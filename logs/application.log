@@ -1,0 +1,771 @@
+2025-10-05 18:03:35 [main] INFO  DoAn.BE.BeApplication - Starting BeApplication using Java 21.0.8 with PID 19864 (D:\DACN\DACN\BE\BE\target\classes started by dmluc in D:\DACN\DACN)
+2025-10-05 18:03:35 [main] DEBUG DoAn.BE.BeApplication - Running with Spring Boot v3.5.6, Spring v6.2.11
+2025-10-05 18:03:35 [main] INFO  DoAn.BE.BeApplication - No active profile set, falling back to 1 default profile: "default"
+2025-10-05 18:03:36 [main] ERROR o.s.boot.SpringApplication - Application run failed
+java.lang.IllegalStateException: No Docker Compose file found in directory 'D:\DACN\DACN\.'
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.boot.docker.compose.lifecycle.DockerComposeLifecycleManager.getComposeFile(DockerComposeLifecycleManager.java:153)
+	at org.springframework.boot.docker.compose.lifecycle.DockerComposeLifecycleManager.start(DockerComposeLifecycleManager.java:111)
+	at org.springframework.boot.docker.compose.lifecycle.DockerComposeListener.onApplicationEvent(DockerComposeListener.java:53)
+	at org.springframework.boot.docker.compose.lifecycle.DockerComposeListener.onApplicationEvent(DockerComposeListener.java:35)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.doInvokeListener(SimpleApplicationEventMulticaster.java:185)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.invokeListener(SimpleApplicationEventMulticaster.java:178)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:156)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:138)
+	at org.springframework.boot.context.event.EventPublishingRunListener.multicastInitialEvent(EventPublishingRunListener.java:136)
+	at org.springframework.boot.context.event.EventPublishingRunListener.contextLoaded(EventPublishingRunListener.java:98)
+	at org.springframework.boot.SpringApplicationRunListeners.lambda$contextLoaded$4(SpringApplicationRunListeners.java:72)
+	at java.base/java.lang.Iterable.forEach(Unknown Source)
+	at org.springframework.boot.SpringApplicationRunListeners.doWithListeners(SpringApplicationRunListeners.java:118)
+	at org.springframework.boot.SpringApplicationRunListeners.doWithListeners(SpringApplicationRunListeners.java:112)
+	at org.springframework.boot.SpringApplicationRunListeners.contextLoaded(SpringApplicationRunListeners.java:72)
+	at org.springframework.boot.SpringApplication.prepareContext(SpringApplication.java:416)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:317)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at DoAn.BE.BeApplication.main(BeApplication.java:10)
+2025-10-05 18:08:34 [main] INFO  DoAn.BE.BeApplication - Starting BeApplication using Java 21.0.8 with PID 11344 (D:\DACN\DACN\BE\BE\target\classes started by dmluc in D:\DACN\DACN)
+2025-10-05 18:08:34 [main] DEBUG DoAn.BE.BeApplication - Running with Spring Boot v3.5.6, Spring v6.2.11
+2025-10-05 18:08:34 [main] INFO  DoAn.BE.BeApplication - No active profile set, falling back to 1 default profile: "default"
+2025-10-05 18:08:38 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-10-05 18:08:39 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 103 ms. Found 0 JPA repository interfaces.
+2025-10-05 18:08:40 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-10-05 18:08:40 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-10-05 18:08:40 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.46]
+2025-10-05 18:08:41 [main] INFO  o.a.c.c.C.[.[localhost].[/api] - Initializing Spring embedded WebApplicationContext
+2025-10-05 18:08:41 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 6456 ms
+2025-10-05 18:08:41 [main] WARN  o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'entityManagerFactory' defined in class path resource [org/springframework/boot/autoconfigure/orm/jpa/HibernateJpaConfiguration.class]: Failed to initialize dependency 'dataSourceScriptDatabaseInitializer' of LoadTimeWeaverAware bean 'entityManagerFactory': Error creating bean with name 'dataSourceScriptDatabaseInitializer' defined in class path resource [org/springframework/boot/autoconfigure/sql/init/DataSourceInitializationConfiguration.class]: Unsatisfied dependency expressed through method 'dataSourceScriptDatabaseInitializer' parameter 0: Error creating bean with name 'dataSource' defined in class path resource [org/springframework/boot/autoconfigure/jdbc/DataSourceConfiguration$Hikari.class]: Failed to instantiate [com.zaxxer.hikari.HikariDataSource]: Factory method 'dataSource' threw exception with message: Cannot load driver class: com.microsoft.sqlserver.jdbc.SQLServerDriver
+2025-10-05 18:08:41 [main] INFO  o.a.catalina.core.StandardService - Stopping service [Tomcat]
+2025-10-05 18:08:41 [main] INFO  o.s.b.a.l.ConditionEvaluationReportLogger - 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2025-10-05 18:08:41 [main] ERROR o.s.boot.SpringApplication - Application run failed
+org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'entityManagerFactory' defined in class path resource [org/springframework/boot/autoconfigure/orm/jpa/HibernateJpaConfiguration.class]: Failed to initialize dependency 'dataSourceScriptDatabaseInitializer' of LoadTimeWeaverAware bean 'entityManagerFactory': Error creating bean with name 'dataSourceScriptDatabaseInitializer' defined in class path resource [org/springframework/boot/autoconfigure/sql/init/DataSourceInitializationConfiguration.class]: Unsatisfied dependency expressed through method 'dataSourceScriptDatabaseInitializer' parameter 0: Error creating bean with name 'dataSource' defined in class path resource [org/springframework/boot/autoconfigure/jdbc/DataSourceConfiguration$Hikari.class]: Failed to instantiate [com.zaxxer.hikari.HikariDataSource]: Factory method 'dataSource' threw exception with message: Cannot load driver class: com.microsoft.sqlserver.jdbc.SQLServerDriver
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:328)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:207)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:970)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:627)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at DoAn.BE.BeApplication.main(BeApplication.java:10)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'dataSourceScriptDatabaseInitializer' defined in class path resource [org/springframework/boot/autoconfigure/sql/init/DataSourceInitializationConfiguration.class]: Unsatisfied dependency expressed through method 'dataSourceScriptDatabaseInitializer' parameter 0: Error creating bean with name 'dataSource' defined in class path resource [org/springframework/boot/autoconfigure/jdbc/DataSourceConfiguration$Hikari.class]: Failed to instantiate [com.zaxxer.hikari.HikariDataSource]: Factory method 'dataSource' threw exception with message: Cannot load driver class: com.microsoft.sqlserver.jdbc.SQLServerDriver
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:804)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:546)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1375)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1205)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	... 10 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'dataSource' defined in class path resource [org/springframework/boot/autoconfigure/jdbc/DataSourceConfiguration$Hikari.class]: Failed to instantiate [com.zaxxer.hikari.HikariDataSource]: Factory method 'dataSource' threw exception with message: Cannot load driver class: com.microsoft.sqlserver.jdbc.SQLServerDriver
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiate(ConstructorResolver.java:657)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:645)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1375)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1205)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1698)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1643)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 20 common frames omitted
+Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [com.zaxxer.hikari.HikariDataSource]: Factory method 'dataSource' threw exception with message: Cannot load driver class: com.microsoft.sqlserver.jdbc.SQLServerDriver
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.lambda$instantiate$0(SimpleInstantiationStrategy.java:200)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiateWithFactoryMethod(SimpleInstantiationStrategy.java:89)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:169)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiate(ConstructorResolver.java:653)
+	... 33 common frames omitted
+Caused by: java.lang.IllegalStateException: Cannot load driver class: com.microsoft.sqlserver.jdbc.SQLServerDriver
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.boot.autoconfigure.jdbc.DataSourceProperties.findDriverClassName(DataSourceProperties.java:184)
+	at org.springframework.boot.autoconfigure.jdbc.DataSourceProperties.determineDriverClassName(DataSourceProperties.java:174)
+	at org.springframework.boot.autoconfigure.jdbc.PropertiesJdbcConnectionDetails.getDriverClassName(PropertiesJdbcConnectionDetails.java:49)
+	at org.springframework.boot.autoconfigure.jdbc.DataSourceConfiguration.createDataSource(DataSourceConfiguration.java:62)
+	at org.springframework.boot.autoconfigure.jdbc.DataSourceConfiguration$Hikari.dataSource(DataSourceConfiguration.java:127)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source)
+	at java.base/java.lang.reflect.Method.invoke(Unknown Source)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.lambda$instantiate$0(SimpleInstantiationStrategy.java:172)
+	... 36 common frames omitted
+2025-10-05 18:13:11 [main] INFO  DoAn.BE.BeApplication - Starting BeApplication using Java 21.0.8 with PID 20608 (D:\DACN\DACN\BE\BE\target\classes started by dmluc in D:\DACN\DACN)
+2025-10-05 18:13:11 [main] DEBUG DoAn.BE.BeApplication - Running with Spring Boot v3.5.6, Spring v6.2.11
+2025-10-05 18:13:11 [main] INFO  DoAn.BE.BeApplication - No active profile set, falling back to 1 default profile: "default"
+2025-10-05 18:13:16 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-10-05 18:13:16 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 159 ms. Found 0 JPA repository interfaces.
+2025-10-05 18:13:19 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-10-05 18:13:19 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-10-05 18:13:19 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.46]
+2025-10-05 18:13:19 [main] INFO  o.a.c.c.C.[.[localhost].[/api] - Initializing Spring embedded WebApplicationContext
+2025-10-05 18:13:19 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 7864 ms
+2025-10-05 18:13:22 [main] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-10-05 18:13:22 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.29.Final
+2025-10-05 18:13:22 [main] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2025-10-05 18:13:23 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-10-05 18:13:23 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-10-05 18:13:25 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection ConnectionID:1 ClientConnectionId: 3e1b4987-0950-472f-9e99-03465f52c182
+2025-10-05 18:13:25 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-10-05 18:13:26 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: SQLServerDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-10-05 18:13:26 [main] INFO  o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 16.0
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-10-05 18:13:29 [main] ERROR o.s.o.j.LocalContainerEntityManagerFactoryBean - Failed to initialize JPA EntityManagerFactory: [PersistenceUnit: default] Unable to build Hibernate SessionFactory; nested exception is org.hibernate.MappingException: Column 'status' is duplicated in mapping for entity 'DoAn.BE.chat.entity.MessageStatus' (use '@Column(insertable=false, updatable=false)' when mapping multiple properties to the same column)
+2025-10-05 18:13:29 [main] WARN  o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'entityManagerFactory' defined in class path resource [org/springframework/boot/autoconfigure/orm/jpa/HibernateJpaConfiguration.class]: [PersistenceUnit: default] Unable to build Hibernate SessionFactory; nested exception is org.hibernate.MappingException: Column 'status' is duplicated in mapping for entity 'DoAn.BE.chat.entity.MessageStatus' (use '@Column(insertable=false, updatable=false)' when mapping multiple properties to the same column)
+2025-10-05 18:13:29 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2025-10-05 18:13:29 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2025-10-05 18:13:29 [main] INFO  o.a.catalina.core.StandardService - Stopping service [Tomcat]
+2025-10-05 18:13:29 [main] INFO  o.s.b.a.l.ConditionEvaluationReportLogger - 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2025-10-05 18:13:29 [main] ERROR o.s.boot.SpringApplication - Application run failed
+org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'entityManagerFactory' defined in class path resource [org/springframework/boot/autoconfigure/orm/jpa/HibernateJpaConfiguration.class]: [PersistenceUnit: default] Unable to build Hibernate SessionFactory; nested exception is org.hibernate.MappingException: Column 'status' is duplicated in mapping for entity 'DoAn.BE.chat.entity.MessageStatus' (use '@Column(insertable=false, updatable=false)' when mapping multiple properties to the same column)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1826)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:207)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:970)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:627)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at DoAn.BE.BeApplication.main(BeApplication.java:10)
+Caused by: jakarta.persistence.PersistenceException: [PersistenceUnit: default] Unable to build Hibernate SessionFactory; nested exception is org.hibernate.MappingException: Column 'status' is duplicated in mapping for entity 'DoAn.BE.chat.entity.MessageStatus' (use '@Column(insertable=false, updatable=false)' when mapping multiple properties to the same column)
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.buildNativeEntityManagerFactory(AbstractEntityManagerFactoryBean.java:431)
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.afterPropertiesSet(AbstractEntityManagerFactoryBean.java:400)
+	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.afterPropertiesSet(LocalContainerEntityManagerFactoryBean.java:366)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1873)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1822)
+	... 15 common frames omitted
+Caused by: org.hibernate.MappingException: Column 'status' is duplicated in mapping for entity 'DoAn.BE.chat.entity.MessageStatus' (use '@Column(insertable=false, updatable=false)' when mapping multiple properties to the same column)
+	at org.hibernate.mapping.Value.checkColumnDuplication(Value.java:196)
+	at org.hibernate.mapping.MappingHelper.checkPropertyColumnDuplication(MappingHelper.java:251)
+	at org.hibernate.mapping.PersistentClass.checkColumnDuplication(PersistentClass.java:941)
+	at org.hibernate.mapping.PersistentClass.validate(PersistentClass.java:696)
+	at org.hibernate.mapping.RootClass.validate(RootClass.java:286)
+	at org.hibernate.boot.internal.MetadataImpl.validate(MetadataImpl.java:505)
+	at org.hibernate.internal.SessionFactoryImpl.<init>(SessionFactoryImpl.java:282)
+	at org.hibernate.boot.internal.SessionFactoryBuilderImpl.build(SessionFactoryBuilderImpl.java:463)
+	at org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl.build(EntityManagerFactoryBuilderImpl.java:1517)
+	at org.springframework.orm.jpa.vendor.SpringHibernateJpaPersistenceProvider.createContainerEntityManagerFactory(SpringHibernateJpaPersistenceProvider.java:66)
+	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.createNativeEntityManagerFactory(LocalContainerEntityManagerFactoryBean.java:390)
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.buildNativeEntityManagerFactory(AbstractEntityManagerFactoryBean.java:419)
+	... 19 common frames omitted
+2025-10-05 18:17:41 [main] INFO  DoAn.BE.BeApplication - Starting BeApplication using Java 21.0.8 with PID 3688 (D:\DACN\DACN\BE\BE\target\classes started by dmluc in D:\DACN\DACN)
+2025-10-05 18:17:41 [main] DEBUG DoAn.BE.BeApplication - Running with Spring Boot v3.5.6, Spring v6.2.11
+2025-10-05 18:17:41 [main] INFO  DoAn.BE.BeApplication - No active profile set, falling back to 1 default profile: "default"
+2025-10-05 18:17:44 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-10-05 18:17:44 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 95 ms. Found 0 JPA repository interfaces.
+2025-10-05 18:17:45 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-10-05 18:17:45 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-10-05 18:17:45 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.46]
+2025-10-05 18:17:46 [main] INFO  o.a.c.c.C.[.[localhost].[/api] - Initializing Spring embedded WebApplicationContext
+2025-10-05 18:17:46 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 4163 ms
+2025-10-05 18:17:47 [main] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-10-05 18:17:47 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.29.Final
+2025-10-05 18:17:47 [main] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2025-10-05 18:17:48 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-10-05 18:17:48 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-10-05 18:17:49 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection ConnectionID:1 ClientConnectionId: 1e8aa13b-8f02-483f-a4dd-5dc110b4011b
+2025-10-05 18:17:49 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-10-05 18:17:49 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: SQLServerDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-10-05 18:17:49 [main] INFO  o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 16.0
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-10-05 18:17:53 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table activity_logs (
+        log_id bigint identity not null,
+        action varchar(50) not null check (action in ('CREATE','UPDATE','DELETE','VIEW')),
+        created_at datetime2(6),
+        description varchar(500),
+        entity_id bigint not null,
+        entity_type varchar(50) not null,
+        ip_address varchar(50),
+        user_id bigint not null,
+        primary key (log_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table bang_luong (
+        bangluong_id bigint identity not null,
+        created_at datetime2(6),
+        ghi_chu varchar(500),
+        luong_co_ban numeric(15,2) not null,
+        nam int not null,
+        ngay_cong int,
+        phu_cap numeric(15,2),
+        thang int not null,
+        thuong numeric(15,2),
+        tong_luong numeric(15,2) not null,
+        nhanvien_id bigint not null,
+        primary key (bangluong_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table cham_cong (
+        chamcong_id bigint identity not null,
+        created_at datetime2(6),
+        ghi_chu varchar(500),
+        gio_ra time,
+        gio_vao time,
+        ngay_cham date not null,
+        so_gio_lam numeric(5,2),
+        trang_thai varchar(30) check (trang_thai in ('DI_TRE','VE_SOM','DU_GIO','NGHI_PHEP','NGHI_KHONG_PHEP')),
+        nhanvien_id bigint not null,
+        primary key (chamcong_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table chat_room_members (
+        joined_at datetime2(6),
+        role varchar(20) not null check (role in ('ADMIN','MEMBER')),
+        room_id bigint not null,
+        user_id bigint not null,
+        primary key (room_id, user_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table chat_rooms (
+        room_id bigint identity not null,
+        avatar_url varchar(500),
+        created_at datetime2(6),
+        name varchar(100),
+        type varchar(20) not null check (type in ('DIRECT','GROUP','PROJECT')),
+        created_by bigint,
+        project_id bigint,
+        primary key (room_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table chuc_vu (
+        chucvu_id bigint identity not null,
+        created_at datetime2(6),
+        level int not null,
+        mo_ta varchar(500),
+        ten_chuc_vu varchar(100) not null,
+        primary key (chucvu_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table comments (
+        comment_id bigint identity not null,
+        content NVARCHAR(MAX) not null,
+        created_at datetime2(6),
+        is_deleted bit not null,
+        updated_at datetime2(6),
+        issue_id bigint not null,
+        user_id bigint not null,
+        primary key (comment_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table file_shares (
+        share_id bigint identity not null,
+        created_at datetime2(6),
+        expires_at datetime2(6),
+        permission varchar(20) check (permission in ('VIEW','DOWNLOAD','EDIT')),
+        share_token varchar(100),
+        file_id bigint not null,
+        shared_by bigint not null,
+        shared_to bigint,
+        primary key (share_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table files (
+        file_id bigint identity not null,
+        created_at datetime2(6),
+        file_path varchar(500) not null,
+        file_size bigint not null,
+        filename varchar(255) not null,
+        is_deleted bit not null,
+        mime_type varchar(100),
+        original_filename varchar(255) not null,
+        updated_at datetime2(6),
+        upload_ip varchar(50),
+        upload_user_agent varchar(255),
+        version int,
+        folder_id bigint,
+        owner_id bigint not null,
+        parent_file_id bigint,
+        primary key (file_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table folders (
+        folder_id bigint identity not null,
+        created_at datetime2(6),
+        folder_type varchar(20) check (folder_type in ('PERSONAL','SHARED','PROJECT')),
+        name varchar(255) not null,
+        owner_id bigint not null,
+        parent_folder_id bigint,
+        project_id bigint,
+        primary key (folder_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table hop_dong (
+        hopdong_id bigint identity not null,
+        created_at datetime2(6),
+        loai_hop_dong varchar(50) not null check (loai_hop_dong in ('THU_VIEC','XAC_DINH','VO_THOI_HAN')),
+        luong_co_ban numeric(15,2) not null,
+        ngay_bat_dau date not null,
+        ngay_ket_thuc date,
+        noi_dung NVARCHAR(MAX),
+        trang_thai varchar(30) check (trang_thai in ('HIEU_LUC','HET_HAN','BI_HUY')),
+        nhanvien_id bigint not null,
+        primary key (hopdong_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table issue_statuses (
+        status_id int identity not null,
+        color varchar(7),
+        name varchar(50) not null,
+        order_index int not null,
+        primary key (status_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table issue_types (
+        type_id int identity not null,
+        color varchar(7),
+        icon varchar(50),
+        name varchar(50) not null,
+        primary key (type_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table issues (
+        issue_id bigint identity not null,
+        actual_hours numeric(5,2),
+        created_at datetime2(6),
+        description NVARCHAR(MAX),
+        due_date date,
+        estimated_hours numeric(5,2),
+        issue_key varchar(20) not null,
+        priority varchar(20) not null check (priority in ('LOW','MEDIUM','HIGH','CRITICAL')),
+        title varchar(255) not null,
+        updated_at datetime2(6),
+        assignee_id bigint,
+        status_id int not null,
+        type_id int not null,
+        project_id bigint not null,
+        reporter_id bigint not null,
+        sprint_id bigint,
+        primary key (issue_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table message_status (
+        status varchar(20) not null check (status in ('DELIVERED','SEEN')),
+        timestamp datetime2(6),
+        message_id bigint not null,
+        user_id bigint not null,
+        primary key (message_id, user_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table messages (
+        message_id bigint identity not null,
+        content NVARCHAR(MAX),
+        edited_at datetime2(6),
+        is_deleted bit not null,
+        message_type varchar(20) not null check (message_type in ('TEXT','FILE','IMAGE')),
+        sent_at datetime2(6),
+        room_id bigint not null,
+        file_id bigint,
+        sender_id bigint not null,
+        primary key (message_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table nghi_phep (
+        nghiphep_id bigint identity not null,
+        created_at datetime2(6),
+        ghi_chu_duyet varchar(500),
+        loai_phep varchar(50) not null check (loai_phep in ('PHEP_NAM','OM','KO_LUONG','KHAC')),
+        ly_do varchar(500),
+        ngay_bat_dau date not null,
+        ngay_duyet datetime2(6),
+        ngay_ket_thuc date not null,
+        so_ngay int not null,
+        trang_thai varchar(30) check (trang_thai in ('CHO_DUYET','DA_DUYET','TU_CHOI')),
+        nguoi_duyet_id bigint,
+        nhanvien_id bigint not null,
+        primary key (nghiphep_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table nhan_vien (
+        nhanvien_id bigint identity not null,
+        cccd varchar(20),
+        created_at datetime2(6),
+        dia_chi varchar(200),
+        gioi_tinh varchar(10) not null check (gioi_tinh in ('Nam','Nữ','Khác')),
+        ho_ten varchar(100) not null,
+        luong_co_ban numeric(15,2),
+        ngay_sinh date not null,
+        ngay_vao_lam date not null,
+        phu_cap numeric(15,2),
+        trang_thai varchar(50) check (trang_thai in ('DANG_LAM_VIEC','NGHI_VIEC','TAM_NGHI')),
+        chucvu_id bigint,
+        phongban_id bigint,
+        user_id bigint not null,
+        primary key (nhanvien_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table notifications (
+        notification_id bigint identity not null,
+        content varchar(500),
+        created_at datetime2(6),
+        is_read bit not null,
+        link varchar(500),
+        title varchar(255) not null,
+        type varchar(50) not null,
+        user_id bigint not null,
+        primary key (notification_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table phong_ban (
+        phongban_id bigint identity not null,
+        created_at datetime2(6),
+        mo_ta varchar(500),
+        ten_phong_ban varchar(100) not null,
+        truong_phong_id bigint,
+        primary key (phongban_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table project_members (
+        id bigint identity not null,
+        joined_at datetime2(6),
+        role varchar(30) not null check (role in ('OWNER','MANAGER','MEMBER')),
+        project_id bigint not null,
+        user_id bigint not null,
+        primary key (id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table projects (
+        project_id bigint identity not null,
+        created_at datetime2(6),
+        description NVARCHAR(MAX),
+        end_date date,
+        is_active bit not null,
+        key_project varchar(10) not null,
+        name varchar(255) not null,
+        start_date date,
+        status varchar(50) not null check (status in ('ACTIVE','ON_HOLD','COMPLETED','CANCELLED')),
+        updated_at datetime2(6),
+        created_by bigint not null,
+        phongban_id bigint,
+        primary key (project_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table sprints (
+        sprint_id bigint identity not null,
+        created_at datetime2(6),
+        end_date date not null,
+        goal varchar(500),
+        name varchar(100) not null,
+        start_date date not null,
+        status varchar(30) not null check (status in ('PLANNED','ACTIVE','COMPLETED')),
+        project_id bigint not null,
+        primary key (sprint_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create table users (
+        user_id bigint identity not null,
+        avatar_url varchar(500),
+        created_at datetime2(6),
+        email varchar(100),
+        is_active bit not null,
+        last_login datetime2(6),
+        password_hash varchar(255) not null,
+        phone_number varchar(15),
+        role varchar(30) not null check (role in ('ADMIN','MANAGER','EMPLOYEE')),
+        updated_at datetime2(6),
+        username varchar(50) not null,
+        primary key (user_id)
+    )
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    drop index file_shares.UK76yrel9c5d30m59bsis0e9jse
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create unique nonclustered index UK76yrel9c5d30m59bsis0e9jse 
+       on file_shares (share_token) where share_token is not null
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table issue_statuses 
+       drop constraint if exists UKgmea8uondt3tlv5dshpq20imb
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table issue_statuses 
+       add constraint UKgmea8uondt3tlv5dshpq20imb unique (name)
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table issue_types 
+       drop constraint if exists UK89bjrvmd9kx9juiso61ua2jfg
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table issue_types 
+       add constraint UK89bjrvmd9kx9juiso61ua2jfg unique (name)
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table issues 
+       drop constraint if exists UKsqy2j85vopd550spxwa6e5xem
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table issues 
+       add constraint UKsqy2j85vopd550spxwa6e5xem unique (issue_key)
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    drop index nhan_vien.UK4dltajwcytiogq08kwe1pqa48
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create unique nonclustered index UK4dltajwcytiogq08kwe1pqa48 
+       on nhan_vien (cccd) where cccd is not null
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table nhan_vien 
+       drop constraint if exists UKaalrsrbhd3au1rkgjtamvlmrj
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table nhan_vien 
+       add constraint UKaalrsrbhd3au1rkgjtamvlmrj unique (user_id)
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table project_members 
+       drop constraint if exists UKaydweb1re2g5786xaugww4u0
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table project_members 
+       add constraint UKaydweb1re2g5786xaugww4u0 unique (project_id, user_id)
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table projects 
+       drop constraint if exists UK2esujwu50kncgkje6lfgessbt
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table projects 
+       add constraint UK2esujwu50kncgkje6lfgessbt unique (key_project)
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    drop index users.UK6dotkott2kjsp8vw4d0m25fb7
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    create unique nonclustered index UK6dotkott2kjsp8vw4d0m25fb7 
+       on users (email) where email is not null
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table users 
+       drop constraint if exists UKr43af9ap4edm43mmtq01oddj6
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table users 
+       add constraint UKr43af9ap4edm43mmtq01oddj6 unique (username)
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table activity_logs 
+       add constraint FK5bm1lt4f4eevt8lv2517soakd 
+       foreign key (user_id) 
+       references users
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table bang_luong 
+       add constraint FKfejubgvwa7v4shqs5juq3lwcv 
+       foreign key (nhanvien_id) 
+       references nhan_vien
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table cham_cong 
+       add constraint FKd0l1ao1xv7yy1cw4pcbmt6ps4 
+       foreign key (nhanvien_id) 
+       references nhan_vien
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table chat_room_members 
+       add constraint FKdvub8k7sypahkamqjaiokb44t 
+       foreign key (room_id) 
+       references chat_rooms
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table chat_room_members 
+       add constraint FKbemsjj4g0iny4xpkvj5rwj6ab 
+       foreign key (user_id) 
+       references users
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table chat_rooms 
+       add constraint FKin9277aywbjursj2b4e3bmw3s 
+       foreign key (created_by) 
+       references users
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table chat_rooms 
+       add constraint FKorgb7avr2rae0jdaou5gmtvp0 
+       foreign key (project_id) 
+       references projects
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table comments 
+       add constraint FK287j1dpionjmfs2yycfjmy5j2 
+       foreign key (issue_id) 
+       references issues
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table comments 
+       add constraint FK8omq0tc18jd43bu5tjh6jvraq 
+       foreign key (user_id) 
+       references users
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table file_shares 
+       add constraint FKlf6yrfalqkfrnb3jij96sddbl 
+       foreign key (file_id) 
+       references files
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table file_shares 
+       add constraint FK7ejkq63t97dnijb9y1clpln4 
+       foreign key (shared_by) 
+       references users
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table file_shares 
+       add constraint FKowssep9l8y806xgj7rtv955bb 
+       foreign key (shared_to) 
+       references users
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table files 
+       add constraint FKe9awb46i258gxwjtbjprmtpmi 
+       foreign key (folder_id) 
+       references folders
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table files 
+       add constraint FKndbd0r86rsovslrthjrgl960x 
+       foreign key (owner_id) 
+       references users
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table files 
+       add constraint FKj8du7p53ohmxdo0sniwuwax7n 
+       foreign key (parent_file_id) 
+       references files
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table folders 
+       add constraint FK5b5p96ewk9msg1omqhl0vttop 
+       foreign key (owner_id) 
+       references users
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table folders 
+       add constraint FKiohfylsa0e068vfrh56nwqv5w 
+       foreign key (parent_folder_id) 
+       references folders
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table folders 
+       add constraint FKmv7gtusmu0tk7hkbvxvlg065x 
+       foreign key (project_id) 
+       references projects
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table hop_dong 
+       add constraint FK1oixv0mc8rqxifq12xre33bk5 
+       foreign key (nhanvien_id) 
+       references nhan_vien
+2025-10-05 18:17:54 [main] DEBUG org.hibernate.SQL - 
+    alter table issues 
+       add constraint FK6tkde1c2odhrtreahor01p5fb 
+       foreign key (assignee_id) 
+       references users
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table issues 
+       add constraint FK6a9e4auysr8j798w80hiyntt 
+       foreign key (status_id) 
+       references issue_statuses
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table issues 
+       add constraint FKj9qjsy7ncwcf75cq0dkjhs6xl 
+       foreign key (type_id) 
+       references issue_types
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table issues 
+       add constraint FK4j2x3reshuu7qj5svh6eacnpt 
+       foreign key (project_id) 
+       references projects
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table issues 
+       add constraint FKk6y4w2thufjijfu9ixo7njd9b 
+       foreign key (reporter_id) 
+       references users
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table issues 
+       add constraint FK9dv7dy82mg9598oxgpivxjjd1 
+       foreign key (sprint_id) 
+       references sprints
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table message_status 
+       add constraint FKt08yagv0viu5m3sk4uwluxr4o 
+       foreign key (message_id) 
+       references messages
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table message_status 
+       add constraint FKspq9hq2wll5fbje0bv0c45hf0 
+       foreign key (user_id) 
+       references users
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table messages 
+       add constraint FKj9tydtks7eq8dy1jq67yv5icx 
+       foreign key (room_id) 
+       references chat_rooms
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table messages 
+       add constraint FKrvm6kfareq86j08cv7n03ocwq 
+       foreign key (file_id) 
+       references files
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table messages 
+       add constraint FK4ui4nnwntodh6wjvck53dbk9m 
+       foreign key (sender_id) 
+       references users
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table nghi_phep 
+       add constraint FKcp6rbisaihhyua6osile86ij3 
+       foreign key (nguoi_duyet_id) 
+       references users
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table nghi_phep 
+       add constraint FK21jcnwyxn3reodkuecggokbpx 
+       foreign key (nhanvien_id) 
+       references nhan_vien
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table nhan_vien 
+       add constraint FKsntl164809bg9khnwar6uj3nl 
+       foreign key (chucvu_id) 
+       references chuc_vu
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table nhan_vien 
+       add constraint FKkttyp2wpy4mg7j95w5u275qou 
+       foreign key (phongban_id) 
+       references phong_ban
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table nhan_vien 
+       add constraint FKrvv509hcoa3a5r8g6iosip9gj 
+       foreign key (user_id) 
+       references users
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table notifications 
+       add constraint FK9y21adhxn0ayjhfocscqox7bh 
+       foreign key (user_id) 
+       references users
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table phong_ban 
+       add constraint FK72oordf1ts0p0oqyefwx4ux89 
+       foreign key (truong_phong_id) 
+       references nhan_vien
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table project_members 
+       add constraint FKdki1sp2homqsdcvqm9yrix31g 
+       foreign key (project_id) 
+       references projects
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table project_members 
+       add constraint FKgul2el0qjk5lsvig3wgajwm77 
+       foreign key (user_id) 
+       references users
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table projects 
+       add constraint FKf1ph00os6khfle3ub9b50x594 
+       foreign key (created_by) 
+       references users
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table projects 
+       add constraint FKjgdbl17toow15nntca8d77j07 
+       foreign key (phongban_id) 
+       references phong_ban
+2025-10-05 18:17:55 [main] DEBUG org.hibernate.SQL - 
+    alter table sprints 
+       add constraint FKke5a9e380ibc0xugykeqaktp4 
+       foreign key (project_id) 
+       references projects
+2025-10-05 18:17:55 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-10-05 18:17:55 [main] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-10-05 18:17:56 [main] DEBUG o.s.s.c.a.a.c.AuthenticationConfiguration$DefaultPasswordEncoderAuthenticationManagerBuilder - No authenticationProviders and no parentAuthenticationManager defined. Returning null.
+2025-10-05 18:17:57 [main] DEBUG o.s.s.web.DefaultSecurityFilterChain - Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, CsrfFilter, LogoutFilter, UsernamePasswordAuthenticationFilter, DefaultResourcesFilter, DefaultLoginPageGeneratingFilter, DefaultLogoutPageGeneratingFilter, BasicAuthenticationFilter, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, ExceptionTranslationFilter, AuthorizationFilter
+2025-10-05 18:17:58 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/api'
+2025-10-05 18:17:58 [main] INFO  DoAn.BE.BeApplication - Started BeApplication in 18.152 seconds (process running for 19.384)
