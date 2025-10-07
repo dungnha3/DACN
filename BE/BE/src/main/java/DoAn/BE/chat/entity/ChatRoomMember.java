@@ -4,7 +4,6 @@ import DoAn.BE.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
@@ -45,14 +44,3 @@ public class ChatRoomMember {
     }
 }
 
-@Embeddable
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class ChatRoomMemberId implements Serializable {
-    @Column(name = "room_id")
-    private Long roomId;
-    
-    @Column(name = "user_id")
-    private Long userId;
-}

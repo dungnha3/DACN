@@ -1,11 +1,9 @@
 package DoAn.BE.chat.entity;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import DoAn.BE.user.entity.User;
 import jakarta.persistence.Column;
-import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -57,14 +55,3 @@ public class MessageStatus {
     }
 }
 
-@Embeddable
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class MessageStatusId implements Serializable {
-    @Column(name = "message_id")
-    private Long messageId;
-    
-    @Column(name = "user_id")
-    private Long userId;
-}
