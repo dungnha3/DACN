@@ -67,10 +67,6 @@ public class Project {
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private List<Sprint> sprints;
-
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
     private List<Issue> issues;
 
     @PrePersist

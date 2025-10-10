@@ -83,10 +83,6 @@ public class File {
     @JsonIgnore
     private List<File> versions;
 
-    @OneToMany(mappedBy = "file", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<FileShare> shares;
-
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
