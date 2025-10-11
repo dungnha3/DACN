@@ -34,3 +34,5 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttempt, Long
     List<LoginAttempt> findOldAttempts(@Param("cutoffTime") LocalDateTime cutoffTime);
 }
 
+
+

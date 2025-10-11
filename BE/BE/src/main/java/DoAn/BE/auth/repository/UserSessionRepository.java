@@ -45,3 +45,7 @@ public interface UserSessionRepository extends JpaRepository<UserSession, Long> 
     List<UserSession> findActiveSessionsByIpAddress(@Param("ipAddress") String ipAddress);
 }
 
+
+
+
+
