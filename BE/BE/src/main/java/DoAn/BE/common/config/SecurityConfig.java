@@ -26,6 +26,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/users/**").permitAll() // Tạm thời permit all cho testing
                 .requestMatchers("/api/profile/**").permitAll() // Tạm thời permit all cho testing
+                .requestMatchers("/api/projects/**").permitAll() // Tạm thời permit all cho testing
+                .requestMatchers("/api/issues/**").permitAll() // Tạm thời permit all cho testing
+                .requestMatchers("/api/project-members/**").permitAll() // Tạm thời permit all cho testing
                 .anyRequest().authenticated()
             );
 
