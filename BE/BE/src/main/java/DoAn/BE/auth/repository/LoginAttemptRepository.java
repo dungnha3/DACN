@@ -33,3 +33,4 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttempt, Long
     @Query("SELECT la FROM LoginAttempt la WHERE la.attemptedAt < :cutoffTime")
     List<LoginAttempt> findOldAttempts(@Param("cutoffTime") LocalDateTime cutoffTime);
 }
+

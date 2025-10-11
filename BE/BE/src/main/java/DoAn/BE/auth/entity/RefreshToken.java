@@ -49,3 +49,4 @@ public class RefreshToken {
         return !this.isRevoked && !this.isExpired();
     }
 }
+

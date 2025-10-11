@@ -44,3 +44,4 @@ public interface UserSessionRepository extends JpaRepository<UserSession, Long> 
     @Query("SELECT us FROM UserSession us WHERE us.ipAddress = :ipAddress AND us.isActive = true")
     List<UserSession> findActiveSessionsByIpAddress(@Param("ipAddress") String ipAddress);
 }
+

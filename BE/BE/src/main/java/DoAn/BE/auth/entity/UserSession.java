@@ -62,3 +62,4 @@ public class UserSession {
         return LocalDateTime.now().isAfter(this.lastActivity.plusMinutes(timeoutMinutes));
     }
 }
+

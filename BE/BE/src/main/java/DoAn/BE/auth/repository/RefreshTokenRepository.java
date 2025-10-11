@@ -37,3 +37,4 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     @Query("SELECT COUNT(rt) FROM RefreshToken rt WHERE rt.user = :user AND rt.isRevoked = false")
     long countActiveTokensByUser(@Param("user") User user);
 }
+
