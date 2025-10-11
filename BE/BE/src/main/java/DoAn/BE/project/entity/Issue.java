@@ -3,9 +3,6 @@ package DoAn.BE.project.entity;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,9 +25,6 @@ public class Issue {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    @ManyToOne
-    @JoinColumn(name = "sprint_id")
-    private Sprint sprint;  // NULL = trong backlog
 
     @Column(name = "issue_key", nullable = false, unique = true, length = 20)
     private String issueKey;  // VD: PROJ-001, PROJ-002
@@ -41,9 +35,6 @@ public class Issue {
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
-    @ManyToOne
-    @JoinColumn(name = "type_id", nullable = false)
-    private IssueType issueType;
 
     @ManyToOne
     @JoinColumn(name = "status_id", nullable = false)
@@ -76,10 +67,6 @@ public class Issue {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Relationships
-    @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<Comment> comments;
 
     @PrePersist
     protected void onCreate() {
@@ -93,10 +80,6 @@ public class Issue {
     }
 
     // Helper methods
-    public boolean isInBacklog() {
-        return this.sprint == null;
-    }
-
     public boolean isOverdue() {
         return this.dueDate != null && 
                LocalDate.now().isAfter(this.dueDate) &&
@@ -110,16 +93,6 @@ public class Issue {
 
     public boolean isAssigned() {
         return this.assignee != null;
-    }
-
-    public void moveToSprint(Sprint sprint) {
-        this.sprint = sprint;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    public void moveToBacklog() {
-        this.sprint = null;
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void assignTo(User user) {

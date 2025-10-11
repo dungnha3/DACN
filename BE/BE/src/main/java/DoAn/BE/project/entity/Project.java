@@ -67,10 +67,6 @@ public class Project {
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private List<Sprint> sprints;
-
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
     private List<Issue> issues;
 
     @PrePersist
@@ -93,10 +89,17 @@ public class Project {
         return this.status == ProjectStatus.COMPLETED;
     }
 
+    public boolean isOverdue() {
+        return this.status == ProjectStatus.ACTIVE && 
+               this.endDate != null && 
+               this.endDate.isBefore(LocalDate.now());
+    }
+
     // Enum
     public enum ProjectStatus {
         ACTIVE,      // Đang hoạt động
         ON_HOLD,     // Tạm dừng
+        OVERDUE,     // Quá hạn
         COMPLETED,   // Hoàn thành
         CANCELLED    // Đã hủy
     }

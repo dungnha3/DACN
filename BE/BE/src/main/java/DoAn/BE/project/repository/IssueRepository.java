@@ -10,9 +10,9 @@ import org.springframework.stereotype.Repository;
 public interface IssueRepository extends JpaRepository<Issue, Long> {
     Optional<Issue> findByIssueKey(String issueKey);
     List<Issue> findByProject_ProjectId(Long projectId);
-    List<Issue> findBySprint_SprintId(Long sprintId);
     List<Issue> findByReporter_UserId(Long userId);
     List<Issue> findByAssignee_UserId(Long userId);
+    List<Issue> findByIssueStatus_StatusId(Integer statusId);
 }
 
 

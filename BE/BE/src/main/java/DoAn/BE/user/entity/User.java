@@ -59,6 +59,26 @@ public class User {
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
+    @Column(name = "is_online", nullable = false)
+    private Boolean isOnline = false;
+
+    @Column(name = "last_seen")
+    private LocalDateTime lastSeen;
+
+    public void setOnline() {
+        this.isOnline = true;
+        this.lastSeen = LocalDateTime.now();
+    }
+
+    public void setOffline() {
+        this.isOnline = false;
+        this.lastSeen = LocalDateTime.now();
+    }
+
+    public boolean isCurrentlyOnline() {
+        return this.isOnline != null && this.isOnline;
+    }
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

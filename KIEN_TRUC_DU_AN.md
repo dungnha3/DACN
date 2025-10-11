@@ -73,7 +73,7 @@
 │  │   SQL Server     │              │   MinIO          │        │
 │  │   (Database)     │              │   (File Storage) │        │
 │  │                  │              │                  │        │
-│  │  - 24 Tables     │              │  - Folders       │        │
+│  │  - 22 Tables     │              │  - Folders       │        │
 │  │  - Relationships │              │  - Files         │        │
 │  │  - Indexes       │              │  - Buckets       │        │
 │  └──────────────────┘              └──────────────────┘        │
@@ -119,6 +119,22 @@ enterprise-system-backend/
 │   │   └── dto/
 │   │       └── UserDTO.java
 │   │
+│   ├── 📦 ai/                      # AI Integration Module
+│   │   ├── service/
+│   │   │   ├── OpenAIService.java
+│   │   │   ├── NotionAIService.java
+│   │   │   ├── AIAssignmentService.java
+│   │   │   └── AIContentService.java
+│   │   ├── controller/
+│   │   │   ├── AIAssignmentController.java
+│   │   │   └── NotionAIController.java
+│   │   ├── dto/
+│   │   │   ├── AIAssignmentRequest.java
+│   │   │   ├── AIContentRequest.java
+│   │   │   └── AIResponse.java
+│   │   └── config/
+│   │       └── AIConfig.java
+│   │
 │   ├── 📦 hr/                      # HR Module
 │   │   ├── entity/
 │   │   │   ├── NhanVien.java
@@ -152,6 +168,11 @@ enterprise-system-backend/
 │   │   │   ├── IssueType.java
 │   │   │   ├── IssueStatus.java
 │   │   │   └── Comment.java
+│   │   │   # AI-Enhanced Fields:
+│   │   │   # - ai_generated_description
+│   │   │   # - ai_suggested_assignee
+│   │   │   # - ai_estimated_hours
+│   │   │   # - ai_priority_suggestion
 │   │   ├── controller/
 │   │   │   ├── ProjectController.java
 │   │   │   ├── SprintController.java
@@ -170,13 +191,17 @@ enterprise-system-backend/
 │   │   │   ├── ChatRoomMember.java
 │   │   │   ├── Message.java
 │   │   │   └── MessageStatus.java
+│   │   │   # Enhanced with Online Status:
+│   │   │   # - is_online (Boolean)
+│   │   │   # - last_seen (LocalDateTime)
 │   │   ├── controller/
 │   │   │   ├── ChatRoomController.java
 │   │   │   └── MessageController.java
 │   │   ├── websocket/
 │   │   │   ├── WebSocketConfig.java
 │   │   │   ├── WebSocketController.java
-│   │   │   └── WebSocketEventListener.java
+│   │   │   ├── WebSocketEventListener.java
+│   │   │   └── PresenceController.java
 │   │   ├── service/
 │   │   │   └── [3 services]
 │   │   ├── repository/
@@ -318,7 +343,8 @@ frontend-web/
 │   │   ├── hr.api.ts              # HR APIs
 │   │   ├── project.api.ts         # Project APIs
 │   │   ├── chat.api.ts            # Chat APIs
-│   │   └── storage.api.ts         # Storage APIs
+│   │   ├── storage.api.ts         # Storage APIs
+│   │   └── ai.api.ts              # AI APIs
 │   │
 │   ├── 📦 components/              # Reusable Components
 │   │   ├── common/
@@ -335,7 +361,10 @@ frontend-web/
 │   │   └── features/
 │   │       ├── UserAvatar.tsx
 │   │       ├── NotificationDropdown.tsx
-│   │       └── FileUploader.tsx
+│   │       ├── FileUploader.tsx
+│   │       ├── OnlineStatus.tsx
+│   │       ├── AIWritingAssistant.tsx
+│   │       └── AIAssignmentButton.tsx
 │   │
 │   ├── 📦 pages/                   # Page Components
 │   │   ├── auth/
@@ -371,12 +400,14 @@ frontend-web/
 │   │   ├── useAuth.ts
 │   │   ├── useWebSocket.ts
 │   │   ├── useDebounce.ts
-│   │   └── useInfiniteScroll.ts
+│   │   ├── useInfiniteScroll.ts
+│   │   └── usePresence.ts
 │   │
 │   ├── 📦 types/                   # TypeScript Types
 │   │   ├── user.types.ts
 │   │   ├── project.types.ts
 │   │   ├── chat.types.ts
+│   │   ├── ai.types.ts
 │   │   └── api.types.ts
 │   │
 │   ├── 📦 utils/                   # Utilities
@@ -589,6 +620,7 @@ mobile-android/
 │    │  - username, password_hash              │  │       │
 │    │  - email, phone_number, avatar_url      │  │       │
 │    │  - role (ADMIN/MANAGER/EMPLOYEE)        │  │       │
+│    │  - is_online, last_seen                 │  │       │
 │    └─────────────────────────────────────────┘  │       │
 │                                                  │       │
 │    ┌─────────────────────────────────────────┐  │       │
@@ -611,12 +643,14 @@ mobile-android/
 │    │ bang_luong   │  │ nghi_phep    │                   │
 │    └──────────────┘  └──────────────┘                   │
 │                                                          │
-│  📁 PROJECT (7 tables)                                   │
+│  📁 PROJECT (3 tables)                                   │
 │    ┌─────────────────────────────────────────┐          │
 │    │ projects                                │          │
 │    │  - project_id (PK)                      │──┐       │
 │    │  - name, key_project, description       │  │       │
 │    │  - created_by (FK → users)              │  │       │
+│    │  - ai_generated_description             │  │       │
+│    │  - ai_suggested_timeline                 │  │       │
 │    └─────────────────────────────────────────┘  │       │
 │                                                  │       │
 │    ┌─────────────────────────────────────────┐  │       │
@@ -625,10 +659,25 @@ mobile-android/
 │    │  - project_id (FK) ──────────────────────┘       │
 │    │  - assignee_id (FK → users)             │          │
 │    │  - reporter_id (FK → users)             │          │
+│    │  - status_id (FK → issue_statuses)      │          │
+│    │  - ai_generated_description             │          │
+│    │  - ai_suggested_assignee                │          │
+│    │  - ai_estimated_hours                   │          │
 │    └─────────────────────────────────────────┘          │
 │                                                          │
-│    [sprints, project_members, comments,                 │
-│     issue_types, issue_statuses]                        │
+│    ┌─────────────────────────────────────────┐          │
+│    │ project_members                         │          │
+│    │  - member_id (PK)                       │          │
+│    │  - project_id (FK → projects)           │          │
+│    │  - user_id (FK → users)                 │          │
+│    │  - role (OWNER/MANAGER/MEMBER)          │          │
+│    └─────────────────────────────────────────┘          │
+│                                                          │
+│    ┌─────────────────────────────────────────┐          │
+│    │ issue_statuses                          │          │
+│    │  - status_id (PK)                       │          │
+│    │  - name, order_index, color             │          │
+│    └─────────────────────────────────────────┘          │
 │                                                          │
 │  📁 CHAT (4 tables)                                      │
 │    ┌─────────────┐  ┌──────────────┐                    │
@@ -638,15 +687,45 @@ mobile-android/
 │    │ chat_room_members  │  │ message_status │           │
 │    └────────────────────┘  └────────────────┘           │
 │                                                          │
-│  📁 STORAGE (3 tables)                                   │
-│    ┌──────────┐  ┌──────┐  ┌────────────┐              │
-│    │ folders  │  │ files│  │ file_shares│              │
-│    └──────────┘  └──────┘  └────────────┘              │
+│  📁 STORAGE (2 tables)                                   │
+│    ┌──────────┐  ┌──────┐                               │
+│    │ folders  │  │ files│                               │
+│    └──────────┘  └──────┘                               │
 │                                                          │
-│  📁 SYSTEM (2 tables)                                    │
-│    ┌──────────────────┐  ┌───────────────┐             │
-│    │ notifications    │  │ activity_logs │             │
-│    └──────────────────┘  └───────────────┘             │
+│  📁 SYSTEM (1 table)                                     │
+│    ┌──────────────────┐                                 │
+│    │ notifications    │                                 │
+│    └──────────────────┘                                 │
+│                                                          │
+│  📁 AUTH (3 tables)                                      │
+│    ┌─────────────────────────────────────────┐          │
+│    │ refresh_tokens                          │          │
+│    │  - id (PK)                              │          │
+│    │  - token, user_id (FK)                  │          │
+│    │  - expires_at, is_revoked               │          │
+│    └─────────────────────────────────────────┘          │
+│                                                          │
+│    ┌─────────────────────────────────────────┐          │
+│    │ user_sessions                           │          │
+│    │  - id (PK)                              │          │
+│    │  - user_id (FK), session_id             │          │
+│    │  - ip_address, user_agent               │          │
+│    │  - last_activity, is_active             │          │
+│    └─────────────────────────────────────────┘          │
+│                                                          │
+│    ┌─────────────────────────────────────────┐          │
+│    │ login_attempts                          │          │
+│    │  - id (PK)                              │          │
+│    │  - username, ip_address                 │          │
+│    │  - success, failure_reason              │          │
+│    │  - attempted_at                         │          │
+│    └─────────────────────────────────────────┘          │
+│                                                          │
+│  📁 AI INTEGRATION                                        │
+│    - OpenAI API Integration                              │
+│    - Notion-style AI Writing Assistant                  │
+│    - AI Task Assignment                                  │
+│    - AI Content Generation                               │
 │                                                          │
 └──────────────────────────────────────────────────────────┘
 ```
@@ -691,6 +770,16 @@ folders (1) ──────── (N) files
 
 files (1) ──────── (N) file_shares
       (1) ──────── (N) messages (file attachments)
+
+# Auth Relationships
+users (1) ──────── (N) refresh_tokens
+users (1) ──────── (N) user_sessions
+users (1) ──────── (N) login_attempts
+
+# AI Integration Relationships
+users (1) ──────── (N) ai_assignments
+issues (1) ──────── (N) ai_suggestions
+projects (1) ──────── (N) ai_content
 ```
 
 ---
@@ -888,9 +977,200 @@ volumes:
 
 ---
 
+## 🤖 AI INTEGRATION ARCHITECTURE
+
+### AI Services Integration
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    AI PROVIDERS                        │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  ┌──────────────────┐  ┌──────────────────┐            │
+│  │   OpenAI GPT-4   │  │  Google Gemini   │            │
+│  │   - Content Gen  │  │  - Fast Response │            │
+│  │   - Task Assign  │  │  - Multimodal   │            │
+│  └──────────────────┘  └──────────────────┘            │
+│                                                         │
+│  ┌──────────────────┐  ┌──────────────────┐            │
+│  │  Anthropic Claude│  │   Custom AI      │            │
+│  │  - Long Context  │  │  - Business Logic│            │
+│  │  - Safety Focus  │  │  - Domain Specific│            │
+│  └──────────────────┘  └──────────────────┘            │
+│                                                         │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│                AI SERVICE LAYER                         │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │            NotionAIService                      │   │
+│  │  - generateContent()                           │   │
+│  │  - improveContent()                            │   │
+│  │  - summarizeContent()                          │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │            AIAssignmentService                  │   │
+│  │  - assignTaskToUser()                          │   │
+│  │  - suggestAssignee()                           │   │
+│  │  - estimateHours()                             │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│                BUSINESS LOGIC                          │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  Issue Creation → AI Description Generation            │
+│  Project Planning → AI Timeline Suggestion             │
+│  Task Assignment → AI User Recommendation             │
+│  Content Writing → AI Writing Assistant               │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+### AI Features Implementation
+
+#### 1. **Notion-style AI Writing Assistant**
+```java
+// AI Content Generation
+@PostMapping("/api/ai/generate-content")
+public ResponseEntity<?> generateContent(@RequestBody AIContentRequest request) {
+    String generatedContent = notionAIService.generateContent(
+        request.getPrompt(), 
+        request.getContext()
+    );
+    return ResponseEntity.ok(new AIResponse(generatedContent));
+}
+```
+
+#### 2. **AI Task Assignment**
+```java
+// AI Assignment Service
+@PostMapping("/api/ai/assign-task/{issueId}")
+public ResponseEntity<?> assignTask(@PathVariable Long issueId) {
+    User assignedUser = aiAssignmentService.assignTaskToUser(issueId);
+    return ResponseEntity.ok(Map.of(
+        "assignedTo", assignedUser.getUsername(),
+        "confidence", aiAssignmentService.getConfidenceScore()
+    ));
+}
+```
+
+#### 3. **AI Content Enhancement**
+```java
+// Content Improvement
+@PostMapping("/api/ai/improve-content")
+public ResponseEntity<?> improveContent(@RequestBody String content) {
+    String improvedContent = notionAIService.improveContent(content);
+    return ResponseEntity.ok(new AIResponse(improvedContent));
+}
+```
+
+### Frontend AI Components
+
+#### 1. **AI Writing Assistant**
+```tsx
+const AIWritingAssistant = ({ onContentGenerated }) => {
+  const [loading, setLoading] = useState(false);
+  
+  const generateContent = async (prompt) => {
+    setLoading(true);
+    const response = await aiService.generateContent(prompt);
+    onContentGenerated(response.content);
+    setLoading(false);
+  };
+  
+  return (
+    <div className="ai-assistant">
+      <button onClick={() => generateContent('Generate description')}>
+        ✍️ AI Generate
+      </button>
+      <button onClick={() => generateContent('Improve content')}>
+        🔄 AI Improve
+      </button>
+      {loading && <div>AI is thinking...</div>}
+    </div>
+  );
+};
+```
+
+#### 2. **AI Assignment Button**
+```tsx
+const AIAssignmentButton = ({ issueId }) => {
+  const [loading, setLoading] = useState(false);
+  
+  const handleAIAssignment = async () => {
+    setLoading(true);
+    const result = await aiService.assignTask(issueId);
+    alert(`Task assigned to: ${result.assignedTo}`);
+    setLoading(false);
+  };
+  
+  return (
+    <button 
+      onClick={handleAIAssignment}
+      disabled={loading}
+      className="ai-assign-btn"
+    >
+      {loading ? 'AI Assigning...' : '🤖 AI Assign'}
+    </button>
+  );
+};
+```
+
+### AI Data Flow
+
+```
+┌─────────────┐
+│   User      │
+│  Interaction│
+└──────┬──────┘
+       │
+       ▼
+┌─────────────────────────────────────┐
+│        AI COMPONENTS                │
+│  - AI Writing Assistant             │
+│  - AI Assignment Button             │
+│  - AI Content Generator             │
+└──────┬──────────────────────────────┘
+       │
+       ▼
+┌─────────────────────────────────────┐
+│         AI API LAYER                │
+│  - OpenAI GPT-4                     │
+│  - Google Gemini                    │
+│  - Anthropic Claude                 │
+└──────┬──────────────────────────────┘
+       │
+       ▼
+┌─────────────────────────────────────┐
+│       AI SERVICE LAYER              │
+│  - NotionAIService                  │
+│  - AIAssignmentService              │
+│  - AIContentService                 │
+└──────┬──────────────────────────────┘
+       │
+       ▼
+┌─────────────────────────────────────┐
+│        BUSINESS LOGIC               │
+│  - Issue Creation                   │
+│  - Project Planning                  │
+│  - Task Assignment                   │
+│  - Content Generation                │
+└─────────────────────────────────────┘
+```
+
+---
+
 ## 🔄 DATA FLOW
 
-### Example: Tạo Issue mới
+### Example: Tạo Issue mới với AIa
 
 ```
 ┌──────────────┐
@@ -898,18 +1178,39 @@ volumes:
 └──────┬───────┘
        │
        │ 1. User click "Create Issue"
-       │    Fill form & submit
+       │    Fill form & click "🤖 AI Generate Description"
        │
        ▼
 ┌──────────────────────────────────┐
 │  IssueCreateForm.tsx             │
-│  - Validate input                │
-│  - Call API: createIssue()       │
+│  - AI Writing Assistant          │
+│  - Generate description with AI  │
+│  - Call AI API                   │
 └──────┬───────────────────────────┘
        │
-       │ 2. POST /api/issues
-       │    { title, description, assigneeId, ... }
-       │    Header: Authorization: Bearer {token}
+       │ 2. POST /api/ai/generate-content
+       │    { prompt: "Generate issue description", context: "..." }
+       │
+       ▼
+┌──────────────────────────────────┐
+│  NotionAIController.java         │
+│  @PostMapping("/api/ai/generate-content")│
+│  - Call OpenAI API               │
+│  - Generate AI content           │
+└──────┬───────────────────────────┘
+       │
+       │ 3. AI-generated description
+       │
+       ▼
+┌──────────────────────────────────┐
+│  Frontend (AI Writing Assistant) │
+│  - Show AI-generated content     │
+│  - User can edit/accept           │
+│  - Submit final form              │
+└──────┬───────────────────────────┘
+       │
+       │ 4. POST /api/issues
+       │    { title, aiDescription, assigneeId, ... }
        │
        ▼
 ┌──────────────────────────────────┐
@@ -920,64 +1221,91 @@ volumes:
 │  - Call service                  │
 └──────┬───────────────────────────┘
        │
-       │ 3. issueService.createIssue(dto)
+       │ 5. issueService.createIssue(dto)
+       │    - Save with AI-generated content
+       │    - Auto-assign with AI suggestion
        │
        ▼
 ┌──────────────────────────────────┐
 │  IssueServiceImpl.java           │
-│  - Validate business logic       │
-│  - Auto-generate issue_key       │
-│  - Convert DTO → Entity          │
-│  - Save to repository            │
+│  - Save issue with AI content    │
+│  - AI assignment suggestion      │
 │  - Create notification           │
 │  - Log activity                  │
 └──────┬───────────────────────────┘
        │
-       │ 4. issueRepository.save(issue)
-       │
-       ▼
-┌──────────────────────────────────┐
-│  IssueRepository.java            │
-│  extends JpaRepository           │
-└──────┬───────────────────────────┘
-       │
-       │ 5. JPA/Hibernate
-       │    INSERT INTO issues ...
-       │
-       ▼
-┌──────────────────────────────────┐
-│       SQL Server Database        │
-│  - Insert issue record           │
-│  - Return generated ID           │
-└──────┬───────────────────────────┘
-       │
-       │ 6. Return saved entity
-       │
-       ▼
-┌──────────────────────────────────┐
-│  IssueServiceImpl.java           │
-│  - Convert Entity → DTO          │
-│  - Return DTO                    │
-└──────┬───────────────────────────┘
-       │
-       │ 7. Send notification
-       │    notificationService.notify(assigneeId)
-       │
-       ▼
-┌──────────────────────────────────┐
-│  WebSocket Server (STOMP)        │
-│  - Push notification to assignee │
-└──────┬───────────────────────────┘
-       │
-       │ 8. WebSocket message
+       │ 6. WebSocket notification
+       │    "New issue assigned to you with AI description"
        │
        ▼
 ┌──────────────────────────────────┐
 │  Frontend (Assignee's browser)   │
-│  - Show notification popup       │
-│  - Update notification count     │
+│  - Show AI-generated issue       │
+│  - AI assignment notification    │
+│  - AI content preview            │
 └──────────────────────────────────┘
 ```
 
+### Example: AI Task Assignment
 
-
+```
+┌──────────────┐
+│   Manager    │
+└──────┬───────┘
+       │
+       │ 1. Click "🤖 AI Assign" button
+       │
+       ▼
+┌──────────────────────────────────┐
+│  AIAssignmentButton.tsx          │
+│  - Call AI assignment API        │
+│  - Show AI thinking...           │
+└──────┬───────────────────────────┘
+       │
+       │ 2. POST /api/ai/assign-task/{issueId}
+       │
+       ▼
+┌──────────────────────────────────┐
+│  AIAssignmentController.java     │
+│  @PostMapping("/api/ai/assign-task/{id}")│
+│  - Analyze issue requirements    │
+│  - Get available users           │
+│  - Call AI for assignment        │
+└──────┬───────────────────────────┘
+       │
+       │ 3. AIAssignmentService.assignTaskToUser()
+       │    - Create AI prompt with issue + users
+       │    - Call OpenAI API
+       │    - Parse AI response
+       │    - Assign to suggested user
+       │
+       ▼
+┌──────────────────────────────────┐
+│  OpenAI API                      │
+│  - Analyze issue complexity      │
+│  - Match with user skills         │
+│  - Suggest best assignee          │
+│  - Return confidence score        │
+└──────┬───────────────────────────┘
+       │
+       │ 4. AI response: "Assign to John (95% confidence)"
+       │
+       ▼
+┌──────────────────────────────────┐
+│  IssueServiceImpl.java           │
+│  - Update issue.assignee         │
+│  - Set AI confidence score       │
+│  - Create assignment notification│
+└──────┬───────────────────────────┘
+       │
+       │ 5. WebSocket notification
+       │    "Issue assigned to you by AI (95% confidence)"
+       │
+       ▼
+┌──────────────────────────────────┐
+│  Frontend (John's browser)       │
+│  - Show AI assignment            │
+│  - Display confidence score      │
+│  - AI reasoning explanation       │
+└──────────────────────────────────┘
+```
