@@ -32,6 +32,11 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttempt, Long
     
     @Query("SELECT la FROM LoginAttempt la WHERE la.attemptedAt < :cutoffTime")
     List<LoginAttempt> findOldAttempts(@Param("cutoffTime") LocalDateTime cutoffTime);
+    
+    @Query("SELECT COUNT(la) FROM LoginAttempt la WHERE (la.username = :username OR la.ipAddress = :ipAddress) AND la.attemptedAt > :since AND la.success = false")
+    long countRecentFailedAttempts(@Param("username") String username, @Param("ipAddress") String ipAddress, @Param("since") LocalDateTime since);
+    
+    void deleteByUsernameAndIpAddress(String username, String ipAddress);
 }
 
 
