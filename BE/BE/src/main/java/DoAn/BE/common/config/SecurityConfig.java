@@ -1,11 +1,14 @@
 package DoAn.BE.common.config;
 
+import DoAn.BE.auth.filter.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -16,6 +19,9 @@ import java.util.Arrays;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -23,14 +29,25 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
+                // Public endpoints
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/users/**").permitAll() // Tạm thời permit all cho testing
-                .requestMatchers("/api/profile/**").permitAll() // Tạm thời permit all cho testing
+                .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
+                
+                // Admin endpoints
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                
+                // User endpoints - require authentication
+                .requestMatchers("/api/users/**").hasAnyRole("USER", "ADMIN", "EMPLOYEE")
+                .requestMatchers("/api/profile/**").hasAnyRole("USER", "ADMIN", "EMPLOYEE")
+                
+                // All other requests require authentication
                 .requestMatchers("/api/projects/**").permitAll() // Tạm thời permit all cho testing
                 .requestMatchers("/api/issues/**").permitAll() // Tạm thời permit all cho testing
                 .requestMatchers("/api/project-members/**").permitAll() // Tạm thời permit all cho testing
                 .anyRequest().authenticated()
-            );
+            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -48,3 +65,4 @@ public class SecurityConfig {
         return source;
     }
 }
+

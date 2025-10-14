@@ -1,6 +1,7 @@
 package DoAn.BE.user.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -123,5 +124,21 @@ public class UserService {
 
     public long countOnlineUsers() {
         return userRepository.countByIsOnlineTrue();
+    }
+
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+
+    public User save(User user) {
+        return userRepository.save(user);
     }
 }
