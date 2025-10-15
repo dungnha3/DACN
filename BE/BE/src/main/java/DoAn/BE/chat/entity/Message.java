@@ -47,6 +47,10 @@ public class Message {
     @Column(name = "edited_at")
     private LocalDateTime editedAt;
 
+    @ManyToOne
+    @JoinColumn(name = "reply_to_message_id")
+    private Message replyToMessage;
+
     @PrePersist
     protected void onCreate() {
         this.sentAt = LocalDateTime.now();
