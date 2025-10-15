@@ -94,3 +94,4 @@ public class TypingController {
         return ResponseEntity.ok(response);
     }
 }
+
