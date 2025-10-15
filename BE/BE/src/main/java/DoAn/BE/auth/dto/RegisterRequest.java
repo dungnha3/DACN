@@ -26,3 +26,4 @@ public class RegisterRequest {
     private String phoneNumber;
     private User.Role role = User.Role.EMPLOYEE;
 }
+
