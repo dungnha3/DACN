@@ -307,3 +307,4 @@ Nếu có vấn đề hoặc câu hỏi, vui lòng tạo issue trên GitHub repo
 ---
 
 **Chat System v1.0.0** - Enterprise-level real-time chat solution 🚀
+
