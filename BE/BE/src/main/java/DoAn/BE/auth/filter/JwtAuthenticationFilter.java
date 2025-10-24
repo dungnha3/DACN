@@ -73,9 +73,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         return;
                     }
 
-                    // Tạo authentication token
+                    // Tạo authentication token với userId làm principal
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            user,
+                            user.getUserId().toString(),
                             null,
                             Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
                     );
