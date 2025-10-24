@@ -7,7 +7,6 @@ import DoAn.BE.user.entity.User;
 import DoAn.BE.user.mapper.UserMapper;
 import DoAn.BE.user.service.ProfileService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,11 +19,13 @@ import java.util.Map;
 @RequestMapping("/profile")
 public class ProfileController {
     
-    @Autowired
-    private ProfileService profileService;
-    
-    @Autowired
-    private UserMapper userMapper;
+    private final ProfileService profileService;
+    private final UserMapper userMapper;
+
+    public ProfileController(ProfileService profileService, UserMapper userMapper) {
+        this.profileService = profileService;
+        this.userMapper = userMapper;
+    }
     
     /**
      * Lấy thông tin profile của user hiện tại

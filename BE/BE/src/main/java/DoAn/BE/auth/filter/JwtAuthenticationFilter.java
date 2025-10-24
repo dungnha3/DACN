@@ -3,7 +3,6 @@ package DoAn.BE.auth.filter;
 import java.io.IOException;
 import java.util.Collections;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,14 +23,15 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtService jwtService;
+    private final JwtService jwtService;
+    private final UserService userService;
+    private final SessionService sessionService;
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private SessionService sessionService;
+    public JwtAuthenticationFilter(JwtService jwtService, UserService userService, SessionService sessionService) {
+        this.jwtService = jwtService;
+        this.userService = userService;
+        this.sessionService = sessionService;
+    }
 
     @Override
     @SuppressWarnings({"squid:S1181", "squid:S1181"}) // JWT validation requires generic exception handling

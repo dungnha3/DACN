@@ -7,7 +7,6 @@ import DoAn.BE.user.entity.User;
 import DoAn.BE.user.mapper.UserMapper;
 import DoAn.BE.user.service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,11 +19,13 @@ import java.util.Map;
 @RequestMapping("/users")
 public class UserController {
     
-    @Autowired
-    private UserService userService;
-    
-    @Autowired
-    private UserMapper userMapper;
+    private final UserService userService;
+    private final UserMapper userMapper;
+
+    public UserController(UserService userService, UserMapper userMapper) {
+        this.userService = userService;
+        this.userMapper = userMapper;
+    }
     
     /**
      * Tạo user mới
