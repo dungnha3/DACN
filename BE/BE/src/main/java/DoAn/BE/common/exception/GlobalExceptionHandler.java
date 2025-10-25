@@ -55,6 +55,24 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
     
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<ErrorResponse> handleFileStorage(FileStorageException ex) {
+        ErrorResponse error = new ErrorResponse(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+    
+    @ExceptionHandler(StorageFileNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleStorageFileNotFound(StorageFileNotFoundException ex) {
+        ErrorResponse error = new ErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND.value());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+    
+    @ExceptionHandler(StorageQuotaExceededException.class)
+    public ResponseEntity<ErrorResponse> handleStorageQuotaExceeded(StorageQuotaExceededException ex) {
+        ErrorResponse error = new ErrorResponse(ex.getMessage(), HttpStatus.PAYLOAD_TOO_LARGE.value());
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(error);
+    }
+    
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();

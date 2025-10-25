@@ -47,6 +47,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/projects/**").hasAnyRole("USER", "ADMIN", "EMPLOYEE", "MANAGER")
                 .requestMatchers("/api/issues/**").hasAnyRole("USER", "ADMIN", "EMPLOYEE", "MANAGER")
                 
+                // Storage endpoints - require authentication
+                .requestMatchers("/api/storage/**").hasAnyRole("USER", "ADMIN", "EMPLOYEE", "MANAGER")
+                
                 // All other requests require authentication
                 .anyRequest().authenticated()
             )
