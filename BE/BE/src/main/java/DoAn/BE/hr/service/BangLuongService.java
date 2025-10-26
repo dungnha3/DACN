@@ -12,19 +12,42 @@ import DoAn.BE.hr.dto.UpdateBangLuongRequest;
 import DoAn.BE.hr.entity.BangLuong;
 import DoAn.BE.hr.entity.NhanVien;
 import DoAn.BE.hr.repository.BangLuongRepository;
+import DoAn.BE.hr.repository.ChamCongRepository;
+import DoAn.BE.hr.repository.HopDongRepository;
 import DoAn.BE.hr.repository.NhanVienRepository;
+import DoAn.BE.hr.entity.HopDong;
+import DoAn.BE.hr.entity.HopDong.TrangThaiHopDong;
+import DoAn.BE.notification.service.NotificationService;
 import jakarta.transaction.Transactional;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @Transactional
 public class BangLuongService {
     
+    private static final Logger log = LoggerFactory.getLogger(BangLuongService.class);
+    
     private final BangLuongRepository bangLuongRepository;
     private final NhanVienRepository nhanVienRepository;
+    private final HopDongRepository hopDongRepository;
+    private final ChamCongRepository chamCongRepository;
+    private final NotificationService notificationService;
 
-    public BangLuongService(BangLuongRepository bangLuongRepository, NhanVienRepository nhanVienRepository) {
+    public BangLuongService(BangLuongRepository bangLuongRepository, 
+                           NhanVienRepository nhanVienRepository,
+                           HopDongRepository hopDongRepository,
+                           ChamCongRepository chamCongRepository,
+                           NotificationService notificationService) {
         this.bangLuongRepository = bangLuongRepository;
         this.nhanVienRepository = nhanVienRepository;
+        this.hopDongRepository = hopDongRepository;
+        this.chamCongRepository = chamCongRepository;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -72,6 +95,13 @@ public class BangLuongService {
      */
     public List<BangLuong> getAllBangLuong() {
         return bangLuongRepository.findAll();
+    }
+
+    /**
+     * ⭐ Lấy danh sách bảng lương có phân trang
+     */
+    public Page<BangLuong> getAllBangLuongPage(Pageable pageable) {
+        return bangLuongRepository.findAll(pageable);
     }
 
     /**
@@ -189,5 +219,113 @@ public class BangLuongService {
     public BigDecimal getTotalSalaryByNhanVienAndYear(Long nhanvienId, Integer nam) {
         BigDecimal total = bangLuongRepository.getTongLuongNhanVienTheoNam(nhanvienId, nam);
         return total != null ? total : BigDecimal.ZERO;
+    }
+
+    /**
+     * ⭐⭐⭐ TÍNH LƯƠNG TỰ ĐỘNG - Tính năng nổi bật từ QLNS
+     * Tự động tính lương dựa trên:
+     * - Hợp đồng còn hiệu lực
+     * - Dữ liệu chấm công trong tháng
+     * - Các khoản bảo hiểm (BHXH 8%, BHYT 1.5%, BHTN 1%)
+     * - Thuế TNCN theo bậc thang lũy tiến
+     */
+    public BangLuong tinhLuongTuDong(Long nhanvienId, Integer thang, Integer nam) {
+        log.info("Bắt đầu tính lương tự động cho nhân viên ID: {}, tháng {}/{}", nhanvienId, thang, nam);
+        
+        // 1. Lấy thông tin nhân viên
+        NhanVien nhanVien = nhanVienRepository.findById(nhanvienId)
+            .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
+        log.debug("Tìm thấy nhân viên: {}", nhanVien.getHoTen());
+        
+        // 2. Kiểm tra bảng lương đã tồn tại chưa
+        if (bangLuongRepository.existsByNhanVien_NhanvienIdAndThangAndNam(nhanvienId, thang, nam)) {
+            throw new DuplicateException("Bảng lương cho nhân viên này trong kỳ " + thang + "/" + nam + " đã tồn tại");
+        }
+        
+        // 3. Lấy hợp đồng còn hiệu lực
+        HopDong hopDong = hopDongRepository
+            .findFirstByNhanVien_NhanvienIdAndTrangThaiOrderByNgayBatDauDesc(
+                nhanvienId, TrangThaiHopDong.HIEU_LUC)
+            .orElseThrow(() -> new EntityNotFoundException("Nhân viên chưa có hợp đồng còn hiệu lực"));
+        log.debug("Lương cơ bản từ hợp đồng: {}", hopDong.getLuongCoBan());
+        
+        // 4. Lấy dữ liệu chấm công trong tháng
+        YearMonth yearMonth = YearMonth.of(nam, thang);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+        
+        // Đếm số ngày công thực tế
+        int ngayCong = chamCongRepository.countWorkingDaysByNhanVienAndMonth(nhanvienId, startDate, endDate);
+        log.debug("Số ngày công: {}", ngayCong);
+        
+        // Tính tổng giờ làm việc
+        BigDecimal tongGioLam = chamCongRepository.sumWorkingHoursByNhanVienAndMonth(nhanvienId, startDate, endDate);
+        log.debug("Tổng giờ làm: {}", tongGioLam);
+        
+        // 5. Tạo bảng lương với dữ liệu tự động
+        BangLuong bangLuong = new BangLuong();
+        bangLuong.setNhanVien(nhanVien);
+        bangLuong.setThang(thang);
+        bangLuong.setNam(nam);
+        bangLuong.setLuongCoBan(hopDong.getLuongCoBan());
+        bangLuong.setNgayCong(ngayCong);
+        bangLuong.setNgayCongChuan(26); // Số ngày công chuẩn
+        
+        // Phụ cấp từ nhân viên (nếu có)
+        bangLuong.setPhuCap(nhanVien.getPhuCap() != null ? nhanVien.getPhuCap() : BigDecimal.ZERO);
+        
+        // Tính giờ làm thêm (nếu > 176 giờ/tháng)
+        BigDecimal gioChuan = new BigDecimal("176"); // 22 ngày * 8 giờ
+        if (tongGioLam.compareTo(gioChuan) > 0) {
+            BigDecimal gioThem = tongGioLam.subtract(gioChuan);
+            bangLuong.setGioLamThem(gioThem.intValue());
+        }
+        
+        // Mặc định không có thưởng/phạt (có thể cập nhật sau)
+        bangLuong.setThuong(BigDecimal.ZERO);
+        bangLuong.setKhauTruKhac(BigDecimal.ZERO);
+        
+        // Entity sẽ tự động tính các khoản còn lại trong @PrePersist
+        BangLuong saved = bangLuongRepository.save(bangLuong);
+        
+        log.info("✅ Tính lương thành công cho nhân viên: {} - Thực nhận: {}", 
+                 nhanVien.getHoTen(), saved.getLuongThucNhan());
+        
+        // 🔔 Gửi notification cho nhân viên
+        try {
+            if (nhanVien.getUser() != null) {
+                notificationService.createSalaryNotification(
+                    nhanVien.getUser().getUserId(),
+                    String.valueOf(thang),
+                    String.valueOf(nam)
+                );
+            }
+        } catch (Exception e) {
+            log.warn("Không thể gửi notification lương cho nhân viên {}: {}", nhanVien.getHoTen(), e.getMessage());
+        }
+        
+        return saved;
+    }
+
+    /**
+     * Tính lương tự động cho tất cả nhân viên trong tháng
+     */
+    public List<BangLuong> tinhLuongTuDongChoTatCa(Integer thang, Integer nam) {
+        log.info("Bắt đầu tính lương tự động cho tất cả nhân viên - Tháng {}/{}", thang, nam);
+        
+        List<NhanVien> nhanViens = nhanVienRepository.findByTrangThai(NhanVien.TrangThaiNhanVien.DANG_LAM_VIEC);
+        List<BangLuong> results = new java.util.ArrayList<>();
+        
+        for (NhanVien nv : nhanViens) {
+            try {
+                BangLuong bangLuong = tinhLuongTuDong(nv.getNhanvienId(), thang, nam);
+                results.add(bangLuong);
+            } catch (Exception e) {
+                log.error("Lỗi khi tính lương cho nhân viên {}: {}", nv.getHoTen(), e.getMessage());
+            }
+        }
+        
+        log.info("✅ Hoàn thành tính lương cho {}/{} nhân viên", results.size(), nhanViens.size());
+        return results;
     }
 }

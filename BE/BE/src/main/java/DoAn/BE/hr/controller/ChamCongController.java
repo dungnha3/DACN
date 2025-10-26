@@ -1,0 +1,201 @@
+package DoAn.BE.hr.controller;
+
+import DoAn.BE.hr.dto.ChamCongDTO;
+import DoAn.BE.hr.dto.ChamCongRequest;
+import DoAn.BE.hr.entity.ChamCong;
+import DoAn.BE.hr.mapper.ChamCongMapper;
+import DoAn.BE.hr.service.ChamCongService;
+import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/cham-cong")
+public class ChamCongController {
+    
+    private final ChamCongService chamCongService;
+    private final ChamCongMapper chamCongMapper;
+
+    public ChamCongController(ChamCongService chamCongService, ChamCongMapper chamCongMapper) {
+        this.chamCongService = chamCongService;
+        this.chamCongMapper = chamCongMapper;
+    }
+    
+    /**
+     * Tạo chấm công mới
+     * POST /api/cham-cong
+     */
+    @PostMapping
+    public ResponseEntity<ChamCongDTO> createChamCong(@Valid @RequestBody ChamCongRequest request) {
+        ChamCong chamCong = chamCongService.createChamCong(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(chamCongMapper.toDTO(chamCong));
+    }
+    
+    /**
+     * Lấy thông tin chấm công theo ID
+     * GET /api/cham-cong/{id}
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ChamCongDTO> getChamCongById(@PathVariable Long id) {
+        ChamCong chamCong = chamCongService.getChamCongById(id);
+        return ResponseEntity.ok(chamCongMapper.toDTO(chamCong));
+    }
+    
+    /**
+     * Lấy danh sách tất cả chấm công
+     * GET /api/cham-cong
+     */
+    @GetMapping
+    public ResponseEntity<List<ChamCongDTO>> getAllChamCong() {
+        List<ChamCong> chamCongs = chamCongService.getAllChamCong();
+        return ResponseEntity.ok(chamCongMapper.toDTOList(chamCongs));
+    }
+    
+    /**
+     * Cập nhật chấm công
+     * PUT /api/cham-cong/{id}
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<ChamCongDTO> updateChamCong(
+            @PathVariable Long id,
+            @Valid @RequestBody ChamCongRequest request) {
+        ChamCong chamCong = chamCongService.updateChamCong(id, request);
+        return ResponseEntity.ok(chamCongMapper.toDTO(chamCong));
+    }
+    
+    /**
+     * Xóa chấm công
+     * DELETE /api/cham-cong/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, String>> deleteChamCong(@PathVariable Long id) {
+        chamCongService.deleteChamCong(id);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Xóa chấm công thành công");
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Lấy chấm công theo nhân viên
+     * GET /api/cham-cong/nhan-vien/{nhanvienId}
+     */
+    @GetMapping("/nhan-vien/{nhanvienId}")
+    public ResponseEntity<List<ChamCongDTO>> getChamCongByNhanVien(@PathVariable Long nhanvienId) {
+        List<ChamCong> chamCongs = chamCongService.getChamCongByNhanVien(nhanvienId);
+        return ResponseEntity.ok(chamCongMapper.toDTOList(chamCongs));
+    }
+    
+    /**
+     * Lấy chấm công theo khoảng thời gian
+     * GET /api/cham-cong/date-range?startDate=2024-01-01&endDate=2024-01-31
+     */
+    @GetMapping("/date-range")
+    public ResponseEntity<List<ChamCongDTO>> getChamCongByDateRange(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        List<ChamCong> chamCongs = chamCongService.getChamCongByDateRange(startDate, endDate);
+        return ResponseEntity.ok(chamCongMapper.toDTOList(chamCongs));
+    }
+    
+    /**
+     * Lấy chấm công của nhân viên trong tháng
+     * GET /api/cham-cong/nhan-vien/{nhanvienId}/month?year=2024&month=1
+     */
+    @GetMapping("/nhan-vien/{nhanvienId}/month")
+    public ResponseEntity<List<ChamCongDTO>> getChamCongByNhanVienAndMonth(
+            @PathVariable Long nhanvienId,
+            @RequestParam int year,
+            @RequestParam int month) {
+        List<ChamCong> chamCongs = chamCongService.getChamCongByNhanVienAndMonth(nhanvienId, year, month);
+        return ResponseEntity.ok(chamCongMapper.toDTOList(chamCongs));
+    }
+    
+    /**
+     * Tính số ngày công của nhân viên trong tháng
+     * GET /api/cham-cong/nhan-vien/{nhanvienId}/working-days?year=2024&month=1
+     */
+    @GetMapping("/nhan-vien/{nhanvienId}/working-days")
+    public ResponseEntity<Map<String, Object>> countWorkingDays(
+            @PathVariable Long nhanvienId,
+            @RequestParam int year,
+            @RequestParam int month) {
+        int workingDays = chamCongService.countWorkingDays(nhanvienId, year, month);
+        Map<String, Object> response = new HashMap<>();
+        response.put("nhanvienId", nhanvienId);
+        response.put("year", year);
+        response.put("month", month);
+        response.put("workingDays", workingDays);
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Tính tổng số giờ làm việc của nhân viên trong tháng
+     * GET /api/cham-cong/nhan-vien/{nhanvienId}/total-hours?year=2024&month=1
+     */
+    @GetMapping("/nhan-vien/{nhanvienId}/total-hours")
+    public ResponseEntity<Map<String, Object>> getTotalWorkingHours(
+            @PathVariable Long nhanvienId,
+            @RequestParam int year,
+            @RequestParam int month) {
+        BigDecimal totalHours = chamCongService.getTotalWorkingHours(nhanvienId, year, month);
+        Map<String, Object> response = new HashMap<>();
+        response.put("nhanvienId", nhanvienId);
+        response.put("year", year);
+        response.put("month", month);
+        response.put("totalHours", totalHours);
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Thống kê đi trễ/về sớm của nhân viên trong tháng
+     * GET /api/cham-cong/nhan-vien/{nhanvienId}/statistics?year=2024&month=1
+     */
+    @GetMapping("/nhan-vien/{nhanvienId}/statistics")
+    public ResponseEntity<Map<String, Object>> getStatistics(
+            @PathVariable Long nhanvienId,
+            @RequestParam int year,
+            @RequestParam int month) {
+        long lateDays = chamCongService.countLateDays(nhanvienId, year, month);
+        long earlyLeaveDays = chamCongService.countEarlyLeaveDays(nhanvienId, year, month);
+        int workingDays = chamCongService.countWorkingDays(nhanvienId, year, month);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("nhanvienId", nhanvienId);
+        response.put("year", year);
+        response.put("month", month);
+        response.put("workingDays", workingDays);
+        response.put("lateDays", lateDays);
+        response.put("earlyLeaveDays", earlyLeaveDays);
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Check-in (chấm công vào)
+     * POST /api/cham-cong/check-in
+     */
+    @PostMapping("/check-in")
+    public ResponseEntity<ChamCongDTO> checkIn(
+            @RequestParam Long nhanvienId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ngayCham) {
+        ChamCong chamCong = chamCongService.checkIn(nhanvienId, ngayCham);
+        return ResponseEntity.status(HttpStatus.CREATED).body(chamCongMapper.toDTO(chamCong));
+    }
+    
+    /**
+     * Check-out (chấm công ra)
+     * PATCH /api/cham-cong/{id}/check-out
+     */
+    @PatchMapping("/{id}/check-out")
+    public ResponseEntity<ChamCongDTO> checkOut(@PathVariable Long id) {
+        ChamCong chamCong = chamCongService.checkOut(id);
+        return ResponseEntity.ok(chamCongMapper.toDTO(chamCong));
+    }
+}

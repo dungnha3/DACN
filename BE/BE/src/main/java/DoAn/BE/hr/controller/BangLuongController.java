@@ -7,6 +7,10 @@ import DoAn.BE.hr.entity.BangLuong;
 import DoAn.BE.hr.mapper.BangLuongMapper;
 import DoAn.BE.hr.service.BangLuongService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -177,5 +181,56 @@ public class BangLuongController {
         response.put("nam", nam);
         response.put("tongLuongThucNhan", total);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * ⭐⭐⭐ TÍNH LƯƠNG TỰ ĐỘNG - API mới
+     * POST /api/bang-luong/tinh-tu-dong/{nhanvienId}?thang=10&nam=2024
+     */
+    @PostMapping("/tinh-tu-dong/{nhanvienId}")
+    public ResponseEntity<BangLuongDTO> tinhLuongTuDong(
+            @PathVariable Long nhanvienId,
+            @RequestParam Integer thang,
+            @RequestParam Integer nam) {
+        BangLuong bangLuong = bangLuongService.tinhLuongTuDong(nhanvienId, thang, nam);
+        return ResponseEntity.status(HttpStatus.CREATED).body(bangLuongMapper.toDTO(bangLuong));
+    }
+
+    /**
+     * ⭐⭐⭐ TÍNH LƯƠNG TỰ ĐỘNG CHO TẤT CẢ - API mới
+     * POST /api/bang-luong/tinh-tu-dong-tat-ca?thang=10&nam=2024
+     */
+    @PostMapping("/tinh-tu-dong-tat-ca")
+    public ResponseEntity<Map<String, Object>> tinhLuongTuDongChoTatCa(
+            @RequestParam Integer thang,
+            @RequestParam Integer nam) {
+        List<BangLuong> bangLuongs = bangLuongService.tinhLuongTuDongChoTatCa(thang, nam);
+        Map<String, Object> response = new HashMap<>();
+        response.put("thang", thang);
+        response.put("nam", nam);
+        response.put("soLuongBangLuong", bangLuongs.size());
+        response.put("danhSach", bangLuongMapper.toDTOList(bangLuongs));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * ⭐ Lấy danh sách bảng lương có phân trang
+     * GET /api/bang-luong/page?page=0&size=10&sort=thang,desc
+     */
+    @GetMapping("/page")
+    public ResponseEntity<Page<BangLuongDTO>> getBangLuongPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "thang") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? 
+            Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        
+        Page<BangLuong> bangLuongPage = bangLuongService.getAllBangLuongPage(pageable);
+        Page<BangLuongDTO> dtoPage = bangLuongPage.map(bangLuongMapper::toDTO);
+        
+        return ResponseEntity.ok(dtoPage);
     }
 }
