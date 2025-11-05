@@ -3,7 +3,6 @@ package DoAn.BE.auth.service;
 import DoAn.BE.auth.entity.UserSession;
 import DoAn.BE.auth.repository.UserSessionRepository;
 import DoAn.BE.user.entity.User;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,14 +16,17 @@ import java.util.UUID;
 @Transactional
 public class SessionService {
 
-    @Autowired
-    private UserSessionRepository userSessionRepository;
+    private final UserSessionRepository userSessionRepository;
 
     @Value("${session.timeout:30}") // 30 minutes
     private int sessionTimeoutMinutes;
 
     @Value("${session.max-concurrent:5}") // Max 5 concurrent sessions per user
     private int maxConcurrentSessions;
+
+    public SessionService(UserSessionRepository userSessionRepository) {
+        this.userSessionRepository = userSessionRepository;
+    }
 
     /**
      * Tạo session mới cho user

@@ -31,7 +31,7 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                // Public endpoints
+                // Public endpoints - NO AUTHENTICATION REQUIRED
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
@@ -42,6 +42,13 @@ public class SecurityConfig {
                 // User endpoints - require authentication
                 .requestMatchers("/api/users/**").hasAnyRole("USER", "ADMIN", "EMPLOYEE")
                 .requestMatchers("/api/profile/**").hasAnyRole("USER", "ADMIN", "EMPLOYEE")
+                
+                // Project endpoints - require authentication
+                .requestMatchers("/api/projects/**").hasAnyRole("USER", "ADMIN", "EMPLOYEE", "MANAGER")
+                .requestMatchers("/api/issues/**").hasAnyRole("USER", "ADMIN", "EMPLOYEE", "MANAGER")
+                
+                // Storage endpoints - require authentication
+                .requestMatchers("/api/storage/**").hasAnyRole("USER", "ADMIN", "EMPLOYEE", "MANAGER")
                 
                 // All other requests require authentication
                 .anyRequest().authenticated()
@@ -64,4 +71,3 @@ public class SecurityConfig {
         return source;
     }
 }
-

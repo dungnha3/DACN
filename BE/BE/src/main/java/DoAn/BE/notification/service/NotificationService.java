@@ -153,5 +153,67 @@ public class NotificationService {
         
         return createChatNotification(userId, "ROOM_UPDATED", title, content, link);
     }
+
+    // ==================== HR NOTIFICATIONS ====================
+
+    /**
+     * Tạo notification cho bảng lương mới
+     */
+    public Notification createSalaryNotification(Long userId, String month, String year) {
+        String title = "Bảng lương mới";
+        String content = "Bảng lương tháng " + month + "/" + year + " đã được tạo";
+        String link = "/hr/bang-luong";
+        return createNotification(userId, "HR_SALARY", title, content, link);
+    }
+
+    /**
+     * Tạo notification khi đơn nghỉ phép được phê duyệt
+     */
+    public Notification createLeaveApprovedNotification(Long userId, String startDate, String endDate) {
+        String title = "Đơn nghỉ phép được duyệt";
+        String content = "Đơn nghỉ phép từ " + startDate + " đến " + endDate + " đã được phê duyệt";
+        String link = "/hr/nghi-phep";
+        return createNotification(userId, "HR_LEAVE_APPROVED", title, content, link);
+    }
+
+    /**
+     * Tạo notification khi đơn nghỉ phép bị từ chối
+     */
+    public Notification createLeaveRejectedNotification(Long userId, String startDate, String endDate, String reason) {
+        String title = "Đơn nghỉ phép bị từ chối";
+        String content = "Đơn nghỉ phép từ " + startDate + " đến " + endDate + " đã bị từ chối. Lý do: " + reason;
+        String link = "/hr/nghi-phep";
+        return createNotification(userId, "HR_LEAVE_REJECTED", title, content, link);
+    }
+
+    /**
+     * Tạo notification cho người quản lý khi có đơn nghỉ phép mới
+     */
+    public Notification createNewLeaveRequestNotification(Long managerId, String employeeName) {
+        String title = "Đơn nghỉ phép mới";
+        String content = employeeName + " đã gửi đơn xin nghỉ phép";
+        String link = "/hr/nghi-phep/pending";
+        return createNotification(managerId, "HR_LEAVE_REQUEST", title, content, link);
+    }
+
+    /**
+     * Tạo notification khi hợp đồng sắp hết hạn
+     */
+    public Notification createContractExpiringNotification(Long userId, String employeeName, String expiryDate) {
+        String title = "Hợp đồng sắp hết hạn";
+        String content = "Hợp đồng của " + employeeName + " sẽ hết hạn vào " + expiryDate;
+        String link = "/hr/hop-dong";
+        return createNotification(userId, "HR_CONTRACT_EXPIRING", title, content, link);
+    }
+
+    /**
+     * Tạo notification khi bảng lương được thanh toán
+     */
+    public Notification createSalaryPaidNotification(Long userId, String month, String year, String amount) {
+        String title = "Lương đã được thanh toán";
+        String content = "Lương tháng " + month + "/" + year + " (" + amount + " VNĐ) đã được thanh toán";
+        String link = "/hr/bang-luong";
+        return createNotification(userId, "HR_SALARY_PAID", title, content, link);
+    }
 }
 

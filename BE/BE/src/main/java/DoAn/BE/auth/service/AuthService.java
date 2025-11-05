@@ -3,7 +3,6 @@ package DoAn.BE.auth.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,26 +24,26 @@ import DoAn.BE.user.service.UserService;
 @Transactional
 public class AuthService {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private JwtService jwtService;
-
-    @Autowired
-    private SessionService sessionService;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
-
-    @Autowired
-    private LoginAttemptRepository loginAttemptRepository;
+    private final UserService userService;
+    private final JwtService jwtService;
+    private final SessionService sessionService;
+    private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final LoginAttemptRepository loginAttemptRepository;
 
     private static final int MAX_LOGIN_ATTEMPTS = 5;
     private static final int LOCKOUT_DURATION_MINUTES = 15;
+
+    public AuthService(UserService userService, JwtService jwtService, SessionService sessionService,
+                      PasswordEncoder passwordEncoder, RefreshTokenRepository refreshTokenRepository,
+                      LoginAttemptRepository loginAttemptRepository) {
+        this.userService = userService;
+        this.jwtService = jwtService;
+        this.sessionService = sessionService;
+        this.passwordEncoder = passwordEncoder;
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.loginAttemptRepository = loginAttemptRepository;
+    }
 
     /**
      * Đăng ký user mới (public endpoint)
