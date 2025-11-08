@@ -34,7 +34,17 @@ export default function LoginPage() {
       localStorage.setItem('accessToken', data.accessToken)
       localStorage.setItem('refreshToken', data.refreshToken)
       localStorage.setItem('tokenType', data.tokenType || 'Bearer')
+      if (data?.user?.role) localStorage.setItem('userRole', data.user.role)
+      if (data?.user?.username) localStorage.setItem('username', data.user.username)
+      if (typeof data?.expiresIn === 'number') {
+        const expiresAt = Date.now() + data.expiresIn * 1000
+        localStorage.setItem('expiresAt', String(expiresAt))
+      }
       if (staySignedIn) localStorage.setItem('staySignedIn', '1')
+      if (data?.user?.role === 'ADMIN') {
+        window.location.reload()
+        return
+      }
       setSuccess('Đăng nhập thành công')
     } catch (err) {
       setError(err.message || 'Đăng nhập thất bại')
