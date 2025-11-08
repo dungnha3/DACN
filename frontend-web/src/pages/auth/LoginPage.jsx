@@ -41,10 +41,13 @@ export default function LoginPage() {
         localStorage.setItem('expiresAt', String(expiresAt))
       }
       if (staySignedIn) localStorage.setItem('staySignedIn', '1')
-      if (data?.user?.role === 'ADMIN') {
+      
+      // Reload page to trigger App.jsx routing based on role
+      if (data?.user?.role === 'ADMIN' || data?.user?.role === 'EMPLOYEE') {
         window.location.reload()
         return
       }
+      
       setSuccess('Đăng nhập thành công')
     } catch (err) {
       setError(err.message || 'Đăng nhập thất bại')

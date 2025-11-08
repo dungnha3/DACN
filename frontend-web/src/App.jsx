@@ -1,6 +1,7 @@
 import './App.css'
 import LoginPage from './pages/auth/LoginPage.jsx'
 import AdminDashboard from './pages/dashboard/AdminDashboard.jsx'
+import EmployeeDashboard from './pages/dashboard/EmployeeDashboard.jsx'
 
 function App() {
   const ls = typeof localStorage !== 'undefined' ? localStorage : null
@@ -8,9 +9,9 @@ function App() {
   const role = ls ? ls.getItem('userRole') : null
   const expiresAtStr = ls ? ls.getItem('expiresAt') : null
   const now = Date.now()
-  const isValid = Boolean(token && role === 'ADMIN' && expiresAtStr && Number(expiresAtStr) > now)
+  const isValidToken = Boolean(token && expiresAtStr && Number(expiresAtStr) > now)
 
-  if (!isValid && ls) {
+  if (!isValidToken && ls) {
     // Clear stale credentials to avoid unintended redirects
     ls.removeItem('accessToken')
     ls.removeItem('refreshToken')
@@ -20,7 +21,14 @@ function App() {
     ls.removeItem('expiresAt')
   }
 
-  if (isValid) return <AdminDashboard />
+  // Route based on user role
+  if (isValidToken && role === 'ADMIN') {
+    return <AdminDashboard />
+  }
+
+  if (isValidToken && role === 'EMPLOYEE') {
+    return <EmployeeDashboard />
+  }
 
   return <LoginPage />
 }
