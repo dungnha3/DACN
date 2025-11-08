@@ -2,6 +2,7 @@ import './App.css'
 import LoginPage from './pages/auth/LoginPage.jsx'
 import AdminDashboard from './pages/dashboard/AdminDashboard.jsx'
 import EmployeeDashboard from './pages/dashboard/EmployeeDashboard.jsx'
+import ManagerDashboard from './pages/dashboard/ManagerDashboard.jsx'
 
 function App() {
   const ls = typeof localStorage !== 'undefined' ? localStorage : null
@@ -24,6 +25,10 @@ function App() {
   // Route based on user role
   if (isValidToken && role === 'ADMIN') {
     return <AdminDashboard />
+  }
+
+  if (isValidToken && role === 'MANAGER') {
+    return <ManagerDashboard />
   }
 
   if (isValidToken && role === 'EMPLOYEE') {

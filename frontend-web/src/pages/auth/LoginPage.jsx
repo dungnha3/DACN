@@ -43,7 +43,7 @@ export default function LoginPage() {
       if (staySignedIn) localStorage.setItem('staySignedIn', '1')
       
       // Reload page to trigger App.jsx routing based on role
-      if (data?.user?.role === 'ADMIN' || data?.user?.role === 'EMPLOYEE') {
+      if (data?.user?.role === 'ADMIN' || data?.user?.role === 'MANAGER' || data?.user?.role === 'EMPLOYEE') {
         window.location.reload()
         return
       }
