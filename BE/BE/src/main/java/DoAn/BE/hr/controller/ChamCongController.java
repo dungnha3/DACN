@@ -1,6 +1,7 @@
 package DoAn.BE.hr.controller;
 
 import DoAn.BE.hr.dto.ChamCongDTO;
+import DoAn.BE.hr.dto.ChamCongGPSRequest;
 import DoAn.BE.hr.dto.ChamCongRequest;
 import DoAn.BE.hr.entity.ChamCong;
 import DoAn.BE.hr.mapper.ChamCongMapper;
@@ -197,5 +198,25 @@ public class ChamCongController {
     public ResponseEntity<ChamCongDTO> checkOut(@PathVariable Long id) {
         ChamCong chamCong = chamCongService.checkOut(id);
         return ResponseEntity.ok(chamCongMapper.toDTO(chamCong));
+    }
+    
+    /**
+     * ⭐⭐⭐ CHẤM CÔNG GPS - API mới
+     * POST /api/cham-cong/gps
+     */
+    @PostMapping("/gps")
+    public ResponseEntity<Map<String, Object>> chamCongGPS(@Valid @RequestBody ChamCongGPSRequest request) {
+        Map<String, Object> response = chamCongService.chamCongGPS(request);
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Lấy trạng thái chấm công hôm nay
+     * GET /api/cham-cong/status/{nhanvienId}
+     */
+    @GetMapping("/status/{nhanvienId}")
+    public ResponseEntity<Map<String, Object>> getTrangThaiChamCongHomNay(@PathVariable Long nhanvienId) {
+        Map<String, Object> response = chamCongService.getTrangThaiChamCongHomNay(nhanvienId);
+        return ResponseEntity.ok(response);
     }
 }

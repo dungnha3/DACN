@@ -14,8 +14,10 @@ import DoAn.BE.auth.entity.LoginAttempt;
 import DoAn.BE.auth.entity.RefreshToken;
 import DoAn.BE.auth.repository.LoginAttemptRepository;
 import DoAn.BE.auth.repository.RefreshTokenRepository;
+import DoAn.BE.common.exception.BadRequestException;
 import DoAn.BE.common.exception.DuplicateException;
 import DoAn.BE.common.exception.UnauthorizedException;
+import DoAn.BE.common.util.PasswordValidator;
 import DoAn.BE.user.dto.CreateUserRequest;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.user.service.UserService;
@@ -49,6 +51,12 @@ public class AuthService {
      * Đăng ký user mới (public endpoint)
      */
     public AuthResponse register(RegisterRequest request, String ipAddress, String userAgent) {
+        // ⭐ Validate mật khẩu
+        String passwordError = PasswordValidator.validatePassword(request.getPassword());
+        if (passwordError != null) {
+            throw new BadRequestException(passwordError);
+        }
+        
         // Kiểm tra username đã tồn tại
         if (userService.existsByUsername(request.getUsername())) {
             throw new DuplicateException("Username đã tồn tại");

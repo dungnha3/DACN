@@ -57,6 +57,27 @@ public class ChamCong {
     @Column(name = "ghi_chu", length = 500)
     private String ghiChu;
 
+    // GPS fields
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
+    @Column(name = "dia_chi_checkin", length = 500)
+    private String diaChiCheckin;
+
+    @Column(name = "khoang_cach")
+    private Double khoangCach; // Khoảng cách từ công ty (meters)
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "phuong_thuc", length = 20)
+    private PhuongThucChamCong phuongThuc = PhuongThucChamCong.MANUAL;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "loai_ca", length = 20)
+    private LoaiCa loaiCa = LoaiCa.FULL;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -64,17 +85,35 @@ public class ChamCong {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         calculateWorkingHours();
+        autoDetectStatus();
     }
 
     @PreUpdate
     protected void onUpdate() {
         calculateWorkingHours();
+        autoDetectStatus();
     }
 
     private void calculateWorkingHours() {
         if (gioVao != null && gioRa != null) {
             long minutes = java.time.Duration.between(gioVao, gioRa).toMinutes();
             this.soGioLam = BigDecimal.valueOf(minutes).divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
+        }
+    }
+
+    /**
+     * Tự động xác định trạng thái chấm công
+     */
+    private void autoDetectStatus() {
+        if (trangThai == null && gioVao != null) {
+            LocalTime gioVaoChuan = LocalTime.of(8, 0);
+            if (gioVao.isAfter(gioVaoChuan.plusMinutes(15))) {
+                this.trangThai = TrangThaiChamCong.DI_TRE;
+            } else if (gioRa != null && isEarlyLeave()) {
+                this.trangThai = TrangThaiChamCong.VE_SOM;
+            } else if (gioRa != null) {
+                this.trangThai = TrangThaiChamCong.DU_GIO;
+            }
         }
     }
 
@@ -94,5 +133,19 @@ public class ChamCong {
         DU_GIO,
         NGHI_PHEP,
         NGHI_KHONG_PHEP
+    }
+
+    public enum PhuongThucChamCong {
+        GPS,
+        MANUAL,
+        QR_CODE,
+        FACE_ID
+    }
+
+    public enum LoaiCa {
+        SANG,
+        CHIEU,
+        TOI,
+        FULL
     }
 }

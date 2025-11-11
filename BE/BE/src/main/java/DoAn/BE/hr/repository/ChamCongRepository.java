@@ -21,6 +21,9 @@ public interface ChamCongRepository extends JpaRepository<ChamCong, Long> {
     // Tìm theo nhân viên và khoảng thời gian
     List<ChamCong> findByNhanVien_NhanvienIdAndNgayChamBetween(Long nhanvienId, LocalDate start, LocalDate end);
     
+    // Tìm theo nhân viên và ngày cụ thể (cho GPS attendance)
+    List<ChamCong> findByNhanVien_NhanvienIdAndNgayCham(Long nhanvienId, LocalDate ngayCham);
+    
     // Đếm số ngày công (trạng thái hợp lệ)
     @Query("SELECT COUNT(cc) FROM ChamCong cc WHERE cc.nhanVien.nhanvienId = :nhanvienId " +
            "AND cc.ngayCham BETWEEN :startDate AND :endDate " +

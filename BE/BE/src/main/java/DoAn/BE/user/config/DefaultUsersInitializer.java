@@ -20,7 +20,11 @@ public class DefaultUsersInitializer {
             upsertUser(userService, userRepository, passwordEncoder,
                     "admin", "Admin@123", "admin@example.com", User.Role.ADMIN);
             upsertUser(userService, userRepository, passwordEncoder,
-                    "manager", "Manager@123", "manager@example.com", User.Role.MANAGER);
+                    "hr", "HrManager@123", "hr@example.com", User.Role.MANAGER_HR);
+            upsertUser(userService, userRepository, passwordEncoder,
+                    "accounting", "Accounting@123", "accounting@example.com", User.Role.MANAGER_ACCOUNTING);
+            upsertUser(userService, userRepository, passwordEncoder,
+                    "pm", "ProjectManager@123", "pm@example.com", User.Role.MANAGER_PROJECT);
             upsertUser(userService, userRepository, passwordEncoder,
                     "employee", "Employee@123", "employee@example.com", User.Role.EMPLOYEE);
         };

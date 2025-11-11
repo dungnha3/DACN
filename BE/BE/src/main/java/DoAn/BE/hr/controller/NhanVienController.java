@@ -6,7 +6,10 @@ import DoAn.BE.hr.entity.NhanVien;
 import DoAn.BE.hr.entity.NhanVien.TrangThaiNhanVien;
 import DoAn.BE.hr.mapper.NhanVienMapper;
 import DoAn.BE.hr.service.NhanVienService;
+import DoAn.BE.user.entity.User;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
@@ -31,15 +34,22 @@ public class NhanVienController {
         this.nhanVienMapper = nhanVienMapper;
     }
     
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return (User) auth.getPrincipal();
+    }
+    
     @PostMapping
     public ResponseEntity<NhanVienDTO> createNhanVien(@Valid @RequestBody NhanVienRequest request) {
-        NhanVien nhanVien = nhanVienService.createNhanVien(request);
+        User currentUser = getCurrentUser();
+        NhanVien nhanVien = nhanVienService.createNhanVien(request, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(nhanVienMapper.toDTO(nhanVien));
     }
     
     @GetMapping("/{id}")
     public ResponseEntity<NhanVienDTO> getNhanVienById(@PathVariable Long id) {
-        NhanVien nhanVien = nhanVienService.getNhanVienById(id);
+        User currentUser = getCurrentUser();
+        NhanVien nhanVien = nhanVienService.getNhanVienById(id, currentUser);
         return ResponseEntity.ok(nhanVienMapper.toDTO(nhanVien));
     }
     

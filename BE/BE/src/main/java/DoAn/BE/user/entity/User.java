@@ -92,8 +92,37 @@ public class User {
 
     // Enum định nghĩa quyền
     public enum Role {
-        ADMIN,
-        MANAGER,
-        EMPLOYEE
+        ADMIN,              // Quản trị hệ thống - quản lý user, không truy cập dữ liệu công ty
+        MANAGER_HR,         // Quản lý nhân sự - quản lý nhân viên, lương, hợp đồng
+        MANAGER_ACCOUNTING, // Quản lý kế toán - tính lương, chấm công, xuất báo cáo
+        MANAGER_PROJECT,    // Quản lý dự án - quản lý dự án của mình
+        EMPLOYEE            // Nhân viên - quyền cơ bản
+    }
+    
+    // Helper methods để kiểm tra role
+    public boolean isAdmin() {
+        return this.role == Role.ADMIN;
+    }
+    
+    public boolean isManagerHR() {
+        return this.role == Role.MANAGER_HR;
+    }
+    
+    public boolean isManagerAccounting() {
+        return this.role == Role.MANAGER_ACCOUNTING;
+    }
+    
+    public boolean isManagerProject() {
+        return this.role == Role.MANAGER_PROJECT;
+    }
+    
+    public boolean isEmployee() {
+        return this.role == Role.EMPLOYEE;
+    }
+    
+    public boolean isAnyManager() {
+        return this.role == Role.MANAGER_HR || 
+               this.role == Role.MANAGER_ACCOUNTING || 
+               this.role == Role.MANAGER_PROJECT;
     }
 }

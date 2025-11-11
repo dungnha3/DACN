@@ -2,15 +2,26 @@ package DoAn.BE.hr.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.YearMonth;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import DoAn.BE.common.exception.BadRequestException;
 import DoAn.BE.common.exception.DuplicateException;
 import DoAn.BE.common.exception.EntityNotFoundException;
+import DoAn.BE.common.util.GPSUtil;
+import DoAn.BE.hr.dto.ChamCongGPSRequest;
 import DoAn.BE.hr.dto.ChamCongRequest;
 import DoAn.BE.hr.entity.ChamCong;
+import DoAn.BE.hr.entity.ChamCong.PhuongThucChamCong;
 import DoAn.BE.hr.entity.ChamCong.TrangThaiChamCong;
 import DoAn.BE.hr.entity.NhanVien;
 import DoAn.BE.hr.repository.ChamCongRepository;
@@ -20,6 +31,18 @@ import jakarta.transaction.Transactional;
 @Service
 @Transactional
 public class ChamCongService {
+    
+    private static final Logger log = LoggerFactory.getLogger(ChamCongService.class);
+    
+    // Tọa độ công ty (configurable)
+    @Value("${company.latitude:21.0285}")
+    private Double companyLatitude;
+    
+    @Value("${company.longitude:105.8542}")
+    private Double companyLongitude;
+    
+    @Value("${company.radius:500}")
+    private Double allowedRadius; // Bán kính cho phép (meters)
     
     private final ChamCongRepository chamCongRepository;
     private final NhanVienRepository nhanVienRepository;
@@ -209,5 +232,119 @@ public class ChamCongService {
         }
 
         return chamCongRepository.save(chamCong);
+    }
+
+    /**
+     * ⭐⭐⭐ CHẤM CÔNG GPS - Tính năng mới
+     * Chấm công bằng GPS với kiểm tra vị trí
+     */
+    public Map<String, Object> chamCongGPS(ChamCongGPSRequest request) {
+        log.info("Chấm công GPS cho nhân viên ID: {}", request.getNhanvienId());
+        
+        // 1. Lấy thông tin nhân viên
+        NhanVien nhanVien = nhanVienRepository.findById(request.getNhanvienId())
+            .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
+        
+        // 2. Tính khoảng cách từ công ty
+        double distance = GPSUtil.calculateDistance(
+            request.getLatitude(), request.getLongitude(),
+            companyLatitude, companyLongitude
+        );
+        
+        log.debug("Khoảng cách: {}m, Cho phép: {}m", distance, allowedRadius);
+        
+        // 3. Kiểm tra trong bán kính cho phép
+        if (distance > allowedRadius) {
+            throw new BadRequestException(String.format(
+                "Vị trí của bạn cách công ty %.0fm. Vui lòng đến gần hơn (trong bán kính %.0fm)",
+                distance, allowedRadius
+            ));
+        }
+        
+        // 4. Lấy hoặc tạo bản ghi chấm công hôm nay
+        LocalDate today = LocalDate.now();
+        Optional<ChamCong> existingOpt = chamCongRepository
+            .findByNhanVien_NhanvienIdAndNgayCham(request.getNhanvienId(), today)
+            .stream()
+            .findFirst();
+        
+        ChamCong chamCong;
+        boolean isCheckIn;
+        
+        if (existingOpt.isEmpty()) {
+            // Chấm công vào
+            chamCong = new ChamCong();
+            chamCong.setNhanVien(nhanVien);
+            chamCong.setNgayCham(today);
+            chamCong.setGioVao(LocalTime.now());
+            chamCong.setPhuongThuc(PhuongThucChamCong.GPS);
+            isCheckIn = true;
+        } else {
+            // Chấm công ra
+            chamCong = existingOpt.get();
+            if (chamCong.getGioRa() != null) {
+                throw new BadRequestException("Bạn đã chấm công ra hôm nay rồi");
+            }
+            chamCong.setGioRa(LocalTime.now());
+            isCheckIn = false;
+        }
+        
+        // 5. Lưu thông tin GPS
+        chamCong.setLatitude(request.getLatitude());
+        chamCong.setLongitude(request.getLongitude());
+        chamCong.setDiaChiCheckin(request.getDiaChiCheckin());
+        chamCong.setKhoangCach(distance);
+        
+        // 6. Lưu vào database
+        chamCong = chamCongRepository.save(chamCong);
+        
+        // 7. Tạo response
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", isCheckIn ? "Chấm công vào thành công!" : "Chấm công ra thành công!");
+        response.put("isCheckIn", isCheckIn);
+        response.put("time", isCheckIn ? chamCong.getGioVao() : chamCong.getGioRa());
+        response.put("distance", Math.round(distance));
+        response.put("address", request.getDiaChiCheckin());
+        response.put("trangThai", chamCong.getTrangThai());
+        
+        log.info("✅ Chấm công {} thành công cho nhân viên: {}", 
+                 isCheckIn ? "vào" : "ra", nhanVien.getHoTen());
+        
+        return response;
+    }
+
+    /**
+     * Lấy trạng thái chấm công hôm nay
+     */
+    public Map<String, Object> getTrangThaiChamCongHomNay(Long nhanvienId) {
+        NhanVien nhanVien = nhanVienRepository.findById(nhanvienId)
+            .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
+        
+        LocalDate today = LocalDate.now();
+        Optional<ChamCong> chamCongOpt = chamCongRepository
+            .findByNhanVien_NhanvienIdAndNgayCham(nhanvienId, today)
+            .stream()
+            .findFirst();
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        if (chamCongOpt.isEmpty()) {
+            response.put("checkedIn", false);
+            response.put("checkedOut", false);
+            response.put("message", "Chưa chấm công hôm nay");
+        } else {
+            ChamCong chamCong = chamCongOpt.get();
+            response.put("checkedIn", true);
+            response.put("checkedOut", chamCong.getGioRa() != null);
+            response.put("gioVao", chamCong.getGioVao());
+            response.put("gioRa", chamCong.getGioRa());
+            response.put("soGioLam", chamCong.getSoGioLam());
+            response.put("trangThai", chamCong.getTrangThai());
+            response.put("phuongThuc", chamCong.getPhuongThuc());
+            response.put("message", chamCong.getGioRa() != null ? "Đã chấm công đầy đủ" : "Đã chấm công vào");
+        }
+        
+        return response;
     }
 }

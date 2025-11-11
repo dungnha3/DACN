@@ -6,6 +6,10 @@ import org.springframework.stereotype.Service;
 
 import DoAn.BE.common.exception.DuplicateException;
 import DoAn.BE.common.exception.EntityNotFoundException;
+import DoAn.BE.common.exception.ForbiddenException;
+import DoAn.BE.common.util.PermissionUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import DoAn.BE.hr.dto.NhanVienRequest;
 import DoAn.BE.hr.entity.ChucVu;
 import DoAn.BE.hr.entity.NhanVien;
@@ -24,6 +28,8 @@ import org.springframework.data.domain.Pageable;
 @Transactional
 public class NhanVienService {
     
+    private static final Logger log = LoggerFactory.getLogger(NhanVienService.class);
+    
     private final NhanVienRepository nhanVienRepository;
     private final UserRepository userRepository;
     private final PhongBanRepository phongBanRepository;
@@ -39,7 +45,12 @@ public class NhanVienService {
         this.chucVuRepository = chucVuRepository;
     }
 
-    public NhanVien createNhanVien(NhanVienRequest request) {
+    /**
+     * Tạo nhân viên - Chỉ HR Manager
+     */
+    public NhanVien createNhanVien(NhanVienRequest request, User currentUser) {
+        PermissionUtil.checkHRPermission(currentUser);
+        log.info("HR Manager {} tạo nhân viên mới", currentUser.getUsername());
         User user = userRepository.findById(request.getUserId())
             .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
 
@@ -79,11 +90,49 @@ public class NhanVienService {
         return nhanVienRepository.save(nhanVien);
     }
 
+    /**
+     * Lấy thông tin nhân viên
+     * - HR/Accounting: xem tất cả
+     * - Employee: chỉ xem của mình
+     * - Project Manager: xem nhân viên trong dự án (kiểm tra ở controller)
+     */
+    public NhanVien getNhanVienById(Long id, User currentUser) {
+        NhanVien nhanVien = nhanVienRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
+        
+        // Admin không có quyền xem
+        if (currentUser.isAdmin()) {
+            throw new ForbiddenException("Admin không có quyền truy cập dữ liệu nhân viên");
+        }
+        
+        // HR và Accounting xem tất cả
+        if (currentUser.isManagerHR() || currentUser.isManagerAccounting()) {
+            return nhanVien;
+        }
+        
+        // Employee và Project Manager chỉ xem của mình
+        if (!nhanVien.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new ForbiddenException("Bạn không có quyền xem thông tin nhân viên này");
+        }
+        
+        return nhanVien;
+    }
+    
     public NhanVien getNhanVienById(Long id) {
         return nhanVienRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
     }
 
+    /**
+     * Lấy danh sách tất cả nhân viên - Chỉ HR/Accounting
+     */
+    public List<NhanVien> getAllNhanVien(User currentUser) {
+        if (!currentUser.isManagerHR() && !currentUser.isManagerAccounting()) {
+            throw new ForbiddenException("Chỉ HR/Accounting Manager mới có quyền xem danh sách nhân viên");
+        }
+        return nhanVienRepository.findAll();
+    }
+    
     public List<NhanVien> getAllNhanVien() {
         return nhanVienRepository.findAll();
     }
@@ -95,9 +144,20 @@ public class NhanVienService {
         return nhanVienRepository.findAll(pageable);
     }
 
-    public NhanVien updateNhanVien(Long id, NhanVienRequest request) {
+    /**
+     * Cập nhật nhân viên - Chỉ HR Manager
+     */
+    public NhanVien updateNhanVien(Long id, NhanVienRequest request, User currentUser) {
+        PermissionUtil.checkHRPermission(currentUser);
+        log.info("HR Manager {} cập nhật nhân viên ID: {}", currentUser.getUsername(), id);
+        
         NhanVien nhanVien = getNhanVienById(id);
-
+        
+        // Cập nhật thông tin...
+        return updateNhanVienInternal(nhanVien, request);
+    }
+    
+    private NhanVien updateNhanVienInternal(NhanVien nhanVien, NhanVienRequest request) {
         if (request.getHoTen() != null) {
             nhanVien.setHoTen(request.getHoTen());
         }
