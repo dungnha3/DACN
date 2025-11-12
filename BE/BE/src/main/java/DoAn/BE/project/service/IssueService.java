@@ -6,12 +6,17 @@ import DoAn.BE.project.dto.IssueDTO;
 import DoAn.BE.project.dto.UpdateIssueRequest;
 import DoAn.BE.project.entity.Issue;
 import DoAn.BE.project.entity.IssueStatus;
+import DoAn.BE.project.entity.IssueActivity;
+import DoAn.BE.project.entity.IssueActivity.ActivityType;
 import DoAn.BE.project.entity.Project;
 import DoAn.BE.project.entity.ProjectMember;
+import DoAn.BE.project.entity.Sprint;
 import DoAn.BE.project.repository.IssueRepository;
 import DoAn.BE.project.repository.IssueStatusRepository;
+import DoAn.BE.project.repository.IssueActivityRepository;
 import DoAn.BE.project.repository.ProjectMemberRepository;
 import DoAn.BE.project.repository.ProjectRepository;
+import DoAn.BE.project.repository.SprintRepository;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +35,8 @@ public class IssueService {
     private final ProjectMemberRepository projectMemberRepository;
     private final IssueStatusRepository issueStatusRepository;
     private final UserRepository userRepository;
+    private final SprintRepository sprintRepository;
+    private final IssueActivityRepository issueActivityRepository;
     
     @Transactional
     public IssueDTO createIssue(CreateIssueRequest request, Long userId) {
@@ -95,6 +102,32 @@ public class IssueService {
         validateProjectAccess(projectId, userId);
         
         List<Issue> issues = issueRepository.findByProject_ProjectId(projectId);
+        return issues.stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+    }
+    
+    @Transactional(readOnly = true)
+    public List<IssueDTO> getProjectBacklog(Long projectId, Long userId) {
+        // Validate access
+        validateProjectAccess(projectId, userId);
+        
+        List<Issue> issues = issueRepository.findByProject_ProjectIdAndSprintIsNull(projectId);
+        return issues.stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+    }
+    
+    @Transactional(readOnly = true)
+    public List<IssueDTO> getSprintIssues(Long sprintId, Long userId) {
+        // Get sprint to validate project access
+        Sprint sprint = sprintRepository.findById(sprintId)
+            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy sprint"));
+        
+        // Validate access to project
+        validateProjectAccess(sprint.getProject().getProjectId(), userId);
+        
+        List<Issue> issues = issueRepository.findBySprint_SprintId(sprintId);
         return issues.stream()
             .map(this::convertToDTO)
             .collect(Collectors.toList());
@@ -245,6 +278,12 @@ public class IssueService {
         dto.setIssueId(issue.getIssueId());
         dto.setProjectId(issue.getProject().getProjectId());
         dto.setProjectName(issue.getProject().getName());
+        
+        if (issue.getSprint() != null) {
+            dto.setSprintId(issue.getSprint().getSprintId());
+            dto.setSprintName(issue.getSprint().getName());
+        }
+        
         dto.setIssueKey(issue.getIssueKey());
         dto.setTitle(issue.getTitle());
         dto.setDescription(issue.getDescription());

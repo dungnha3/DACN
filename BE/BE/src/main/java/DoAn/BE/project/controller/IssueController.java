@@ -47,6 +47,24 @@ public class IssueController {
         return ResponseEntity.ok(issues);
     }
     
+    @GetMapping("/project/{projectId}/backlog")
+    public ResponseEntity<List<IssueDTO>> getProjectBacklog(
+            @PathVariable Long projectId,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        List<IssueDTO> issues = issueService.getProjectBacklog(projectId, userId);
+        return ResponseEntity.ok(issues);
+    }
+    
+    @GetMapping("/sprint/{sprintId}")
+    public ResponseEntity<List<IssueDTO>> getSprintIssues(
+            @PathVariable Long sprintId,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        List<IssueDTO> issues = issueService.getSprintIssues(sprintId, userId);
+        return ResponseEntity.ok(issues);
+    }
+    
     @GetMapping("/my-issues")
     public ResponseEntity<List<IssueDTO>> getMyIssues(Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());

@@ -13,6 +13,8 @@ public interface IssueRepository extends JpaRepository<Issue, Long> {
     List<Issue> findByReporter_UserId(Long userId);
     List<Issue> findByAssignee_UserId(Long userId);
     List<Issue> findByIssueStatus_StatusId(Integer statusId);
+    List<Issue> findBySprint_SprintId(Long sprintId);
+    List<Issue> findByProject_ProjectIdAndSprintIsNull(Long projectId);
 }
 
 

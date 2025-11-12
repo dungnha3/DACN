@@ -16,6 +16,8 @@ public class IssueDTO {
     private Long issueId;
     private Long projectId;
     private String projectName;
+    private Long sprintId;
+    private String sprintName;
     private String issueKey;
     private String title;
     private String description;
