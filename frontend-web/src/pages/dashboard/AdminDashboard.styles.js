@@ -8,9 +8,9 @@ export const styles = {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
   },
   
-  // Sidebar - Admin theme with orange/red gradient
+  // Sidebar
   sidebar: {
-    background: 'linear-gradient(195deg, #dc2626 0%, #991b1b 100%)',
+    background: 'linear-gradient(195deg, #1e3a8a 0%, #0f172a 100%)',
     padding: '24px 20px',
     display: 'flex',
     flexDirection: 'column',
@@ -27,11 +27,11 @@ export const styles = {
     width: 40,
     height: 40,
     borderRadius: 10,
-    background: 'linear-gradient(195deg, #f59e0b 0%, #d97706 100%)',
+    background: 'linear-gradient(195deg, #dc2626 0%, #991b1b 100%)',
     display: 'grid',
     placeItems: 'center',
     fontSize: 20,
-    boxShadow: '0 2px 12px rgba(245, 158, 11, 0.4)'
+    boxShadow: '0 2px 12px rgba(220, 38, 38, 0.4)'
   },
   brandName: {
     fontSize: 16,
@@ -60,13 +60,13 @@ export const styles = {
     width: 40,
     height: 40,
     borderRadius: 10,
-    background: 'linear-gradient(195deg, #f59e0b 0%, #d97706 100%)',
+    background: 'linear-gradient(195deg, #dc2626 0%, #991b1b 100%)',
     color: '#fff',
     display: 'grid',
     placeItems: 'center',
     fontWeight: 700,
     fontSize: 16,
-    boxShadow: '0 2px 10px rgba(245, 158, 11, 0.3)'
+    boxShadow: '0 2px 10px rgba(220, 38, 38, 0.3)'
   },
   userInfo: { flex: 1 },
   userName: { fontWeight: 700, color: '#fff', fontSize: 14 },
@@ -109,7 +109,7 @@ export const styles = {
   },
   logoutBtn: {
     marginTop: 'auto',
-    background: 'linear-gradient(195deg, #f59e0b 0%, #d97706 100%)',
+    background: 'linear-gradient(195deg, #dc2626 0%, #991b1b 100%)',
     border: 'none',
     color: '#fff',
     padding: '11px 16px',
@@ -118,7 +118,7 @@ export const styles = {
     fontWeight: 600,
     fontSize: 14,
     transition: 'all 0.2s',
-    boxShadow: '0 2px 10px rgba(245, 158, 11, 0.3)'
+    boxShadow: '0 2px 10px rgba(220, 38, 38, 0.3)'
   },
   
   // Main Content
@@ -138,13 +138,13 @@ export const styles = {
   roleBadge: {
     display: 'flex',
     alignItems: 'center',
-    background: 'linear-gradient(195deg, #dc2626 0%, #991b1b 100%)',
+    background: 'linear-gradient(195deg, #1e3a8a 0%, #1e40af 100%)',
     color: '#fff',
     borderRadius: 8,
     padding: '6px 14px',
     fontSize: 12,
     fontWeight: 600,
-    boxShadow: '0 2px 10px rgba(220, 38, 38, 0.3)'
+    boxShadow: '0 2px 10px rgba(30, 58, 138, 0.3)'
   },
   
   // Dashboard Content
@@ -198,11 +198,11 @@ export const styles = {
     gap: 20
   },
   welcomeCard: {
-    background: 'linear-gradient(195deg, #dc2626 0%, #991b1b 100%)',
+    background: 'linear-gradient(195deg, #1e3a8a 0%, #1e40af 100%)',
     borderRadius: 16,
     padding: 28,
     color: '#fff',
-    boxShadow: '0 4px 20px rgba(220, 38, 38, 0.3)'
+    boxShadow: '0 4px 20px rgba(30, 58, 138, 0.3)'
   },
   welcomeContent: {},
   welcomeTitle: {
@@ -217,7 +217,7 @@ export const styles = {
     marginBottom: 20
   },
   actionBtn: {
-    background: 'linear-gradient(195deg, #f59e0b 0%, #d97706 100%)',
+    background: 'linear-gradient(195deg, #dc2626 0%, #991b1b 100%)',
     border: 'none',
     color: '#fff',
     padding: '10px 20px',
@@ -226,7 +226,7 @@ export const styles = {
     fontWeight: 600,
     fontSize: 14,
     transition: 'all 0.2s',
-    boxShadow: '0 2px 10px rgba(245, 158, 11, 0.3)'
+    boxShadow: '0 2px 10px rgba(220, 38, 38, 0.3)'
   },
   notificationCard: {
     background: '#fff',
@@ -325,7 +325,7 @@ export const styles = {
     color: '#344767'
   },
   addBtn: {
-    background: 'linear-gradient(195deg, #f59e0b 0%, #d97706 100%)',
+    background: 'linear-gradient(195deg, #dc2626 0%, #991b1b 100%)',
     border: 'none',
     color: '#fff',
     padding: '10px 18px',
@@ -333,7 +333,7 @@ export const styles = {
     cursor: 'pointer',
     fontWeight: 600,
     fontSize: 14,
-    boxShadow: '0 2px 10px rgba(245, 158, 11, 0.3)'
+    boxShadow: '0 2px 10px rgba(220, 38, 38, 0.3)'
   },
   tableWrap: {
     overflowX: 'auto'
