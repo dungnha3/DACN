@@ -87,7 +87,8 @@ public class NhanVienController {
     public ResponseEntity<NhanVienDTO> updateNhanVien(
             @PathVariable Long id,
             @Valid @RequestBody NhanVienRequest request) {
-        NhanVien nhanVien = nhanVienService.updateNhanVien(id, request);
+        User currentUser = getCurrentUser();
+        NhanVien nhanVien = nhanVienService.updateNhanVien(id, request, currentUser);
         return ResponseEntity.ok(nhanVienMapper.toDTO(nhanVien));
     }
     

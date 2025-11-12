@@ -52,7 +52,7 @@ public class ChatRoomController {
     @PostMapping
     public ResponseEntity<ChatRoomDTO> createChatRoom(@Valid @RequestBody CreateChatRoomRequest request) {
         User currentUser = getCurrentUser();
-        ChatRoomDTO chatRoom = chatRoomService.createChatRoom(request, currentUser.getUserId());
+        ChatRoomDTO chatRoom = chatRoomService.createChatRoom(request, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(chatRoom);
     }
 
@@ -62,7 +62,7 @@ public class ChatRoomController {
     @GetMapping
     public ResponseEntity<List<ChatRoomDTO>> getMyChatRooms() {
         User currentUser = getCurrentUser();
-        List<ChatRoomDTO> chatRooms = chatRoomService.getChatRoomsByUserId(currentUser.getUserId());
+        List<ChatRoomDTO> chatRooms = chatRoomService.getChatRoomsByUserId(currentUser);
         return ResponseEntity.ok(chatRooms);
     }
 

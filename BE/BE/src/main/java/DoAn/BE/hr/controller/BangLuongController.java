@@ -6,7 +6,10 @@ import DoAn.BE.hr.dto.UpdateBangLuongRequest;
 import DoAn.BE.hr.entity.BangLuong;
 import DoAn.BE.hr.mapper.BangLuongMapper;
 import DoAn.BE.hr.service.BangLuongService;
+import DoAn.BE.user.entity.User;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,13 +35,19 @@ public class BangLuongController {
         this.bangLuongMapper = bangLuongMapper;
     }
     
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return (User) auth.getPrincipal();
+    }
+    
     /**
      * Tạo bảng lương mới
      * POST /api/bang-luong
      */
     @PostMapping
     public ResponseEntity<BangLuongDTO> createBangLuong(@Valid @RequestBody CreateBangLuongRequest request) {
-        BangLuong bangLuong = bangLuongService.createBangLuong(request);
+        User currentUser = getCurrentUser();
+        BangLuong bangLuong = bangLuongService.createBangLuong(request, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(bangLuongMapper.toDTO(bangLuong));
     }
     
@@ -48,7 +57,8 @@ public class BangLuongController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<BangLuongDTO> getBangLuongById(@PathVariable Long id) {
-        BangLuong bangLuong = bangLuongService.getBangLuongById(id);
+        User currentUser = getCurrentUser();
+        BangLuong bangLuong = bangLuongService.getBangLuongById(id, currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTO(bangLuong));
     }
     
@@ -58,7 +68,8 @@ public class BangLuongController {
      */
     @GetMapping
     public ResponseEntity<List<BangLuongDTO>> getAllBangLuong() {
-        List<BangLuong> bangLuongs = bangLuongService.getAllBangLuong();
+        User currentUser = getCurrentUser();
+        List<BangLuong> bangLuongs = bangLuongService.getAllBangLuong(currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTOList(bangLuongs));
     }
     
@@ -70,7 +81,8 @@ public class BangLuongController {
     public ResponseEntity<BangLuongDTO> updateBangLuong(
             @PathVariable Long id,
             @Valid @RequestBody UpdateBangLuongRequest request) {
-        BangLuong bangLuong = bangLuongService.updateBangLuong(id, request);
+        User currentUser = getCurrentUser();
+        BangLuong bangLuong = bangLuongService.updateBangLuong(id, request, currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTO(bangLuong));
     }
     
@@ -80,7 +92,8 @@ public class BangLuongController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteBangLuong(@PathVariable Long id) {
-        bangLuongService.deleteBangLuong(id);
+        User currentUser = getCurrentUser();
+        bangLuongService.deleteBangLuong(id, currentUser);
         Map<String, String> response = new HashMap<>();
         response.put("message", "Xóa bảng lương thành công");
         return ResponseEntity.ok(response);
@@ -92,7 +105,8 @@ public class BangLuongController {
      */
     @GetMapping("/nhan-vien/{nhanvienId}")
     public ResponseEntity<List<BangLuongDTO>> getBangLuongByNhanVien(@PathVariable Long nhanvienId) {
-        List<BangLuong> bangLuongs = bangLuongService.getBangLuongByNhanVien(nhanvienId);
+        User currentUser = getCurrentUser();
+        List<BangLuong> bangLuongs = bangLuongService.getBangLuongByNhanVien(nhanvienId, currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTOList(bangLuongs));
     }
     
@@ -137,7 +151,8 @@ public class BangLuongController {
      */
     @PatchMapping("/{id}/mark-paid")
     public ResponseEntity<BangLuongDTO> markAsPaid(@PathVariable Long id) {
-        BangLuong bangLuong = bangLuongService.markAsPaid(id);
+        User currentUser = getCurrentUser();
+        BangLuong bangLuong = bangLuongService.markAsPaid(id, currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTO(bangLuong));
     }
     

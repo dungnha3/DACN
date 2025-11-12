@@ -6,7 +6,10 @@ import DoAn.BE.hr.dto.NghiPhepRequest;
 import DoAn.BE.hr.entity.NghiPhep;
 import DoAn.BE.hr.mapper.NghiPhepMapper;
 import DoAn.BE.hr.service.NghiPhepService;
+import DoAn.BE.user.entity.User;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,13 +32,19 @@ public class NghiPhepController {
         this.nghiPhepMapper = nghiPhepMapper;
     }
     
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return (User) auth.getPrincipal();
+    }
+    
     /**
      * Tạo đơn nghỉ phép mới
      * POST /api/nghi-phep
      */
     @PostMapping
     public ResponseEntity<NghiPhepDTO> createNghiPhep(@Valid @RequestBody NghiPhepRequest request) {
-        NghiPhep nghiPhep = nghiPhepService.createNghiPhep(request);
+        User currentUser = getCurrentUser();
+        NghiPhep nghiPhep = nghiPhepService.createNghiPhep(request, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(nghiPhepMapper.toDTO(nghiPhep));
     }
     
@@ -45,7 +54,8 @@ public class NghiPhepController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<NghiPhepDTO> getNghiPhepById(@PathVariable Long id) {
-        NghiPhep nghiPhep = nghiPhepService.getNghiPhepById(id);
+        User currentUser = getCurrentUser();
+        NghiPhep nghiPhep = nghiPhepService.getNghiPhepById(id, currentUser);
         return ResponseEntity.ok(nghiPhepMapper.toDTO(nghiPhep));
     }
     
@@ -55,7 +65,8 @@ public class NghiPhepController {
      */
     @GetMapping
     public ResponseEntity<List<NghiPhepDTO>> getAllNghiPhep() {
-        List<NghiPhep> nghiPheps = nghiPhepService.getAllNghiPhep();
+        User currentUser = getCurrentUser();
+        List<NghiPhep> nghiPheps = nghiPhepService.getAllNghiPhep(currentUser);
         return ResponseEntity.ok(nghiPhepMapper.toDTOList(nghiPheps));
     }
     
@@ -67,7 +78,8 @@ public class NghiPhepController {
     public ResponseEntity<NghiPhepDTO> updateNghiPhep(
             @PathVariable Long id,
             @Valid @RequestBody NghiPhepRequest request) {
-        NghiPhep nghiPhep = nghiPhepService.updateNghiPhep(id, request);
+        User currentUser = getCurrentUser();
+        NghiPhep nghiPhep = nghiPhepService.updateNghiPhep(id, request, currentUser);
         return ResponseEntity.ok(nghiPhepMapper.toDTO(nghiPhep));
     }
     
@@ -143,7 +155,8 @@ public class NghiPhepController {
     public ResponseEntity<NghiPhepDTO> approveNghiPhep(
             @PathVariable Long id,
             @Valid @RequestBody ApproveRejectRequest request) {
-        NghiPhep nghiPhep = nghiPhepService.approveNghiPhep(id, request.getNguoiDuyetId(), request.getGhiChu());
+        User currentUser = getCurrentUser();
+        NghiPhep nghiPhep = nghiPhepService.approveNghiPhep(id, request.getGhiChu(), currentUser);
         return ResponseEntity.ok(nghiPhepMapper.toDTO(nghiPhep));
     }
     
@@ -155,7 +168,8 @@ public class NghiPhepController {
     public ResponseEntity<NghiPhepDTO> rejectNghiPhep(
             @PathVariable Long id,
             @Valid @RequestBody ApproveRejectRequest request) {
-        NghiPhep nghiPhep = nghiPhepService.rejectNghiPhep(id, request.getNguoiDuyetId(), request.getGhiChu());
+        User currentUser = getCurrentUser();
+        NghiPhep nghiPhep = nghiPhepService.rejectNghiPhep(id, request.getGhiChu(), currentUser);
         return ResponseEntity.ok(nghiPhepMapper.toDTO(nghiPhep));
     }
     

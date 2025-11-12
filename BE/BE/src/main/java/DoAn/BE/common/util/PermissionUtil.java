@@ -27,11 +27,20 @@ public class PermissionUtil {
     }
     
     /**
-     * Kiểm tra user có quyền quản lý kế toán không
+     * Kiểm tra user có quyền quản lý kế toán không (chỉ xem)
      */
-    public static void checkAccountingPermission(User currentUser) {
+    public static void checkAccountingViewPermission(User currentUser) {
         if (!currentUser.isManagerAccounting()) {
-            throw new ForbiddenException("Chỉ Accounting Manager mới có quyền thực hiện thao tác này");
+            throw new ForbiddenException("Chỉ Accounting Manager mới có quyền xem dữ liệu này");
+        }
+    }
+    
+    /**
+     * Kiểm tra user có quyền thao tác chấm công không (chỉ HR)
+     */
+    public static void checkAttendanceManagePermission(User currentUser) {
+        if (!currentUser.isManagerHR()) {
+            throw new ForbiddenException("Chỉ HR Manager mới có quyền quản lý chấm công");
         }
     }
     
@@ -55,7 +64,7 @@ public class PermissionUtil {
     
     /**
      * Kiểm tra user có quyền xem profile nhân viên không
-     * - Employee: chỉ xem của mình
+     * - Employee/Managers: chỉ xem của mình
      * - Manager HR/Accounting: xem tất cả
      * - Manager Project: xem nhân viên trong dự án (kiểm tra ở service)
      */
@@ -84,10 +93,10 @@ public class PermissionUtil {
     }
     
     /**
-     * Kiểm tra user có quyền duyệt nghỉ phép không
+     * Kiểm tra user có quyền duyệt nghỉ phép không - Chỉ Project Manager
      */
     public static boolean canApproveLeave(User currentUser) {
-        return currentUser.isManagerAccounting() || currentUser.isManagerProject();
+        return currentUser.isManagerProject();
     }
     
     /**
@@ -107,8 +116,39 @@ public class PermissionUtil {
     /**
      * Kiểm tra user có quyền truy cập dự án không
      * Admin không có quyền truy cập dự án
+     * HR/Accounting Manager có quyền như Employee
      */
     public static boolean canAccessProjects(User currentUser) {
-        return !currentUser.isAdmin() && !currentUser.isManagerHR() && !currentUser.isManagerAccounting();
+        return !currentUser.isAdmin();
+    }
+    
+    /**
+     * Kiểm tra user có quyền xem dữ liệu chấm công không
+     */
+    public static boolean canViewAttendance(User currentUser) {
+        return currentUser.isManagerHR() || currentUser.isManagerAccounting();
+    }
+    
+    /**
+     * Kiểm tra user có quyền xem dữ liệu nghỉ phép không - HR, Accounting, Project Manager
+     */
+    public static boolean canViewLeave(User currentUser) {
+        return currentUser.isManagerHR() || currentUser.isManagerAccounting() || currentUser.isManagerProject();
+    }
+    
+    /**
+     * Kiểm tra user có quyền thực hiện chấm công không - Tất cả trừ Admin
+     */
+    public static boolean canPerformAttendance(User currentUser) {
+        return !currentUser.isAdmin();
+    }
+    
+    /**
+     * Kiểm tra user có quyền xem chấm công team không
+     * HR/Accounting: xem tất cả
+     * Project Manager: xem team trong dự án (kiểm tra ở service)
+     */
+    public static boolean canViewTeamAttendance(User currentUser) {
+        return currentUser.isManagerHR() || currentUser.isManagerAccounting() || currentUser.isManagerProject();
     }
 }

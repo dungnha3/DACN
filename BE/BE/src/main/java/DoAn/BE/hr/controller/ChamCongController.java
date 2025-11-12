@@ -6,7 +6,10 @@ import DoAn.BE.hr.dto.ChamCongRequest;
 import DoAn.BE.hr.entity.ChamCong;
 import DoAn.BE.hr.mapper.ChamCongMapper;
 import DoAn.BE.hr.service.ChamCongService;
+import DoAn.BE.user.entity.User;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,13 +33,19 @@ public class ChamCongController {
         this.chamCongMapper = chamCongMapper;
     }
     
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return (User) auth.getPrincipal();
+    }
+    
     /**
      * Tạo chấm công mới
      * POST /api/cham-cong
      */
     @PostMapping
     public ResponseEntity<ChamCongDTO> createChamCong(@Valid @RequestBody ChamCongRequest request) {
-        ChamCong chamCong = chamCongService.createChamCong(request);
+        User currentUser = getCurrentUser();
+        ChamCong chamCong = chamCongService.createChamCong(request, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(chamCongMapper.toDTO(chamCong));
     }
     
@@ -46,7 +55,8 @@ public class ChamCongController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<ChamCongDTO> getChamCongById(@PathVariable Long id) {
-        ChamCong chamCong = chamCongService.getChamCongById(id);
+        User currentUser = getCurrentUser();
+        ChamCong chamCong = chamCongService.getChamCongById(id, currentUser);
         return ResponseEntity.ok(chamCongMapper.toDTO(chamCong));
     }
     
@@ -56,7 +66,8 @@ public class ChamCongController {
      */
     @GetMapping
     public ResponseEntity<List<ChamCongDTO>> getAllChamCong() {
-        List<ChamCong> chamCongs = chamCongService.getAllChamCong();
+        User currentUser = getCurrentUser();
+        List<ChamCong> chamCongs = chamCongService.getAllChamCong(currentUser);
         return ResponseEntity.ok(chamCongMapper.toDTOList(chamCongs));
     }
     
@@ -68,7 +79,8 @@ public class ChamCongController {
     public ResponseEntity<ChamCongDTO> updateChamCong(
             @PathVariable Long id,
             @Valid @RequestBody ChamCongRequest request) {
-        ChamCong chamCong = chamCongService.updateChamCong(id, request);
+        User currentUser = getCurrentUser();
+        ChamCong chamCong = chamCongService.updateChamCong(id, request, currentUser);
         return ResponseEntity.ok(chamCongMapper.toDTO(chamCong));
     }
     
@@ -78,7 +90,8 @@ public class ChamCongController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteChamCong(@PathVariable Long id) {
-        chamCongService.deleteChamCong(id);
+        User currentUser = getCurrentUser();
+        chamCongService.deleteChamCong(id, currentUser);
         Map<String, String> response = new HashMap<>();
         response.put("message", "Xóa chấm công thành công");
         return ResponseEntity.ok(response);
@@ -90,7 +103,8 @@ public class ChamCongController {
      */
     @GetMapping("/nhan-vien/{nhanvienId}")
     public ResponseEntity<List<ChamCongDTO>> getChamCongByNhanVien(@PathVariable Long nhanvienId) {
-        List<ChamCong> chamCongs = chamCongService.getChamCongByNhanVien(nhanvienId);
+        User currentUser = getCurrentUser();
+        List<ChamCong> chamCongs = chamCongService.getChamCongByNhanVien(nhanvienId, currentUser);
         return ResponseEntity.ok(chamCongMapper.toDTOList(chamCongs));
     }
     

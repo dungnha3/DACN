@@ -10,6 +10,8 @@ import DoAn.BE.user.entity.User;
 import DoAn.BE.user.repository.UserRepository;
 import DoAn.BE.common.exception.BadRequestException;
 import DoAn.BE.common.exception.EntityNotFoundException;
+import DoAn.BE.common.exception.ForbiddenException;
+import DoAn.BE.common.util.PermissionUtil;
 import DoAn.BE.chat.websocket.service.WebSocketNotificationService;
 import DoAn.BE.notification.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,18 +46,21 @@ public class ChatRoomService {
     private NotificationService notificationService;
 
     /**
-     * Tạo phòng chat mới
+     * Tạo phòng chat mới - Admin không có quyền
      */
-    public ChatRoomDTO createChatRoom(CreateChatRoomRequest request, Long creatorId) {
+    public ChatRoomDTO createChatRoom(CreateChatRoomRequest request, User currentUser) {
         try {
-            // 1. Validate input
+            // 1. Kiểm tra quyền - Admin không có quyền chat
+            if (!PermissionUtil.canUseChat(currentUser)) {
+                throw new ForbiddenException("Admin không có quyền sử dụng chat");
+            }
+            
+            // 2. Validate input
             if (request.getName() == null || request.getName().trim().isEmpty()) {
                 throw new BadRequestException("Tên phòng chat không được để trống");
             }
             
-            // 2. Validate user tồn tại
-            User creator = userRepository.findById(creatorId)
-                .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
+            logger.info(String.format("User %s tạo phòng chat: %s", currentUser.getUsername(), request.getName()));
             
             // 3. Tạo ChatRoom entity
             ChatRoom chatRoom = new ChatRoom();
@@ -70,7 +75,7 @@ public class ChatRoomService {
             // 5. Tạo ChatRoomMember cho creator với role ADMIN
             ChatRoomMember creatorMember = new ChatRoomMember();
             creatorMember.setChatRoom(chatRoom);
-            creatorMember.setUser(creator);
+            creatorMember.setUser(currentUser);
             creatorMember.setRole(ChatRoomMember.MemberRole.ADMIN);
             creatorMember.setJoinedAt(LocalDateTime.now());
             chatRoomMemberRepository.save(creatorMember);
@@ -79,20 +84,21 @@ public class ChatRoomService {
             return convertToChatRoomDTO(chatRoom);
             
         } catch (DataAccessException | IllegalArgumentException e) {
-            logger.severe(String.format("Error creating chat room for user %d: %s", creatorId, e.getMessage()));
+            logger.severe(String.format("Error creating chat room for user %s: %s", currentUser.getUsername(), e.getMessage()));
             throw new BadRequestException("Không thể tạo phòng chat, vui lòng thử lại");
         }
     }
     
     /**
-     * Lấy danh sách phòng chat của user
+     * Lấy danh sách phòng chat của user - Admin không có quyền
      */
-    public List<ChatRoomDTO> getChatRoomsByUserId(Long userId) {
-        // Validate user tồn tại
-        userRepository.findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
+    public List<ChatRoomDTO> getChatRoomsByUserId(User currentUser) {
+        // Kiểm tra quyền - Admin không có quyền chat
+        if (!PermissionUtil.canUseChat(currentUser)) {
+            throw new ForbiddenException("Admin không có quyền sử dụng chat");
+        }
         
-        List<ChatRoomMember> memberships = chatRoomMemberRepository.findByUser_UserId(userId);
+        List<ChatRoomMember> memberships = chatRoomMemberRepository.findByUser_UserId(currentUser.getUserId());
         return memberships.stream()
             .map(membership -> convertToChatRoomDTO(membership.getChatRoom()))
             .collect(Collectors.toList());

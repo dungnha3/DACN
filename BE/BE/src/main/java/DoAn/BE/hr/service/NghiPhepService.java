@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 
 import DoAn.BE.common.exception.BadRequestException;
 import DoAn.BE.common.exception.EntityNotFoundException;
+import DoAn.BE.common.exception.ForbiddenException;
+import DoAn.BE.common.util.PermissionUtil;
 import DoAn.BE.hr.dto.NghiPhepRequest;
 import DoAn.BE.hr.entity.NghiPhep;
 import DoAn.BE.hr.entity.NghiPhep.TrangThaiNghiPhep;
@@ -42,9 +44,15 @@ public class NghiPhepService {
     }
 
     /**
-     * Tạo đơn nghỉ phép mới
+     * Tạo đơn nghỉ phép mới - Employee tự tạo
      */
-    public NghiPhep createNghiPhep(NghiPhepRequest request) {
+    public NghiPhep createNghiPhep(NghiPhepRequest request, User currentUser) {
+        // Admin không có quyền
+        if (currentUser.isAdmin()) {
+            throw new ForbiddenException("Admin không có quyền tạo đơn nghỉ phép");
+        }
+        
+        log.info("User {} tạo đơn nghỉ phép cho nhân viên ID: {}", currentUser.getUsername(), request.getNhanvienId());
         // Kiểm tra nhân viên tồn tại
         NhanVien nhanVien = nhanVienRepository.findById(request.getNhanvienId())
             .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
@@ -67,24 +75,62 @@ public class NghiPhepService {
 
     /**
      * Lấy thông tin nghỉ phép theo ID
+     * - Accounting/PM: xem tất cả
+     * - Employee: chỉ xem của mình
      */
+    public NghiPhep getNghiPhepById(Long id, User currentUser) {
+        NghiPhep nghiPhep = nghiPhepRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Đơn nghỉ phép không tồn tại"));
+        
+        // Admin không có quyền xem
+        if (currentUser.isAdmin()) {
+            throw new ForbiddenException("Admin không có quyền truy cập dữ liệu nghỉ phép");
+        }
+        
+        // HR/Accounting/Project Manager xem tất cả
+        if (PermissionUtil.canViewLeave(currentUser)) {
+            return nghiPhep;
+        }
+        
+        // Employee chỉ xem của mình
+        if (!nghiPhep.getNhanVien().getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new ForbiddenException("Bạn không có quyền xem đơn nghỉ phép này");
+        }
+        
+        return nghiPhep;
+    }
+    
     public NghiPhep getNghiPhepById(Long id) {
         return nghiPhepRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Đơn nghỉ phép không tồn tại"));
     }
 
     /**
-     * Lấy danh sách tất cả nghỉ phép
+     * Lấy danh sách tất cả nghỉ phép - HR/Accounting/Project Manager
      */
+    public List<NghiPhep> getAllNghiPhep(User currentUser) {
+        if (!PermissionUtil.canViewLeave(currentUser)) {
+            throw new ForbiddenException("Bạn không có quyền xem danh sách nghỉ phép");
+        }
+        return nghiPhepRepository.findAll();
+    }
+    
     public List<NghiPhep> getAllNghiPhep() {
         return nghiPhepRepository.findAll();
     }
 
     /**
-     * Cập nhật đơn nghỉ phép
+     * Cập nhật đơn nghỉ phép - Employee chỉ sửa của mình
      */
-    public NghiPhep updateNghiPhep(Long id, NghiPhepRequest request) {
-        NghiPhep nghiPhep = getNghiPhepById(id);
+    public NghiPhep updateNghiPhep(Long id, NghiPhepRequest request, User currentUser) {
+        NghiPhep nghiPhep = getNghiPhepById(id, currentUser);
+        
+        // Employee chỉ sửa đơn của mình, Manager không được sửa
+        if (!nghiPhep.getNhanVien().getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new ForbiddenException("Bạn chỉ có thể sửa đơn nghỉ phép của chính mình");
+        }
+        
+        log.info("User {} cập nhật đơn nghỉ phép ID: {}", currentUser.getUsername(), id);
 
         // Chỉ cho phép cập nhật nếu đang chờ duyệt
         if (nghiPhep.getTrangThai() != TrangThaiNghiPhep.CHO_DUYET) {
@@ -148,20 +194,21 @@ public class NghiPhepService {
     }
 
     /**
-     * Duyệt đơn nghỉ phép
+     * Duyệt đơn nghỉ phép - Chỉ Accounting/PM
      */
-    public NghiPhep approveNghiPhep(Long id, Long approverId, String note) {
-        log.info("Phê duyệt đơn nghỉ phép ID: {} bởi user ID: {}", id, approverId);
+    public NghiPhep approveNghiPhep(Long id, String note, User currentUser) {
+        if (!PermissionUtil.canApproveLeave(currentUser)) {
+            throw new ForbiddenException("Bạn không có quyền duyệt nghỉ phép");
+        }
+        
+        log.info("Phê duyệt đơn nghỉ phép ID: {} bởi user: {}", id, currentUser.getUsername());
         NghiPhep nghiPhep = getNghiPhepById(id);
         
         if (nghiPhep.getTrangThai() != TrangThaiNghiPhep.CHO_DUYET) {
             throw new BadRequestException("Đơn này đã được xử lý");
         }
         
-        User approver = userRepository.findById(approverId)
-            .orElseThrow(() -> new EntityNotFoundException("Người duyệt không tồn tại"));
-        
-        nghiPhep.approve(approver, note);
+        nghiPhep.approve(currentUser, note);
         NghiPhep saved = nghiPhepRepository.save(nghiPhep);
         log.info("✅ Đã phê duyệt đơn nghỉ phép cho nhân viên: {}", nghiPhep.getNhanVien().getHoTen());
         
@@ -182,20 +229,21 @@ public class NghiPhepService {
     }
 
     /**
-     * Từ chối đơn nghỉ phép
+     * Từ chối đơn nghỉ phép - Chỉ Accounting/PM
      */
-    public NghiPhep rejectNghiPhep(Long id, Long approverId, String note) {
-        log.info("Từ chối đơn nghỉ phép ID: {} bởi user ID: {}", id, approverId);
+    public NghiPhep rejectNghiPhep(Long id, String note, User currentUser) {
+        if (!PermissionUtil.canApproveLeave(currentUser)) {
+            throw new ForbiddenException("Bạn không có quyền từ chối nghỉ phép");
+        }
+        
+        log.info("Từ chối đơn nghỉ phép ID: {} bởi user: {}", id, currentUser.getUsername());
         NghiPhep nghiPhep = getNghiPhepById(id);
         
         if (nghiPhep.getTrangThai() != TrangThaiNghiPhep.CHO_DUYET) {
             throw new BadRequestException("Đơn này đã được xử lý");
         }
         
-        User approver = userRepository.findById(approverId)
-            .orElseThrow(() -> new EntityNotFoundException("Người duyệt không tồn tại"));
-        
-        nghiPhep.reject(approver, note);
+        nghiPhep.reject(currentUser, note);
         NghiPhep saved = nghiPhepRepository.save(nghiPhep);
         log.info("❌ Đã từ chối đơn nghỉ phép cho nhân viên: {} - Lý do: {}", nghiPhep.getNhanVien().getHoTen(), note);
         

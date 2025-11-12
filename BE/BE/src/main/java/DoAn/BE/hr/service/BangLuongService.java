@@ -7,6 +7,9 @@ import org.springframework.stereotype.Service;
 
 import DoAn.BE.common.exception.DuplicateException;
 import DoAn.BE.common.exception.EntityNotFoundException;
+import DoAn.BE.common.exception.ForbiddenException;
+import DoAn.BE.common.util.PermissionUtil;
+import DoAn.BE.user.entity.User;
 import DoAn.BE.hr.dto.CreateBangLuongRequest;
 import DoAn.BE.hr.dto.UpdateBangLuongRequest;
 import DoAn.BE.hr.entity.BangLuong;
@@ -51,9 +54,11 @@ public class BangLuongService {
     }
 
     /**
-     * Tạo bảng lương mới
+     * Tạo bảng lương mới - Chỉ HR Manager
      */
-    public BangLuong createBangLuong(CreateBangLuongRequest request) {
+    public BangLuong createBangLuong(CreateBangLuongRequest request, User currentUser) {
+        PermissionUtil.checkHRPermission(currentUser);
+        log.info("HR Manager {} tạo bảng lương cho nhân viên ID: {}", currentUser.getUsername(), request.getNhanvienId());
         // Kiểm tra nhân viên tồn tại
         NhanVien nhanVien = nhanVienRepository.findById(request.getNhanvienId())
             .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
@@ -84,15 +89,46 @@ public class BangLuongService {
 
     /**
      * Lấy thông tin bảng lương theo ID
+     * - Accounting Manager: xem tất cả
+     * - Employee: chỉ xem của mình
      */
+    public BangLuong getBangLuongById(Long id, User currentUser) {
+        BangLuong bangLuong = bangLuongRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Bảng lương không tồn tại"));
+        
+        // Admin không có quyền xem
+        if (currentUser.isAdmin()) {
+            throw new ForbiddenException("Admin không có quyền truy cập dữ liệu bảng lương");
+        }
+        
+        // HR và Accounting xem tất cả
+        if (currentUser.isManagerHR() || currentUser.isManagerAccounting()) {
+            return bangLuong;
+        }
+        
+        // Employee chỉ xem của mình
+        if (!bangLuong.getNhanVien().getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new ForbiddenException("Bạn không có quyền xem bảng lương này");
+        }
+        
+        return bangLuong;
+    }
+    
     public BangLuong getBangLuongById(Long id) {
         return bangLuongRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Bảng lương không tồn tại"));
     }
 
     /**
-     * Lấy danh sách tất cả bảng lương
+     * Lấy danh sách tất cả bảng lương - Chỉ HR/Accounting
      */
+    public List<BangLuong> getAllBangLuong(User currentUser) {
+        if (!currentUser.isManagerHR() && !currentUser.isManagerAccounting()) {
+            throw new ForbiddenException("Chỉ HR/Accounting Manager mới có quyền xem danh sách bảng lương");
+        }
+        return bangLuongRepository.findAll();
+    }
+    
     public List<BangLuong> getAllBangLuong() {
         return bangLuongRepository.findAll();
     }
@@ -105,9 +141,12 @@ public class BangLuongService {
     }
 
     /**
-     * Cập nhật bảng lương
+     * Cập nhật bảng lương - Chỉ HR Manager
      */
-    public BangLuong updateBangLuong(Long id, UpdateBangLuongRequest request) {
+    public BangLuong updateBangLuong(Long id, UpdateBangLuongRequest request, User currentUser) {
+        PermissionUtil.checkHRPermission(currentUser);
+        log.info("HR Manager {} cập nhật bảng lương ID: {}", currentUser.getUsername(), id);
+        
         BangLuong bangLuong = getBangLuongById(id);
 
         // Cập nhật các trường nếu có
@@ -149,17 +188,36 @@ public class BangLuongService {
     }
 
     /**
-     * Xóa bảng lương
+     * Xóa bảng lương - Chỉ HR Manager
      */
-    public void deleteBangLuong(Long id) {
+    public void deleteBangLuong(Long id, User currentUser) {
+        PermissionUtil.checkHRPermission(currentUser);
+        log.info("HR Manager {} xóa bảng lương ID: {}", currentUser.getUsername(), id);
+        
         BangLuong bangLuong = getBangLuongById(id);
         bangLuongRepository.delete(bangLuong);
     }
 
     /**
      * Lấy bảng lương theo nhân viên
+     * - HR/Accounting: xem tất cả
+     * - Employee: chỉ xem của mình
      */
-    public List<BangLuong> getBangLuongByNhanVien(Long nhanvienId) {
+    public List<BangLuong> getBangLuongByNhanVien(Long nhanvienId, User currentUser) {
+        // Admin không có quyền
+        if (currentUser.isAdmin()) {
+            throw new ForbiddenException("Admin không có quyền truy cập dữ liệu bảng lương");
+        }
+        
+        // HR và Accounting xem tất cả
+        if (!currentUser.isManagerHR() && !currentUser.isManagerAccounting()) {
+            // Employee chỉ xem của mình
+            NhanVien nhanVien = nhanVienRepository.findById(nhanvienId)
+                .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
+            if (!nhanVien.getUser().getUserId().equals(currentUser.getUserId())) {
+                throw new ForbiddenException("Bạn chỉ có thể xem bảng lương của chính mình");
+            }
+        }
         return bangLuongRepository.findByNhanVien_NhanvienId(nhanvienId);
     }
 
@@ -186,9 +244,12 @@ public class BangLuongService {
     }
 
     /**
-     * Đánh dấu đã thanh toán
+     * Đánh dấu đã thanh toán - Chỉ Accounting Manager (chỉ xem)
      */
-    public BangLuong markAsPaid(Long id) {
+    public BangLuong markAsPaid(Long id, User currentUser) {
+        PermissionUtil.checkAccountingViewPermission(currentUser);
+        log.info("Accounting Manager {} đánh dấu thanh toán bảng lương ID: {}", currentUser.getUsername(), id);
+        
         BangLuong bangLuong = getBangLuongById(id);
         bangLuong.setTrangThai("DA_THANH_TOAN");
         return bangLuongRepository.save(bangLuong);

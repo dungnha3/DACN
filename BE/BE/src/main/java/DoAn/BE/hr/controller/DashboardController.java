@@ -2,17 +2,25 @@ package DoAn.BE.hr.controller;
 
 import DoAn.BE.hr.dto.DashboardDTO;
 import DoAn.BE.hr.service.DashboardService;
+import DoAn.BE.user.entity.User;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
-@RequestMapping("/dashboard")
+@RequestMapping("/api/dashboard")
+@RequiredArgsConstructor
 public class DashboardController {
     
     private final DashboardService dashboardService;
-
-    public DashboardController(DashboardService dashboardService) {
-        this.dashboardService = dashboardService;
+    
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return (User) auth.getPrincipal();
     }
 
     /**

@@ -1,8 +1,11 @@
 package DoAn.BE.project.service;
 
 import DoAn.BE.common.exception.*;
+import DoAn.BE.common.util.PermissionUtil;
 import DoAn.BE.hr.entity.PhongBan;
 import DoAn.BE.hr.repository.PhongBanRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import DoAn.BE.project.dto.*;
 import DoAn.BE.project.entity.Project;
 import DoAn.BE.project.entity.ProjectMember;
@@ -22,16 +25,21 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProjectService {
     
+    private static final Logger log = LoggerFactory.getLogger(ProjectService.class);
+    
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
     private final PhongBanRepository phongBanRepository;
     
     @Transactional
-    public ProjectDTO createProject(CreateProjectRequest request, Long userId) {
-        // Validate user exists
-        User creator = userRepository.findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
+    public ProjectDTO createProject(CreateProjectRequest request, User currentUser) {
+        // Admin và HR/Accounting không có quyền
+        if (!PermissionUtil.canAccessProjects(currentUser)) {
+            throw new ForbiddenException("Bạn không có quyền truy cập dự án");
+        }
+        
+        log.info("User {} tạo dự án mới: {}", currentUser.getUsername(), request.getName());
         
         // Check if project key already exists
         if (projectRepository.findByKeyProject(request.getKeyProject()).isPresent()) {
@@ -59,7 +67,7 @@ public class ProjectService {
         project.setDescription(request.getDescription());
         project.setStartDate(request.getStartDate());
         project.setEndDate(request.getEndDate());
-        project.setCreatedBy(creator);
+        project.setCreatedBy(currentUser);
         project.setPhongBan(phongBan);
         project.setStatus(Project.ProjectStatus.ACTIVE);
         project.setIsActive(true);
@@ -67,28 +75,42 @@ public class ProjectService {
         project = projectRepository.save(project);
         
         // Add creator as OWNER
-        ProjectMember ownerMember = new ProjectMember(project, creator, ProjectRole.OWNER);
+        ProjectMember ownerMember = new ProjectMember(project, currentUser, ProjectRole.OWNER);
         projectMemberRepository.save(ownerMember);
         
         return convertToDTO(project);
     }
     
     @Transactional(readOnly = true)
-    public ProjectDTO getProjectById(Long projectId, Long userId) {
+    public ProjectDTO getProjectById(Long projectId, User currentUser) {
+        // Admin và HR/Accounting không có quyền
+        if (!PermissionUtil.canAccessProjects(currentUser)) {
+            throw new ForbiddenException("Bạn không có quyền truy cập dự án");
+        }
+        
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy dự án"));
         
         // Check if user has access to this project
-        validateProjectAccess(projectId, userId);
+        validateProjectAccess(projectId, currentUser.getUserId());
         
         return convertToDTO(project);
     }
     
     @Transactional(readOnly = true)
-    public List<ProjectDTO> getAllProjects() {
-        return projectRepository.findByIsActiveTrue().stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
+    public List<ProjectDTO> getAllProjects(User currentUser) {
+        // Admin và HR/Accounting không có quyền
+        if (!PermissionUtil.canAccessProjects(currentUser)) {
+            throw new ForbiddenException("Bạn không có quyền truy cập dự án");
+        }
+        
+        // Project Manager chỉ xem dự án của mình
+        if (currentUser.isManagerProject()) {
+            return getMyProjects(currentUser.getUserId());
+        }
+        
+        // Employee xem dự án tham gia
+        return getMyProjects(currentUser.getUserId());
     }
     
     @Transactional(readOnly = true)
@@ -97,6 +119,16 @@ public class ProjectService {
         return memberships.stream()
             .map(member -> convertToDTO(member.getProject()))
             .collect(Collectors.toList());
+    }
+    
+    @Transactional(readOnly = true)
+    public List<ProjectDTO> getMyProjects(User currentUser) {
+        // Admin và HR/Accounting không có quyền
+        if (!PermissionUtil.canAccessProjects(currentUser)) {
+            throw new ForbiddenException("Bạn không có quyền truy cập dự án");
+        }
+        
+        return getMyProjects(currentUser.getUserId());
     }
     
     @Transactional

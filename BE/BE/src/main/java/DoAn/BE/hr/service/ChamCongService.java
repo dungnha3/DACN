@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import DoAn.BE.common.exception.BadRequestException;
 import DoAn.BE.common.exception.DuplicateException;
 import DoAn.BE.common.exception.EntityNotFoundException;
+import DoAn.BE.common.exception.ForbiddenException;
+import DoAn.BE.common.util.PermissionUtil;
 import DoAn.BE.common.util.GPSUtil;
 import DoAn.BE.hr.dto.ChamCongGPSRequest;
 import DoAn.BE.hr.dto.ChamCongRequest;
@@ -26,6 +28,7 @@ import DoAn.BE.hr.entity.ChamCong.TrangThaiChamCong;
 import DoAn.BE.hr.entity.NhanVien;
 import DoAn.BE.hr.repository.ChamCongRepository;
 import DoAn.BE.hr.repository.NhanVienRepository;
+import DoAn.BE.user.entity.User;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -55,7 +58,14 @@ public class ChamCongService {
     /**
      * Tạo chấm công mới
      */
-    public ChamCong createChamCong(ChamCongRequest request) {
+    /**
+     * Tạo chấm công - Tất cả trừ Admin
+     */
+    public ChamCong createChamCong(ChamCongRequest request, User currentUser) {
+        if (!PermissionUtil.canPerformAttendance(currentUser)) {
+            throw new ForbiddenException("Admin không có quyền thực hiện chấm công");
+        }
+        log.info("User {} tạo chấm công cho nhân viên ID: {}", currentUser.getUsername(), request.getNhanvienId());
         // Kiểm tra nhân viên tồn tại
         NhanVien nhanVien = nhanVienRepository.findById(request.getNhanvienId())
             .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
@@ -74,6 +84,34 @@ public class ChamCongService {
     /**
      * Lấy thông tin chấm công theo ID
      */
+    /**
+     * Lấy thông tin chấm công theo ID
+     * - Accounting Manager: xem tất cả
+     * - Employee: chỉ xem của mình
+     */
+    public ChamCong getChamCongById(Long id, User currentUser) {
+        ChamCong chamCong = chamCongRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Chấm công không tồn tại"));
+        
+        // Admin không có quyền xem
+        if (currentUser.isAdmin()) {
+            throw new ForbiddenException("Admin không có quyền truy cập dữ liệu chấm công");
+        }
+        
+        // HR/Accounting Manager xem tất cả, Project Manager xem team
+        if (PermissionUtil.canViewTeamAttendance(currentUser)) {
+            // Project Manager cần kiểm tra thêm ở service layer nếu cần
+            return chamCong;
+        }
+        
+        // Employee chỉ xem của mình
+        if (!chamCong.getNhanVien().getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new ForbiddenException("Bạn không có quyền xem chấm công này");
+        }
+        
+        return chamCong;
+    }
+    
     public ChamCong getChamCongById(Long id) {
         return chamCongRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Chấm công không tồn tại"));
@@ -82,14 +120,30 @@ public class ChamCongService {
     /**
      * Lấy danh sách tất cả chấm công
      */
+    /**
+     * Lấy danh sách tất cả chấm công - HR/Accounting/Project Manager
+     */
+    public List<ChamCong> getAllChamCong(User currentUser) {
+        if (!PermissionUtil.canViewTeamAttendance(currentUser)) {
+            throw new ForbiddenException("Bạn không có quyền xem danh sách chấm công");
+        }
+        // TODO: Project Manager chỉ xem team của mình - cần implement logic kiểm tra thành viên dự án
+        return chamCongRepository.findAll();
+    }
+    
     public List<ChamCong> getAllChamCong() {
         return chamCongRepository.findAll();
     }
 
     /**
-     * Cập nhật chấm công
+     * Cập nhật chấm công - Tất cả trừ Admin
      */
-    public ChamCong updateChamCong(Long id, ChamCongRequest request) {
+    public ChamCong updateChamCong(Long id, ChamCongRequest request, User currentUser) {
+        if (!PermissionUtil.canPerformAttendance(currentUser)) {
+            throw new ForbiddenException("Admin không có quyền thực hiện chấm công");
+        }
+        log.info("User {} cập nhật chấm công ID: {}", currentUser.getUsername(), id);
+        
         ChamCong chamCong = getChamCongById(id);
 
         // Không cho đổi nhân viên
@@ -119,17 +173,39 @@ public class ChamCongService {
     }
 
     /**
-     * Xóa chấm công
+     * Xóa chấm công - Tất cả trừ Admin
      */
-    public void deleteChamCong(Long id) {
+    public void deleteChamCong(Long id, User currentUser) {
+        if (!PermissionUtil.canPerformAttendance(currentUser)) {
+            throw new ForbiddenException("Admin không có quyền thực hiện chấm công");
+        }
+        log.info("User {} xóa chấm công ID: {}", currentUser.getUsername(), id);
+        
         ChamCong chamCong = getChamCongById(id);
         chamCongRepository.delete(chamCong);
     }
 
     /**
      * Lấy chấm công theo nhân viên
+     * - Accounting Manager: xem tất cả
+     * - Employee: chỉ xem của mình
      */
-    public List<ChamCong> getChamCongByNhanVien(Long nhanvienId) {
+    public List<ChamCong> getChamCongByNhanVien(Long nhanvienId, User currentUser) {
+        // Admin không có quyền
+        if (currentUser.isAdmin()) {
+            throw new ForbiddenException("Admin không có quyền truy cập dữ liệu chấm công");
+        }
+        
+        // HR/Accounting Manager xem tất cả, Project Manager xem team
+        if (!PermissionUtil.canViewTeamAttendance(currentUser)) {
+            // Employee chỉ xem của mình
+            NhanVien nhanVien = nhanVienRepository.findById(nhanvienId)
+                .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
+            if (!nhanVien.getUser().getUserId().equals(currentUser.getUserId())) {
+                throw new ForbiddenException("Bạn chỉ có thể xem chấm công của chính mình");
+            }
+        }
+        // TODO: Project Manager chỉ xem team của mình - cần kiểm tra thành viên dự án
         return chamCongRepository.findByNhanVien_NhanvienIdOrderByNgayChamDesc(nhanvienId);
     }
 

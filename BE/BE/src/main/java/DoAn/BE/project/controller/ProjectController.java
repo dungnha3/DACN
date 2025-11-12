@@ -3,11 +3,13 @@ package DoAn.BE.project.controller;
 import DoAn.BE.project.dto.*;
 import DoAn.BE.project.entity.ProjectMember.ProjectRole;
 import DoAn.BE.project.service.ProjectService;
+import DoAn.BE.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,34 +21,38 @@ public class ProjectController {
     
     private final ProjectService projectService;
     
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return (User) auth.getPrincipal();
+    }
+    
     @PostMapping
     public ResponseEntity<ProjectDTO> createProject(
-            @Valid @RequestBody CreateProjectRequest request,
-            Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        ProjectDTO project = projectService.createProject(request, userId);
+            @Valid @RequestBody CreateProjectRequest request) {
+        User currentUser = getCurrentUser();
+        ProjectDTO project = projectService.createProject(request, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(project);
     }
     
     @GetMapping("/{projectId}")
     public ResponseEntity<ProjectDTO> getProject(
-            @PathVariable Long projectId,
-            Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        ProjectDTO project = projectService.getProjectById(projectId, userId);
+            @PathVariable Long projectId) {
+        User currentUser = getCurrentUser();
+        ProjectDTO project = projectService.getProjectById(projectId, currentUser);
         return ResponseEntity.ok(project);
     }
     
     @GetMapping
     public ResponseEntity<List<ProjectDTO>> getAllProjects() {
-        List<ProjectDTO> projects = projectService.getAllProjects();
+        User currentUser = getCurrentUser();
+        List<ProjectDTO> projects = projectService.getAllProjects(currentUser);
         return ResponseEntity.ok(projects);
     }
     
     @GetMapping("/my-projects")
-    public ResponseEntity<List<ProjectDTO>> getMyProjects(Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        List<ProjectDTO> projects = projectService.getMyProjects(userId);
+    public ResponseEntity<List<ProjectDTO>> getMyProjects() {
+        User currentUser = getCurrentUser();
+        List<ProjectDTO> projects = projectService.getMyProjects(currentUser);
         return ResponseEntity.ok(projects);
     }
     
