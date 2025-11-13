@@ -10,7 +10,7 @@ export const styles = {
   
   // Sidebar
   sidebar: {
-    background: 'linear-gradient(195deg, #1e3a8a 0%, #0f172a 100%)',
+    background: 'linear-gradient(195deg, #374151 0%, #1f2937 100%)',
     padding: '24px 20px',
     display: 'flex',
     flexDirection: 'column',
@@ -109,7 +109,7 @@ export const styles = {
   },
   logoutBtn: {
     marginTop: 'auto',
-    background: 'linear-gradient(195deg, #dc2626 0%, #991b1b 100%)',
+    background: 'linear-gradient(195deg, #f59e0b 0%, #d97706 100%)',
     border: 'none',
     color: '#fff',
     padding: '11px 16px',
@@ -118,7 +118,7 @@ export const styles = {
     fontWeight: 600,
     fontSize: 14,
     transition: 'all 0.2s',
-    boxShadow: '0 2px 10px rgba(220, 38, 38, 0.3)'
+    boxShadow: '0 2px 10px rgba(245, 158, 11, 0.3)'
   },
   
   // Main Content
@@ -138,13 +138,13 @@ export const styles = {
   roleBadge: {
     display: 'flex',
     alignItems: 'center',
-    background: 'linear-gradient(195deg, #1e3a8a 0%, #1e40af 100%)',
+    background: 'linear-gradient(195deg, #374151 0%, #4b5563 100%)',
     color: '#fff',
     borderRadius: 8,
     padding: '6px 14px',
     fontSize: 12,
     fontWeight: 600,
-    boxShadow: '0 2px 10px rgba(30, 58, 138, 0.3)'
+    boxShadow: '0 2px 10px rgba(55, 65, 81, 0.3)'
   },
   
   // Dashboard Content
@@ -198,11 +198,11 @@ export const styles = {
     gap: 20
   },
   welcomeCard: {
-    background: 'linear-gradient(195deg, #1e3a8a 0%, #1e40af 100%)',
+    background: 'linear-gradient(195deg, #374151 0%, #4b5563 100%)',
     borderRadius: 16,
     padding: 28,
     color: '#fff',
-    boxShadow: '0 4px 20px rgba(30, 58, 138, 0.3)'
+    boxShadow: '0 4px 20px rgba(55, 65, 81, 0.3)'
   },
   welcomeContent: {},
   welcomeTitle: {
@@ -217,7 +217,7 @@ export const styles = {
     marginBottom: 20
   },
   actionBtn: {
-    background: 'linear-gradient(195deg, #dc2626 0%, #991b1b 100%)',
+    background: 'linear-gradient(195deg, #f59e0b 0%, #d97706 100%)',
     border: 'none',
     color: '#fff',
     padding: '10px 20px',
@@ -226,7 +226,7 @@ export const styles = {
     fontWeight: 600,
     fontSize: 14,
     transition: 'all 0.2s',
-    boxShadow: '0 2px 10px rgba(220, 38, 38, 0.3)'
+    boxShadow: '0 2px 10px rgba(245, 158, 11, 0.3)'
   },
   notificationCard: {
     background: '#fff',
@@ -325,7 +325,7 @@ export const styles = {
     color: '#344767'
   },
   addBtn: {
-    background: 'linear-gradient(195deg, #dc2626 0%, #991b1b 100%)',
+    background: 'linear-gradient(195deg, #f59e0b 0%, #d97706 100%)',
     border: 'none',
     color: '#fff',
     padding: '10px 18px',
@@ -333,7 +333,7 @@ export const styles = {
     cursor: 'pointer',
     fontWeight: 600,
     fontSize: 14,
-    boxShadow: '0 2px 10px rgba(220, 38, 38, 0.3)'
+    boxShadow: '0 2px 10px rgba(245, 158, 11, 0.3)'
   },
   tableWrap: {
     overflowX: 'auto'
@@ -396,8 +396,8 @@ export const styles = {
     width: 32,
     height: 32,
     borderRadius: 8,
-    background: status === 'active' ? '#dbeafe' : status === 'pending' ? '#fef3c7' : '#fee2e2',
-    color: status === 'active' ? '#1e3a8a' : status === 'pending' ? '#d97706' : '#dc2626',
+    background: status === 'active' ? '#e5e7eb' : status === 'pending' ? '#fef3c7' : '#fee2e2',
+    color: status === 'active' ? '#374151' : status === 'pending' ? '#d97706' : '#dc2626',
     display: 'grid',
     placeItems: 'center',
     fontSize: 16,
