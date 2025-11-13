@@ -3,6 +3,9 @@ import LoginPage from './pages/auth/LoginPage.jsx'
 import AdminDashboard from './pages/dashboard/AdminDashboard.jsx'
 import EmployeeDashboard from './pages/dashboard/EmployeeDashboard.jsx'
 import ManagerDashboard from './pages/dashboard/ManagerDashboard.jsx'
+import ProjectManagerDashboard from './pages/dashboard/ProjectManagerDashboard.jsx'
+import HrManagerDashboard from './pages/dashboard/HrManagerDashboard.jsx'
+import AccountingManagerDashboard from './pages/dashboard/AccountingManagerDashboard.jsx'
 
 function App() {
   const ls = typeof localStorage !== 'undefined' ? localStorage : null
@@ -27,8 +30,16 @@ function App() {
     return <AdminDashboard />
   }
 
-  if (isValidToken && role === 'MANAGER') {
-    return <ManagerDashboard />
+  if (isValidToken && role === 'MANAGER_PROJECT') {
+    return <ProjectManagerDashboard />
+  }
+
+  if (isValidToken && role === 'MANAGER_HR') {
+    return <HrManagerDashboard />
+  }
+
+  if (isValidToken && role === 'MANAGER_ACCOUNTING') {
+    return <AccountingManagerDashboard />
   }
 
   if (isValidToken && role === 'EMPLOYEE') {
