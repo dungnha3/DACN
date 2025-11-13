@@ -25,6 +25,9 @@ public class Issue {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
+    @ManyToOne
+    @JoinColumn(name = "sprint_id")
+    private Sprint sprint;
 
     @Column(name = "issue_key", nullable = false, unique = true, length = 20)
     private String issueKey;  // VD: PROJ-001, PROJ-002
