@@ -19,27 +19,20 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(@NonNull MessageBrokerRegistry config) {
-        // Enable a simple message broker for destinations prefixed with "/topic"
-        config.enableSimpleBroker("/topic", "/queue");
-        
-        // Set application destination prefix
-        config.setApplicationDestinationPrefixes("/app");
-        
-        // Set user destination prefix for private messages
-        config.setUserDestinationPrefix("/user");
+        config.enableSimpleBroker("/topic", "/queue"); // Broker cho các topic và queue
+        config.setApplicationDestinationPrefixes("/app"); // Prefix cho destination
+        config.setUserDestinationPrefix("/user"); // Prefix cho tin nhắn cá nhân
     }
 
     @Override
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
-        // Register WebSocket endpoint
-        registry.addEndpoint("/ws/chat")
+        registry.addEndpoint("/ws/chat") // Đăng ký WebSocket endpoint
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
 
     @Override
     public void configureClientInboundChannel(@NonNull ChannelRegistration registration) {
-        // Add authentication interceptor
-        registration.interceptors(authChannelInterceptor);
+        registration.interceptors(authChannelInterceptor); // Thêm interceptor xác thực
     }
 }

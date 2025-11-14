@@ -49,7 +49,13 @@ public class TypingController {
      */
     @PostMapping("/{roomId}/typing/start")
     public ResponseEntity<Map<String, String>> startTyping(@PathVariable Long roomId) {
+        if (roomId == null) {
+            throw new IllegalArgumentException("Room ID không được null");
+        }
         User currentUser = getCurrentUser();
+        if (currentUser.getUserId() == null) {
+            throw new IllegalStateException("User ID không hợp lệ");
+        }
         typingIndicatorService.startTyping(roomId, currentUser.getUserId());
         
         Map<String, String> response = new HashMap<>();
@@ -62,7 +68,13 @@ public class TypingController {
      */
     @PostMapping("/{roomId}/typing/stop")
     public ResponseEntity<Map<String, String>> stopTyping(@PathVariable Long roomId) {
+        if (roomId == null) {
+            throw new IllegalArgumentException("Room ID không được null");
+        }
         User currentUser = getCurrentUser();
+        if (currentUser.getUserId() == null) {
+            throw new IllegalStateException("User ID không hợp lệ");
+        }
         typingIndicatorService.stopTyping(roomId, currentUser.getUserId());
         
         Map<String, String> response = new HashMap<>();
@@ -75,7 +87,13 @@ public class TypingController {
      */
     @GetMapping("/{roomId}/typing")
     public ResponseEntity<Map<String, Object>> getTypingUsers(@PathVariable Long roomId) {
+        if (roomId == null) {
+            throw new IllegalArgumentException("Room ID không được null");
+        }
         User currentUser = getCurrentUser();
+        if (currentUser.getUserId() == null) {
+            throw new IllegalStateException("User ID không hợp lệ");
+        }
         
         // Validate user có trong phòng không
         boolean isMember = chatRoomMemberRepository.existsByChatRoom_RoomIdAndUser_UserId(roomId, currentUser.getUserId());

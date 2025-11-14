@@ -32,7 +32,7 @@ public interface ChamCongRepository extends JpaRepository<ChamCong, Long> {
                                            @Param("startDate") LocalDate startDate, 
                                            @Param("endDate") LocalDate endDate);
     
-    // Tính tổng giờ làm việc
+    // Tính tổng giờ làm việc  
     @Query("SELECT COALESCE(SUM(cc.soGioLam), 0) FROM ChamCong cc WHERE cc.nhanVien.nhanvienId = :nhanvienId " +
            "AND cc.ngayCham BETWEEN :startDate AND :endDate")
     BigDecimal sumWorkingHoursByNhanVienAndMonth(@Param("nhanvienId") Long nhanvienId, 
@@ -55,6 +55,12 @@ public interface ChamCongRepository extends JpaRepository<ChamCong, Long> {
     long countEarlyLeaveDaysByNhanVienAndMonth(@Param("nhanvienId") Long nhanvienId, 
                                                @Param("startDate") LocalDate startDate, 
                                                @Param("endDate") LocalDate endDate);
+    
+    // Tìm theo nhân viên và khoảng thời gian (cần cho dashboard)
+    List<ChamCong> findByNhanVienAndNgayChamBetween(DoAn.BE.hr.entity.NhanVien nhanVien, LocalDate startDate, LocalDate endDate);
+    
+    // Tìm chấm công theo danh sách user ID (cho Project Manager)
+    List<ChamCong> findByNhanVien_User_UserIdIn(List<Long> userIds);
 }
 
 

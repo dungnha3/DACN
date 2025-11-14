@@ -53,17 +53,12 @@ public class BangLuongService {
         this.notificationService = notificationService;
     }
 
-    /**
-     * Tạo bảng lương mới - Chỉ HR Manager
-     */
+    // Tạo bảng lương mới - Chỉ HR Manager
     public BangLuong createBangLuong(CreateBangLuongRequest request, User currentUser) {
         PermissionUtil.checkHRPermission(currentUser);
         log.info("HR Manager {} tạo bảng lương cho nhân viên ID: {}", currentUser.getUsername(), request.getNhanvienId());
-        // Kiểm tra nhân viên tồn tại
         NhanVien nhanVien = nhanVienRepository.findById(request.getNhanvienId())
             .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
-
-        // Kiểm tra bảng lương đã tồn tại cho kỳ này chưa
         if (bangLuongRepository.existsByNhanVien_NhanvienIdAndThangAndNam(request.getNhanvienId(), request.getThang(), request.getNam())) {
             throw new DuplicateException("Bảng lương cho nhân viên này trong kỳ " + 
                 request.getThang() + "/" + request.getNam() + " đã tồn tại");

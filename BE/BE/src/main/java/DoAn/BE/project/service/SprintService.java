@@ -43,12 +43,8 @@ public class SprintService {
         }
         
         log.info("User {} tạo sprint mới cho project {}", currentUser.getUsername(), request.getProjectId());
-        
-        // Validate project exists
         Project project = projectRepository.findById(request.getProjectId())
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy dự án"));
-        
-        // Kiểm tra quyền quản lý project (chỉ OWNER và MANAGER)
         validateProjectManagement(request.getProjectId(), currentUser.getUserId());
         
         // Validate dates
@@ -89,7 +85,10 @@ public class SprintService {
         Sprint sprint = sprintRepository.findById(sprintId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy sprint"));
         
-        // Kiểm tra quyền truy cập project
+        if (sprint.getProject() == null) {
+            throw new IllegalStateException("Sprint không có dự án liên kết");
+        }
+        
         validateProjectAccess(sprint.getProject().getProjectId(), currentUser.getUserId());
         
         return convertToDTO(sprint);
@@ -115,7 +114,10 @@ public class SprintService {
         Sprint sprint = sprintRepository.findById(sprintId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy sprint"));
         
-        // Kiểm tra quyền quản lý project
+        if (sprint.getProject() == null) {
+            throw new IllegalStateException("Sprint không có dự án liên kết");
+        }
+        
         validateProjectManagement(sprint.getProject().getProjectId(), currentUser.getUserId());
         
         // Update fields if provided
@@ -153,7 +155,10 @@ public class SprintService {
         Sprint sprint = sprintRepository.findById(sprintId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy sprint"));
         
-        // Kiểm tra quyền quản lý project
+        if (sprint.getProject() == null) {
+            throw new IllegalStateException("Sprint không có dự án liên kết");
+        }
+        
         validateProjectManagement(sprint.getProject().getProjectId(), currentUser.getUserId());
         
         // Không thể xóa sprint đang ACTIVE
@@ -176,7 +181,10 @@ public class SprintService {
         Sprint sprint = sprintRepository.findById(sprintId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy sprint"));
         
-        // Kiểm tra quyền quản lý project
+        if (sprint.getProject() == null) {
+            throw new IllegalStateException("Sprint không có dự án liên kết");
+        }
+        
         validateProjectManagement(sprint.getProject().getProjectId(), currentUser.getUserId());
         
         if (!sprint.canBeStarted()) {
@@ -201,7 +209,10 @@ public class SprintService {
         Sprint sprint = sprintRepository.findById(sprintId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy sprint"));
         
-        // Kiểm tra quyền quản lý project
+        if (sprint.getProject() == null) {
+            throw new IllegalStateException("Sprint không có dự án liên kết");
+        }
+        
         validateProjectManagement(sprint.getProject().getProjectId(), currentUser.getUserId());
         
         if (!sprint.canBeCompleted()) {
@@ -222,10 +233,16 @@ public class SprintService {
         Issue issue = issueRepository.findById(issueId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
         
-        // Kiểm tra quyền quản lý project
+        if (sprint.getProject() == null) {
+            throw new IllegalStateException("Sprint không có dự án liên kết");
+        }
+        
+        if (issue.getProject() == null) {
+            throw new IllegalStateException("Issue không có dự án liên kết");
+        }
+        
         validateProjectManagement(sprint.getProject().getProjectId(), currentUser.getUserId());
         
-        // Kiểm tra issue thuộc cùng project
         if (!issue.getProject().getProjectId().equals(sprint.getProject().getProjectId())) {
             throw new BadRequestException("Issue không thuộc dự án này");
         }
@@ -247,7 +264,10 @@ public class SprintService {
         Issue issue = issueRepository.findById(issueId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
         
-        // Kiểm tra quyền quản lý project
+        if (sprint.getProject() == null) {
+            throw new IllegalStateException("Sprint không có dự án liên kết");
+        }
+        
         validateProjectManagement(sprint.getProject().getProjectId(), currentUser.getUserId());
         
         // Kiểm tra issue có thuộc sprint này không
@@ -297,18 +317,25 @@ public class SprintService {
     private SprintDTO convertToDTO(Sprint sprint) {
         SprintDTO dto = new SprintDTO();
         dto.setSprintId(sprint.getSprintId());
-        dto.setProjectId(sprint.getProject().getProjectId());
-        dto.setProjectName(sprint.getProject().getName());
+        
+        if (sprint.getProject() != null) {
+            dto.setProjectId(sprint.getProject().getProjectId());
+            dto.setProjectName(sprint.getProject().getName());
+        }
+        
         dto.setName(sprint.getName());
         dto.setGoal(sprint.getGoal());
         dto.setStartDate(sprint.getStartDate());
         dto.setEndDate(sprint.getEndDate());
         dto.setStatus(sprint.getStatus());
-        dto.setCreatedBy(sprint.getCreatedBy().getUserId());
-        dto.setCreatedByName(sprint.getCreatedBy().getUsername());
+        
+        if (sprint.getCreatedBy() != null) {
+            dto.setCreatedBy(sprint.getCreatedBy().getUserId());
+            dto.setCreatedByName(sprint.getCreatedBy().getUsername());
+        }
+        
         dto.setCreatedAt(sprint.getCreatedAt());
         
-        // Count issues
         List<Issue> sprintIssues = issueRepository.findBySprint_SprintId(sprint.getSprintId());
         dto.setTotalIssues(sprintIssues.size());
         dto.setCompletedIssues((int) sprintIssues.stream()

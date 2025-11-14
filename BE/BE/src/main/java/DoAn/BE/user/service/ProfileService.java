@@ -23,7 +23,6 @@ public class ProfileService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // Profile management
     public User getCurrentUserProfile(Long userId) {
         return userRepository.findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
@@ -32,7 +31,6 @@ public class ProfileService {
     public User updateProfile(Long userId, UpdateUserRequest request) {
         User user = getCurrentUserProfile(userId);
 
-        // Update profile fields (không update username và role)
         if (request.getEmail() != null) {
             user.setEmail(request.getEmail());
         }
@@ -49,7 +47,6 @@ public class ProfileService {
     public void changePassword(Long userId, ChangePasswordRequest request) {
         User user = getCurrentUserProfile(userId);
 
-        // Verify old password
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
             throw new InvalidRequestException("Mật khẩu cũ không đúng");
         }

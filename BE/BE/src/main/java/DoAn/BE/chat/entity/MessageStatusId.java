@@ -13,6 +13,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MessageStatusId implements Serializable {
+    private static final long serialVersionUID = 1L;
     @Column(name = "message_id")
     private Long messageId;
 

@@ -36,11 +36,11 @@ public class SessionService {
         List<UserSession> activeSessions = userSessionRepository.findByUserAndIsActiveTrue(user);
         
         if (activeSessions.size() >= maxConcurrentSessions) {
-            // Xóa session cũ nhất
             UserSession oldestSession = activeSessions.stream()
+                    .filter(s -> s.getLastActivity() != null)
                     .min((s1, s2) -> s1.getLastActivity().compareTo(s2.getLastActivity()))
                     .orElse(null);
-            if (oldestSession != null) {
+            if (oldestSession != null && oldestSession.getSessionId() != null) {
                 deactivateSession(oldestSession.getSessionId());
             }
         }
@@ -127,7 +127,7 @@ public class SessionService {
         LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(sessionTimeoutMinutes);
         
         allSessions.stream()
-                .filter(session -> session.getLastActivity().isBefore(cutoffTime))
+                .filter(session -> session.getLastActivity() != null && session.getLastActivity().isBefore(cutoffTime))
                 .forEach(session -> {
                     session.setIsActive(false);
                     userSessionRepository.save(session);

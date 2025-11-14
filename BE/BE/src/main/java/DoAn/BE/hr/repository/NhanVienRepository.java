@@ -26,6 +26,13 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, Long> {
     
     // Đếm theo trạng thái
     long countByTrangThai(TrangThaiNhanVien trangThai);
+    
+    // Tìm nhân viên theo phòng ban (cần cho dashboard)
+    List<NhanVien> findByPhongBan(DoAn.BE.hr.entity.PhongBan phongBan);
+    
+    // Tìm nhân viên sinh nhật (cần cho WorkflowNotificationService)
+    @Query("SELECT nv FROM NhanVien nv WHERE MONTH(nv.ngaySinh) = :month AND DAY(nv.ngaySinh) = :day AND nv.trangThai = 'DANG_LAM_VIEC'")
+    List<NhanVien> findByBirthday(@Param("month") int month, @Param("day") int day);
 }
 
 

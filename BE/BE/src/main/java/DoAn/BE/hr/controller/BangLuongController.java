@@ -40,10 +40,7 @@ public class BangLuongController {
         return (User) auth.getPrincipal();
     }
     
-    /**
-     * Tạo bảng lương mới
-     * POST /api/bang-luong
-     */
+    // Tạo bảng lương mới
     @PostMapping
     public ResponseEntity<BangLuongDTO> createBangLuong(@Valid @RequestBody CreateBangLuongRequest request) {
         User currentUser = getCurrentUser();
@@ -51,10 +48,7 @@ public class BangLuongController {
         return ResponseEntity.status(HttpStatus.CREATED).body(bangLuongMapper.toDTO(bangLuong));
     }
     
-    /**
-     * Lấy thông tin bảng lương theo ID
-     * GET /api/bang-luong/{id}
-     */
+    // Lấy thông tin bảng lương theo ID
     @GetMapping("/{id}")
     public ResponseEntity<BangLuongDTO> getBangLuongById(@PathVariable Long id) {
         User currentUser = getCurrentUser();
@@ -62,10 +56,7 @@ public class BangLuongController {
         return ResponseEntity.ok(bangLuongMapper.toDTO(bangLuong));
     }
     
-    /**
-     * Lấy danh sách tất cả bảng lương
-     * GET /api/bang-luong
-     */
+    // Lấy danh sách tất cả bảng lương
     @GetMapping
     public ResponseEntity<List<BangLuongDTO>> getAllBangLuong() {
         User currentUser = getCurrentUser();
@@ -73,10 +64,7 @@ public class BangLuongController {
         return ResponseEntity.ok(bangLuongMapper.toDTOList(bangLuongs));
     }
     
-    /**
-     * Cập nhật bảng lương
-     * PUT /api/bang-luong/{id}
-     */
+    // Cập nhật bảng lương
     @PutMapping("/{id}")
     public ResponseEntity<BangLuongDTO> updateBangLuong(
             @PathVariable Long id,
@@ -86,10 +74,7 @@ public class BangLuongController {
         return ResponseEntity.ok(bangLuongMapper.toDTO(bangLuong));
     }
     
-    /**
-     * Xóa bảng lương
-     * DELETE /api/bang-luong/{id}
-     */
+    // Xóa bảng lương
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteBangLuong(@PathVariable Long id) {
         User currentUser = getCurrentUser();
@@ -99,10 +84,7 @@ public class BangLuongController {
         return ResponseEntity.ok(response);
     }
     
-    /**
-     * Lấy bảng lương theo nhân viên
-     * GET /api/bang-luong/nhan-vien/{nhanvienId}
-     */
+    // Lấy bảng lương theo nhân viên
     @GetMapping("/nhan-vien/{nhanvienId}")
     public ResponseEntity<List<BangLuongDTO>> getBangLuongByNhanVien(@PathVariable Long nhanvienId) {
         User currentUser = getCurrentUser();
@@ -110,10 +92,7 @@ public class BangLuongController {
         return ResponseEntity.ok(bangLuongMapper.toDTOList(bangLuongs));
     }
     
-    /**
-     * Lấy bảng lương theo kỳ (tháng/năm)
-     * GET /api/bang-luong/period?thang=1&nam=2024
-     */
+    // Lấy bảng lương theo kỳ (tháng/năm)
     @GetMapping("/period")
     public ResponseEntity<List<BangLuongDTO>> getBangLuongByPeriod(
             @RequestParam Integer thang,
@@ -122,10 +101,7 @@ public class BangLuongController {
         return ResponseEntity.ok(bangLuongMapper.toDTOList(bangLuongs));
     }
     
-    /**
-     * Lấy bảng lương theo nhân viên và kỳ
-     * GET /api/bang-luong/nhan-vien/{nhanvienId}/period?thang=1&nam=2024
-     */
+    // Lấy bảng lương theo nhân viên và kỳ
     @GetMapping("/nhan-vien/{nhanvienId}/period")
     public ResponseEntity<BangLuongDTO> getBangLuongByNhanVienAndPeriod(
             @PathVariable Long nhanvienId,
@@ -135,20 +111,14 @@ public class BangLuongController {
         return ResponseEntity.ok(bangLuongMapper.toDTO(bangLuong));
     }
     
-    /**
-     * Lấy bảng lương theo trạng thái
-     * GET /api/bang-luong/trang-thai/{trangThai}
-     */
+    // Lấy bảng lương theo trạng thái
     @GetMapping("/trang-thai/{trangThai}")
     public ResponseEntity<List<BangLuongDTO>> getBangLuongByTrangThai(@PathVariable String trangThai) {
         List<BangLuong> bangLuongs = bangLuongService.getBangLuongByTrangThai(trangThai);
         return ResponseEntity.ok(bangLuongMapper.toDTOList(bangLuongs));
     }
     
-    /**
-     * Đánh dấu đã thanh toán
-     * PATCH /api/bang-luong/{id}/mark-paid
-     */
+    // Đánh dấu đã thanh toán
     @PatchMapping("/{id}/mark-paid")
     public ResponseEntity<BangLuongDTO> markAsPaid(@PathVariable Long id) {
         User currentUser = getCurrentUser();
@@ -156,20 +126,14 @@ public class BangLuongController {
         return ResponseEntity.ok(bangLuongMapper.toDTO(bangLuong));
     }
     
-    /**
-     * Hủy bảng lương
-     * PATCH /api/bang-luong/{id}/cancel
-     */
+    // Hủy bảng lương
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<BangLuongDTO> cancelBangLuong(@PathVariable Long id) {
         BangLuong bangLuong = bangLuongService.cancelBangLuong(id);
         return ResponseEntity.ok(bangLuongMapper.toDTO(bangLuong));
     }
     
-    /**
-     * Tính tổng lương thực nhận theo kỳ
-     * GET /api/bang-luong/total/period?thang=1&nam=2024
-     */
+    // Tính tổng lương thực nhận theo kỳ
     @GetMapping("/total/period")
     public ResponseEntity<Map<String, Object>> getTotalSalaryByPeriod(
             @RequestParam Integer thang,
@@ -182,10 +146,7 @@ public class BangLuongController {
         return ResponseEntity.ok(response);
     }
     
-    /**
-     * Tính tổng lương thực nhận theo nhân viên trong năm
-     * GET /api/bang-luong/total/nhan-vien/{nhanvienId}/year/{nam}
-     */
+    // Tính tổng lương thực nhận theo nhân viên trong năm
     @GetMapping("/total/nhan-vien/{nhanvienId}/year/{nam}")
     public ResponseEntity<Map<String, Object>> getTotalSalaryByNhanVienAndYear(
             @PathVariable Long nhanvienId,
@@ -198,10 +159,7 @@ public class BangLuongController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * ⭐⭐⭐ TÍNH LƯƠNG TỰ ĐỘNG - API mới
-     * POST /api/bang-luong/tinh-tu-dong/{nhanvienId}?thang=10&nam=2024
-     */
+    // Tính lương tự động
     @PostMapping("/tinh-tu-dong/{nhanvienId}")
     public ResponseEntity<BangLuongDTO> tinhLuongTuDong(
             @PathVariable Long nhanvienId,
@@ -211,10 +169,7 @@ public class BangLuongController {
         return ResponseEntity.status(HttpStatus.CREATED).body(bangLuongMapper.toDTO(bangLuong));
     }
 
-    /**
-     * ⭐⭐⭐ TÍNH LƯƠNG TỰ ĐỘNG CHO TẤT CẢ - API mới
-     * POST /api/bang-luong/tinh-tu-dong-tat-ca?thang=10&nam=2024
-     */
+    // Tính lương tự động cho tất cả
     @PostMapping("/tinh-tu-dong-tat-ca")
     public ResponseEntity<Map<String, Object>> tinhLuongTuDongChoTatCa(
             @RequestParam Integer thang,
@@ -228,10 +183,7 @@ public class BangLuongController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * ⭐ Lấy danh sách bảng lương có phân trang
-     * GET /api/bang-luong/page?page=0&size=10&sort=thang,desc
-     */
+    // Lấy danh sách bảng lương có phân trang
     @GetMapping("/page")
     public ResponseEntity<Page<BangLuongDTO>> getBangLuongPage(
             @RequestParam(defaultValue = "0") int page,

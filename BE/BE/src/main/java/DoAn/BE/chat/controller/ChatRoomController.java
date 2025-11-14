@@ -32,9 +32,7 @@ public class ChatRoomController {
     @Autowired
     private UserRepository userRepository;
 
-    /**
-     * Lấy thông tin user hiện tại từ Security Context
-     */
+    // Lấy thông tin user hiện tại từ Security Context
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -46,9 +44,7 @@ public class ChatRoomController {
             .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
     }
 
-    /**
-     * Tạo phòng chat mới
-     */
+    // Tạo phòng chat mới
     @PostMapping
     public ResponseEntity<ChatRoomDTO> createChatRoom(@Valid @RequestBody CreateChatRoomRequest request) {
         User currentUser = getCurrentUser();
@@ -56,9 +52,7 @@ public class ChatRoomController {
         return ResponseEntity.status(HttpStatus.CREATED).body(chatRoom);
     }
 
-    /**
-     * Lấy danh sách phòng chat của user hiện tại
-     */
+    // Lấy danh sách phòng chat của user hiện tại
     @GetMapping
     public ResponseEntity<List<ChatRoomDTO>> getMyChatRooms() {
         User currentUser = getCurrentUser();
@@ -66,9 +60,7 @@ public class ChatRoomController {
         return ResponseEntity.ok(chatRooms);
     }
 
-    /**
-     * Lấy thông tin phòng chat theo ID
-     */
+    // Lấy thông tin phòng chat theo ID
     @GetMapping("/{roomId}")
     public ResponseEntity<ChatRoomDTO> getChatRoom(@PathVariable Long roomId) {
         User currentUser = getCurrentUser();
@@ -76,9 +68,7 @@ public class ChatRoomController {
         return ResponseEntity.ok(chatRoom);
     }
 
-    /**
-     * Tìm hoặc tạo chat 1-1 với user khác
-     */
+    // Tìm hoặc tạo chat 1-1 với user khác
     @PostMapping("/direct/{userId}")
     public ResponseEntity<ChatRoomDTO> createDirectChat(@PathVariable Long userId) {
         User currentUser = getCurrentUser();
@@ -86,9 +76,7 @@ public class ChatRoomController {
         return ResponseEntity.ok(chatRoom);
     }
 
-    /**
-     * Thêm thành viên vào phòng chat
-     */
+    // Thêm thành viên vào phòng chat
     @PostMapping("/{roomId}/members/{userId}")
     public ResponseEntity<ChatRoomDTO> addMemberToRoom(
             @PathVariable Long roomId,
@@ -98,9 +86,7 @@ public class ChatRoomController {
         return ResponseEntity.ok(chatRoom);
     }
 
-    /**
-     * Xóa thành viên khỏi phòng chat
-     */
+    // Xóa thành viên khỏi phòng chat
     @DeleteMapping("/{roomId}/members/{userId}")
     public ResponseEntity<ChatRoomDTO> removeMemberFromRoom(
             @PathVariable Long roomId,
@@ -110,9 +96,7 @@ public class ChatRoomController {
         return ResponseEntity.ok(chatRoom);
     }
 
-    /**
-     * Rời khỏi phòng chat
-     */
+    // Rời khỏi phòng chat
     @DeleteMapping("/{roomId}/leave")
     public ResponseEntity<Map<String, String>> leaveRoom(@PathVariable Long roomId) {
         User currentUser = getCurrentUser();
@@ -123,9 +107,7 @@ public class ChatRoomController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Thay đổi quyền thành viên
-     */
+    // Thay đổi quyền thành viên
     @PutMapping("/{roomId}/members/{userId}/role")
     public ResponseEntity<ChatRoomDTO> changeMemberRole(
             @PathVariable Long roomId,
@@ -137,9 +119,7 @@ public class ChatRoomController {
         return ResponseEntity.ok(chatRoom);
     }
 
-    /**
-     * Cập nhật thông tin phòng chat
-     */
+    // Cập nhật thông tin phòng chat
     @PutMapping("/{roomId}/settings")
     public ResponseEntity<ChatRoomDTO> updateRoomSettings(
             @PathVariable Long roomId,
@@ -151,9 +131,7 @@ public class ChatRoomController {
         return ResponseEntity.ok(chatRoom);
     }
 
-    /**
-     * Lấy danh sách thành viên trong phòng
-     */
+    // Lấy danh sách thành viên trong phòng
     @GetMapping("/{roomId}/members")
     public ResponseEntity<List<ChatRoomMember>> getRoomMembers(@PathVariable Long roomId) {
         User currentUser = getCurrentUser();

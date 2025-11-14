@@ -40,9 +40,7 @@ public class AccountController {
         return (User) auth.getPrincipal();
     }
     
-    /**
-     * Tạo tài khoản kèm nhân viên - Chỉ HR Manager
-     */
+    // Tạo tài khoản kèm nhân viên - Chỉ HR Manager
     @PostMapping("/with-employee")
     public ResponseEntity<Map<String, Object>> createAccountWithEmployee(
             @Valid @RequestBody CreateAccountWithEmployeeRequest request) {

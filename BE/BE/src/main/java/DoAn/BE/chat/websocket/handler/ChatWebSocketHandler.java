@@ -6,7 +6,6 @@ import DoAn.BE.chat.websocket.dto.WebSocketMessage;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.user.repository.UserRepository;
 import DoAn.BE.chat.service.UserPresenceService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
@@ -20,31 +19,28 @@ import java.util.concurrent.ConcurrentHashMap;
 @Controller
 public class ChatWebSocketHandler {
 
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final UserRepository userRepository;
+    private final UserPresenceService userPresenceService;
 
-    // @Autowired
-    // private MessageService messageService; // Not used in WebSocket handler
-
-    @Autowired
-    private ChatRoomMemberRepository chatRoomMemberRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-    
-    @Autowired
-    private UserPresenceService userPresenceService;
+    public ChatWebSocketHandler(SimpMessagingTemplate messagingTemplate,
+                               ChatRoomMemberRepository chatRoomMemberRepository,
+                               UserRepository userRepository,
+                               UserPresenceService userPresenceService) {
+        this.messagingTemplate = messagingTemplate;
+        this.chatRoomMemberRepository = chatRoomMemberRepository;
+        this.userRepository = userRepository;
+        this.userPresenceService = userPresenceService;
+    }
 
     // Store typing users for each room
     private final Map<Long, Map<Long, Long>> typingUsers = new ConcurrentHashMap<>();
 
-    /**
-     * Handle incoming chat messages
-     */
+    // Handle incoming chat messages
     @MessageMapping("/chat.sendMessage")
     public void sendMessage(@Payload WebSocketMessage message, SimpMessageHeaderAccessor headerAccessor) {
         try {
-            // Get user from authentication
             Object principal = headerAccessor.getUser();
             if (principal == null || !(principal instanceof User)) {
                 return; // User not authenticated
@@ -52,6 +48,9 @@ public class ChatWebSocketHandler {
 
             User user = (User) principal;
             Long roomId = message.getRoomId();
+            if (roomId == null || user.getUserId() == null) {
+                return; // Invalid data
+            }
 
             // Check if user is member of the room
             boolean isMember = chatRoomMemberRepository.existsByChatRoom_RoomIdAndUser_UserId(roomId, user.getUserId());
@@ -100,6 +99,9 @@ public class ChatWebSocketHandler {
 
             User user = (User) principal;
             Long roomId = message.getRoomId();
+            if (roomId == null || user.getUserId() == null) {
+                return; // Invalid data
+            }
 
             // Check if user is member of the room
             boolean isMember = chatRoomMemberRepository.existsByChatRoom_RoomIdAndUser_UserId(roomId, user.getUserId());
@@ -135,6 +137,9 @@ public class ChatWebSocketHandler {
 
             User user = (User) principal;
             Long roomId = message.getRoomId();
+            if (roomId == null || user.getUserId() == null) {
+                return; // Invalid data
+            }
 
             // Remove user from typing list
             Map<Long, Long> roomTypingUsers = typingUsers.get(roomId);
@@ -171,6 +176,9 @@ public class ChatWebSocketHandler {
 
             User user = (User) principal;
             Long roomId = message.getRoomId();
+            if (roomId == null || user.getUserId() == null) {
+                return; // Invalid data
+            }
 
             // Check if user is member of the room
             boolean isMember = chatRoomMemberRepository.existsByChatRoom_RoomIdAndUser_UserId(roomId, user.getUserId());
@@ -205,6 +213,9 @@ public class ChatWebSocketHandler {
 
             User user = (User) principal;
             Long roomId = message.getRoomId();
+            if (roomId == null || user.getUserId() == null) {
+                return; // Invalid data
+            }
 
             // Remove user from typing list
             Map<Long, Long> roomTypingUsers = typingUsers.get(roomId);
@@ -237,6 +248,9 @@ public class ChatWebSocketHandler {
      * Get typing users for a room
      */
     public List<String> getTypingUsers(Long roomId) {
+        if (roomId == null) {
+            return List.of();
+        }
         Map<Long, Long> roomTypingUsers = typingUsers.get(roomId);
         if (roomTypingUsers == null || roomTypingUsers.isEmpty()) {
             return List.of();

@@ -41,12 +41,9 @@ public class ProjectService {
         
         log.info("User {} tạo dự án mới: {}", currentUser.getUsername(), request.getName());
         
-        // Check if project key already exists
         if (projectRepository.findByKeyProject(request.getKeyProject()).isPresent()) {
             throw new DuplicateException("Mã dự án đã tồn tại: " + request.getKeyProject());
         }
-        
-        // Validate phongban if provided
         PhongBan phongBan = null;
         if (request.getPhongbanId() != null) {
             phongBan = phongBanRepository.findById(request.getPhongbanId())
@@ -59,8 +56,6 @@ public class ProjectService {
                 throw new BadRequestException("Ngày kết thúc phải sau ngày bắt đầu");
             }
         }
-        
-        // Create project
         Project project = new Project();
         project.setName(request.getName());
         project.setKeyProject(request.getKeyProject());
@@ -289,8 +284,11 @@ public class ProjectService {
         dto.setStatus(project.getStatus());
         dto.setStartDate(project.getStartDate());
         dto.setEndDate(project.getEndDate());
-        dto.setCreatedBy(project.getCreatedBy().getUserId());
-        dto.setCreatedByName(project.getCreatedBy().getUsername());
+        
+        if (project.getCreatedBy() != null) {
+            dto.setCreatedBy(project.getCreatedBy().getUserId());
+            dto.setCreatedByName(project.getCreatedBy().getUsername());
+        }
         
         if (project.getPhongBan() != null) {
             dto.setPhongbanId(project.getPhongBan().getPhongbanId());
@@ -303,10 +301,14 @@ public class ProjectService {
     private ProjectMemberDTO convertToMemberDTO(ProjectMember member) {
         ProjectMemberDTO dto = new ProjectMemberDTO();
         dto.setId(member.getId());
-        dto.setUserId(member.getUser().getUserId());
-        dto.setUsername(member.getUser().getUsername());
-        dto.setEmail(member.getUser().getEmail());
-        dto.setAvatarUrl(member.getUser().getAvatarUrl());
+        
+        if (member.getUser() != null) {
+            dto.setUserId(member.getUser().getUserId());
+            dto.setUsername(member.getUser().getUsername());
+            dto.setEmail(member.getUser().getEmail());
+            dto.setAvatarUrl(member.getUser().getAvatarUrl());
+        }
+        
         dto.setRole(member.getRole());
         dto.setJoinedAt(member.getJoinedAt());
         return dto;

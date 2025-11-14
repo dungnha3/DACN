@@ -18,7 +18,7 @@ import DoAn.BE.common.exception.BadRequestException;
 import DoAn.BE.common.exception.EntityNotFoundException;
 import DoAn.BE.chat.websocket.service.WebSocketNotificationService;
 import DoAn.BE.notification.service.NotificationService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,49 +32,49 @@ import org.springframework.data.domain.Pageable;
 @Transactional
 public class MessageService {
 
-    @Autowired
-    private MessageRepository messageRepository;
+    private final MessageRepository messageRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final MessageStatusRepository messageStatusRepository;
+    private final UserRepository userRepository;
+    private final WebSocketNotificationService webSocketNotificationService;
+    private final NotificationService notificationService;
+    private final TypingIndicatorService typingIndicatorService;
 
-    @Autowired
-    private ChatRoomRepository chatRoomRepository;
+    public MessageService(MessageRepository messageRepository,
+                         ChatRoomRepository chatRoomRepository,
+                         ChatRoomMemberRepository chatRoomMemberRepository,
+                         MessageStatusRepository messageStatusRepository,
+                         UserRepository userRepository,
+                         WebSocketNotificationService webSocketNotificationService,
+                         NotificationService notificationService,
+                         TypingIndicatorService typingIndicatorService) {
+        this.messageRepository = messageRepository;
+        this.chatRoomRepository = chatRoomRepository;
+        this.chatRoomMemberRepository = chatRoomMemberRepository;
+        this.messageStatusRepository = messageStatusRepository;
+        this.userRepository = userRepository;
+        this.webSocketNotificationService = webSocketNotificationService;
+        this.notificationService = notificationService;
+        this.typingIndicatorService = typingIndicatorService;
+    }
 
-    @Autowired
-    private ChatRoomMemberRepository chatRoomMemberRepository;
-
-    @Autowired
-    private MessageStatusRepository messageStatusRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private WebSocketNotificationService webSocketNotificationService;
-
-    @Autowired
-    private NotificationService notificationService;
-
-    @Autowired
-    private TypingIndicatorService typingIndicatorService;
-
-    /**
-     * Gửi tin nhắn
-     */
-    public MessDTO sendMessage(SendMessageRequest request, Long senderId) {
-        // Validate sender tồn tại
+    // Gửi tin nhắn
+    public MessDTO sendMessage(SendMessageRequest request, @NonNull Long senderId) {
+        if (request.getRoomId() == null) {
+            throw new BadRequestException("Room ID không được null");
+        }
         User sender = userRepository.findById(senderId)
             .orElseThrow(() -> new EntityNotFoundException("Người gửi không tồn tại"));
 
-        // Validate phòng chat tồn tại
         ChatRoom chatRoom = chatRoomRepository.findById(request.getRoomId())
             .orElseThrow(() -> new EntityNotFoundException("Phòng chat không tồn tại"));
 
-        // Kiểm tra sender có trong phòng không
         boolean isMember = chatRoomMemberRepository.existsByChatRoom_RoomIdAndUser_UserId(request.getRoomId(), senderId);
         if (!isMember) {
             throw new BadRequestException("Bạn không có quyền gửi tin nhắn trong phòng này");
         }
 
-        // Tạo Message entity
         Message message = new Message();
         message.setChatRoom(chatRoom);
         message.setSender(sender);
@@ -83,12 +83,10 @@ public class MessageService {
         message.setSentAt(LocalDateTime.now());
         message.setIsDeleted(false);
 
-        // Set reply message nếu có
         if (request.getReplyToMessageId() != null) {
             Message replyToMessage = messageRepository.findById(request.getReplyToMessageId())
                 .orElseThrow(() -> new EntityNotFoundException("Tin nhắn được reply không tồn tại"));
 
-            // Kiểm tra tin nhắn reply có cùng phòng không
             if (!replyToMessage.getChatRoom().getRoomId().equals(request.getRoomId())) {
                 throw new BadRequestException("Không thể reply tin nhắn từ phòng khác");
             }
@@ -96,13 +94,13 @@ public class MessageService {
             message.setReplyToMessage(replyToMessage);
         }
 
-        // Lưu tin nhắn
         message = messageRepository.save(message);
 
-        // Tạo MessageStatus cho tất cả members (trừ sender)
+
         List<ChatRoomMember> members = chatRoomMemberRepository.findByChatRoom_RoomId(request.getRoomId());
         for (ChatRoomMember member : members) {
-            if (!member.getUser().getUserId().equals(senderId)) {
+            if (member.getUser() != null && member.getUser().getUserId() != null 
+                && !member.getUser().getUserId().equals(senderId)) {
                 MessageStatus status = new MessageStatus();
                 status.setId(new MessageStatusId(message.getMessageId(), member.getUser().getUserId()));
                 status.setMessage(message);
@@ -115,13 +113,13 @@ public class MessageService {
 
         MessDTO messageDTO = convertToMessageDTO(message);
 
-        // Gửi WebSocket notification
         webSocketNotificationService.notifyNewMessage(request.getRoomId(), messageDTO);
 
-        // Gửi notification cho các thành viên khác
+
         List<ChatRoomMember> otherMembers = chatRoomMemberRepository.findByChatRoom_RoomId(request.getRoomId())
             .stream()
-            .filter(member -> !member.getUser().getUserId().equals(senderId))
+            .filter(member -> member.getUser() != null && member.getUser().getUserId() != null
+                && !member.getUser().getUserId().equals(senderId))
             .toList();
 
         for (ChatRoomMember member : otherMembers) {
@@ -133,16 +131,13 @@ public class MessageService {
             );
         }
 
-        // Dừng typing indicator cho user này
         typingIndicatorService.forceStopTyping(request.getRoomId(), senderId);
 
         return messageDTO;
     }
 
-    /**
-     * Lấy tin nhắn trong phòng chat
-     */
-    public List<MessDTO> getMessagesByRoomId(Long roomId, Long userId, int page, int size) {
+    // Lấy tin nhắn trong phòng chat
+    public List<MessDTO> getMessagesByRoomId(@NonNull Long roomId, @NonNull Long userId, int page, int size) {
         // Validate phòng chat tồn tại
         chatRoomRepository.findById(roomId)
             .orElseThrow(() -> new EntityNotFoundException("Phòng chat không tồn tại"));
@@ -162,10 +157,8 @@ public class MessageService {
             .collect(Collectors.toList());
     }
 
-    /**
-     * Đánh dấu tin nhắn đã đọc
-     */
-    public void markMessageAsSeen(Long messageId, Long userId) {
+    // Đánh dấu tin nhắn đã đọc
+    public void markMessageAsSeen(@NonNull Long messageId, @NonNull Long userId) {
         // Validate message tồn tại
         messageRepository.findById(messageId)
             .orElseThrow(() -> new EntityNotFoundException("Tin nhắn không tồn tại"));
@@ -182,9 +175,7 @@ public class MessageService {
         }
     }
 
-    /**
-     * Tự động detect loại tin nhắn
-     */
+    // Tự động xác định loại tin nhắn
     private Message.MessageType detectMessageType(SendMessageRequest request) {
         if (request.getFileId() != null) {
             String fileName = request.getFileName();
@@ -199,15 +190,12 @@ public class MessageService {
         return Message.MessageType.TEXT;
     }
 
-    /**
-     * Convert Message entity sang DTO
-     */
+    // Chuyển đổi Message entity sang DTO
     private MessDTO convertToMessageDTO(Message message) {
         MessDTO dto = new MessDTO();
         dto.setMessageId(message.getMessageId());
         dto.setRoomId(message.getChatRoom().getRoomId());
 
-        // Convert User to UserDTO
         UserDTO senderDTO = new UserDTO();
         senderDTO.setUserId(message.getSender().getUserId());
         senderDTO.setUsername(message.getSender().getUsername());
@@ -229,12 +217,8 @@ public class MessageService {
         return dto;
     }
 
-    // ==================== SEARCH METHODS ====================
-
-    /**
-     * Tìm kiếm tin nhắn theo nội dung
-     */
-    public List<MessDTO> searchMessages(Long roomId, String keyword, Long userId, Pageable pageable) {
+    // Tìm kiếm tin nhắn theo nội dung
+    public List<MessDTO> searchMessages(@NonNull Long roomId, String keyword, @NonNull Long userId, Pageable pageable) {
         // Validate phòng chat tồn tại
         chatRoomRepository.findById(roomId)
             .orElseThrow(() -> new EntityNotFoundException("Phòng chat không tồn tại"));
@@ -258,10 +242,8 @@ public class MessageService {
             .collect(Collectors.toList());
     }
 
-    /**
-     * Tìm kiếm tin nhắn theo người gửi
-     */
-    public List<MessDTO> searchMessagesBySender(Long roomId, String senderKeyword, Long userId) {
+    // Tìm kiếm tin nhắn theo người gửi
+    public List<MessDTO> searchMessagesBySender(@NonNull Long roomId, String senderKeyword, @NonNull Long userId) {
         // Validate permissions
         validateRoomAccess(roomId, userId);
 
@@ -272,10 +254,8 @@ public class MessageService {
             .collect(Collectors.toList());
     }
 
-    /**
-     * Tìm kiếm tin nhắn theo khoảng thời gian
-     */
-    public List<MessDTO> searchMessagesByDateRange(Long roomId, LocalDateTime startDate, LocalDateTime endDate, Long userId) {
+    // Tìm kiếm tin nhắn theo khoảng thời gian
+    public List<MessDTO> searchMessagesByDateRange(@NonNull Long roomId, LocalDateTime startDate, LocalDateTime endDate, @NonNull Long userId) {
         // Validate permissions
         validateRoomAccess(roomId, userId);
 
@@ -286,10 +266,8 @@ public class MessageService {
             .collect(Collectors.toList());
     }
 
-    /**
-     * Tìm kiếm tin nhắn theo loại
-     */
-    public List<MessDTO> searchMessagesByType(Long roomId, Message.MessageType messageType, Long userId) {
+    // Tìm kiếm tin nhắn theo loại
+    public List<MessDTO> searchMessagesByType(@NonNull Long roomId, Message.MessageType messageType, @NonNull Long userId) {
         // Validate permissions
         validateRoomAccess(roomId, userId);
 
@@ -300,10 +278,8 @@ public class MessageService {
             .collect(Collectors.toList());
     }
 
-    /**
-     * Sửa tin nhắn
-     */
-    public MessDTO editMessage(Long messageId, String newContent, Long userId) {
+    // Sửa tin nhắn
+    public MessDTO editMessage(@NonNull Long messageId, String newContent, @NonNull Long userId) {
         // Validate message tồn tại
         Message message = messageRepository.findById(messageId)
             .orElseThrow(() -> new EntityNotFoundException("Tin nhắn không tồn tại"));
@@ -349,10 +325,8 @@ public class MessageService {
         return messageDTO;
     }
 
-    /**
-     * Xóa tin nhắn (soft delete)
-     */
-    public void deleteMessage(Long messageId, Long userId) {
+    // Xóa tin nhắn (soft delete)
+    public void deleteMessage(@NonNull Long messageId, @NonNull Long userId) {
         // Validate message tồn tại
         Message message = messageRepository.findById(messageId)
             .orElseThrow(() -> new EntityNotFoundException("Tin nhắn không tồn tại"));
@@ -390,10 +364,8 @@ public class MessageService {
         }
     }
 
-    /**
-     * Helper method để validate quyền truy cập phòng
-     */
-    private void validateRoomAccess(Long roomId, Long userId) {
+    // Kiểm tra quyền truy cập phòng
+    private void validateRoomAccess(@NonNull Long roomId, @NonNull Long userId) {
         chatRoomRepository.findById(roomId)
             .orElseThrow(() -> new EntityNotFoundException("Phòng chat không tồn tại"));
 

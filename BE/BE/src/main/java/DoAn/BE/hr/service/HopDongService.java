@@ -27,15 +27,10 @@ public class HopDongService {
         this.nhanVienRepository = nhanVienRepository;
     }
 
-    /**
-     * Tạo hợp đồng mới
-     */
+    // Tạo hợp đồng mới
     public HopDong createHopDong(HopDongRequest request) {
-        // Kiểm tra nhân viên tồn tại
         NhanVien nhanVien = nhanVienRepository.findById(request.getNhanvienId())
             .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
-
-        // Validate ngày
         if (request.getNgayKetThuc() != null && 
             request.getNgayKetThuc().isBefore(request.getNgayBatDau())) {
             throw new BadRequestException("Ngày kết thúc phải sau ngày bắt đầu");
@@ -53,9 +48,7 @@ public class HopDongService {
         return hopDongRepository.save(hopDong);
     }
 
-    /**
-     * Lấy thông tin hợp đồng theo ID
-     */
+    // Lấy thông tin hợp đồng theo ID
     public HopDong getHopDongById(Long id) {
         return hopDongRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Hợp đồng không tồn tại"));

@@ -44,6 +44,10 @@ public interface HopDongRepository extends JpaRepository<HopDong, Long> {
     
     // Đếm theo trạng thái
     long countByTrangThai(TrangThaiHopDong trangThai);
+    
+    // Thống kê theo loại hợp đồng (cần cho dashboard)
+    @Query("SELECT hd.loaiHopDong, COUNT(hd) FROM HopDong hd GROUP BY hd.loaiHopDong")
+    List<Object[]> getStatsByLoaiHopDong();
 }
 
 

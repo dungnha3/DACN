@@ -5,7 +5,6 @@ import DoAn.BE.chat.entity.ChatRoomMember;
 import DoAn.BE.chat.repository.ChatRoomMemberRepository;
 import DoAn.BE.chat.websocket.dto.WebSocketMessage;
 import DoAn.BE.user.entity.User;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -14,15 +13,16 @@ import java.util.List;
 @Service
 public class WebSocketNotificationService {
 
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final ChatRoomMemberRepository chatRoomMemberRepository;
 
-    @Autowired
-    private ChatRoomMemberRepository chatRoomMemberRepository;
+    public WebSocketNotificationService(SimpMessagingTemplate messagingTemplate,
+                                       ChatRoomMemberRepository chatRoomMemberRepository) {
+        this.messagingTemplate = messagingTemplate;
+        this.chatRoomMemberRepository = chatRoomMemberRepository;
+    }
 
-    /**
-     * Gửi tin nhắn mới đến tất cả thành viên trong phòng
-     */
+    // Gửi thông báo tin nhắn mới
     public void notifyNewMessage(Long roomId, MessDTO message) {
         WebSocketMessage wsMessage = new WebSocketMessage(
             WebSocketMessage.MessageType.CHAT_MESSAGE,
@@ -34,10 +34,7 @@ public class WebSocketNotificationService {
         wsMessage.setMessageId(message.getMessageId());
         wsMessage.setTimestamp(message.getSentAt().toString());
 
-        // Gửi đến tất cả thành viên trong phòng
         messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
-
-        // Gửi notification riêng cho từng user (để hiển thị notification)
         List<ChatRoomMember> members = chatRoomMemberRepository.findByChatRoom_RoomId(roomId);
         for (ChatRoomMember member : members) {
             if (!member.getUser().getUserId().equals(message.getSender().getUserId())) {
@@ -50,9 +47,7 @@ public class WebSocketNotificationService {
         }
     }
 
-    /**
-     * Thông báo tin nhắn đã được sửa
-     */
+    // Thông báo tin nhắn đã được sửa
     public void notifyMessageEdited(Long roomId, MessDTO message) {
         WebSocketMessage wsMessage = new WebSocketMessage(
             WebSocketMessage.MessageType.MESSAGE_EDITED,
@@ -66,9 +61,7 @@ public class WebSocketNotificationService {
         messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
     }
 
-    /**
-     * Thông báo tin nhắn đã được xóa
-     */
+    // Thông báo tin nhắn đã được xóa
     public void notifyMessageDeleted(Long roomId, Long messageId, Long userId) {
         WebSocketMessage wsMessage = new WebSocketMessage(
             WebSocketMessage.MessageType.MESSAGE_DELETED,
@@ -82,9 +75,7 @@ public class WebSocketNotificationService {
         messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
     }
 
-    /**
-     * Thông báo thành viên mới tham gia
-     */
+    // Thông báo thành viên mới tham gia
     public void notifyUserJoined(Long roomId, User user) {
         WebSocketMessage wsMessage = new WebSocketMessage(
             WebSocketMessage.MessageType.USER_JOINED,
@@ -97,9 +88,7 @@ public class WebSocketNotificationService {
         messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
     }
 
-    /**
-     * Thông báo thành viên rời khỏi phòng
-     */
+    // Thông báo thành viên rời khỏi phòng
     public void notifyUserLeft(Long roomId, User user) {
         WebSocketMessage wsMessage = new WebSocketMessage(
             WebSocketMessage.MessageType.USER_LEFT,
@@ -112,9 +101,7 @@ public class WebSocketNotificationService {
         messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
     }
 
-    /**
-     * Thông báo cập nhật thông tin phòng
-     */
+    // Thông báo cập nhật thông tin phòng
     public void notifyRoomUpdated(Long roomId, String updateMessage) {
         WebSocketMessage wsMessage = new WebSocketMessage(
             WebSocketMessage.MessageType.ROOM_UPDATED,
@@ -127,9 +114,7 @@ public class WebSocketNotificationService {
         messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
     }
 
-    /**
-     * Gửi typing indicator
-     */
+    // Gửi typing indicator
     public void notifyTyping(Long roomId, Long userId, String username, boolean isTyping) {
         WebSocketMessage.MessageType type = isTyping ? 
             WebSocketMessage.MessageType.TYPING_START : 
@@ -140,9 +125,7 @@ public class WebSocketNotificationService {
         messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
     }
 
-    /**
-     * Gửi notification chung
-     */
+    // Gửi notification chung
     public void sendNotification(String username, String message, Object data) {
         WebSocketMessage wsMessage = new WebSocketMessage(
             WebSocketMessage.MessageType.NOTIFICATION,
@@ -151,5 +134,19 @@ public class WebSocketNotificationService {
         );
 
         messagingTemplate.convertAndSendToUser(username, "/queue/notifications", wsMessage);
+    }
+
+    // Gửi notification đến tất cả thành viên trong phòng
+    public void sendNotificationToRoom(Long roomId, String type, String message, Object data) {
+        WebSocketMessage wsMessage = new WebSocketMessage(
+            WebSocketMessage.MessageType.NOTIFICATION,
+            roomId,
+            null,
+            null,
+            message
+        );
+        wsMessage.setData(data);
+
+        messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
     }
 }

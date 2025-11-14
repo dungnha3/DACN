@@ -28,6 +28,7 @@ import DoAn.BE.hr.entity.ChamCong.TrangThaiChamCong;
 import DoAn.BE.hr.entity.NhanVien;
 import DoAn.BE.hr.repository.ChamCongRepository;
 import DoAn.BE.hr.repository.NhanVienRepository;
+import DoAn.BE.project.repository.ProjectMemberRepository;
 import DoAn.BE.user.entity.User;
 import jakarta.transaction.Transactional;
 
@@ -49,10 +50,14 @@ public class ChamCongService {
     
     private final ChamCongRepository chamCongRepository;
     private final NhanVienRepository nhanVienRepository;
+    private final ProjectMemberRepository projectMemberRepository;
 
-    public ChamCongService(ChamCongRepository chamCongRepository, NhanVienRepository nhanVienRepository) {
+    public ChamCongService(ChamCongRepository chamCongRepository, 
+                          NhanVienRepository nhanVienRepository,
+                          ProjectMemberRepository projectMemberRepository) {
         this.chamCongRepository = chamCongRepository;
         this.nhanVienRepository = nhanVienRepository;
+        this.projectMemberRepository = projectMemberRepository;
     }
 
     /**
@@ -65,9 +70,14 @@ public class ChamCongService {
         if (!PermissionUtil.canPerformAttendance(currentUser)) {
             throw new ForbiddenException("Admin không có quyền thực hiện chấm công");
         }
-        log.info("User {} tạo chấm công cho nhân viên ID: {}", currentUser.getUsername(), request.getNhanvienId());
+        Long nhanvienId = request.getNhanvienId();
+        if (nhanvienId == null) {
+            throw new BadRequestException("ID nhân viên không được để trống");
+        }
+        
+        log.info("User {} tạo chấm công cho nhân viên ID: {}", currentUser.getUsername(), nhanvienId);
         // Kiểm tra nhân viên tồn tại
-        NhanVien nhanVien = nhanVienRepository.findById(request.getNhanvienId())
+        NhanVien nhanVien = nhanVienRepository.findById(nhanvienId)
             .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
 
         ChamCong chamCong = new ChamCong();
@@ -127,7 +137,18 @@ public class ChamCongService {
         if (!PermissionUtil.canViewTeamAttendance(currentUser)) {
             throw new ForbiddenException("Bạn không có quyền xem danh sách chấm công");
         }
-        // TODO: Project Manager chỉ xem team của mình - cần implement logic kiểm tra thành viên dự án
+        
+        // HR và Accounting xem tất cả
+        if (currentUser.isManagerHR() || currentUser.isManagerAccounting()) {
+            return chamCongRepository.findAll();
+        }
+        
+        // Project Manager chỉ xem team của mình
+        if (currentUser.isManagerProject()) {
+            List<Long> teamMemberIds = projectMemberRepository.findTeamMemberUserIdsByManager(currentUser.getUserId());
+            return chamCongRepository.findByNhanVien_User_UserIdIn(teamMemberIds);
+        }
+        
         return chamCongRepository.findAll();
     }
     
@@ -191,6 +212,10 @@ public class ChamCongService {
      * - Employee: chỉ xem của mình
      */
     public List<ChamCong> getChamCongByNhanVien(Long nhanvienId, User currentUser) {
+        if (nhanvienId == null) {
+            throw new BadRequestException("ID nhân viên không được để trống");
+        }
+        
         // Admin không có quyền
         if (currentUser.isAdmin()) {
             throw new ForbiddenException("Admin không có quyền truy cập dữ liệu chấm công");
@@ -204,8 +229,15 @@ public class ChamCongService {
             if (!nhanVien.getUser().getUserId().equals(currentUser.getUserId())) {
                 throw new ForbiddenException("Bạn chỉ có thể xem chấm công của chính mình");
             }
+        } else if (currentUser.isManagerProject()) {
+            // Project Manager chỉ xem team của mình
+            List<Long> teamMemberIds = projectMemberRepository.findTeamMemberUserIdsByManager(currentUser.getUserId());
+            NhanVien nhanVien = nhanVienRepository.findById(nhanvienId)
+                .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
+            if (!teamMemberIds.contains(nhanVien.getUser().getUserId())) {
+                throw new ForbiddenException("Bạn chỉ có thể xem chấm công của team members");
+            }
         }
-        // TODO: Project Manager chỉ xem team của mình - cần kiểm tra thành viên dự án
         return chamCongRepository.findByNhanVien_NhanvienIdOrderByNgayChamDesc(nhanvienId);
     }
 

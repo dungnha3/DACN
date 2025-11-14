@@ -3,7 +3,9 @@ package DoAn.BE.chat.service;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.user.repository.UserRepository;
 import DoAn.BE.chat.websocket.service.WebSocketNotificationService;
-import org.springframework.beans.factory.annotation.Autowired;
+import DoAn.BE.chat.entity.ChatRoomMember;
+import DoAn.BE.chat.repository.ChatRoomMemberRepository;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,82 +18,73 @@ import java.util.concurrent.ConcurrentHashMap;
 @Transactional
 public class UserPresenceService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final WebSocketNotificationService webSocketNotificationService;
+    private final ChatRoomMemberRepository chatRoomMemberRepository;
 
-    @Autowired
-    private WebSocketNotificationService webSocketNotificationService;
+    public UserPresenceService(UserRepository userRepository,
+                              WebSocketNotificationService webSocketNotificationService,
+                              ChatRoomMemberRepository chatRoomMemberRepository) {
+        this.userRepository = userRepository;
+        this.webSocketNotificationService = webSocketNotificationService;
+        this.chatRoomMemberRepository = chatRoomMemberRepository;
+    }
 
-    // Store online users
-    private final Set<Long> onlineUsers = ConcurrentHashMap.newKeySet();
+    private final Set<Long> onlineUsers = ConcurrentHashMap.newKeySet(); // Lưu danh sách user đang online
 
-    /**
-     * Đánh dấu user online
-     */
-    public void markUserOnline(Long userId) {
+    // Đánh dấu user online
+    public void markUserOnline(@NonNull Long userId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User không tồn tại"));
 
         boolean wasOffline = !onlineUsers.contains(userId);
         onlineUsers.add(userId);
 
-        // Cập nhật database
         user.setIsOnline(true);
         user.setLastSeen(LocalDateTime.now());
         userRepository.save(user);
 
-        // Thông báo đến các phòng chat mà user tham gia
+
         if (wasOffline) {
             notifyUserStatusChange(userId, true);
         }
     }
 
-    /**
-     * Đánh dấu user offline
-     */
-    public void markUserOffline(Long userId) {
+    // Đánh dấu user offline
+    public void markUserOffline(@NonNull Long userId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User không tồn tại"));
 
         boolean wasOnline = onlineUsers.contains(userId);
         onlineUsers.remove(userId);
 
-        // Cập nhật database
         user.setIsOnline(false);
         user.setLastSeen(LocalDateTime.now());
         userRepository.save(user);
 
-        // Thông báo đến các phòng chat mà user tham gia
+
         if (wasOnline) {
             notifyUserStatusChange(userId, false);
         }
     }
 
-    /**
-     * Kiểm tra user có online không
-     */
-    public boolean isUserOnline(Long userId) {
+    // Kiểm tra user có online không
+    public boolean isUserOnline(@NonNull Long userId) {
         return onlineUsers.contains(userId);
     }
 
-    /**
-     * Lấy danh sách user online
-     */
+    // Lấy danh sách user online
     public List<Long> getOnlineUsers() {
         return List.copyOf(onlineUsers);
     }
 
-    /**
-     * Lấy số lượng user online
-     */
+    // Lấy số lượng user online
     public int getOnlineUserCount() {
         return onlineUsers.size();
     }
 
-    /**
-     * Cập nhật last seen của user
-     */
-    public void updateLastSeen(Long userId) {
+    // Cập nhật last seen của user
+    public void updateLastSeen(@NonNull Long userId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User không tồn tại"));
 
@@ -99,34 +92,34 @@ public class UserPresenceService {
         userRepository.save(user);
     }
 
-    /**
-     * Thông báo thay đổi trạng thái online/offline
-     */
-    private void notifyUserStatusChange(Long userId, boolean isOnline) {
+    // Thông báo thay đổi trạng thái online/offline
+    private void notifyUserStatusChange(@NonNull Long userId, boolean isOnline) {
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) return;
 
         String statusMessage = isOnline ? "đã online" : "đã offline";
         
-        // Gửi notification đến tất cả phòng chat mà user tham gia
-        // TODO: Implement logic để lấy danh sách phòng chat của user
-        // và gửi notification đến từng phòng
+        List<ChatRoomMember> userRooms = chatRoomMemberRepository.findByUser_UserId(userId);
         
-        // Tạm thời gửi notification chung
-        java.util.Map<String, Object> data = new java.util.HashMap<>();
-        data.put("userId", userId);
-        data.put("isOnline", isOnline);
-        
-        webSocketNotificationService.sendNotification(
-            user.getUsername(),
-            "Trạng thái: " + statusMessage,
-            data
-        );
+        for (ChatRoomMember roomMember : userRooms) {
+            Long roomId = roomMember.getChatRoom().getRoomId();
+            
+            java.util.Map<String, Object> data = new java.util.HashMap<>();
+            data.put("userId", userId);
+            data.put("username", user.getUsername());
+            data.put("isOnline", isOnline);
+            data.put("roomId", roomId);
+            
+            webSocketNotificationService.sendNotificationToRoom(
+                roomId,
+                "USER_STATUS_CHANGE",
+                user.getUsername() + " " + statusMessage,
+                data
+            );
+        }
     }
 
-    /**
-     * Cleanup users who haven't been active for a while
-     */
+    // Dọn dẹp các user không hoạt động
     public void cleanupInactiveUsers() {
         LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(5);
         

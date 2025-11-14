@@ -9,16 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import DoAn.BE.auth.dto.AuthResponse;
 import DoAn.BE.auth.dto.LoginRequest;
-import DoAn.BE.auth.dto.RegisterRequest;
 import DoAn.BE.auth.entity.LoginAttempt;
 import DoAn.BE.auth.entity.RefreshToken;
 import DoAn.BE.auth.repository.LoginAttemptRepository;
 import DoAn.BE.auth.repository.RefreshTokenRepository;
-import DoAn.BE.common.exception.BadRequestException;
-import DoAn.BE.common.exception.DuplicateException;
 import DoAn.BE.common.exception.UnauthorizedException;
-import DoAn.BE.common.util.PasswordValidator;
-import DoAn.BE.user.dto.CreateUserRequest;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.user.service.UserService;
 
@@ -47,49 +42,9 @@ public class AuthService {
         this.loginAttemptRepository = loginAttemptRepository;
     }
 
-    /**
-     * Đăng ký user mới (public endpoint)
-     */
-    public AuthResponse register(RegisterRequest request, String ipAddress, String userAgent) {
-        // ⭐ Validate mật khẩu
-        String passwordError = PasswordValidator.validatePassword(request.getPassword());
-        if (passwordError != null) {
-            throw new BadRequestException(passwordError);
-        }
-        
-        // Kiểm tra username đã tồn tại
-        if (userService.existsByUsername(request.getUsername())) {
-            throw new DuplicateException("Username đã tồn tại");
-        }
+    // Chức năng đăng ký đã bị vô hiệu hóa - Chỉ HR Manager có quyền tạo tài khoản
 
-        // Kiểm tra email đã tồn tại
-        if (userService.existsByEmail(request.getEmail())) {
-            throw new DuplicateException("Email đã tồn tại");
-        }
-
-        // Tạo user mới
-        CreateUserRequest createUserRequest = new CreateUserRequest();
-        createUserRequest.setUsername(request.getUsername());
-        createUserRequest.setPassword(request.getPassword());
-        createUserRequest.setEmail(request.getEmail());
-        createUserRequest.setPhoneNumber(request.getPhoneNumber());
-        createUserRequest.setRole(request.getRole() != null ? request.getRole() : User.Role.EMPLOYEE);
-
-        User user = userService.createUser(createUserRequest);
-
-        // Tạo session
-        sessionService.createSession(user, ipAddress, userAgent);
-
-        // Tạo tokens
-        String accessToken = jwtService.generateToken(user);
-        String refreshToken = createRefreshToken(user);
-
-        return buildAuthResponse(accessToken, refreshToken, user);
-    }
-
-    /**
-     * Đăng nhập
-     */
+    // Đăng nhập
     public AuthResponse login(LoginRequest request, String ipAddress, String userAgent) {
         // Kiểm tra login attempts
         checkLoginAttempts(request.getUsername(), ipAddress);
@@ -128,9 +83,7 @@ public class AuthService {
         return buildAuthResponse(accessToken, refreshToken, user);
     }
 
-    /**
-     * Refresh token
-     */
+    // Refresh token
     public AuthResponse refreshToken(String refreshTokenString) {
         // Validate refresh token
         if (!jwtService.validateToken(refreshTokenString) || !jwtService.isRefreshToken(refreshTokenString)) {
@@ -160,9 +113,7 @@ public class AuthService {
         return buildAuthResponse(newAccessToken, newRefreshToken, user);
     }
 
-    /**
-     * Đăng xuất
-     */
+    // Đăng xuất
     public void logout(String refreshTokenString, String sessionId) {
         // Revoke refresh token
         if (refreshTokenString != null) {
@@ -179,9 +130,7 @@ public class AuthService {
         }
     }
 
-    /**
-     * Đăng xuất tất cả thiết bị
-     */
+    // Đăng xuất tất cả thiết bị
     public void logoutAllDevices(Long userId) {
         User user = userService.getUserById(userId);
 
@@ -196,15 +145,12 @@ public class AuthService {
         userService.save(user);
     }
 
-    /**
-     * Tạo refresh token
-     */
+    // Tạo refresh token
     private String createRefreshToken(User user) {
-        // Xóa refresh token cũ của user (nếu có)
         List<RefreshToken> existingTokens = refreshTokenRepository.findValidTokensByUser(user, LocalDateTime.now());
-        refreshTokenRepository.deleteAll(existingTokens);
-
-        // Tạo refresh token mới
+        if (existingTokens != null && !existingTokens.isEmpty()) {
+            refreshTokenRepository.deleteAll(existingTokens);
+        }
         String tokenString = jwtService.generateRefreshToken(user);
 
         RefreshToken refreshToken = new RefreshToken();
@@ -218,9 +164,7 @@ public class AuthService {
         return tokenString;
     }
 
-    /**
-     * Kiểm tra login attempts
-     */
+    // Kiểm tra số lần đăng nhập thất bại
     private void checkLoginAttempts(String username, String ipAddress) {
         LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(LOCKOUT_DURATION_MINUTES);
 
@@ -231,9 +175,7 @@ public class AuthService {
         }
     }
 
-    /**
-     * Ghi lại login thất bại
-     */
+    // Ghi lại login thất bại
     private void recordFailedLogin(String username, String ipAddress, String reason) {
         LoginAttempt attempt = new LoginAttempt();
         attempt.setUsername(username);
@@ -245,16 +187,12 @@ public class AuthService {
         loginAttemptRepository.save(attempt);
     }
 
-    /**
-     * Xóa failed attempts
-     */
+    // Xóa các lần thử thất bại
     private void clearFailedAttempts(String username, String ipAddress) {
         loginAttemptRepository.deleteByUsernameAndIpAddress(username, ipAddress);
     }
 
-    /**
-     * Xây dựng AuthResponse
-     */
+    // Xây dựng AuthResponse
     private AuthResponse buildAuthResponse(String accessToken, String refreshToken, User user) {
         AuthResponse response = new AuthResponse();
         response.setAccessToken(accessToken);

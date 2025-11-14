@@ -6,7 +6,7 @@ import DoAn.BE.chat.entity.MessageStatusId;
 import DoAn.BE.chat.repository.MessageRepository;
 import DoAn.BE.chat.repository.MessageStatusRepository;
 import DoAn.BE.common.exception.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,21 +18,19 @@ import java.util.Optional;
 @Transactional
 public class MessageStatusService {
 
-    @Autowired
-    private MessageStatusRepository messageStatusRepository;
-    
-    @Autowired
-    private MessageRepository messageRepository;
+    private final MessageStatusRepository messageStatusRepository;
+    private final MessageRepository messageRepository;
 
-    /**
-     * Đánh dấu tin nhắn đã gửi
-     */
-    public void markMessageAsDelivered(Long messageId, Long userId) {
-        // Validate message tồn tại
+    public MessageStatusService(MessageStatusRepository messageStatusRepository, MessageRepository messageRepository) {
+        this.messageStatusRepository = messageStatusRepository;
+        this.messageRepository = messageRepository;
+    }
+
+    // Đánh dấu tin nhắn đã gửi
+    public void markMessageAsDelivered(@NonNull Long messageId, @NonNull Long userId) {
         messageRepository.findById(messageId)
             .orElseThrow(() -> new EntityNotFoundException("Tin nhắn không tồn tại"));
         
-        // Tìm MessageStatus
         Optional<MessageStatus> statusOpt = messageStatusRepository.findById(
             new MessageStatusId(messageId, userId));
         
@@ -44,15 +42,11 @@ public class MessageStatusService {
         }
     }
     
-    /**
-     * Đánh dấu tin nhắn đã đọc
-     */
-    public void markMessageAsSeen(Long messageId, Long userId) {
-        // Validate message tồn tại
+    // Đánh dấu tin nhắn đã đọc
+    public void markMessageAsSeen(@NonNull Long messageId, @NonNull Long userId) {
         messageRepository.findById(messageId)
             .orElseThrow(() -> new EntityNotFoundException("Tin nhắn không tồn tại"));
         
-        // Tìm MessageStatus
         Optional<MessageStatus> statusOpt = messageStatusRepository.findById(
             new MessageStatusId(messageId, userId));
         
@@ -64,11 +58,8 @@ public class MessageStatusService {
         }
     }
     
-    /**
-     * Đánh dấu tất cả tin nhắn trong phòng đã đọc
-     */
-    public void markAllMessagesAsSeen(Long roomId, Long userId) {
-        // Lấy tất cả tin nhắn trong phòng
+    // Đánh dấu tất cả tin nhắn trong phòng đã đọc
+    public void markAllMessagesAsSeen(@NonNull Long roomId, @NonNull Long userId) {
         List<Message> messages = messageRepository.findByChatRoom_RoomIdOrderBySentAtAsc(roomId);
         
         for (Message message : messages) {
@@ -76,30 +67,20 @@ public class MessageStatusService {
         }
     }
     
-    /**
-     * Lấy trạng thái tin nhắn
-     */
-    public MessageStatus getMessageStatus(Long messageId, Long userId) {
+    // Lấy trạng thái tin nhắn
+    public MessageStatus getMessageStatus(@NonNull Long messageId, @NonNull Long userId) {
         return messageStatusRepository.findById(
             new MessageStatusId(messageId, userId))
             .orElse(null);
     }
     
-    /**
-     * Lấy danh sách trạng thái tin nhắn
-     */
-    public List<MessageStatus> getMessageStatuses(Long messageId) {
+    // Lấy danh sách trạng thái tin nhắn
+    public List<MessageStatus> getMessageStatuses(@NonNull Long messageId) {
         return messageStatusRepository.findByMessage_MessageId(messageId);
     }
     
-    /**
-     * Đếm số tin nhắn chưa đọc trong phòng
-     */
-    public Long getUnreadCount(Long roomId, Long userId) {
-        // TODO: Implement query đếm tin nhắn chưa đọc
-        // SELECT COUNT(*) FROM messages m 
-        // LEFT JOIN message_status ms ON m.message_id = ms.message_id AND ms.user_id = ?
-        // WHERE m.room_id = ? AND (ms.status IS NULL OR ms.status != 'SEEN')
-        return 0L; // Placeholder
+    // Đếm số tin nhắn chưa đọc trong phòng
+    public Long getUnreadCount(@NonNull Long roomId, @NonNull Long userId) {
+        return messageStatusRepository.countUnreadMessagesInRoom(roomId, userId);
     }
 }

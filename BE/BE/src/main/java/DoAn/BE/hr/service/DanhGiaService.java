@@ -31,30 +31,21 @@ public class DanhGiaService {
     private final DanhGiaRepository danhGiaRepository;
     private final NhanVienRepository nhanVienRepository;
     
-    /**
-     * Tạo đánh giá mới - HR Manager và Project Manager
-     */
+    // Tạo đánh giá mới - HR Manager và Project Manager
     public DanhGia createDanhGia(DanhGiaRequest request, User currentUser) {
-        // Kiểm tra quyền: HR Manager hoặc Project Manager
         if (!currentUser.isManagerHR() && !currentUser.isManagerProject()) {
             throw new ForbiddenException("Chỉ HR Manager và Project Manager mới có quyền tạo đánh giá");
         }
         
         log.info("User {} tạo đánh giá cho nhân viên ID: {}", currentUser.getUsername(), request.getNhanvienId());
-        
-        // Kiểm tra nhân viên tồn tại
         NhanVien nhanVien = nhanVienRepository.findById(request.getNhanvienId())
             .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
-        
-        // Kiểm tra đã có đánh giá trong kỳ chưa
         Optional<DanhGia> existingDanhGia = danhGiaRepository.findByNhanVienAndKyAndLoai(
             request.getNhanvienId(), request.getKyDanhGia(), request.getLoaiDanhGia());
         
         if (existingDanhGia.isPresent()) {
             throw new BadRequestException("Nhân viên đã có đánh giá trong kỳ này");
         }
-        
-        // Lấy thông tin người đánh giá
         NhanVien nguoiDanhGia = nhanVienRepository.findByUser_UserId(currentUser.getUserId())
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy thông tin nhân viên của người đánh giá"));
         

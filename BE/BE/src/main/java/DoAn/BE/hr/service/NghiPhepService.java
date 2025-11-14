@@ -43,9 +43,7 @@ public class NghiPhepService {
         this.notificationService = notificationService;
     }
 
-    /**
-     * Tạo đơn nghỉ phép mới - Employee tự tạo
-     */
+    // Tạo đơn nghỉ phép mới - Employee tự tạo
     public NghiPhep createNghiPhep(NghiPhepRequest request, User currentUser) {
         // Admin không có quyền
         if (currentUser.isAdmin()) {
@@ -53,11 +51,8 @@ public class NghiPhepService {
         }
         
         log.info("User {} tạo đơn nghỉ phép cho nhân viên ID: {}", currentUser.getUsername(), request.getNhanvienId());
-        // Kiểm tra nhân viên tồn tại
         NhanVien nhanVien = nhanVienRepository.findById(request.getNhanvienId())
             .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
-
-        // Validate ngày
         if (request.getNgayKetThuc().isBefore(request.getNgayBatDau())) {
             throw new BadRequestException("Ngày kết thúc phải sau ngày bắt đầu");
         }

@@ -66,6 +66,13 @@
 		<scope>runtime</scope>
 	</dependency>
 	
+	<!-- H2 Database for Testing -->
+	<dependency>
+		<groupId>com.h2database</groupId>
+		<artifactId>h2</artifactId>
+		<scope>runtime</scope>
+	</dependency>
+	
 	<!-- JWT for Authentication -->
 	<dependency>
 		<groupId>io.jsonwebtoken</groupId>
@@ -89,6 +96,12 @@
 	<dependency>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-websocket</artifactId>
+	</dependency>
+	
+	<!-- Mail for Email Notifications -->
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-mail</artifactId>
 	</dependency>
 	
 	<!-- Lombok -->
@@ -120,6 +133,12 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
+					<showWarnings>true</showWarnings>
+					<showDeprecation>true</showDeprecation>
+					<compilerArgs>
+						<arg>-Xlint:all</arg>
+						<arg>-Xlint:-processing</arg>
+					</compilerArgs>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.projectlombok</groupId>

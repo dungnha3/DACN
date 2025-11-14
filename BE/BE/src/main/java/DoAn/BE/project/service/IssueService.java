@@ -40,32 +40,19 @@ public class IssueService {
     
     @Transactional
     public IssueDTO createIssue(CreateIssueRequest request, Long userId) {
-        // Validate user exists
         User reporter = userRepository.findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
-        
-        // Validate project exists
         Project project = projectRepository.findById(request.getProjectId())
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy dự án"));
-        
-        // Check if user is a member of the project
         validateProjectAccess(request.getProjectId(), userId);
-        
-        // Validate status exists
         IssueStatus status = issueStatusRepository.findById(request.getStatusId())
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy trạng thái"));
-        
-        // Validate assignee if provided
         User assignee = null;
         if (request.getAssigneeId() != null) {
             assignee = userRepository.findById(request.getAssigneeId())
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người được giao việc"));
-            
-            // Check if assignee is a member of the project
             validateProjectAccess(request.getProjectId(), request.getAssigneeId());
         }
-        
-        // Generate issue key
         String issueKey = generateIssueKey(project);
         
         // Create issue
@@ -90,7 +77,10 @@ public class IssueService {
         Issue issue = issueRepository.findById(issueId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
         
-        // Check if user has access to the project
+        if (issue.getProject() == null) {
+            throw new IllegalStateException("Issue không có dự án liên kết");
+        }
+        
         validateProjectAccess(issue.getProject().getProjectId(), userId);
         
         return convertToDTO(issue);
@@ -120,11 +110,13 @@ public class IssueService {
     
     @Transactional(readOnly = true)
     public List<IssueDTO> getSprintIssues(Long sprintId, Long userId) {
-        // Get sprint to validate project access
         Sprint sprint = sprintRepository.findById(sprintId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy sprint"));
         
-        // Validate access to project
+        if (sprint.getProject() == null) {
+            throw new IllegalStateException("Sprint không có dự án liên kết");
+        }
+        
         validateProjectAccess(sprint.getProject().getProjectId(), userId);
         
         List<Issue> issues = issueRepository.findBySprint_SprintId(sprintId);
@@ -154,7 +146,10 @@ public class IssueService {
         Issue issue = issueRepository.findById(issueId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
         
-        // Check if user has access to the project
+        if (issue.getProject() == null) {
+            throw new IllegalStateException("Issue không có dự án liên kết");
+        }
+        
         validateProjectAccess(issue.getProject().getProjectId(), userId);
         
         // Update fields if provided
@@ -215,14 +210,15 @@ public class IssueService {
         Issue issue = issueRepository.findById(issueId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
         
-        // Check if user can manage the project
+        if (issue.getProject() == null) {
+            throw new IllegalStateException("Issue không có dự án liên kết");
+        }
+        
         validateProjectManagement(issue.getProject().getProjectId(), userId);
         
-        // Validate assignee
         User assignee = userRepository.findById(assigneeId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người được giao việc"));
         
-        // Check if assignee is a member of the project
         validateProjectAccess(issue.getProject().getProjectId(), assigneeId);
         
         issue.assignTo(assignee);
@@ -236,7 +232,10 @@ public class IssueService {
         Issue issue = issueRepository.findById(issueId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
         
-        // Check if user has access to the project
+        if (issue.getProject() == null) {
+            throw new IllegalStateException("Issue không có dự án liên kết");
+        }
+        
         validateProjectAccess(issue.getProject().getProjectId(), userId);
         
         // Validate status
@@ -276,8 +275,11 @@ public class IssueService {
     private IssueDTO convertToDTO(Issue issue) {
         IssueDTO dto = new IssueDTO();
         dto.setIssueId(issue.getIssueId());
-        dto.setProjectId(issue.getProject().getProjectId());
-        dto.setProjectName(issue.getProject().getName());
+        
+        if (issue.getProject() != null) {
+            dto.setProjectId(issue.getProject().getProjectId());
+            dto.setProjectName(issue.getProject().getName());
+        }
         
         if (issue.getSprint() != null) {
             dto.setSprintId(issue.getSprint().getSprintId());
@@ -287,12 +289,19 @@ public class IssueService {
         dto.setIssueKey(issue.getIssueKey());
         dto.setTitle(issue.getTitle());
         dto.setDescription(issue.getDescription());
-        dto.setStatusId(issue.getIssueStatus().getStatusId());
-        dto.setStatusName(issue.getIssueStatus().getName());
-        dto.setStatusColor(issue.getIssueStatus().getColor());
+        
+        if (issue.getIssueStatus() != null) {
+            dto.setStatusId(issue.getIssueStatus().getStatusId());
+            dto.setStatusName(issue.getIssueStatus().getName());
+            dto.setStatusColor(issue.getIssueStatus().getColor());
+        }
+        
         dto.setPriority(issue.getPriority());
-        dto.setReporterId(issue.getReporter().getUserId());
-        dto.setReporterName(issue.getReporter().getUsername());
+        
+        if (issue.getReporter() != null) {
+            dto.setReporterId(issue.getReporter().getUserId());
+            dto.setReporterName(issue.getReporter().getUsername());
+        }
         
         if (issue.getAssignee() != null) {
             dto.setAssigneeId(issue.getAssignee().getUserId());

@@ -68,15 +68,17 @@ public class ProjectDashboardService {
         int overdueIssues = 0;
         
         for (Issue issue : allIssues) {
-            String statusName = issue.getIssueStatus().getName();
-            statusDistribution.put(statusName, statusDistribution.getOrDefault(statusName, 0) + 1);
+            if (issue.getIssueStatus() != null && issue.getIssueStatus().getName() != null) {
+                String statusName = issue.getIssueStatus().getName();
+                statusDistribution.put(statusName, statusDistribution.getOrDefault(statusName, 0) + 1);
             
-            if (issue.isDone()) {
-                completedIssues++;
-            } else if ("In Progress".equals(statusName)) {
-                inProgressIssues++;
-            } else if ("To Do".equals(statusName)) {
-                todoIssues++;
+                if (issue.isDone()) {
+                    completedIssues++;
+                } else if ("In Progress".equals(statusName)) {
+                    inProgressIssues++;
+                } else if ("To Do".equals(statusName)) {
+                    todoIssues++;
+                }
             }
             
             if (issue.isOverdue()) {
@@ -114,11 +116,13 @@ public class ProjectDashboardService {
         
         Map<String, Integer> memberWorkload = new HashMap<>();
         for (ProjectMember member : members) {
-            List<Issue> memberIssues = allIssues.stream()
-                .filter(issue -> issue.getAssignee() != null && 
-                        issue.getAssignee().getUserId().equals(member.getUser().getUserId()))
-                .collect(Collectors.toList());
-            memberWorkload.put(member.getUser().getUsername(), memberIssues.size());
+            if (member.getUser() != null) {
+                List<Issue> memberIssues = allIssues.stream()
+                    .filter(issue -> issue.getAssignee() != null && 
+                            issue.getAssignee().getUserId().equals(member.getUser().getUserId()))
+                    .collect(Collectors.toList());
+                memberWorkload.put(member.getUser().getUsername(), memberIssues.size());
+            }
         }
         stats.setMemberWorkload(memberWorkload);
         
@@ -147,6 +151,10 @@ public class ProjectDashboardService {
         
         Sprint sprint = sprintRepository.findById(sprintId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy sprint"));
+        
+        if (sprint.getProject() == null) {
+            throw new IllegalStateException("Sprint không có dự án liên kết");
+        }
         
         validateProjectAccess(sprint.getProject().getProjectId(), currentUser.getUserId());
         
@@ -210,6 +218,7 @@ public class ProjectDashboardService {
         List<ProjectMember> memberships = projectMemberRepository.findByUser_UserId(currentUser.getUserId());
         
         return memberships.stream()
+            .filter(member -> member.getProject() != null)
             .map(member -> getProjectStats(member.getProject().getProjectId(), currentUser))
             .collect(Collectors.toList());
     }

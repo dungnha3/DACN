@@ -6,10 +6,9 @@ import DoAn.BE.user.dto.UserDTO;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.user.mapper.UserMapper;
 import DoAn.BE.user.service.ProfileService;
+import DoAn.BE.common.util.SecurityUtil;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -93,20 +92,9 @@ public class ProfileController {
     
     /**
      * Helper method để lấy userId từ SecurityContext
-     * Tạm thời return hardcode ID, sẽ integrate với Spring Security sau
      */
     private Long getCurrentUserId() {
-        // TODO: Get from SecurityContext after implementing authentication
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
-        // Tạm thời return 1L cho testing
-        // Trong production, sẽ extract từ JWT token
-        if (authentication != null && authentication.isAuthenticated()) {
-            // Extract userId from authentication principal
-            // return ((UserDetails) authentication.getPrincipal()).getUserId();
-        }
-        
-        return 1L; // Placeholder for testing
+        return SecurityUtil.getCurrentUserId();
     }
 }
 

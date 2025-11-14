@@ -37,9 +37,7 @@ public class MessageController {
     @Autowired
     private UserRepository userRepository;
 
-    /**
-     * Lấy thông tin user hiện tại từ Security Context
-     */
+    // Lấy thông tin user hiện tại từ Security Context
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -51,28 +49,36 @@ public class MessageController {
             .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
     }
 
-    /**
-     * Gửi tin nhắn text
-     */
+    // Gửi tin nhắn text
     @PostMapping("/rooms/{roomId}/messages")
     public ResponseEntity<MessDTO> sendMessage(
             @PathVariable Long roomId,
             @Valid @RequestBody SendMessageRequest request) {
+        if (roomId == null) {
+            throw new IllegalArgumentException("Room ID không được null");
+        }
         User currentUser = getCurrentUser();
-        request.setRoomId(roomId); // Set roomId từ path variable
+        if (currentUser.getUserId() == null) {
+            throw new IllegalStateException("User ID không hợp lệ");
+        }
+        request.setRoomId(roomId);
         MessDTO message = messageService.sendMessage(request, currentUser.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
 
-    /**
-     * Lấy danh sách tin nhắn trong phòng chat (có phân trang)
-     */
+    // Lấy danh sách tin nhắn trong phòng chat (có phân trang)
     @GetMapping("/rooms/{roomId}/messages")
     public ResponseEntity<Page<MessDTO>> getMessages(
             @PathVariable Long roomId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
+        if (roomId == null) {
+            throw new IllegalArgumentException("Room ID không được null");
+        }
         User currentUser = getCurrentUser();
+        if (currentUser.getUserId() == null) {
+            throw new IllegalStateException("User ID không hợp lệ");
+        }
         Pageable pageable = PageRequest.of(page, size);
         List<MessDTO> messages = messageService.getMessagesByRoomId(roomId, currentUser.getUserId(), page, size);
         // Convert to Page manually for now
@@ -80,12 +86,16 @@ public class MessageController {
         return ResponseEntity.ok(pageMessages);
     }
 
-    /**
-     * Đánh dấu tin nhắn đã xem
-     */
+    // Đánh dấu tin nhắn đã xem
     @PutMapping("/messages/{messageId}/seen")
     public ResponseEntity<Map<String, String>> markMessageAsSeen(@PathVariable Long messageId) {
+        if (messageId == null) {
+            throw new IllegalArgumentException("Message ID không được null");
+        }
         User currentUser = getCurrentUser();
+        if (currentUser.getUserId() == null) {
+            throw new IllegalStateException("User ID không hợp lệ");
+        }
         messageService.markMessageAsSeen(messageId, currentUser.getUserId());
         
         Map<String, String> response = new HashMap<>();
@@ -93,25 +103,33 @@ public class MessageController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Sửa tin nhắn
-     */
+    // Sửa tin nhắn
     @PutMapping("/messages/{messageId}")
     public ResponseEntity<MessDTO> editMessage(
             @PathVariable Long messageId,
             @RequestBody Map<String, String> request) {
+        if (messageId == null) {
+            throw new IllegalArgumentException("Message ID không được null");
+        }
         User currentUser = getCurrentUser();
+        if (currentUser.getUserId() == null) {
+            throw new IllegalStateException("User ID không hợp lệ");
+        }
         String newContent = request.get("content");
         MessDTO message = messageService.editMessage(messageId, newContent, currentUser.getUserId());
         return ResponseEntity.ok(message);
     }
 
-    /**
-     * Xóa tin nhắn
-     */
+    // Xóa tin nhắn
     @DeleteMapping("/messages/{messageId}")
     public ResponseEntity<Map<String, String>> deleteMessage(@PathVariable Long messageId) {
+        if (messageId == null) {
+            throw new IllegalArgumentException("Message ID không được null");
+        }
         User currentUser = getCurrentUser();
+        if (currentUser.getUserId() == null) {
+            throw new IllegalStateException("User ID không hợp lệ");
+        }
         messageService.deleteMessage(messageId, currentUser.getUserId());
         
         Map<String, String> response = new HashMap<>();
@@ -119,11 +137,7 @@ public class MessageController {
         return ResponseEntity.ok(response);
     }
 
-    // ==================== SEARCH ENDPOINTS ====================
-
-    /**
-     * Tìm kiếm tin nhắn trong phòng chat
-     */
+    // Tìm kiếm tin nhắn trong phòng chat
     @GetMapping("/rooms/{roomId}/search")
     public ResponseEntity<List<MessDTO>> searchMessages(
             @PathVariable Long roomId,
@@ -136,9 +150,7 @@ public class MessageController {
         return ResponseEntity.ok(messages);
     }
 
-    /**
-     * Tìm kiếm tin nhắn theo người gửi
-     */
+    // Tìm kiếm tin nhắn theo người gửi
     @GetMapping("/rooms/{roomId}/search/sender")
     public ResponseEntity<List<MessDTO>> searchMessagesBySender(
             @PathVariable Long roomId,
@@ -148,9 +160,7 @@ public class MessageController {
         return ResponseEntity.ok(messages);
     }
 
-    /**
-     * Tìm kiếm tin nhắn theo khoảng thời gian
-     */
+    // Tìm kiếm tin nhắn theo khoảng thời gian
     @GetMapping("/rooms/{roomId}/search/date")
     public ResponseEntity<List<MessDTO>> searchMessagesByDateRange(
             @PathVariable Long roomId,
@@ -163,9 +173,7 @@ public class MessageController {
         return ResponseEntity.ok(messages);
     }
 
-    /**
-     * Tìm kiếm tin nhắn theo loại
-     */
+    // Tìm kiếm tin nhắn theo loại
     @GetMapping("/rooms/{roomId}/search/type")
     public ResponseEntity<List<MessDTO>> searchMessagesByType(
             @PathVariable Long roomId,

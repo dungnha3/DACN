@@ -13,6 +13,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChatRoomMemberId implements Serializable {
+    private static final long serialVersionUID = 1L;
     @Column(name = "room_id")
     private Long roomId;
 

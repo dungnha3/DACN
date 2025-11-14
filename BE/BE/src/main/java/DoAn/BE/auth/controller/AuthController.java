@@ -2,7 +2,6 @@ package DoAn.BE.auth.controller;
 
 import DoAn.BE.auth.dto.AuthResponse;
 import DoAn.BE.auth.dto.LoginRequest;
-import DoAn.BE.auth.dto.RegisterRequest;
 import DoAn.BE.auth.service.AuthService;
 import DoAn.BE.common.exception.BadRequestException;
 import DoAn.BE.common.exception.UnauthorizedException;
@@ -26,29 +25,9 @@ public class AuthController {
         this.authService = authService;
     }
 
-    /**
-     * Đăng ký tài khoản mới (public endpoint)
-     * POST /api/auth/register
-     */
-    @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(
-            @Valid @RequestBody RegisterRequest request,
-            HttpServletRequest httpRequest) {
-        try {
-            String ipAddress = getClientIpAddress(httpRequest);
-            String userAgent = httpRequest.getHeader("User-Agent");
-            
-            AuthResponse response = authService.register(request, ipAddress, userAgent);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (Exception e) {
-            throw new BadRequestException("Đăng ký thất bại: " + e.getMessage());
-        }
-    }
+    // Chức năng đăng ký đã bị vô hiệu hóa - Chỉ HR Manager có quyền tạo tài khoản mới
 
-    /**
-     * Đăng nhập
-     * POST /api/auth/login
-     */
+    // Đăng nhập
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request,
@@ -64,10 +43,7 @@ public class AuthController {
         }
     }
 
-    /**
-     * Refresh token
-     * POST /api/auth/refresh
-     */
+    // Refresh token
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(@RequestBody Map<String, String> request) {
         try {
@@ -83,10 +59,7 @@ public class AuthController {
         }
     }
 
-    /**
-     * Đăng xuất
-     * POST /api/auth/logout
-     */
+    // Đăng xuất
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(
             @RequestBody(required = false) Map<String, String> request,
@@ -105,10 +78,7 @@ public class AuthController {
         }
     }
 
-    /**
-     * Đăng xuất tất cả thiết bị
-     * POST /api/auth/logout-all
-     */
+    // Đăng xuất tất cả thiết bị
     @PostMapping("/logout-all")
     public ResponseEntity<Map<String, String>> logoutAllDevices(@RequestParam Long userId) {
         try {
@@ -122,14 +92,10 @@ public class AuthController {
         }
     }
 
-    /**
-     * Kiểm tra token có hợp lệ không
-     * GET /api/auth/validate
-     */
+    // Kiểm tra token có hợp lệ không
     @GetMapping("/validate")
     public ResponseEntity<Map<String, Object>> validateToken(@RequestParam String token) {
         try {
-            // Token validation sẽ được xử lý bởi JWT filter
             Map<String, Object> response = new HashMap<>();
             response.put("valid", true);
             response.put("message", "Token hợp lệ");
@@ -142,9 +108,7 @@ public class AuthController {
         }
     }
 
-    /**
-     * Lấy thông tin client IP address
-     */
+    // Lấy thông tin client IP address
     private String getClientIpAddress(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         if (xForwardedFor != null && !xForwardedFor.isEmpty() && !"unknown".equalsIgnoreCase(xForwardedFor)) {

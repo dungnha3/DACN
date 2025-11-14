@@ -41,6 +41,16 @@ public interface NghiPhepRepository extends JpaRepository<NghiPhep, Long> {
     
     // Tìm theo người duyệt
     List<NghiPhep> findByNguoiDuyet_UserId(Long nguoiDuyetId);
+    
+    // Thống kê theo loại phép (cần cho dashboard)
+    @Query("SELECT np.loaiPhep, COUNT(np) FROM NghiPhep np GROUP BY np.loaiPhep")
+    List<Object[]> getStatsByLoaiPhep();
+    
+    // Đếm theo loại phép và trạng thái
+    long countByLoaiPhepAndTrangThai(DoAn.BE.hr.entity.NghiPhep.LoaiPhep loaiPhep, TrangThaiNghiPhep trangThai);
+    
+    // Tìm theo khoảng ngày bắt đầu (cần cho export)
+    List<NghiPhep> findByNgayBatDauBetween(LocalDate startDate, LocalDate endDate);
 }
 
 

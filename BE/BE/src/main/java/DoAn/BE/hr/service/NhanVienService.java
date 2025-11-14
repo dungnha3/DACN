@@ -45,9 +45,7 @@ public class NhanVienService {
         this.chucVuRepository = chucVuRepository;
     }
 
-    /**
-     * Tạo nhân viên - Chỉ HR Manager
-     */
+    // Tạo nhân viên - Chỉ HR Manager
     public NhanVien createNhanVien(NhanVienRequest request, User currentUser) {
         PermissionUtil.checkHRPermission(currentUser);
         log.info("HR Manager {} tạo nhân viên mới", currentUser.getUsername());

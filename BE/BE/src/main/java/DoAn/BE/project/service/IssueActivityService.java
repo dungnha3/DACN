@@ -36,9 +36,12 @@ public class IssueActivityService {
             throw new ForbiddenException("Bạn không có quyền truy cập dự án");
         }
         
-        // Validate issue exists and access
         Issue issue = issueRepository.findById(issueId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
+        
+        if (issue.getProject() == null) {
+            throw new IllegalStateException("Issue không có dự án liên kết");
+        }
         
         validateProjectAccess(issue.getProject().getProjectId(), currentUser.getUserId());
         
@@ -82,7 +85,10 @@ public class IssueActivityService {
         IssueActivity activity = issueActivityRepository.findById(activityId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy activity"));
         
-        // Kiểm tra quyền truy cập project
+        if (activity.getIssue() == null || activity.getIssue().getProject() == null) {
+            throw new IllegalStateException("Activity không có issue hoặc dự án liên kết");
+        }
+        
         Long projectId = activity.getIssue().getProject().getProjectId();
         validateProjectAccess(projectId, currentUser.getUserId());
         
@@ -126,11 +132,18 @@ public class IssueActivityService {
     private IssueActivityDTO convertToDTO(IssueActivity activity, User currentUser) {
         IssueActivityDTO dto = new IssueActivityDTO();
         dto.setActivityId(activity.getActivityId());
-        dto.setIssueId(activity.getIssue().getIssueId());
-        dto.setIssueTitle(activity.getIssue().getTitle());
-        dto.setUserId(activity.getUser().getUserId());
-        dto.setUserName(activity.getUser().getUsername());
-        dto.setUserAvatarUrl(activity.getUser().getAvatarUrl());
+        
+        if (activity.getIssue() != null) {
+            dto.setIssueId(activity.getIssue().getIssueId());
+            dto.setIssueTitle(activity.getIssue().getTitle());
+        }
+        
+        if (activity.getUser() != null) {
+            dto.setUserId(activity.getUser().getUserId());
+            dto.setUserName(activity.getUser().getUsername());
+            dto.setUserAvatarUrl(activity.getUser().getAvatarUrl());
+        }
+        
         dto.setActivityType(activity.getActivityType());
         dto.setFieldName(activity.getFieldName());
         dto.setOldValue(activity.getOldValue());
@@ -138,9 +151,10 @@ public class IssueActivityService {
         dto.setDescription(activity.getDescription());
         dto.setCreatedAt(activity.getCreatedAt());
         
-        // Set permissions
-        boolean isProjectManager = isProjectManager(activity.getIssue().getProject().getProjectId(), currentUser.getUserId());
-        dto.setCanDelete(activity.canBeDeletedBy(currentUser, isProjectManager));
+        if (activity.getIssue() != null && activity.getIssue().getProject() != null) {
+            boolean isProjectManager = isProjectManager(activity.getIssue().getProject().getProjectId(), currentUser.getUserId());
+            dto.setCanDelete(activity.canBeDeletedBy(currentUser, isProjectManager));
+        }
         
         return dto;
     }

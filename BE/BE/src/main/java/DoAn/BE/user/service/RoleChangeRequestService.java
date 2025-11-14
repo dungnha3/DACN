@@ -2,7 +2,6 @@ package DoAn.BE.user.service;
 
 import DoAn.BE.common.exception.BadRequestException;
 import DoAn.BE.common.exception.EntityNotFoundException;
-import DoAn.BE.common.exception.ForbiddenException;
 import DoAn.BE.common.util.PermissionUtil;
 import DoAn.BE.notification.service.NotificationService;
 import DoAn.BE.user.dto.RoleChangeRequestDTO;
@@ -37,26 +36,17 @@ public class RoleChangeRequestService {
         this.notificationService = notificationService;
     }
     
-    /**
-     * HR Manager tạo yêu cầu thay đổi role
-     */
+    // HR Manager tạo yêu cầu thay đổi role
     public RoleChangeRequestDTO createRequest(RoleChangeRequestDTO dto, User currentUser) {
         log.info("HR Manager {} tạo yêu cầu thay đổi role cho user {}", 
                  currentUser.getUsername(), dto.getTargetUserId());
         
-        // Chỉ HR Manager mới có quyền
         PermissionUtil.checkHRPermission(currentUser);
-        
-        // Tìm target user
         User targetUser = userRepository.findById(dto.getTargetUserId())
             .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
-        
-        // Không thể thay đổi role của Admin
         if (targetUser.isAdmin()) {
             throw new BadRequestException("Không thể thay đổi role của Admin");
         }
-        
-        // Không thể thay đổi role của chính mình
         if (targetUser.getUserId().equals(currentUser.getUserId())) {
             throw new BadRequestException("Không thể thay đổi role của chính mình");
         }
@@ -74,8 +64,17 @@ public class RoleChangeRequestService {
         log.info("✅ Đã tạo yêu cầu thay đổi role: {} -> {}", 
                  request.getCurrentRole(), request.getRequestedRole());
         
-        // TODO: Gửi notification cho Admin
-        // notificationService.createRoleChangeRequestNotification(...)
+        // Gửi notification cho tất cả Admin
+        List<User> admins = userRepository.findByRole(User.Role.ADMIN);
+        for (User admin : admins) {
+            notificationService.createRoleChangeRequestNotification(
+                admin.getUserId(),
+                currentUser.getUsername(),
+                targetUser.getUsername(),
+                request.getCurrentRole().toString(),
+                request.getRequestedRole().toString()
+            );
+        }
         
         return toDTO(request);
     }
@@ -107,8 +106,20 @@ public class RoleChangeRequestService {
         log.info("✅ Đã duyệt thay đổi role: {} -> {} cho user {}", 
                  request.getCurrentRole(), request.getRequestedRole(), targetUser.getUsername());
         
-        // TODO: Gửi notification cho HR và target user
-        // notificationService.createRoleChangedNotification(...)
+        // Gửi notification cho target user
+        notificationService.createRoleChangeApprovedNotification(
+            targetUser.getUserId(),
+            request.getCurrentRole().toString(),
+            request.getRequestedRole().toString()
+        );
+        
+        // Gửi notification cho HR Manager
+        notificationService.createRoleChangeProcessedNotification(
+            request.getRequestedBy().getUserId(),
+            targetUser.getUsername(),
+            "duyệt",
+            note
+        );
         
         return toDTO(request);
     }
@@ -133,6 +144,14 @@ public class RoleChangeRequestService {
         
         log.info("❌ Đã từ chối yêu cầu thay đổi role cho user {}", 
                  request.getTargetUser().getUsername());
+        
+        // Gửi notification cho HR Manager
+        notificationService.createRoleChangeProcessedNotification(
+            request.getRequestedBy().getUserId(),
+            request.getTargetUser().getUsername(),
+            "từ chối",
+            note
+        );
         
         return toDTO(request);
     }

@@ -91,6 +91,7 @@ public class Issue {
 
     public boolean isDone() {
         return this.issueStatus != null && 
+               this.issueStatus.getName() != null &&
                "Done".equals(this.issueStatus.getName());
     }
 

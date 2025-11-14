@@ -45,7 +45,13 @@ public class MessageStatusController {
      */
     @GetMapping("/rooms/{roomId}/unread-count")
     public ResponseEntity<Map<String, Long>> getUnreadCount(@PathVariable Long roomId) {
+        if (roomId == null) {
+            throw new IllegalArgumentException("Room ID không được null");
+        }
         User currentUser = getCurrentUser();
+        if (currentUser.getUserId() == null) {
+            throw new IllegalStateException("User ID không hợp lệ");
+        }
         Long unreadCount = messageStatusService.getUnreadCount(roomId, currentUser.getUserId());
         
         Map<String, Long> response = new HashMap<>();

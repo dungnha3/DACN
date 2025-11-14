@@ -43,15 +43,14 @@ public class IssueCommentService {
         }
         
         log.info("User {} tạo comment cho issue {}", currentUser.getUsername(), request.getIssueId());
-        
-        // Validate issue exists
         Issue issue = issueRepository.findById(request.getIssueId())
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
         
-        // Kiểm tra quyền truy cập project
-        validateProjectAccess(issue.getProject().getProjectId(), currentUser.getUserId());
+        if (issue.getProject() == null) {
+            throw new IllegalStateException("Issue không có dự án liên kết");
+        }
         
-        // Create comment
+        validateProjectAccess(issue.getProject().getProjectId(), currentUser.getUserId());
         IssueComment comment = new IssueComment(issue, currentUser, request.getContent());
         comment = issueCommentRepository.save(comment);
         
@@ -69,9 +68,12 @@ public class IssueCommentService {
             throw new ForbiddenException("Bạn không có quyền truy cập dự án");
         }
         
-        // Validate issue exists and access
         Issue issue = issueRepository.findById(issueId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
+        
+        if (issue.getProject() == null) {
+            throw new IllegalStateException("Issue không có dự án liên kết");
+        }
         
         validateProjectAccess(issue.getProject().getProjectId(), currentUser.getUserId());
         
@@ -91,7 +93,10 @@ public class IssueCommentService {
             throw new ForbiddenException("Bạn chỉ có thể sửa comment của mình");
         }
         
-        // Kiểm tra quyền truy cập project
+        if (comment.getIssue() == null || comment.getIssue().getProject() == null) {
+            throw new IllegalStateException("Comment không có issue hoặc dự án liên kết");
+        }
+        
         validateProjectAccess(comment.getIssue().getProject().getProjectId(), currentUser.getUserId());
         
         String oldContent = comment.getContent();
@@ -111,7 +116,10 @@ public class IssueCommentService {
         IssueComment comment = issueCommentRepository.findById(commentId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy comment"));
         
-        // Kiểm tra quyền truy cập project
+        if (comment.getIssue() == null || comment.getIssue().getProject() == null) {
+            throw new IllegalStateException("Comment không có issue hoặc dự án liên kết");
+        }
+        
         Long projectId = comment.getIssue().getProject().getProjectId();
         validateProjectAccess(projectId, currentUser.getUserId());
         
@@ -158,20 +166,29 @@ public class IssueCommentService {
     private IssueCommentDTO convertToDTO(IssueComment comment, User currentUser) {
         IssueCommentDTO dto = new IssueCommentDTO();
         dto.setCommentId(comment.getCommentId());
-        dto.setIssueId(comment.getIssue().getIssueId());
-        dto.setIssueTitle(comment.getIssue().getTitle());
-        dto.setAuthorId(comment.getAuthor().getUserId());
-        dto.setAuthorName(comment.getAuthor().getUsername());
-        dto.setAuthorAvatarUrl(comment.getAuthor().getAvatarUrl());
+        
+        if (comment.getIssue() != null) {
+            dto.setIssueId(comment.getIssue().getIssueId());
+            dto.setIssueTitle(comment.getIssue().getTitle());
+        }
+        
+        if (comment.getAuthor() != null) {
+            dto.setAuthorId(comment.getAuthor().getUserId());
+            dto.setAuthorName(comment.getAuthor().getUsername());
+            dto.setAuthorAvatarUrl(comment.getAuthor().getAvatarUrl());
+        }
+        
         dto.setContent(comment.getContent());
         dto.setCreatedAt(comment.getCreatedAt());
         dto.setUpdatedAt(comment.getUpdatedAt());
         dto.setIsEdited(comment.getIsEdited());
         
-        // Set permissions
         dto.setCanEdit(comment.canBeEditedBy(currentUser));
-        boolean isProjectManager = isProjectManager(comment.getIssue().getProject().getProjectId(), currentUser.getUserId());
-        dto.setCanDelete(comment.canBeDeletedBy(currentUser, isProjectManager));
+        
+        if (comment.getIssue() != null && comment.getIssue().getProject() != null) {
+            boolean isProjectManager = isProjectManager(comment.getIssue().getProject().getProjectId(), currentUser.getUserId());
+            dto.setCanDelete(comment.canBeDeletedBy(currentUser, isProjectManager));
+        }
         
         return dto;
     }
