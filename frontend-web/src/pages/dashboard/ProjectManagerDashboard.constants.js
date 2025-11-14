@@ -108,7 +108,7 @@ export const sectionsConfig = {
   },
   leave: {
     title: 'Đơn từ & Nghỉ phép',
-    pageTitle: 'Đơn từ & Nghỉ phép',
+    pageTitle: 'Đơn từ & Nghghỉ phép',
     subtitle: 'Xin nghỉ phép và xem trạng thái đơn',
   },
   approvals: {
@@ -126,9 +126,114 @@ export const sectionsConfig = {
     pageTitle: 'Hợp đồng & Tài liệu',
     subtitle: 'Quản lý hợp đồng và tài liệu cá nhân',
   },
+  projects: {
+    title: 'Dự án',
+    pageTitle: 'Quản lý Dự án',
+    subtitle: 'Quản lý công việc, tiến độ, và tài liệu dự án',
+  },
   chat: {
     title: 'Trò chuyện',
     pageTitle: 'Trò chuyện',
     subtitle: 'Nhắn tin với đồng nghiệp và nhóm dự án',
   }
 }
+
+// START: DATA MẪU MỚI CHO TRANG DỰ ÁN (CHI TIẾT HƠN)
+export const mockProjects = [
+  { 
+    id: 1, 
+    name: 'Website E-commerce (QLNS)', 
+    status: 'Đang tiến hành', 
+    progress: 65, 
+    team: ['A', 'B', 'C', 'D'],
+    dueDate: '30/12/2025',
+    leader: 'Trần Thị B'
+  },
+  { 
+    id: 2, 
+    name: 'Ứng dụng Mobile Banking', 
+    status: 'Tạm dừng', 
+    progress: 20, 
+    team: ['E', 'F'],
+    dueDate: 'N/A',
+    leader: 'Trần Thị B'
+  },
+  { 
+    id: 3, 
+    name: 'Hệ thống ERP nội bộ', 
+    status: 'Hoàn thành', 
+    progress: 100, 
+    team: ['A', 'G', 'H'],
+    dueDate: '01/10/2025',
+    leader: 'Nguyễn Văn A'
+  },
+  { 
+    id: 4, 
+    name: 'Nâng cấp Cơ sở dữ liệu', 
+    status: 'Chưa bắt đầu', 
+    progress: 0, 
+    team: ['B', 'D'],
+    dueDate: '15/01/2026',
+    leader: 'Lê Văn C'
+  },
+]
+
+export const mockIssues = [
+  { id: 'PROJ-101', title: 'Lỗi giao diện trang thanh toán', project: 'Website E-commerce', priority: 'Cao', status: 'Mở', assignee: 'Nguyễn Văn A' },
+  { id: 'PROJ-102', title: 'Không thể đăng nhập bằng Google', project: 'Website E-commerce', priority: 'Trung bình', status: 'Đang xử lý', assignee: 'Trần Thị B' },
+  { id: 'ERP-55', title: 'Sai công thức tính lương', project: 'Hệ thống ERP nội bộ', priority: 'Cao', status: 'Mở', assignee: 'Lê Văn C' },
+  { id: 'MB-12', title: 'App crash khi chuyển tiền', project: 'Ứng dụng Mobile Banking', priority: 'Cao nhất', status: 'Đã đóng', assignee: 'Trần Thị B' },
+  { id: 'PROJ-103', title: 'Tối ưu hóa query trang sản phẩm', project: 'Website E-commerce', priority: 'Thấp', status: 'Mở', assignee: 'Nguyễn Văn A' },
+]
+
+export const mockStorageItems = [
+  { id: 1, type: 'folder', name: 'Tài liệu Đặc tả Yêu cầu', lastModified: '12/11/2025', size: '25.5 MB' },
+  { id: 2, type: 'folder', name: 'Thiết kế (Wireframes & Mockups)', lastModified: '10/11/2025', size: '150.2 MB' },
+  { id: 3, type: 'folder', name: 'Hợp đồng & Hóa đơn', lastModified: '01/11/2025', size: '10.1 MB' },
+  { id: 4, type: 'file', name: 'Project_Charter_QLNS.pdf', lastModified: '05/10/2025', size: '2.2 MB' },
+  { id: 5, type: 'file', name: 'Timeline_Gantt_Chart.xlsx', lastModified: '14/11/2025', size: '1.5 MB' },
+  { id: 6, type: 'file', name: 'Meeting_Notes_10-11.docx', lastModified: '10/11/2025', size: '350 KB' },
+]
+
+export const mockSprints = [
+  { 
+    id: 1, 
+    name: 'Sprint 1: Setup & UI Base', 
+    status: 'Hoàn thành', 
+    startDate: '01/10/2025', 
+    endDate: '15/10/2025', 
+    issues: 15 
+  },
+  { 
+    id: 2, 
+    name: 'Sprint 2: Core Features', 
+    status: 'Đang tiến hành', 
+    startDate: '16/10/2025', 
+    endDate: '30/10/2025', 
+    issues: 8 
+  },
+  { 
+    id: 3, 
+    name: 'Sprint 3: Payment & Checkout', 
+    status: 'Chưa bắt đầu', 
+    startDate: '01/11/2025', 
+    endDate: '15/11/2025', 
+    issues: 0 
+  },
+]
+
+export const mockProjectMembers = [
+  { id: 1, name: 'Nguyễn Văn A', email: 'vana@example.com', role: 'DEVELOPER' },
+  { id: 2, name: 'Trần Thị B', email: 'thib@example.com', role: 'PROJECT_MANAGER' },
+  { id: 3, name: 'Lê Văn C', email: 'vanc@example.com', role: 'DEVELOPER' },
+  { id: 4, name: 'Phạm Thị D', email: 'thid@example.com', role: 'TESTER' },
+]
+
+export const mockActivities = [
+  { id: 1, user: 'Nguyễn Văn A', action: 'đã bình luận về issue', target: 'PROJ-102', time: '15 phút trước' },
+  { id: 2, user: 'Trần Thị B', action: 'đã tạo issue mới', target: 'PROJ-103', time: '1 giờ trước' },
+  { id: 3, user: 'Trần Thị B', action: 'đã assign', target: 'PROJ-103 cho Nguyễn Văn A', time: '1 giờ trước' },
+  { id: 4, user: 'Lê Văn C', action: 'đã thay đổi trạng thái của', target: 'ERP-55 thành "Đang xử lý"', time: '3 giờ trước' },
+]
+
+// END: DATA MẪU MỚI

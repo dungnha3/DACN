@@ -111,18 +111,14 @@ export const styles = {
 
   // Content Area
   content: {
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden'
+    padding: '24px 28px',
+    overflowY: 'auto'
   },
   header: {
     display: 'flex',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '24px 32px',
-    background: '#ffffff',
-    borderBottom: '1px solid #e9ecef',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
+    justifyContent: 'space-between',
+    marginBottom: 24
   },
   pageHeading: {
     fontSize: 24,
@@ -298,9 +294,9 @@ export const styles = {
 
   // Page Content
   pageContent: {
-    padding: '32px',
-    flex: 1,
-    overflowY: 'auto'
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 20
   },
 
   // Table Card
@@ -532,12 +528,12 @@ export const styles = {
     margin: '0 auto'
   },
 
-  // Chat Styles - Soft UI / Neumorphism Design with Green Theme
+  // Chat Styles - Soft UI / Neumorphism Design with Green 
   chatContainer: {
     display: 'grid',
-    gridTemplateColumns: '320px 1fr',
-    height: 'calc(100vh - 200px)',
-    gap: 16,
+    gridTemplateColumns: '360px 1fr',
+    height: 'calc(100vh - 120px)',
+    gap: 20,
     background: 'transparent'
   },
 
@@ -869,5 +865,244 @@ export const styles = {
   },
   chatSendButtonPressed: {
     boxShadow: 'inset 4px 4px 10px rgba(5, 150, 105, 0.5), inset -2px -2px 6px rgba(255, 255, 255, 0.3)'
+  },
+
+  // Navigation Item Styles
+  navItem: {
+    width: '100%',
+    textAlign: 'left',
+    padding: '11px 16px',
+    borderRadius: 10,
+    border: 'none',
+    background: 'transparent',
+    color: '#fff',
+    cursor: 'pointer',
+    fontSize: 14,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    transition: 'all 0.2s',
+    marginBottom: 4
+  },
+  navIcon: {
+    fontSize: 16,
+    width: 20,
+    textAlign: 'center'
+  },
+  navItemActive: {
+    background: 'rgba(255,255,255,0.15)',
+    fontWeight: 600,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+  },
+
+  // Approval Card Styles
+  approvalCard: {
+    background: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
+    border: '1px solid #e9ecef'
+  },
+  approvalHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16
+  },
+  approvalEmployee: {
+    fontSize: 16,
+    fontWeight: 700,
+    color: '#344767',
+    marginBottom: 4
+  },
+  approvalType: {
+    fontSize: 14,
+    color: '#7b809a',
+    fontWeight: 500
+  },
+  approvalBody: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: 16,
+    marginBottom: 16
+  },
+  approvalField: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4
+  },
+  approvalLabel: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: '#7b809a',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
+  },
+  approvalValue: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: '#344767'
+  },
+  approvalReason: {
+    gridColumn: '1 / -1',
+    marginTop: 8
+  },
+  approvalReasonLabel: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: '#7b809a',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    marginBottom: 8
+  },
+  approvalReasonText: {
+    fontSize: 14,
+    color: '#344767',
+    lineHeight: 1.5,
+    padding: 12,
+    background: '#f8f9fa',
+    borderRadius: 8,
+    border: '1px solid #e9ecef'
+  },
+  approvalActions: {
+    display: 'flex',
+    gap: 12,
+    justifyContent: 'flex-end'
+  },
+  rejectBtn: {
+    background: 'linear-gradient(195deg, #dc2626 0%, #991b1b 100%)',
+    border: 'none',
+    color: '#fff',
+    padding: '8px 16px',
+    borderRadius: 8,
+    cursor: 'pointer',
+    fontWeight: 600,
+    fontSize: 14,
+    boxShadow: '0 2px 10px rgba(220, 38, 38, 0.3)',
+    transition: 'all 0.2s'
+  },
+  approveBtn: {
+    background: 'linear-gradient(195deg, #059669 0%, #047857 100%)',
+    border: 'none',
+    color: '#fff',
+    padding: '8px 16px',
+    borderRadius: 8,
+    cursor: 'pointer',
+    fontWeight: 600,
+    fontSize: 14,
+    boxShadow: '0 2px 10px rgba(5, 150, 105, 0.3)',
+    transition: 'all 0.2s'
+  },
+
+  // Check-in Button Style (for welcome card)
+  checkInBtn: {
+    background: 'linear-gradient(195deg, #059669 0%, #047857 100%)',
+    border: 'none',
+    color: '#fff',
+    padding: '10px 20px',
+    borderRadius: 8,
+    cursor: 'pointer',
+    fontWeight: 600,
+    fontSize: 14,
+    transition: 'all 0.2s',
+    boxShadow: '0 2px 10px rgba(5, 150, 105, 0.3)'
+  },
+
+  // Payroll Styles
+  payrollActions: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    background: '#fff',
+    padding: 20,
+    borderRadius: 16,
+    boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
+    marginBottom: 20
+  },
+  monthSelector: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12
+  },
+  monthLabel: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: '#344767'
+  },
+  monthSelect: {
+    padding: '8px 16px',
+    border: '1px solid #e9ecef',
+    borderRadius: 8,
+    fontSize: 14,
+    color: '#344767',
+    background: '#fff',
+    cursor: 'pointer',
+    outline: 'none',
+    transition: 'all 0.2s'
+  },
+  actionButtons: {
+    display: 'flex',
+    gap: 12
+  },
+  autoCalculateBtn: {
+    background: 'linear-gradient(195deg, #059669 0%, #047857 100%)',
+    border: 'none',
+    color: '#fff',
+    padding: '12px 24px',
+    borderRadius: 10,
+    cursor: 'pointer',
+    fontWeight: 600,
+    fontSize: 14,
+    transition: 'all 0.2s',
+    boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8
+  },
+  exportBtn: {
+    background: 'linear-gradient(195deg, #3b82f6 0%, #2563eb 100%)',
+    border: 'none',
+    color: '#fff',
+    padding: '12px 24px',
+    borderRadius: 10,
+    cursor: 'pointer',
+    fontWeight: 600,
+    fontSize: 14,
+    transition: 'all 0.2s',
+    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8
+  },
+  employeeCell: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2
+  },
+  employeeName: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: '#344767'
+  },
+  employeePosition: {
+    fontSize: 12,
+    color: '#7b809a',
+    fontWeight: 500
+  },
+  totalSalaryCell: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#059669'
+  },
+  payrollStatusBadge: {
+    padding: '6px 12px',
+    borderRadius: 8,
+    fontSize: 12,
+    fontWeight: 600,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
   }
 }

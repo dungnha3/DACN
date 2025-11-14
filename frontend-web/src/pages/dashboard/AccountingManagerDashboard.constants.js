@@ -30,7 +30,10 @@ export const pendingApprovals = [
     id: 1,
     type: 'Đề xuất chi phí',
     employee: 'Nguyễn Văn A',
-    date: '08/11/2025',
+    fromDate: '10/11/2025',
+    toDate: '15/11/2025',
+    days: 5,
+    submitDate: '08/11/2025',
     reason: 'Mua thiết bị văn phòng cho phòng IT',
     status: 'pending'
   },
@@ -38,7 +41,10 @@ export const pendingApprovals = [
     id: 2,
     type: 'Thanh toán hóa đơn',
     employee: 'Trần Thị B',
-    date: '07/11/2025',
+    fromDate: '07/11/2025',
+    toDate: '07/11/2025',
+    days: 1,
+    submitDate: '07/11/2025',
     reason: 'Thanh toán hóa đơn điện tháng 10',
     status: 'pending'
   },
@@ -46,7 +52,10 @@ export const pendingApprovals = [
     id: 3,
     type: 'Tạm ứng',
     employee: 'Lê Văn C',
-    date: '06/11/2025',
+    fromDate: '12/11/2025',
+    toDate: '14/11/2025',
+    days: 3,
+    submitDate: '06/11/2025',
     reason: 'Tạm ứng chi phí công tác Hà Nội',
     status: 'approved'
   },
@@ -54,7 +63,10 @@ export const pendingApprovals = [
     id: 4,
     type: 'Hoàn ứng',
     employee: 'Phạm Thị D',
-    date: '05/11/2025',
+    fromDate: '05/11/2025',
+    toDate: '05/11/2025',
+    days: 1,
+    submitDate: '05/11/2025',
     reason: 'Hoàn ứng chi phí đào tạo nhân viên',
     status: 'pending'
   },
@@ -62,7 +74,10 @@ export const pendingApprovals = [
     id: 5,
     type: 'Đề xuất chi phí',
     employee: 'Hoàng Văn E',
-    date: '04/11/2025',
+    fromDate: '08/11/2025',
+    toDate: '10/11/2025',
+    days: 3,
+    submitDate: '04/11/2025',
     reason: 'Chi phí bảo trì hệ thống máy tính',
     status: 'rejected'
   },
@@ -70,7 +85,10 @@ export const pendingApprovals = [
     id: 6,
     type: 'Thanh toán hóa đơn',
     employee: 'Vũ Thị F',
-    date: '03/11/2025',
+    fromDate: '03/11/2025',
+    toDate: '03/11/2025',
+    days: 1,
+    submitDate: '03/11/2025',
     reason: 'Thanh toán hóa đơn internet tháng 10',
     status: 'approved'
   },
@@ -78,7 +96,10 @@ export const pendingApprovals = [
     id: 7,
     type: 'Tạm ứng',
     employee: 'Đỗ Văn G',
-    date: '02/11/2025',
+    fromDate: '15/11/2025',
+    toDate: '18/11/2025',
+    days: 4,
+    submitDate: '02/11/2025',
     reason: 'Tạm ứng chi phí mua vật tư',
     status: 'pending'
   },
@@ -86,11 +107,106 @@ export const pendingApprovals = [
     id: 8,
     type: 'Hoàn ứng',
     employee: 'Bùi Thị H',
-    date: '01/11/2025',
+    fromDate: '01/11/2025',
+    toDate: '01/11/2025',
+    days: 1,
+    submitDate: '01/11/2025',
     reason: 'Hoàn ứng chi phí đi lại',
     status: 'pending'
   }
 ]
+
+// Payroll Data
+export const payrollData = [
+  {
+    id: 1,
+    employeeId: 'NV001',
+    employeeName: 'Nguyễn Văn A',
+    department: 'IT',
+    position: 'Developer',
+    baseSalary: 15000000,
+    allowances: 2000000,
+    overtime: 1500000,
+    deductions: 500000,
+    totalSalary: 18000000,
+    status: 'calculated',
+    month: '11/2025',
+    calculatedDate: '25/11/2025'
+  },
+  {
+    id: 2,
+    employeeId: 'NV002',
+    employeeName: 'Trần Thị B',
+    department: 'HR',
+    position: 'HR Manager',
+    baseSalary: 20000000,
+    allowances: 3000000,
+    overtime: 0,
+    deductions: 800000,
+    totalSalary: 22200000,
+    status: 'paid',
+    month: '11/2025',
+    calculatedDate: '25/11/2025'
+  },
+  {
+    id: 3,
+    employeeId: 'NV003',
+    employeeName: 'Lê Văn C',
+    department: 'Sales',
+    position: 'Sales Executive',
+    baseSalary: 12000000,
+    allowances: 1500000,
+    overtime: 2000000,
+    deductions: 300000,
+    totalSalary: 15200000,
+    status: 'calculated',
+    month: '11/2025',
+    calculatedDate: '25/11/2025'
+  },
+  {
+    id: 4,
+    employeeId: 'NV004',
+    employeeName: 'Phạm Thị D',
+    department: 'Accounting',
+    position: 'Accountant',
+    baseSalary: 14000000,
+    allowances: 1800000,
+    overtime: 800000,
+    deductions: 400000,
+    totalSalary: 16200000,
+    status: 'pending',
+    month: '11/2025',
+    calculatedDate: null
+  },
+  {
+    id: 5,
+    employeeId: 'NV005',
+    employeeName: 'Hoàng Văn E',
+    department: 'IT',
+    position: 'Tester',
+    baseSalary: 13000000,
+    allowances: 1200000,
+    overtime: 1000000,
+    deductions: 200000,
+    totalSalary: 15000000,
+    status: 'paid',
+    month: '11/2025',
+    calculatedDate: '25/11/2025'
+  }
+]
+
+// Payroll Summary
+export const payrollSummary = {
+  totalEmployees: 5,
+  calculatedEmployees: 3,
+  paidEmployees: 2,
+  pendingEmployees: 1,
+  totalPayroll: 86600000,
+  totalBaseSalary: 74000000,
+  totalAllowances: 9500000,
+  totalOvertime: 5300000,
+  totalDeductions: 2200000
+}
 
 // Notifications
 export const notifications = [
@@ -225,7 +341,7 @@ export const sectionsConfig = {
     subtitle: 'Xem xét và phê duyệt các đề xuất tài chính',
   },
   payroll: {
-    title: 'Phiếu lương',
+    title: 'Bảng lương',
     pageTitle: 'Quản lý lương',
     subtitle: 'Quản lý và xử lý phiếu lương nhân viên',
   },
