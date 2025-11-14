@@ -100,7 +100,10 @@ export const styles = {
   navIcon: {
     fontSize: 16,
     width: 20,
-    textAlign: 'center'
+    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   navItemActive: {
     background: 'rgba(255,255,255,0.15)',
@@ -579,10 +582,10 @@ export const styles = {
   // Chat Styles
   chatContainer: {
     display: 'grid',
-    gridTemplateColumns: '320px 1fr',
+    gridTemplateColumns: '360px 1fr',
+    height: 'calc(100vh - 120px)',
     gap: 20,
-    height: 'calc(100vh - 140px)',
-    overflow: 'hidden'
+    background: 'transparent'
   },
 
   // Chat Sidebar (Left Column)
@@ -749,16 +752,18 @@ export const styles = {
     gap: 8
   },
   chatActionButton: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     border: 'none',
     background: 'transparent',
-    borderRadius: 8,
+    borderRadius: 10,
     cursor: 'pointer',
     color: '#7b809a',
     display: 'grid',
     placeItems: 'center',
-    transition: 'all 0.2s'
+    transition: 'all 0.2s',
+    padding: 0,
+    position: 'relative'
   },
   chatMessagesArea: {
     flex: 1,
@@ -835,8 +840,9 @@ export const styles = {
   },
   chatInputArea: {
     padding: '16px 24px',
-    borderTop: '1px solid #f0f2f5',
-    background: '#fff'
+    borderTop: 'none',
+    background: '#ffffff',
+    boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.05)'
   },
   chatInputToolbar: {
     display: 'flex',
@@ -844,45 +850,329 @@ export const styles = {
     marginBottom: 12
   },
   chatToolButton: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     border: 'none',
-    background: '#f8f9fa',
-    borderRadius: 8,
+    borderRadius: 12,
+    background: '#e8eaf0',
+    boxShadow: '3px 3px 8px rgba(0, 0, 0, 0.08), -3px -3px 8px rgba(255, 255, 255, 0.9)',
     cursor: 'pointer',
-    color: '#7b809a',
+    fontSize: 18,
     display: 'grid',
     placeItems: 'center',
-    transition: 'all 0.2s'
+    transition: 'all 0.3s ease',
+    color: '#7b809a',
+    padding: 0,
+    position: 'relative'
   },
   chatInputWrapper: {
     display: 'flex',
     gap: 12,
-    alignItems: 'flex-end'
+    alignItems: 'center'
   },
   chatMessageInput: {
     flex: 1,
-    padding: '12px 16px',
-    border: '1px solid #e9ecef',
-    borderRadius: 12,
+    padding: '14px 20px',
+    border: 'none',
+    borderRadius: 18,
     fontSize: 14,
     outline: 'none',
-    resize: 'none',
-    minHeight: 44,
-    maxHeight: 120,
-    transition: 'all 0.2s'
+    background: '#e8eaf0',
+    boxShadow: 'inset 4px 4px 10px rgba(0, 0, 0, 0.1), inset -4px -4px 10px rgba(255, 255, 255, 0.9)',
+    transition: 'all 0.3s ease',
+    color: '#344767'
   },
   chatSendButton: {
-    width: 44,
-    height: 44,
+    width: 52,
+    height: 52,
     border: 'none',
+    borderRadius: 16,
     background: 'linear-gradient(145deg, #1e3a8a, #1e40af)',
-    borderRadius: 12,
+    boxShadow: '5px 5px 15px rgba(30, 58, 138, 0.4), -3px -3px 10px rgba(255, 255, 255, 0.8)',
     cursor: 'pointer',
+    fontSize: 20,
+    color: '#ffffff',
+    display: 'grid',
+    placeItems: 'center',
+    transition: 'all 0.3s ease',
+    fontWeight: 700,
+    padding: 0,
+    flexShrink: 0,
+    position: 'relative'
+  },
+
+  // START: PROJECT PAGE STYLES
+  projectTabContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: 6,
+    background: '#e9ecef',
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 20
+  },
+  projectTabButton: {
+    border: 'none',
+    padding: '10px 24px',
+    borderRadius: 10,
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: 'pointer',
+    color: '#67748e',
+    background: 'transparent',
+    transition: 'all 0.2s'
+  },
+  projectTabButtonActive: {
+    background: '#fff',
+    color: '#1e3a8a',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+  },
+  projectTabContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 20
+  },
+  projectGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+    gap: 20
+  },
+  projectCard: {
+    background: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
+    border: '1px solid #e9ecef',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12
+  },
+  projectCardHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start'
+  },
+  projectCardTitle: {
+    fontSize: 16,
+    fontWeight: 700,
+    color: '#1e3a8a',
+    marginBottom: 4
+  },
+  projectCardStatus: (status) => {
+    const s = {
+      'Đang tiến hành': { bg: '#dbeafe', color: '#1e3a8a' },
+      'Tạm dừng': { bg: '#e5e7eb', color: '#374151' },
+      'Hoàn thành': { bg: '#d1fae5', color: '#065f46' },
+      'Chưa bắt đầu': { bg: '#fee2e2', color: '#991b1b' }
+    }
+    return {
+      padding: '4px 10px',
+      borderRadius: 6,
+      fontSize: 12,
+      fontWeight: 600,
+      background: s[status]?.bg || s['Tạm dừng'].bg,
+      color: s[status]?.color || s['Tạm dừng'].color,
+    }
+  },
+  projectCardProgress: {
+    width: '100%',
+    height: 8,
+    background: '#e9ecef',
+    borderRadius: 4,
+    overflow: 'hidden'
+  },
+  projectCardProgressBar: (progress) => ({
+    width: `${progress}%`,
+    height: '100%',
+    background: 'linear-gradient(195deg, #1e3a8a 0%, #1e40af 100%)',
+    borderRadius: 4
+  }),
+  projectCardFooter: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8
+  },
+  projectCardTeam: {
+    display: 'flex',
+  },
+  projectCardAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: '50%',
+    background: '#1e3a8a',
     color: '#fff',
     display: 'grid',
     placeItems: 'center',
+    fontWeight: 700,
+    border: '2px solid #fff',
+    marginLeft: -8,
+  },
+  projectCardDue: {
+    fontSize: 13,
+    color: '#dc2626',
+    fontWeight: 600
+  },
+  
+  // Storage Grid
+  storageGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gap: 16
+  },
+  storageItem: {
+    background: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+    border: '1px solid #e9ecef',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 14,
     transition: 'all 0.2s',
-    boxShadow: '0 4px 12px rgba(30, 58, 138, 0.3)'
+    cursor: 'pointer'
+  },
+  storageIcon: (type) => ({
+    fontSize: 24,
+    color: type === 'folder' ? '#fbbf24' : '#6b7280'
+  }),
+  storageInfo: {
+    flex: 1
+  },
+  storageName: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: '#344767',
+    marginBottom: 4
+  },
+  storageMeta: {
+    fontSize: 12,
+    color: '#7b809a'
+  },
+  
+  // START: NEW PROJECT DETAIL STYLES
+  projectSelectorBar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '16px 20px',
+    background: '#fff',
+    borderRadius: 16,
+    boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
+    border: '1px solid #e9ecef',
+  },
+  projectSelector: {
+    fontSize: 14,
+    padding: '8px 12px',
+    borderRadius: 8,
+    border: '1px solid #d2d6da',
+    background: '#fff',
+    fontWeight: 600,
+    color: '#344767'
+  },
+  projectSelectorLabel: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: '#344767',
+    marginRight: 10
+  },
+  
+  subTabsContainer: {
+    display: 'flex',
+    gap: 8,
+    borderBottom: '1px solid #e9ecef',
+    marginBottom: 20
+  },
+  subTabButton: {
+    border: 'none',
+    background: 'transparent',
+    padding: '10px 16px',
+    fontSize: 14,
+    fontWeight: 600,
+    color: '#67748e',
+    cursor: 'pointer',
+    borderBottom: '3px solid transparent',
+    transition: 'all 0.2s'
+  },
+  subTabButtonActive: {
+    color: '#1e3a8a',
+    borderBottom: '3px solid #1e3a8a'
+  },
+  
+  sprintCard: {
+    background: '#f8f9fa',
+    borderRadius: 12,
+    padding: 20,
+    border: '1px solid #e9ecef',
+    marginBottom: 16
+  },
+  sprintHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12
+  },
+  sprintName: {
+    fontSize: 16,
+    fontWeight: 700,
+    color: '#344767'
+  },
+  sprintDates: {
+    fontSize: 13,
+    color: '#7b809a',
+    fontWeight: 600,
+    marginTop: 4
+  },
+  sprintActions: {
+    display: 'flex',
+    gap: 10
+  },
+  sprintButton: {
+    background: 'linear-gradient(195deg, #1e3a8a 0%, #1e40af 100%)',
+    border: 'none',
+    color: '#fff',
+    padding: '8px 16px',
+    borderRadius: 8,
+    cursor: 'pointer',
+    fontWeight: 600,
+    fontSize: 13,
+    boxShadow: '0 2px 8px rgba(30, 58, 138, 0.3)'
+  },
+  
+  activityFeed: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12
+  },
+  activityItem: {
+    display: 'flex',
+    gap: 12,
+    padding: 12,
+    borderRadius: 10,
+    background: '#f8f9fa',
+    border: '1px solid #e9ecef'
+  },
+  activityAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    background: 'linear-gradient(195deg, #1e3a8a 0%, #1e40af 100%)',
+    color: '#fff',
+    display: 'grid',
+    placeItems: 'center',
+    fontWeight: 700,
+    fontSize: 14,
+    flexShrink: 0
+  },
+  activityContent: {
+    fontSize: 14,
+    color: '#344767'
+  },
+  activityTime: {
+    fontSize: 12,
+    color: '#7b809a',
+    marginTop: 4
   }
+  // END: NEW PROJECT DETAIL STYLES
 }

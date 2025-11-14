@@ -1,19 +1,37 @@
 import { useMemo, useState } from 'react'
 import { styles } from './ProjectManagerDashboard.styles'
 import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar, ApprovalStatusBadge } from './ProjectManagerDashboard.components'
-import { kpiData, attendanceHistory, leaveRequests, notifications, sectionsConfig, pendingApprovals } from './ProjectManagerDashboard.constants'
+import { 
+  kpiData, attendanceHistory, leaveRequests, notifications, sectionsConfig, pendingApprovals, 
+  mockProjects, mockIssues, mockStorageItems, mockSprints, mockProjectMembers, mockActivities 
+} from './ProjectManagerDashboard.constants'
 import { chatContacts, chatMessages } from './EmployeeDashboard.constants'
 
 export default function ProjectManagerDashboard() {
   const [active, setActive] = useState('dashboard')
+  const [projectTab, setProjectTab] = useState('management') // management, issues, storage
+  const [projectSubTab, setProjectSubTab] = useState('backlog') // backlog, sprints, members, activity
   const [approvals, setApprovals] = useState(pendingApprovals)
   const [selectedContact, setSelectedContact] = useState(chatContacts?.[0] || null)
   const [messageInput, setMessageInput] = useState('')
+  const [isCheckedIn, setIsCheckedIn] = useState(false)
+  
+  // STATE MỚI: Quản lý dự án đang được chọn
+  const [allProjects, setAllProjects] = useState(mockProjects)
+  const [selectedProjectId, setSelectedProjectId] = useState(allProjects[0]?.id || null)
+
   const username = typeof localStorage !== 'undefined' ? localStorage.getItem('username') : 'Project Manager'
   const user = useMemo(() => ({ name: username || 'Trần Thị B', role: 'Quản lý dự án' }), [username])
 
   const sections = useMemo(() => sectionsConfig, [])
   const meta = sections[active]
+
+  // Hàm chọn dự án (từ Tab 1) và tự động chuyển tab
+  const handleSelectProject = (projectId) => {
+    setSelectedProjectId(projectId)
+    setProjectTab('issues') // Tự động chuyển sang tab "Quản lý Vấn đề"
+    setProjectSubTab('backlog') // Mặc định vào Backlog
+  }
 
   const handleLogout = async () => {
     try {
@@ -47,6 +65,207 @@ export default function ProjectManagerDashboard() {
       item.id === id ? { ...item, status: 'rejected' } : item
     ))
     alert('Đã từ chối đơn!')
+  }
+
+  const handleCheckInOut = () => {
+    const now = new Date()
+    const currentTime = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false })
+    if (!isCheckedIn) {
+      setIsCheckedIn(true)
+      alert(`Đã chấm công vào lúc ${currentTime}`)
+    } else {
+      setIsCheckedIn(false)
+      alert(`Đã chấm công ra lúc ${currentTime}`)
+    }
+  }
+  
+  // Helper render badge cho Issue Priority
+  const IssuePriorityBadge = ({ priority }) => {
+    const priorities = {
+      'Cao nhất': { bg: '#fee2e2', color: '#991b1b', border: '#fecaca' },
+      'Cao': { bg: '#fef3c7', color: '#92400e', border: '#fde68a' },
+      'Trung bình': { bg: '#dbeafe', color: '#1e3a8a', border: '#93c5fd' },
+      'Thấp': { bg: '#e5e7eb', color: '#374151', border: '#d1d5db' }
+    }
+    const p = priorities[priority] || priorities['Thấp']
+    return (
+      <div style={{ ...styles.statusBadge, background: p.bg, color: p.color, border: `1px solid ${p.border}` }}>
+        {priority}
+      </div>
+    )
+  }
+  
+  // Helper render badge cho Issue Status
+  const IssueStatusBadge = ({ status }) => {
+    const statuses = {
+      'Mở': { bg: '#fee2e2', color: '#991b1b', border: '#fecaca' },
+      'Đang xử lý': { bg: '#fef3c7', color: '#92400e', border: '#fde68a' },
+      'Đã đóng': { bg: '#dbeafe', color: '#1e3a8a', border: '#93c5fd' }
+    }
+    const s = statuses[status] || statuses['Mở']
+    return (
+      <div style={{ ...styles.statusBadge, background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
+        {status}
+      </div>
+    )
+  }
+
+  // Component mới: Thanh chọn dự án
+  const ProjectSelectorBar = () => (
+    <div style={styles.projectSelectorBar}>
+      <div>
+        <label style={styles.projectSelectorLabel} htmlFor="project-select">Dự án đang xem:</label>
+        <select 
+          id="project-select"
+          style={styles.projectSelector}
+          value={selectedProjectId}
+          onChange={(e) => setSelectedProjectId(Number(e.target.value))}
+        >
+          {allProjects.map(project => (
+            <option key={project.id} value={project.id}>{project.name}</option>
+          ))}
+        </select>
+      </div>
+      {/* Bạn có thể thêm các nút tổng quan của dự án ở đây */}
+    </div>
+  )
+
+  // Component mới: Nội dung cho tab con
+  const renderProjectSubContent = () => {
+    if (!selectedProjectId) {
+      return (
+        <div style={styles.placeholderCard}>
+          <div style={styles.placeholderIcon}>🏗️</div>
+          <h3 style={styles.placeholderTitle}>Chưa chọn dự án</h3>
+          <p style={styles.placeholderText}>
+            Vui lòng vào tab "Quản lý dự án" và chọn một dự án để xem,
+            hoặc chọn từ danh sách thả xuống ở trên.
+          </p>
+        </div>
+      )
+    }
+
+    // Render dựa trên projectSubTab state
+    switch (projectSubTab) {
+      case 'backlog':
+        return (
+          <div style={styles.tableCard}>
+            <div style={styles.tableHeader}>
+              <h4 style={styles.tableTitle}>Backlog (Tất cả Vấn đề)</h4>
+              <button style={styles.addBtn}>+ Tạo Vấn đề</button>
+            </div>
+            <div style={styles.tableWrap}>
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>ID</th>
+                    <th style={styles.th}>Tiêu đề</th>
+                    <th style={styles.th}>Độ ưu tiên</th>
+                    <th style={styles.th}>Trạng thái</th>
+                    <th style={styles.th}>Người xử lý</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mockIssues.map(issue => (
+                    <tr key={issue.id} style={styles.tr}>
+                      <td style={styles.td}>{issue.id}</td>
+                      <td style={styles.td}>{issue.title}</td>
+                      <td style={styles.td}><IssuePriorityBadge priority={issue.priority} /></td>
+                      <td style={styles.td}><IssueStatusBadge status={issue.status} /></td>
+                      <td style={styles.td}>{issue.assignee}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+      case 'sprints':
+        return (
+          <div style={styles.tableCard}>
+            <div style={styles.tableHeader}>
+              <h4 style={styles.tableTitle}>Quản lý Sprints</h4>
+              <button style={styles.addBtn}>+ Tạo Sprint mới</button>
+            </div>
+            {mockSprints.map(sprint => (
+              <div key={sprint.id} style={styles.sprintCard}>
+                <div style={styles.sprintHeader}>
+                  <div>
+                    <div style={styles.sprintName}>{sprint.name}</div>
+                    <div style={styles.sprintDates}>{sprint.startDate} - {sprint.endDate}</div>
+                  </div>
+                  <div style={styles.sprintActions}>
+                    {sprint.status === 'Chưa bắt đầu' && (
+                      <button style={styles.sprintButton}>Bắt đầu Sprint</button>
+                    )}
+                    {sprint.status === 'Đang tiến hành' && (
+                      <button style={{...styles.sprintButton, background: '#dc2626'}}>Hoàn thành Sprint</button>
+                    )}
+                    <span style={{...styles.projectCardStatus(sprint.status), margin: 'auto 0'}}>{sprint.status}</span>
+                  </div>
+                </div>
+                <div style={{fontSize: 14, color: '#344767'}}>
+                  <strong>{sprint.issues} issues</strong> trong sprint này.
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      case 'members':
+        return (
+          <div style={styles.tableCard}>
+            <div style={styles.tableHeader}>
+              <h4 style={styles.tableTitle}>Thành viên Dự án</h4>
+              <button style={styles.addBtn}>+ Thêm Thành viên</button>
+            </div>
+            <div style={styles.tableWrap}>
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Tên</th>
+                    <th style={styles.th}>Email</th>
+                    <th style={styles.th}>Vai trò (Role)</th>
+                    <th style={styles.th}>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mockProjectMembers.map(member => (
+                    <tr key={member.id} style={styles.tr}>
+                      <td style={styles.td}>{member.name}</td>
+                      <td style={styles.td}>{member.email}</td>
+                      <td style={styles.td}>{member.role}</td>
+                      <td style={styles.td}>
+                        <button style={{...styles.sprintButton, fontSize: 12, padding: '6px 12px'}}>Sửa Role</button>
+                        <button style={{...styles.rejectBtn, fontSize: 12, padding: '6px 12px', marginLeft: 8}}>Xóa</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+      case 'activity':
+        return (
+          <div style={styles.tableCard}>
+            <h4 style={styles.tableTitle}>Hoạt động Dự án</h4>
+            <div style={styles.activityFeed}>
+              {mockActivities.map(act => (
+                <div key={act.id} style={styles.activityItem}>
+                  <div style={styles.activityAvatar}>{act.user.slice(0,1)}</div>
+                  {/* Div này đã được sửa lỗi trong file styles.js */}
+                  <div style={styles.activityContent}>
+                    <span style={{fontWeight: 700}}>{act.user}</span> {act.action} <span style={{fontWeight: 700, color: '#1e3a8a'}}>{act.target}</span>
+                    <div style={styles.activityTime}>{act.time}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      default:
+        return null
+    }
   }
 
   return (
@@ -95,6 +314,12 @@ export default function ProjectManagerDashboard() {
           <NavItem active={active === 'documents'} onClick={() => setActive('documents')} icon="📄">
             {sections.documents.title}
           </NavItem>
+
+          {/* NAV ITEM DỰ ÁN */}
+          <NavItem active={active === 'projects'} onClick={() => setActive('projects')} icon="🏗️">
+            {sections.projects.title}
+          </NavItem>
+          
           <NavItem active={active === 'chat'} onClick={() => setActive('chat')} icon="💬">
             {sections.chat.title}
           </NavItem>
@@ -108,8 +333,8 @@ export default function ProjectManagerDashboard() {
       <main style={styles.content}>
         <header style={styles.header}>
           <div>
-            <div style={styles.pageHeading}>{meta.title}</div>
-            {active !== 'chat' && <div style={styles.subHeading}>Xin chào, {user.name}</div>}
+            <div style={styles.pageHeading}>{meta.pageTitle || meta.title}</div>
+            {active !== 'chat' && <div style={styles.subHeading}>{meta.subtitle}</div>}
           </div>
 
           <div style={styles.rightCluster}>
@@ -184,6 +409,18 @@ export default function ProjectManagerDashboard() {
             <div style={styles.tableCard}>
               <div style={styles.tableHeader}>
                 <h4 style={styles.tableTitle}>Lịch sử chấm công</h4>
+                <button
+                  onClick={handleCheckInOut}
+                  style={{
+                    ...styles.checkInBtn,
+                    background: isCheckedIn
+                      ? 'linear-gradient(195deg, #6b7280 0%, #4b5563 100%)'
+                      : styles.checkInBtn.background,
+                    opacity: 1
+                  }}
+                >
+                  {isCheckedIn ? '⏹ Chấm công ra' : '🟢 Chấm công'}
+                </button>
               </div>
               <div style={styles.tableWrap}>
                 <table style={styles.table}>
@@ -334,11 +571,164 @@ export default function ProjectManagerDashboard() {
           </div>
         )}
 
+        {/* START: PROJECT PAGE (REDESIGNED) */}
+        {active === 'projects' && (
+          <div style={styles.pageContent}>
+            {/* Project Tab Navigation */}
+            <div style={styles.projectTabContainer}>
+              <button 
+                style={projectTab === 'management' ? { ...styles.projectTabButton, ...styles.projectTabButtonActive } : styles.projectTabButton}
+                onClick={() => setProjectTab('management')}
+              >
+                🏗️ Quản lý Dự án
+              </button>
+              <button 
+                style={projectTab === 'issues' ? { ...styles.projectTabButton, ...styles.projectTabButtonActive } : styles.projectTabButton}
+                onClick={() => setProjectTab('issues')}
+              >
+                🐞 Vấn đề & Sprints
+              </button>
+              <button 
+                style={projectTab === 'storage' ? { ...styles.projectTabButton, ...styles.projectTabButtonActive } : styles.projectTabButton}
+                onClick={() => setProjectTab('storage')}
+              >
+                🗄️ Lưu trữ
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            <div style={styles.projectTabContent}>
+              
+              {/* Tab 1: Project Management (ProjectController) */}
+              {projectTab === 'management' && (
+                <>
+                  <div style={styles.tableHeader}>
+                    <h4 style={styles.tableTitle}>Danh sách dự án của tôi</h4>
+                    <button style={styles.addBtn}>+ Tạo dự án mới</button>
+                  </div>
+                  <div style={styles.projectGrid}>
+                    {allProjects.map(project => (
+                      <div key={project.id} style={styles.projectCard}>
+                        <div style={styles.projectCardHeader}>
+                          <div>
+                            <div style={styles.projectCardTitle}>{project.name}</div>
+                          </div>
+                          <span style={styles.projectCardStatus(project.status)}>{project.status}</span>
+                        </div>
+                        <div>
+                          <div style={{ ...styles.projectCardProgress, marginBottom: 4 }}>
+                            <div style={styles.projectCardProgressBar(project.progress)} />
+                          </div>
+                          <span style={{ fontSize: 12, color: '#67748e', fontWeight: 600 }}>{project.progress}% Hoàn thành</span>
+                        </div>
+                        <div style={styles.projectCardFooter}>
+                          <div style={styles.projectCardTeam}>
+                            {project.team.map((avatar, idx) => (
+                              <div key={idx} style={{...styles.projectCardAvatar, zIndex: idx, marginLeft: idx === 0 ? 0 : -10}}>
+                                {avatar}
+                              </div>
+                            ))}
+                          </div>
+                          <button 
+                            style={styles.approveBtn} 
+                            onClick={() => handleSelectProject(project.id)}
+                          >
+                            Quản lý
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Tab 2: Issue & Sprint Management (IssueController, SprintController, etc.) */}
+              {projectTab === 'issues' && (
+                <>
+                  <ProjectSelectorBar />
+                  
+                  {/* Sub-tabs */}
+                  <div style={styles.subTabsContainer}>
+                    <button 
+                      style={projectSubTab === 'backlog' ? {...styles.subTabButton, ...styles.subTabButtonActive} : styles.subTabButton}
+                      onClick={() => setProjectSubTab('backlog')}
+                    >
+                      Backlog
+                    </button>
+                    <button 
+                      style={projectSubTab === 'sprints' ? {...styles.subTabButton, ...styles.subTabButtonActive} : styles.subTabButton}
+                      onClick={() => setProjectSubTab('sprints')}
+                    >
+                      Sprints
+                    </button>
+                    <button 
+                      style={projectSubTab === 'members' ? {...styles.subTabButton, ...styles.subTabButtonActive} : styles.subTabButton}
+                      onClick={() => setProjectSubTab('members')}
+                    >
+                      Thành viên
+                    </button>
+                    <button 
+                      style={projectSubTab === 'activity' ? {...styles.subTabButton, ...styles.subTabButtonActive} : styles.subTabButton}
+                      onClick={() => setProjectSubTab('activity')}
+                    >
+                      Hoạt động
+                    </button>
+                  </div>
+
+                  {/* Render content based on sub-tab */}
+                  {renderProjectSubContent()}
+                </>
+              )}
+
+              {/* Tab 3: Storage (StorageController) */}
+              {projectTab === 'storage' && (
+                <>
+                  <ProjectSelectorBar />
+                  
+                  {!selectedProjectId ? (
+                    <div style={styles.placeholderCard}>
+                      <div style={styles.placeholderIcon}>🗄️</div>
+                      <h3 style={styles.placeholderTitle}>Chưa chọn dự án</h3>
+                      <p style={styles.placeholderText}>
+                        Vui lòng chọn một dự án từ danh sách thả xuống ở trên để xem lưu trữ.
+                      </p>
+                    </div>
+                  ) : (
+                    <div style={styles.tableCard}>
+                      <div style={styles.tableHeader}>
+                        <h4 style={styles.tableTitle}>Lưu trữ cho dự án: {allProjects.find(p => p.id === selectedProjectId)?.name}</h4>
+                        <button style={styles.addBtn}>+ Tải lên tài liệu</button>
+                      </div>
+                      <div style={styles.storageGrid}>
+                        {mockStorageItems.map(item => (
+                          <div key={item.id} style={styles.storageItem}>
+                            <span style={styles.storageIcon(item.type)}>
+                              {item.type === 'folder' ? '📁' : '📄'}
+                            </span>
+                            <div style={styles.storageInfo}>
+                              <div style={styles.storageName}>{item.name}</div>
+                              <div style={styles.storageMeta}>
+                                Cập nhật: {item.lastModified} | {item.size}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+        {/* END: PROJECT PAGE */}
+
         {/* Chat Page */}
         {active === 'chat' && (
-          <div style={styles.chatContainer}>
-            {/* Left Column - Chat List */}
-            <div style={styles.chatSidebar}>
+          <div style={styles.pageContent}>
+            <div style={styles.chatContainer}>
+              {/* Left Column - Chat List */}
+              <div style={styles.chatSidebar}>
               <div style={styles.chatSidebarHeader}>
                 <div style={{
                   position: 'relative',
@@ -527,6 +917,7 @@ export default function ProjectManagerDashboard() {
                   </button>
                 </div>
               </div>
+            </div>
             </div>
           </div>
         )}
