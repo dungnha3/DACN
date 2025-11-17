@@ -32,6 +32,7 @@ public class IssueCommentService {
     private final IssueActivityRepository issueActivityRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
+    private final DoAn.BE.notification.service.ProjectNotificationService projectNotificationService;
     
     @Transactional
     public IssueCommentDTO createComment(CreateCommentRequest request, User currentUser) {
@@ -56,6 +57,23 @@ public class IssueCommentService {
         IssueActivity activity = new IssueActivity(issue, currentUser, ActivityType.COMMENT_ADDED, 
             "đã thêm comment");
         issueActivityRepository.save(activity);
+        
+        // Notify assignee và reporter về comment mới (trừ người comment)
+        if (issue.getAssignee() != null && !issue.getAssignee().getUserId().equals(currentUser.getUserId())) {
+            projectNotificationService.createIssueCommentNotification(
+                issue.getAssignee().getUserId(),
+                currentUser.getUsername(),
+                issue.getTitle()
+            );
+        }
+        if (issue.getReporter() != null && !issue.getReporter().getUserId().equals(currentUser.getUserId())
+            && (issue.getAssignee() == null || !issue.getReporter().getUserId().equals(issue.getAssignee().getUserId()))) {
+            projectNotificationService.createIssueCommentNotification(
+                issue.getReporter().getUserId(),
+                currentUser.getUsername(),
+                issue.getTitle()
+            );
+        }
         
         return convertToDTO(comment, currentUser);
     }

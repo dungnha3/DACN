@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 public interface SprintRepository extends JpaRepository<Sprint, Long> {
     List<Sprint> findByProject_ProjectId(Long projectId);
     List<Sprint> findByProject_ProjectIdAndStatus(Long projectId, SprintStatus status);
+    List<Sprint> findByStatus(SprintStatus status);
     
     @Query("SELECT s FROM Sprint s WHERE s.project.projectId = :projectId ORDER BY s.createdAt DESC")
     List<Sprint> findByProjectIdOrderByCreatedAtDesc(@Param("projectId") Long projectId);

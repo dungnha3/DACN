@@ -153,6 +153,11 @@ public class IssueService {
         
         validateProjectAccess(issue.getProject().getProjectId(), userId);
         
+        User updater = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
+        
+        StringBuilder changes = new StringBuilder();
+        
         // Update fields if provided
         if (request.getTitle() != null) {
             issue.setTitle(request.getTitle());
@@ -166,7 +171,11 @@ public class IssueService {
             issue.setIssueStatus(status);
         }
         if (request.getPriority() != null) {
+            Issue.Priority oldPriority = issue.getPriority();
             issue.setPriority(request.getPriority());
+            if (oldPriority != request.getPriority()) {
+                changes.append("Độ ưu tiên: ").append(oldPriority).append(" → ").append(request.getPriority());
+            }
         }
         if (request.getAssigneeId() != null) {
             User assignee = userRepository.findById(request.getAssigneeId())
@@ -181,10 +190,23 @@ public class IssueService {
             issue.setActualHours(request.getActualHours());
         }
         if (request.getDueDate() != null) {
+            if (changes.length() > 0) changes.append(", ");
+            changes.append("Deadline: ").append(request.getDueDate());
             issue.setDueDate(request.getDueDate());
         }
         
         issue = issueRepository.save(issue);
+        
+        // Notify assignee nếu có thay đổi quan trọng (priority, deadline)
+        if (changes.length() > 0 && issue.getAssignee() != null && !issue.getAssignee().getUserId().equals(userId)) {
+            projectNotificationService.createIssueUpdatedNotification(
+                issue.getAssignee().getUserId(),
+                issue.getTitle(),
+                updater.getUsername(),
+                changes.toString()
+            );
+        }
+        
         return convertToDTO(issue);
     }
     
@@ -250,8 +272,18 @@ public class IssueService {
         IssueStatus status = issueStatusRepository.findById(statusId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy trạng thái"));
         
+        String oldStatus = issue.getIssueStatus() != null ? issue.getIssueStatus().getName() : "";
         issue.changeStatus(status);
         issue = issueRepository.save(issue);
+        
+        // Notify assignee về status change
+        if (issue.getAssignee() != null && !issue.getAssignee().getUserId().equals(userId)) {
+            projectNotificationService.createIssueStatusChangedNotification(
+                issue.getAssignee().getUserId(),
+                issue.getTitle(),
+                status.getName()
+            );
+        }
         
         return convertToDTO(issue);
     }

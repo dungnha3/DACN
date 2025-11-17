@@ -50,13 +50,16 @@ public class ChamCongService {
     private final ChamCongRepository chamCongRepository;
     private final NhanVienRepository nhanVienRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final DoAn.BE.notification.service.AttendanceNotificationService attendanceNotificationService;
 
     public ChamCongService(ChamCongRepository chamCongRepository, 
                           NhanVienRepository nhanVienRepository,
-                          ProjectMemberRepository projectMemberRepository) {
+                          ProjectMemberRepository projectMemberRepository,
+                          DoAn.BE.notification.service.AttendanceNotificationService attendanceNotificationService) {
         this.chamCongRepository = chamCongRepository;
         this.nhanVienRepository = nhanVienRepository;
         this.projectMemberRepository = projectMemberRepository;
+        this.attendanceNotificationService = attendanceNotificationService;
     }
 
     /**
@@ -405,7 +408,26 @@ public class ChamCongService {
         // 6. Lưu vào database
         chamCong = chamCongRepository.save(chamCong);
         
-        // 7. Tạo response
+        // 7. Send notifications
+        if (nhanVien.getUser() != null) {
+            Long userId = nhanVien.getUser().getUserId();
+            String timeStr = (isCheckIn ? chamCong.getGioVao() : chamCong.getGioRa()).toString();
+            
+            if (isCheckIn) {
+                // Check-in notification
+                if (chamCong.getTrangThai() == TrangThaiChamCong.DI_TRE) {
+                    attendanceNotificationService.createCheckinLateNotification(userId, timeStr);
+                } else {
+                    attendanceNotificationService.createCheckinSuccessNotification(userId, timeStr, "GPS");
+                }
+            } else {
+                // Check-out notification
+                String hoursWorked = chamCong.getSoGioLam() != null ? chamCong.getSoGioLam().toString() : "0";
+                attendanceNotificationService.createCheckoutSuccessNotification(userId, timeStr, hoursWorked);
+            }
+        }
+        
+        // 8. Tạo response
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("message", isCheckIn ? "Chấm công vào thành công!" : "Chấm công ra thành công!");

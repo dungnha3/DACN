@@ -32,6 +32,7 @@ public class SprintService {
     private final ProjectMemberRepository projectMemberRepository;
     private final IssueRepository issueRepository;
     private final UserRepository userRepository;
+    private final DoAn.BE.notification.service.ProjectNotificationService projectNotificationService;
     
     @Transactional
     public SprintDTO createSprint(CreateSprintRequest request, User currentUser) {
@@ -199,6 +200,22 @@ public class SprintService {
         sprint.setStatus(SprintStatus.ACTIVE);
         sprint = sprintRepository.save(sprint);
         
+        // Notify all project members
+        List<ProjectMember> members = projectMemberRepository.findByProject_ProjectId(
+            sprint.getProject().getProjectId()
+        );
+        for (ProjectMember member : members) {
+            if (member.getUser() != null) {
+                projectNotificationService.createSprintStartedNotification(
+                    member.getUser().getUserId(),
+                    sprint.getName(),
+                    sprint.getProject().getProjectId()
+                );
+            }
+        }
+        
+        log.info("Sprint {} started, notified {} members", sprint.getName(), members.size());
+        
         return convertToDTO(sprint);
     }
     
@@ -219,6 +236,32 @@ public class SprintService {
         
         sprint.setStatus(SprintStatus.COMPLETED);
         sprint = sprintRepository.save(sprint);
+        
+        // Calculate completion stats
+        List<Issue> sprintIssues = issueRepository.findBySprint_SprintId(sprintId);
+        int totalIssues = sprintIssues.size();
+        int completedIssues = (int) sprintIssues.stream()
+            .filter(Issue::isDone)
+            .count();
+        
+        // Notify all project members
+        List<ProjectMember> members = projectMemberRepository.findByProject_ProjectId(
+            sprint.getProject().getProjectId()
+        );
+        for (ProjectMember member : members) {
+            if (member.getUser() != null) {
+                projectNotificationService.createSprintCompletedNotification(
+                    member.getUser().getUserId(),
+                    sprint.getName(),
+                    completedIssues,
+                    totalIssues,
+                    sprint.getProject().getProjectId()
+                );
+            }
+        }
+        
+        log.info("Sprint {} completed: {}/{} issues done, notified {} members", 
+            sprint.getName(), completedIssues, totalIssues, members.size());
         
         return convertToDTO(sprint);
     }

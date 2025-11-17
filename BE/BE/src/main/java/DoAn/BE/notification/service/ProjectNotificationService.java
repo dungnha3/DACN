@@ -104,12 +104,56 @@ public class ProjectNotificationService {
     }
     
     /**
-     * Tạo notification khi sprint sắp kết thúc
+     * Tạo notification khi issue bị overdue
      */
-    public Notification createSprintEndingNotification(Long userId, String sprintName, String endDate) {
-        String title = "Sprint sắp kết thúc";
-        String content = "Sprint \"" + sprintName + "\" sẽ kết thúc vào " + endDate;
-        String link = "/projects/sprints";
+    public Notification createIssueOverdueNotification(Long userId, String issueTitle, String issueKey) {
+        String title = "Issue quá hạn";
+        String content = "⚠️ Issue \"" + issueTitle + "\" (" + issueKey + ") đã quá hạn!";
+        String link = "/projects/issues/" + issueKey;
+        return notificationService.createNotification(userId, "PROJECT_ISSUE_OVERDUE", title, content, link);
+    }
+    
+    /**
+     * Tạo notification khi issue được update (priority, deadline, etc.)
+     */
+    public Notification createIssueUpdatedNotification(Long userId, String issueTitle, String updaterName, String changeDescription) {
+        String title = "Issue được cập nhật";
+        String content = updaterName + " đã cập nhật issue \"" + issueTitle + "\": " + changeDescription;
+        String link = "/projects/issues";
+        return notificationService.createNotification(userId, "PROJECT_ISSUE_UPDATED", title, content, link);
+    }
+    
+    /**
+     * Tạo notification khi sprint bắt đầu
+     */
+    public Notification createSprintStartedNotification(Long userId, String sprintName, Long projectId) {
+        String title = "🚀 Sprint mới bắt đầu";
+        String content = "Sprint \"" + sprintName + "\" đã bắt đầu. Chúc team làm việc hiệu quả!";
+        String link = "/projects/" + projectId + "/sprints";
+        return notificationService.createNotification(userId, "PROJECT_SPRINT_STARTED", title, content, link);
+    }
+    
+    /**
+     * Tạo notification khi sprint sắp kết thúc (3 ngày trước)
+     */
+    public Notification createSprintEndingNotification(Long userId, String sprintName, String endDate, Long projectId) {
+        String title = "⏰ Sprint sắp kết thúc";
+        String content = "Sprint \"" + sprintName + "\" sẽ kết thúc vào " + endDate + ". Hãy hoàn thành các task còn lại!";
+        String link = "/projects/" + projectId + "/sprints";
         return notificationService.createNotification(userId, "PROJECT_SPRINT_ENDING", title, content, link);
+    }
+    
+    /**
+     * Tạo notification khi sprint hoàn thành
+     */
+    public Notification createSprintCompletedNotification(Long userId, String sprintName, int completedIssues, int totalIssues, Long projectId) {
+        String title = "✅ Sprint hoàn thành";
+        String content = String.format(
+            "Sprint \"%s\" đã hoàn thành! Kết quả: %d/%d issues hoàn thành (%.1f%%)",
+            sprintName, completedIssues, totalIssues, 
+            totalIssues > 0 ? (completedIssues * 100.0 / totalIssues) : 0
+        );
+        String link = "/projects/" + projectId + "/sprints";
+        return notificationService.createNotification(userId, "PROJECT_SPRINT_COMPLETED", title, content, link);
     }
 }
