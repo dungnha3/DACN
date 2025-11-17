@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// Request DTO tạo comment mới cho Issue
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

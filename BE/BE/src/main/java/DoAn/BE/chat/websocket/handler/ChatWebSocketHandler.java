@@ -6,6 +6,7 @@ import DoAn.BE.chat.websocket.dto.WebSocketMessage;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.user.repository.UserRepository;
 import DoAn.BE.chat.service.UserPresenceService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
@@ -16,7 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+// WebSocket handler xử lý real-time chat messages, typing indicators, user presence
 @Controller
+@Slf4j
 public class ChatWebSocketHandler {
 
     private final SimpMessagingTemplate messagingTemplate;
@@ -83,8 +86,7 @@ public class ChatWebSocketHandler {
             messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
 
         } catch (Exception e) {
-            // Log error
-            e.printStackTrace();
+            log.error("Lỗi khi gửi tin nhắn qua WebSocket: {}", e.getMessage(), e);
         }
     }
 
@@ -122,7 +124,7 @@ public class ChatWebSocketHandler {
             messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Lỗi khi xử lý typing indicator: {}", e.getMessage(), e);
         }
     }
 
@@ -161,7 +163,7 @@ public class ChatWebSocketHandler {
             messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Lỗi khi xử lý typing indicator: {}", e.getMessage(), e);
         }
     }
 
@@ -198,7 +200,7 @@ public class ChatWebSocketHandler {
             messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Lỗi khi xử lý typing indicator: {}", e.getMessage(), e);
         }
     }
 
@@ -240,7 +242,7 @@ public class ChatWebSocketHandler {
             messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Lỗi khi xử lý typing indicator: {}", e.getMessage(), e);
         }
     }
 

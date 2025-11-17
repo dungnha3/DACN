@@ -7,6 +7,7 @@ import lombok.*;
 
 import DoAn.BE.user.entity.User;
 
+// Entity lưu lịch sử thay đổi của Issue (activity log/audit trail)
 @Entity
 @Table(name = "issue_activities")
 @Data

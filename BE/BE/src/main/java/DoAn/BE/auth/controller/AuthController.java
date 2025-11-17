@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
+// Controller xử lý authentication (login, logout, refresh token, validate)
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
@@ -96,10 +97,16 @@ public class AuthController {
     @GetMapping("/validate")
     public ResponseEntity<Map<String, Object>> validateToken(@RequestParam String token) {
         try {
+            boolean valid = authService.validateToken(token);
             Map<String, Object> response = new HashMap<>();
-            response.put("valid", true);
-            response.put("message", "Token hợp lệ");
-            return ResponseEntity.ok(response);
+            response.put("valid", valid);
+            response.put("message", valid ? "Token hợp lệ" : "Token không hợp lệ");
+            
+            if (valid) {
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("valid", false);

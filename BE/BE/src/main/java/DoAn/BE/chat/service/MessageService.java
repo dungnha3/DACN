@@ -17,7 +17,7 @@ import DoAn.BE.user.repository.UserRepository;
 import DoAn.BE.common.exception.BadRequestException;
 import DoAn.BE.common.exception.EntityNotFoundException;
 import DoAn.BE.chat.websocket.service.WebSocketNotificationService;
-import DoAn.BE.notification.service.NotificationService;
+import DoAn.BE.notification.service.ChatNotificationService;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +38,7 @@ public class MessageService {
     private final MessageStatusRepository messageStatusRepository;
     private final UserRepository userRepository;
     private final WebSocketNotificationService webSocketNotificationService;
-    private final NotificationService notificationService;
+    private final ChatNotificationService chatNotificationService;
     private final TypingIndicatorService typingIndicatorService;
 
     public MessageService(MessageRepository messageRepository,
@@ -47,7 +47,7 @@ public class MessageService {
                          MessageStatusRepository messageStatusRepository,
                          UserRepository userRepository,
                          WebSocketNotificationService webSocketNotificationService,
-                         NotificationService notificationService,
+                         ChatNotificationService chatNotificationService,
                          TypingIndicatorService typingIndicatorService) {
         this.messageRepository = messageRepository;
         this.chatRoomRepository = chatRoomRepository;
@@ -55,7 +55,7 @@ public class MessageService {
         this.messageStatusRepository = messageStatusRepository;
         this.userRepository = userRepository;
         this.webSocketNotificationService = webSocketNotificationService;
-        this.notificationService = notificationService;
+        this.chatNotificationService = chatNotificationService;
         this.typingIndicatorService = typingIndicatorService;
     }
 
@@ -123,7 +123,7 @@ public class MessageService {
             .toList();
 
         for (ChatRoomMember member : otherMembers) {
-            notificationService.createNewMessageNotification(
+            chatNotificationService.createNewMessageNotification(
                 member.getUser().getUserId(),
                 sender.getUsername(),
                 request.getContent(),
@@ -313,7 +313,7 @@ public class MessageService {
             .toList();
 
         for (ChatRoomMember member : otherMembers) {
-            notificationService.createChatNotification(
+            chatNotificationService.createChatNotification(
                 member.getUser().getUserId(),
                 "MESSAGE_EDITED",
                 "Tin nhắn đã được sửa",
@@ -353,7 +353,7 @@ public class MessageService {
                 .toList();
 
             for (ChatRoomMember member : otherMembers) {
-                notificationService.createChatNotification(
+                chatNotificationService.createChatNotification(
                     member.getUser().getUserId(),
                     "MESSAGE_DELETED",
                     "Tin nhắn đã bị xóa",

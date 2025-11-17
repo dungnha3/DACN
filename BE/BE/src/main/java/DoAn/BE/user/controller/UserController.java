@@ -1,5 +1,6 @@
 package DoAn.BE.user.controller;
 
+import DoAn.BE.common.util.SecurityUtil;
 import DoAn.BE.user.dto.CreateUserRequest;
 import DoAn.BE.user.dto.UpdateUserRequest;
 import DoAn.BE.user.dto.UserDTO;
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// Controller quản lý users (CRUD, activate/deactivate, search)
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -75,7 +77,8 @@ public class UserController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
+        User currentUser = SecurityUtil.getCurrentUser();
+        userService.deleteUser(id, currentUser);
         Map<String, String> response = new HashMap<>();
         response.put("message", "Xóa user thành công");
         return ResponseEntity.ok(response);

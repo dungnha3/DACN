@@ -7,6 +7,7 @@ import lombok.*;
 
 import DoAn.BE.user.entity.User;
 
+// Entity quản lý comment/thảo luận trên Issue
 @Entity
 @Table(name = "issue_comments")
 @Data

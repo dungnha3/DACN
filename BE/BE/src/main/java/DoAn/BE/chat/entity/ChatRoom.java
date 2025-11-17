@@ -11,6 +11,7 @@ import lombok.*;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.project.entity.Project;
 
+// Entity phòng chat (hỗ trợ 3 loại: DIRECT 1-1, GROUP, PROJECT)
 @Entity
 @Table(name = "chat_rooms")
 @Data

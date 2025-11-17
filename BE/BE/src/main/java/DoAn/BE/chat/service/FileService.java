@@ -115,7 +115,8 @@ public class FileService {
         fileEntity.setFilename(file.getOriginalFilename());
         fileEntity.setFileSize(file.getSize());
         fileEntity.setMimeType(contentType);
-        fileEntity.setFilePath("/uploads/" + file.getOriginalFilename()); // TODO: Triển khai lưu file
+        // NOTE: Path tạm thời - cần tích hợp với FileStorageService để lưu file thực tế
+        fileEntity.setFilePath("/uploads/" + file.getOriginalFilename());
         fileEntity = fileRepository.save(fileEntity);
         
         SendMessageRequest request = new SendMessageRequest();
@@ -155,7 +156,8 @@ public class FileService {
         imageEntity.setFilename(fileName);
         imageEntity.setFileSize(imageFile.getSize());
         imageEntity.setMimeType(contentType);
-        imageEntity.setFilePath("/uploads/images/" + fileName); // TODO: Triển khai lưu ảnh
+        // NOTE: Path tạm thời - cần tích hợp với FileStorageService để lưu ảnh thực tế
+        imageEntity.setFilePath("/uploads/images/" + fileName);
         imageEntity = fileRepository.save(imageEntity);
         
         SendMessageRequest request = new SendMessageRequest();

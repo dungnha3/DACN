@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// Entity quản lý file (upload, download, versioning, soft delete, quota)
 @Entity
 @Table(name = "files")
 @Data
@@ -94,6 +95,7 @@ public class File {
         this.updatedAt = LocalDateTime.now();
     }
 
+    // Lấy extension của file
     public String getFileExtension() {
         if (originalFilename != null && originalFilename.contains(".")) {
             return originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
@@ -101,6 +103,7 @@ public class File {
         return "";
     }
 
+    // Format kích thước file (B, KB, MB, GB, TB)
     public String getFileSizeFormatted() {
         if (fileSize == null) return "0 B";
         
@@ -116,10 +119,12 @@ public class File {
         return size + " " + units[unitIndex];
     }
 
+    // Kiểm tra file là ảnh
     public boolean isImage() {
         return mimeType != null && mimeType.startsWith("image/");
     }
 
+    // Kiểm tra file là document (PDF, Word, Excel)
     public boolean isDocument() {
         return mimeType != null && (
             mimeType.startsWith("application/pdf") ||
@@ -128,14 +133,17 @@ public class File {
         );
     }
 
+    // Kiểm tra file là video
     public boolean isVideo() {
         return mimeType != null && mimeType.startsWith("video/");
     }
 
+    // Kiểm tra đây có phải phiên bản mới nhất không
     public boolean isLatestVersion() {
         return parentFile == null;
     }
 
+    // Tăng version của file
     public void incrementVersion() {
         this.version++;
         this.updatedAt = LocalDateTime.now();

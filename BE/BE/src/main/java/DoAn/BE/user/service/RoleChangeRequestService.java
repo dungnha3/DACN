@@ -3,15 +3,14 @@ package DoAn.BE.user.service;
 import DoAn.BE.common.exception.BadRequestException;
 import DoAn.BE.common.exception.EntityNotFoundException;
 import DoAn.BE.common.util.PermissionUtil;
-import DoAn.BE.notification.service.NotificationService;
+import DoAn.BE.notification.service.HRNotificationService;
 import DoAn.BE.user.dto.RoleChangeRequestDTO;
 import DoAn.BE.user.entity.RoleChangeRequest;
 import DoAn.BE.user.entity.RoleChangeRequest.RequestStatus;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.user.repository.RoleChangeRequestRepository;
 import DoAn.BE.user.repository.UserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,20 +19,19 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@Slf4j
 public class RoleChangeRequestService {
-    
-    private static final Logger log = LoggerFactory.getLogger(RoleChangeRequestService.class);
     
     private final RoleChangeRequestRepository requestRepository;
     private final UserRepository userRepository;
-    private final NotificationService notificationService;
+    private final HRNotificationService hrNotificationService;
     
     public RoleChangeRequestService(RoleChangeRequestRepository requestRepository,
                                    UserRepository userRepository,
-                                   NotificationService notificationService) {
+                                   HRNotificationService hrNotificationService) {
         this.requestRepository = requestRepository;
         this.userRepository = userRepository;
-        this.notificationService = notificationService;
+        this.hrNotificationService = hrNotificationService;
     }
     
     // HR Manager tạo yêu cầu thay đổi role
@@ -67,7 +65,7 @@ public class RoleChangeRequestService {
         // Gửi notification cho tất cả Admin
         List<User> admins = userRepository.findByRole(User.Role.ADMIN);
         for (User admin : admins) {
-            notificationService.createRoleChangeRequestNotification(
+            hrNotificationService.createRoleChangeRequestNotification(
                 admin.getUserId(),
                 currentUser.getUsername(),
                 targetUser.getUsername(),
@@ -107,14 +105,14 @@ public class RoleChangeRequestService {
                  request.getCurrentRole(), request.getRequestedRole(), targetUser.getUsername());
         
         // Gửi notification cho target user
-        notificationService.createRoleChangeApprovedNotification(
+        hrNotificationService.createRoleChangeApprovedNotification(
             targetUser.getUserId(),
             request.getCurrentRole().toString(),
             request.getRequestedRole().toString()
         );
         
         // Gửi notification cho HR Manager
-        notificationService.createRoleChangeProcessedNotification(
+        hrNotificationService.createRoleChangeProcessedNotification(
             request.getRequestedBy().getUserId(),
             targetUser.getUsername(),
             "duyệt",
@@ -146,7 +144,7 @@ public class RoleChangeRequestService {
                  request.getTargetUser().getUsername());
         
         // Gửi notification cho HR Manager
-        notificationService.createRoleChangeProcessedNotification(
+        hrNotificationService.createRoleChangeProcessedNotification(
             request.getRequestedBy().getUserId(),
             request.getTargetUser().getUsername(),
             "từ chối",

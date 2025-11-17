@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+// DTO cho request đổi mật khẩu (cho ProfileService)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

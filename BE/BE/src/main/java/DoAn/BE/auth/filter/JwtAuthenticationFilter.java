@@ -20,6 +20,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+// Filter xác thực JWT token cho mỗi request (trừ public endpoints)
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -73,9 +74,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         return;
                     }
 
-                    // Tạo authentication token với userId làm principal
+                    // Tạo authentication token với User object làm principal
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            user.getUserId().toString(),
+                            user, // Set User object làm principal
                             null,
                             Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
                     );

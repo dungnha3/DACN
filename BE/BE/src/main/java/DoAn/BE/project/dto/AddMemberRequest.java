@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// Request DTO thêm thành viên vào dự án
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

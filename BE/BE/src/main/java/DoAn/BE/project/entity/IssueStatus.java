@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
+// Entity quản lý trạng thái của Issue (To Do, In Progress, Review, Done)
 @Entity
 @Table(name = "issue_statuses")
 @Data

@@ -4,8 +4,7 @@ import DoAn.BE.common.exception.*;
 import DoAn.BE.common.util.PermissionUtil;
 import DoAn.BE.hr.entity.PhongBan;
 import DoAn.BE.hr.repository.PhongBanRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import DoAn.BE.project.dto.*;
 import DoAn.BE.project.entity.Project;
 import DoAn.BE.project.entity.ProjectMember;
@@ -21,11 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+// Service quản lý dự án (CRUD, members, phòng ban)
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProjectService {
-    
-    private static final Logger log = LoggerFactory.getLogger(ProjectService.class);
     
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;

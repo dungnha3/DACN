@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// DTO truyền dữ liệu công việc/task
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

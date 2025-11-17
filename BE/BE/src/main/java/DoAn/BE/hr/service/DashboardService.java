@@ -17,8 +17,7 @@ import DoAn.BE.hr.repository.NghiPhepRepository;
 import DoAn.BE.hr.repository.NhanVienRepository;
 import DoAn.BE.hr.repository.PhongBanRepository;
 import DoAn.BE.notification.repository.ThongBaoRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,11 +31,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+// Service cung cấp thống kê dashboard cho HR
 @Service
 @Transactional(readOnly = true)
+@Slf4j
 public class DashboardService {
-    
-    private static final Logger log = LoggerFactory.getLogger(DashboardService.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     
     private final NhanVienRepository nhanVienRepository;

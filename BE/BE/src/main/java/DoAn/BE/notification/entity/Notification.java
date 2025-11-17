@@ -16,6 +16,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// Entity thông báo đơn giản (dùng cho chat, general notifications)
 @Entity
 @Table(name = "notifications")
 @Data
@@ -55,7 +56,7 @@ public class Notification {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Constructor for backward compatibility
+    // Constructor tiện lợi cho thông báo chung
     public Notification(User user, String title, String content) {
         this.user = user;
         this.type = "GENERAL";
@@ -63,11 +64,12 @@ public class Notification {
         this.content = content;
     }
 
-    // Helper methods
+    // Đánh dấu đã đọc
     public void markAsRead() {
         this.isRead = true;
     }
 
+    // Kiểm tra chưa đọc
     public boolean isUnread() {
         return !this.isRead;
     }

@@ -10,7 +10,9 @@ import DoAn.BE.storage.repository.FileRepository;
 import DoAn.BE.storage.repository.FolderRepository;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.user.repository.UserRepository;
+import DoAn.BE.notification.service.StorageNotificationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -29,13 +31,16 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+// Service quản lý file storage (upload, download, delete, quota, versioning)
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FileStorageService {
     
     private final FileRepository fileRepository;
     private final FolderRepository folderRepository;
     private final UserRepository userRepository;
+    private final StorageNotificationService storageNotificationService;
     
     @Value("${file.upload-dir:./uploads}")
     private String uploadDir;
@@ -110,6 +115,14 @@ public class FileStorageService {
             fileEntity.setIsDeleted(false);
             
             fileEntity = fileRepository.save(fileEntity);
+            
+            // Gửi notification cho user về file upload thành công
+            log.info("File uploaded successfully: {} by user {}", originalFilename, userId);
+            storageNotificationService.createFileUploadNotification(
+                userId,
+                originalFilename,
+                fileEntity.getFileSizeFormatted()
+            );
             
             // Build response
             FileUploadResponse response = new FileUploadResponse();
@@ -288,12 +301,28 @@ public class FileStorageService {
             .sum();
         
         long quotaBytes = (user.getRole().name().equals("ADMIN") ? adminQuotaGB : userQuotaGB) * 1024 * 1024 * 1024;
+        long newUsage = currentUsage + fileSize;
         
-        if (currentUsage + fileSize > quotaBytes) {
+        // Kiểm tra vượt quota
+        if (newUsage > quotaBytes) {
+            // Gửi notification khi hết quota
+            storageNotificationService.createQuotaExceededNotification(userId);
+            log.warn("User {} exceeded storage quota: {} / {}", userId, formatSize(newUsage), formatSize(quotaBytes));
+            
             throw new StorageQuotaExceededException(
                 String.format("Vượt quá dung lượng cho phép. Đã dùng: %s, Giới hạn: %s",
                     formatSize(currentUsage), formatSize(quotaBytes))
             );
+        }
+        
+        // Cảnh báo khi dùng > 80% quota
+        double usagePercent = (double) newUsage / quotaBytes * 100;
+        if (usagePercent > 80 && usagePercent <= 90) {
+            storageNotificationService.createQuotaWarningNotification(userId, (int) Math.round(usagePercent));
+            log.info("User {} storage usage warning: {}%", userId, Math.round(usagePercent));
+        } else if (usagePercent > 90) {
+            storageNotificationService.createQuotaWarningNotification(userId, (int) Math.round(usagePercent));
+            log.warn("User {} storage usage critical: {}%", userId, Math.round(usagePercent));
         }
     }
     

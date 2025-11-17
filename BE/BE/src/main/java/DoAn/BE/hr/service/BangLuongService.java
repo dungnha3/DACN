@@ -20,37 +20,36 @@ import DoAn.BE.hr.repository.HopDongRepository;
 import DoAn.BE.hr.repository.NhanVienRepository;
 import DoAn.BE.hr.entity.HopDong;
 import DoAn.BE.hr.entity.HopDong.TrangThaiHopDong;
-import DoAn.BE.notification.service.NotificationService;
+import DoAn.BE.notification.service.HRNotificationService;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+// Service quản lý bảng lương (tính lương, thưởng, khấu trừ, thống kê)
 @Service
 @Transactional
+@Slf4j
 public class BangLuongService {
-    
-    private static final Logger log = LoggerFactory.getLogger(BangLuongService.class);
     
     private final BangLuongRepository bangLuongRepository;
     private final NhanVienRepository nhanVienRepository;
     private final HopDongRepository hopDongRepository;
     private final ChamCongRepository chamCongRepository;
-    private final NotificationService notificationService;
+    private final HRNotificationService hrNotificationService;
 
     public BangLuongService(BangLuongRepository bangLuongRepository, 
                            NhanVienRepository nhanVienRepository,
                            HopDongRepository hopDongRepository,
                            ChamCongRepository chamCongRepository,
-                           NotificationService notificationService) {
+                           HRNotificationService hrNotificationService) {
         this.bangLuongRepository = bangLuongRepository;
         this.nhanVienRepository = nhanVienRepository;
         this.hopDongRepository = hopDongRepository;
         this.chamCongRepository = chamCongRepository;
-        this.notificationService = notificationService;
+        this.hrNotificationService = hrNotificationService;
     }
 
     // Tạo bảng lương mới - Chỉ HR Manager
@@ -350,7 +349,7 @@ public class BangLuongService {
         // 🔔 Gửi notification cho nhân viên
         try {
             if (nhanVien.getUser() != null) {
-                notificationService.createSalaryNotification(
+                hrNotificationService.createSalaryNotification(
                     nhanVien.getUser().getUserId(),
                     String.valueOf(thang),
                     String.valueOf(nam)

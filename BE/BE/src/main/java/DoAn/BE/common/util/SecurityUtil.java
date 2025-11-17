@@ -1,5 +1,6 @@
 package DoAn.BE.common.util;
 
+import DoAn.BE.user.entity.User;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -9,21 +10,28 @@ import org.springframework.security.core.context.SecurityContextHolder;
 public class SecurityUtil {
     
     /**
-     * Lấy userId của user hiện tại từ SecurityContext
+     * Lấy User object hiện tại từ SecurityContext
+     * @return User object đã đăng nhập
+     * @throws RuntimeException nếu user chưa được xác thực
+     */
+    public static User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication != null && authentication.isAuthenticated() && 
+            authentication.getPrincipal() instanceof User) {
+            return (User) authentication.getPrincipal();
+        }
+        
+        throw new RuntimeException("User chưa được xác thực");
+    }
+    
+    /**
+     * Lấy userId của user hiện tại
      * @return userId của user đã đăng nhập
      * @throws RuntimeException nếu user chưa được xác thực
      */
     public static Long getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
-        if (authentication != null && authentication.isAuthenticated() && 
-            !authentication.getPrincipal().equals("anonymousUser")) {
-            // JWT filter đã set userId làm principal
-            String userIdStr = (String) authentication.getPrincipal();
-            return Long.parseLong(userIdStr);
-        }
-        
-        throw new RuntimeException("User chưa được xác thực");
+        return getCurrentUser().getUserId();
     }
     
     /**

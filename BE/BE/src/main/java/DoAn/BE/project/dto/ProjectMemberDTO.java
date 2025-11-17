@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+// DTO truyền dữ liệu thành viên dự án
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

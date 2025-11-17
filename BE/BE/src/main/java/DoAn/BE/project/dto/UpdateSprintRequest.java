@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// Request DTO cập nhật thông tin Sprint
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// DTO cho response user (không expose password)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,12 +24,3 @@ public class UserDTO {
     private LocalDateTime createdAt;
     private LocalDateTime lastLogin;
 }
-
-
-
-
-
-
-
-
-

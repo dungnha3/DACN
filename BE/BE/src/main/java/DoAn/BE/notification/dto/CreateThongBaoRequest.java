@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// DTO cho request tạo thông báo mới
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

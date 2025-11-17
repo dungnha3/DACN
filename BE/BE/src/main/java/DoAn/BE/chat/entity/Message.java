@@ -8,6 +8,7 @@ import lombok.*;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.storage.entity.File;
 
+// Entity tin nhắn chat (TEXT, FILE, IMAGE) với soft delete và reply support
 @Entity
 @Table(name = "messages")
 @Data

@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// Request DTO tạo Issue/task mới
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

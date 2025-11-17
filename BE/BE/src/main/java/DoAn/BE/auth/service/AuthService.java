@@ -14,9 +14,11 @@ import DoAn.BE.auth.entity.RefreshToken;
 import DoAn.BE.auth.repository.LoginAttemptRepository;
 import DoAn.BE.auth.repository.RefreshTokenRepository;
 import DoAn.BE.common.exception.UnauthorizedException;
+import DoAn.BE.notification.service.AuthNotificationService;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.user.service.UserService;
 
+// Service xử lý authentication logic (login, logout, refresh token, brute force protection)
 @Service
 @Transactional
 public class AuthService {
@@ -27,26 +29,30 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
     private final LoginAttemptRepository loginAttemptRepository;
+    private final AuthNotificationService authNotificationService;
 
-    private static final int MAX_LOGIN_ATTEMPTS = 5;
-    private static final int LOCKOUT_DURATION_MINUTES = 15;
+    private static final int MAX_LOGIN_ATTEMPTS = 5; // Khóa sau 5 lần thất bại
+    private static final int LOCKOUT_DURATION_MINUTES = 15; // Khóa trong 15 phút
 
     public AuthService(UserService userService, JwtService jwtService, SessionService sessionService,
                       PasswordEncoder passwordEncoder, RefreshTokenRepository refreshTokenRepository,
-                      LoginAttemptRepository loginAttemptRepository) {
+                      LoginAttemptRepository loginAttemptRepository, AuthNotificationService authNotificationService) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.sessionService = sessionService;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenRepository = refreshTokenRepository;
         this.loginAttemptRepository = loginAttemptRepository;
+        this.authNotificationService = authNotificationService;
     }
 
     // Chức năng đăng ký đã bị vô hiệu hóa - Chỉ HR Manager có quyền tạo tài khoản
 
-    // Đăng nhập
+    /**
+     * Đăng nhập - Generate JWT + Refresh token, tạo session, track login attempts
+     */
     public AuthResponse login(LoginRequest request, String ipAddress, String userAgent) {
-        // Kiểm tra login attempts
+        // Kiểm tra brute force - Lock nếu quá 5 lần thất bại trong 15 phút
         checkLoginAttempts(request.getUsername(), ipAddress);
 
         // Tìm user
@@ -56,6 +62,16 @@ public class AuthService {
         // Kiểm tra user có active không
         if (!user.getIsActive()) {
             recordFailedLogin(request.getUsername(), ipAddress, "Tài khoản đã bị vô hiệu hóa");
+            // 🔔 Thông báo tài khoản bị vô hiệu hóa
+            try {
+                authNotificationService.createSecurityAlertNotification(
+                    user.getUserId(),
+                    "Tài khoản đã bị vô hiệu hóa",
+                    "Có người cố gắng đăng nhập vào tài khoản đã bị vô hiệu hóa từ IP: " + ipAddress
+                );
+            } catch (Exception e) {
+                // Ignore notification errors
+            }
             throw new UnauthorizedException("Tài khoản đã bị vô hiệu hóa");
         }
 
@@ -80,12 +96,25 @@ public class AuthService {
         String accessToken = jwtService.generateToken(user);
         String refreshToken = createRefreshToken(user);
 
+        // 🔔 Gửi thông báo đăng nhập thành công
+        try {
+            authNotificationService.createLoginSuccessNotification(
+                user.getUserId(),
+                ipAddress,
+                userAgent
+            );
+        } catch (Exception e) {
+            // Log error nhưng không fail login
+        }
+
         return buildAuthResponse(accessToken, refreshToken, user);
     }
 
-    // Refresh token
+    /**
+     * Refresh token - Làm mới access token khi hết hạn (rotate refresh token)
+     */
     public AuthResponse refreshToken(String refreshTokenString) {
-        // Validate refresh token
+        // Validate: Phải là refresh token hợp lệ (không phải access token)
         if (!jwtService.validateToken(refreshTokenString) || !jwtService.isRefreshToken(refreshTokenString)) {
             throw new UnauthorizedException("Refresh token không hợp lệ");
         }
@@ -110,12 +139,25 @@ public class AuthService {
         refreshTokenRepository.delete(refreshToken);
         String newRefreshToken = createRefreshToken(user);
 
+        // 🔔 Gửi thông báo refresh token (chỉ khi rotate)
+        try {
+            authNotificationService.createInfoNotification(
+                user.getUserId(),
+                "Phiên đăng nhập đã được làm mới",
+                "Token của bạn đã được làm mới tự động."
+            );
+        } catch (Exception e) {
+            // Ignore notification errors
+        }
+
         return buildAuthResponse(newAccessToken, newRefreshToken, user);
     }
 
-    // Đăng xuất
+    /**
+     * Đăng xuất - Revoke refresh token và deactivate session
+     */
     public void logout(String refreshTokenString, String sessionId) {
-        // Revoke refresh token
+        // Thu hồi refresh token
         if (refreshTokenString != null) {
             refreshTokenRepository.findByToken(refreshTokenString)
                     .ifPresent(token -> {
@@ -130,7 +172,9 @@ public class AuthService {
         }
     }
 
-    // Đăng xuất tất cả thiết bị
+    /**
+     * Đăng xuất tất cả thiết bị - Revoke tất cả tokens và sessions
+     */
     public void logoutAllDevices(Long userId) {
         User user = userService.getUserById(userId);
 
@@ -143,6 +187,17 @@ public class AuthService {
         // Set user offline
         user.setIsOnline(false);
         userService.save(user);
+
+        // 🔔 Gửi thông báo đăng xuất tất cả thiết bị
+        try {
+            authNotificationService.createSecurityAlertNotification(
+                userId,
+                "Đăng xuất tất cả thiết bị",
+                "Bạn đã đăng xuất khỏi tất cả thiết bị. Nếu không phải bạn thực hiện, vui lòng đổi mật khẩu ngay."
+            );
+        } catch (Exception e) {
+            // Ignore notification errors
+        }
     }
 
     // Tạo refresh token
@@ -171,6 +226,19 @@ public class AuthService {
         long recentAttempts = loginAttemptRepository.countRecentFailedAttempts(username, ipAddress, cutoffTime);
 
         if (recentAttempts >= MAX_LOGIN_ATTEMPTS) {
+            // 🔔 Thông báo tài khoản bị khóa
+            try {
+                userService.findByUsername(username).ifPresent(user -> {
+                    authNotificationService.createSecurityAlertNotification(
+                        user.getUserId(),
+                        "Tài khoản tạm thời bị khóa",
+                        String.format("Tài khoản của bạn đã bị khóa trong %d phút do đăng nhập sai %d lần liên tiếp từ IP: %s",
+                            LOCKOUT_DURATION_MINUTES, MAX_LOGIN_ATTEMPTS, ipAddress)
+                    );
+                });
+            } catch (Exception e) {
+                // Ignore notification errors
+            }
             throw new UnauthorizedException("Tài khoản tạm thời bị khóa do đăng nhập sai quá nhiều lần");
         }
     }
@@ -209,5 +277,14 @@ public class AuthService {
 
         response.setUser(userInfo);
         return response;
+    }
+    
+    // Validate token
+    public boolean validateToken(String token) {
+        try {
+            return jwtService.validateToken(token);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

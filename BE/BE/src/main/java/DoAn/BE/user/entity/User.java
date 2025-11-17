@@ -16,6 +16,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// Entity User - Tài khoản đăng nhập hệ thống với role-based access control
 @Entity
 @Data
 @NoArgsConstructor
@@ -65,16 +66,19 @@ public class User {
     @Column(name = "last_seen")
     private LocalDateTime lastSeen;
 
+    // Đặt trạng thái online
     public void setOnline() {
         this.isOnline = true;
         this.lastSeen = LocalDateTime.now();
     }
 
+    // Đặt trạng thái offline
     public void setOffline() {
         this.isOnline = false;
         this.lastSeen = LocalDateTime.now();
     }
 
+    // Kiểm tra user đang online
     public boolean isCurrentlyOnline() {
         return this.isOnline != null && this.isOnline;
     }

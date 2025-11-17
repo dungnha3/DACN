@@ -51,7 +51,7 @@ public class ThongBao {
     private String urlLienKet;
     
     @Column(name = "metadata", columnDefinition = "NVARCHAR(MAX)")
-    private String metadata; // JSON data for additional info
+    private String metadata; // Dữ liệu JSON bổ sung
     
     @Column(name = "uu_tien")
     @Enumerated(EnumType.STRING)
@@ -68,6 +68,7 @@ public class ThongBao {
         ngayTao = LocalDateTime.now();
     }
     
+    // Đánh dấu đã đọc
     public void markAsRead() {
         this.trangThai = TrangThaiThongBao.DA_DOC;
         this.ngayDoc = LocalDateTime.now();

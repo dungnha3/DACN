@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import java.time.LocalDate;
 import java.util.Map;
 
+// DTO thống kê dashboard dự án (issues, sprints, members)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

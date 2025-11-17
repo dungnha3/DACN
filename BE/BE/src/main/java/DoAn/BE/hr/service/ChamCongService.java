@@ -9,8 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -32,11 +31,11 @@ import DoAn.BE.project.repository.ProjectMemberRepository;
 import DoAn.BE.user.entity.User;
 import jakarta.transaction.Transactional;
 
+// Service quản lý chấm công (check-in, check-out, GPS validation, thống kê)
 @Service
 @Transactional
+@Slf4j
 public class ChamCongService {
-    
-    private static final Logger log = LoggerFactory.getLogger(ChamCongService.class);
     
     // Tọa độ công ty (configurable)
     @Value("${company.latitude:21.0285}")

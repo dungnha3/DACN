@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// DTO cho request cập nhật thông tin user
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

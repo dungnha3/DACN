@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+// DTO cho response thông báo (không expose entity trực tiếp)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

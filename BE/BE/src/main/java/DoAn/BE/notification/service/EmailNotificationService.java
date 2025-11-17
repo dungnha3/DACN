@@ -2,7 +2,6 @@ package DoAn.BE.notification.service;
 
 import DoAn.BE.notification.entity.ThongBao;
 import DoAn.BE.user.entity.User;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -14,12 +13,17 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.time.format.DateTimeFormatter;
 
+// Service gửi email notification (hợp đồng, nghỉ phép, lương, chào mừng)
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EmailNotificationService {
     
     private final JavaMailSender mailSender;
+    
+    // Constructor with optional JavaMailSender to allow app to start without mail config
+    public EmailNotificationService(@org.springframework.lang.Nullable JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
     
     @Value("${app.mail.from:noreply@dacn.com}")
     private String fromEmail;
@@ -32,8 +36,8 @@ public class EmailNotificationService {
     
     // Gửi email thông báo
     public void sendNotificationEmail(ThongBao thongBao) {
-        if (!emailEnabled) {
-            log.info("Email không được bật, bỏ qua gửi email cho thông báo {}", thongBao.getThongbaoId());
+        if (!emailEnabled || mailSender == null) {
+            log.info("Email không được bật hoặc chưa config, bỏ qua gửi email cho thông báo {}", thongBao.getThongbaoId());
             return;
         }
         
@@ -67,8 +71,8 @@ public class EmailNotificationService {
      * Gửi email đơn giản
      */
     public void sendSimpleEmail(String to, String subject, String content) {
-        if (!emailEnabled) {
-            log.info("Email không được bật, bỏ qua gửi email đến {}", to);
+        if (!emailEnabled || mailSender == null) {
+            log.info("Email không được bật hoặc chưa config, bỏ qua gửi email đến {}", to);
             return;
         }
         

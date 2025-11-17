@@ -13,7 +13,8 @@ import DoAn.BE.common.exception.EntityNotFoundException;
 import DoAn.BE.common.exception.ForbiddenException;
 import DoAn.BE.common.util.PermissionUtil;
 import DoAn.BE.chat.websocket.service.WebSocketNotificationService;
-import DoAn.BE.notification.service.NotificationService;
+import DoAn.BE.notification.service.ChatNotificationService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.DataAccessException;
@@ -21,30 +22,29 @@ import org.springframework.dao.DataAccessException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.logging.Logger;
 
+// Service quản lý chat rooms (tạo, sửa, xóa, thêm/xóa members, permissions)
 @Service
 @Transactional
+@Slf4j
 public class ChatRoomService {
-
-    private static final Logger logger = Logger.getLogger(ChatRoomService.class.getName());
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final UserRepository userRepository;
     private final WebSocketNotificationService webSocketNotificationService;
-    private final NotificationService notificationService;
+    private final ChatNotificationService chatNotificationService;
 
     public ChatRoomService(ChatRoomRepository chatRoomRepository,
                           ChatRoomMemberRepository chatRoomMemberRepository,
                           UserRepository userRepository,
                           WebSocketNotificationService webSocketNotificationService,
-                          NotificationService notificationService) {
+                          ChatNotificationService chatNotificationService) {
         this.chatRoomRepository = chatRoomRepository;
         this.chatRoomMemberRepository = chatRoomMemberRepository;
         this.userRepository = userRepository;
         this.webSocketNotificationService = webSocketNotificationService;
-        this.notificationService = notificationService;
+        this.chatNotificationService = chatNotificationService;
     }
 
     // Tạo phòng chat mới
@@ -58,7 +58,7 @@ public class ChatRoomService {
                 throw new BadRequestException("Tên phòng chat không được để trống");
             }
             
-            logger.info(String.format("User %s tạo phòng chat: %s", currentUser.getUsername(), request.getName()));
+            log.info("User {} tạo phòng chat: {}", currentUser.getUsername(), request.getName());
             
             ChatRoom chatRoom = new ChatRoom();
             chatRoom.setName(request.getName().trim());
@@ -77,7 +77,7 @@ public class ChatRoomService {
             return convertToChatRoomDTO(chatRoom);
             
         } catch (DataAccessException | IllegalArgumentException e) {
-            logger.severe(String.format("Error creating chat room for user %s: %s", currentUser.getUsername(), e.getMessage()));
+            log.error("Lỗi tạo phòng chat cho user {}: {}", currentUser.getUsername(), e.getMessage(), e);
             throw new BadRequestException("Không thể tạo phòng chat, vui lòng thử lại");
         }
     }
@@ -197,7 +197,7 @@ public class ChatRoomService {
             .toList();
         
         for (ChatRoomMember otherMember : otherMembers) {
-            notificationService.createMemberJoinedNotification(
+            chatNotificationService.createMemberJoinedNotification(
                 otherMember.getUser().getUserId(), 
                 user.getUsername(), 
                 roomId
@@ -231,7 +231,7 @@ public class ChatRoomService {
         List<ChatRoomMember> remainingMembers = chatRoomMemberRepository.findByChatRoom_RoomId(roomId);
         for (ChatRoomMember remainingMember : remainingMembers) {
             if (remainingMember.getUser() != null && removedUser != null) {
-                notificationService.createMemberLeftNotification(
+                chatNotificationService.createMemberLeftNotification(
                     remainingMember.getUser().getUserId(), 
                     removedUser.getUsername(), 
                     roomId
@@ -260,7 +260,7 @@ public class ChatRoomService {
         List<ChatRoomMember> remainingMembers = chatRoomMemberRepository.findByChatRoom_RoomId(roomId);
         for (ChatRoomMember remainingMember : remainingMembers) {
             if (remainingMember.getUser() != null && leavingUser != null) {
-                notificationService.createMemberLeftNotification(
+                chatNotificationService.createMemberLeftNotification(
                     remainingMember.getUser().getUserId(), 
                     leavingUser.getUsername(), 
                     roomId
@@ -319,7 +319,7 @@ public class ChatRoomService {
         List<ChatRoomMember> members = chatRoomMemberRepository.findByChatRoom_RoomId(roomId);
         for (ChatRoomMember member : members) {
             if (member.getUser() != null) {
-                notificationService.createRoomUpdatedNotification(
+                chatNotificationService.createRoomUpdatedNotification(
                     member.getUser().getUserId(), 
                     "SETTINGS", 
                     updateMessage, 

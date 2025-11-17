@@ -10,6 +10,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+// Entity quản lý folder (PERSONAL, SHARED, PROJECT) với cấu trúc tree
 @Entity
 @Table(name = "folders")
 @Data
@@ -57,6 +58,7 @@ public class Folder {
         this.createdAt = LocalDateTime.now();
     }
 
+    // Lấy đường dẫn đầy đủ của folder
     public String getFullPath() {
         if (parentFolder != null) {
             return parentFolder.getFullPath() + "/" + name;
@@ -64,14 +66,17 @@ public class Folder {
         return name;
     }
 
+    // Kiểm tra folder gốc (không có parent)
     public boolean isRoot() {
         return parentFolder == null;
     }
 
+    // Kiểm tra folder của project
     public boolean isProjectFolder() {
         return folderType == FolderType.PROJECT;
     }
 
+    // Kiểm tra folder được share
     public boolean isSharedFolder() {
         return folderType == FolderType.SHARED;
     }

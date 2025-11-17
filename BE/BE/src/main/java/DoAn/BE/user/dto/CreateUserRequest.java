@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// DTO cho request tạo user mới
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,12 +29,3 @@ public class CreateUserRequest {
     
     private User.Role role = User.Role.EMPLOYEE;
 }
-
-
-
-
-
-
-
-
-

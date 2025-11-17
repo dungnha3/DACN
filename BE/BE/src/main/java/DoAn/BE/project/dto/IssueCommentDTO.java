@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
 
+// DTO truyền dữ liệu comment Issue
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

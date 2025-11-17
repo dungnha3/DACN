@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import DoAn.BE.common.exception.BadRequestException;
 import DoAn.BE.common.exception.DuplicateException;
 import DoAn.BE.common.exception.EntityNotFoundException;
+import DoAn.BE.notification.service.AuthNotificationService;
 import DoAn.BE.hr.entity.ChucVu;
 import DoAn.BE.hr.entity.NhanVien;
 import DoAn.BE.hr.entity.PhongBan;
@@ -27,6 +28,7 @@ import DoAn.BE.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
+// Service quản lý users (CRUD, search, role management, tích hợp với HR)
 @Service
 @Transactional
 @Slf4j
@@ -37,15 +39,17 @@ public class UserService {
     private final NhanVienRepository nhanVienRepository;
     private final PhongBanRepository phongBanRepository;
     private final ChucVuRepository chucVuRepository;
+    private final AuthNotificationService authNotificationService;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
                       NhanVienRepository nhanVienRepository, PhongBanRepository phongBanRepository,
-                      ChucVuRepository chucVuRepository) {
+                      ChucVuRepository chucVuRepository, AuthNotificationService authNotificationService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.nhanVienRepository = nhanVienRepository;
         this.phongBanRepository = phongBanRepository;
         this.chucVuRepository = chucVuRepository;
+        this.authNotificationService = authNotificationService;
     }
 
     public User createUser(CreateUserRequest request) {
@@ -60,7 +64,13 @@ public class UserService {
         user.setRole(request.getRole());
         user.setIsActive(true);
         user.setPhoneNumber(request.getPhoneNumber());
-        return userRepository.save(user);
+        user = userRepository.save(user);
+        
+        // Gửi welcome notification
+        authNotificationService.createWelcomeNotification(user.getUserId(), user.getUsername());
+        log.info("Created new user: {}", user.getUsername());
+        
+        return user;
     }
 
     public User getUserById(Long id) {
@@ -73,6 +83,7 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    // Cập nhật user (sử dụng bởi controller cũ - deprecated)
     public User updateUser(Long id, UpdateUserRequest request) {
         User user = getUserById(id);
 
@@ -109,30 +120,33 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public void deleteUser(Long id) {
-        User user = getUserById(id);
-        userRepository.delete(user);
-    }
-
     public User activateUser(Long id) {
         User user = getUserById(id);
         user.setIsActive(true);
-        return userRepository.save(user);
+        user = userRepository.save(user);
+        
+        // Gửi notification
+        authNotificationService.createAccountActivatedNotification(id);
+        log.info("Activated user: {}", user.getUsername());
+        
+        return user;
     }
 
     public User deactivateUser(Long id) {
         User user = getUserById(id);
         user.setIsActive(false);
-        return userRepository.save(user);
+        user = userRepository.save(user);
+        
+        // Gửi notification
+        authNotificationService.createAccountDeactivatedNotification(id, null);
+        log.info("Deactivated user: {}", user.getUsername());
+        
+        return user;
     }
 
+    // Tìm kiếm user theo keyword (username hoặc email) - optimized query
     public List<User> searchUsers(String keyword) {
-        // Tìm kiếm theo username hoặc email
-        List<User> users = userRepository.findAll();
-        return users.stream()
-            .filter(user -> user.getUsername().toLowerCase().contains(keyword.toLowerCase()) ||
-                           (user.getEmail() != null && user.getEmail().toLowerCase().contains(keyword.toLowerCase())))
-            .toList();
+        return userRepository.searchByKeyword(keyword);
     }
 
     public List<User> getUsersByRole(User.Role role) {

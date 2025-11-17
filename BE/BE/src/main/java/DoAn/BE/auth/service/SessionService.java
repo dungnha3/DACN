@@ -12,16 +12,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+// Service quản lý session của user (đa phiên đăng nhập, timeout, concurrent sessions)
 @Service
 @Transactional
 public class SessionService {
 
     private final UserSessionRepository userSessionRepository;
 
-    @Value("${session.timeout:30}") // 30 minutes
+    @Value("${session.timeout:30}") // 30 phút
     private int sessionTimeoutMinutes;
 
-    @Value("${session.max-concurrent:5}") // Max 5 concurrent sessions per user
+    @Value("${session.max-concurrent:5}") // Tối đa 5 phiên cùng lúc
     private int maxConcurrentSessions;
 
     public SessionService(UserSessionRepository userSessionRepository) {
@@ -154,8 +155,3 @@ public class SessionService {
         return !currentIp.equals(session.getIpAddress());
     }
 }
-
-
-
-
-

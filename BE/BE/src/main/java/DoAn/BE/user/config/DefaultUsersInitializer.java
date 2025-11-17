@@ -4,12 +4,15 @@ import DoAn.BE.user.dto.CreateUserRequest;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.user.repository.UserRepository;
 import DoAn.BE.user.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+// Cấu hình khởi tạo tài khoản mặc định khi start app
 @Configuration
+@Slf4j
 public class DefaultUsersInitializer {
 
     @Bean
@@ -106,7 +109,7 @@ public class DefaultUsersInitializer {
                 existing.setEmail(email);
             }
             userRepository.save(existing);
-            System.out.println("🔁 Đã cập nhật tài khoản mặc định: " + username + " (" + role + ")");
+            log.info("🔁 Đã cập nhật tài khoản mặc định: {} ({})", username, role);
         }, () -> {
             CreateUserRequest req = new CreateUserRequest();
             req.setUsername(username);
@@ -115,7 +118,7 @@ public class DefaultUsersInitializer {
             req.setPhoneNumber(null);
             req.setRole(role);
             userService.createUser(req);
-            System.out.println("✅ Đã tạo tài khoản mặc định: " + username + " (" + role + ")");
+            log.info("✅ Đã tạo tài khoản mặc định: {} ({})", username, role);
         });
     }
 }

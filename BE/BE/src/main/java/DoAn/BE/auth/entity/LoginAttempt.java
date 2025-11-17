@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+// Entity lưu lịch sử đăng nhập (thành công/thất bại) để ngăn brute force
 @Entity
 @Data
 @NoArgsConstructor
@@ -39,6 +40,7 @@ public class LoginAttempt {
         this.attemptedAt = LocalDateTime.now();
     }
     
+    // Factory method tạo login attempt thành công
     public static LoginAttempt success(String username, String ipAddress) {
         LoginAttempt attempt = new LoginAttempt();
         attempt.setUsername(username);
@@ -47,6 +49,7 @@ public class LoginAttempt {
         return attempt;
     }
     
+    // Factory method tạo login attempt thất bại
     public static LoginAttempt failure(String username, String ipAddress, String reason) {
         LoginAttempt attempt = new LoginAttempt();
         attempt.setUsername(username);
@@ -56,4 +59,3 @@ public class LoginAttempt {
         return attempt;
     }
 }
-

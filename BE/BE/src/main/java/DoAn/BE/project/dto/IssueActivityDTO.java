@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
 
+// DTO truyền dữ liệu lịch sử Issue
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

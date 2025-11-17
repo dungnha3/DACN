@@ -11,6 +11,7 @@ import lombok.*;
 
 import DoAn.BE.user.entity.User;
 
+// Entity quản lý Sprint (Scrum sprint cycles)
 @Entity
 @Table(name = "sprints")
 @Data

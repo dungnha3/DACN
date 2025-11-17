@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+// Service quản lý thông báo chi tiết (HR, system với priority, email, pagination)
 @Service
 @Transactional
 @RequiredArgsConstructor

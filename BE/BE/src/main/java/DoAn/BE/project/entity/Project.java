@@ -12,6 +12,7 @@ import lombok.*;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.hr.entity.PhongBan;
 
+// Entity quản lý dự án (Agile/Scrum projects)
 @Entity
 @Table(name = "projects")
 @Data

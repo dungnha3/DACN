@@ -9,8 +9,7 @@ import DoAn.BE.project.entity.Sprint.SprintStatus;
 import DoAn.BE.project.repository.*;
 import DoAn.BE.user.entity.User;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,9 +20,8 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProjectDashboardService {
-    
-    private static final Logger log = LoggerFactory.getLogger(ProjectDashboardService.class);
     
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;

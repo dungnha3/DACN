@@ -4,12 +4,12 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import DoAn.BE.common.exception.BadRequestException;
 import DoAn.BE.common.exception.DuplicateException;
 import DoAn.BE.common.exception.EntityNotFoundException;
 import DoAn.BE.common.exception.ForbiddenException;
 import DoAn.BE.common.util.PermissionUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import DoAn.BE.hr.dto.NhanVienRequest;
 import DoAn.BE.hr.entity.ChucVu;
 import DoAn.BE.hr.entity.NhanVien;
@@ -24,11 +24,11 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+// Service quản lý nhân viên (CRUD, hợp đồng, phòng ban, chức vụ)
 @Service
 @Transactional
+@Slf4j
 public class NhanVienService {
-    
-    private static final Logger log = LoggerFactory.getLogger(NhanVienService.class);
     
     private final NhanVienRepository nhanVienRepository;
     private final UserRepository userRepository;

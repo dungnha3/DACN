@@ -4,9 +4,9 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import DoAn.BE.user.entity.User;
 
+// Entity quản lý thành viên dự án (roles: OWNER, MANAGER, DEVELOPER, QA, VIEWER)
 @Entity
 @Table(
     name = "project_members",

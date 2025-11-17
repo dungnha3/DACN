@@ -12,19 +12,18 @@ import DoAn.BE.project.repository.IssueActivityRepository;
 import DoAn.BE.project.repository.ProjectMemberRepository;
 import DoAn.BE.user.entity.User;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+// Service quản lý lịch sử thay đổi của Issue (activity log)
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class IssueActivityService {
-    
-    private static final Logger log = LoggerFactory.getLogger(IssueActivityService.class);
     
     private final IssueActivityRepository issueActivityRepository;
     private final IssueRepository issueRepository;

@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import java.time.LocalDate;
 import java.util.List;
 
+// DTO biểu đồ Burndown Chart cho Sprint (tracking progress)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

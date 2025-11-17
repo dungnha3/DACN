@@ -9,6 +9,7 @@ import lombok.*;
 
 import DoAn.BE.user.entity.User;
 
+// Entity quản lý công việc/task trong dự án (Issue/Task)
 @Entity
 @Table(name = "issues")
 @Data

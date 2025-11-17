@@ -2,11 +2,14 @@ package DoAn.BE.project.config;
 
 import DoAn.BE.project.entity.IssueStatus;
 import DoAn.BE.project.repository.IssueStatusRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+// Khởi tạo dữ liệu mặc định cho Issue Status khi ứng dụng start
 @Configuration
+@Slf4j
 public class IssueStatusDataInitializer {
     
     @Bean
@@ -19,7 +22,7 @@ public class IssueStatusDataInitializer {
                 repository.save(new IssueStatus("Review", 3, "#9C27B0"));
                 repository.save(new IssueStatus("Done", 4, "#4CAF50"));
                 
-                System.out.println("✅ Đã khởi tạo 4 Issue Statuses mặc định");
+                log.info("✅ Đã khởi tạo 4 Issue Statuses mặc định");
             }
         };
     }

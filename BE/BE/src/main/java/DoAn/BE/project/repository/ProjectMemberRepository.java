@@ -16,12 +16,11 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
     
     /**
      * Lấy danh sách user ID của team members mà Project Manager quản lý
+     * Fixed: Dùng JOIN thay vì subquery để tránh lỗi Hibernate validation
      */
-    @Query("SELECT DISTINCT pm.user.userId FROM ProjectMember pm " +
-           "WHERE pm.project.projectId IN (" +
-           "    SELECT p.projectId FROM ProjectMember p " +
-           "    WHERE p.user.userId = :managerId AND p.role = 'MANAGER'" +
-           ")")
+    @Query("SELECT DISTINCT pm2.user.userId FROM ProjectMember pm1 " +
+           "JOIN ProjectMember pm2 ON pm1.project.projectId = pm2.project.projectId " +
+           "WHERE pm1.user.userId = :managerId AND pm1.role = 'MANAGER'")
     List<Long> findTeamMemberUserIdsByManager(@Param("managerId") Long managerId);
 }
 

@@ -15,32 +15,31 @@ import DoAn.BE.hr.entity.NghiPhep.TrangThaiNghiPhep;
 import DoAn.BE.hr.entity.NhanVien;
 import DoAn.BE.hr.repository.NghiPhepRepository;
 import DoAn.BE.hr.repository.NhanVienRepository;
-import DoAn.BE.notification.service.NotificationService;
+import DoAn.BE.notification.service.HRNotificationService;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
+// Service quản lý nghỉ phép (tạo, duyệt, từ chối, thống kê)
 @Service
 @Transactional
+@Slf4j
 public class NghiPhepService {
-    
-    private static final Logger log = LoggerFactory.getLogger(NghiPhepService.class);
     
     private final NghiPhepRepository nghiPhepRepository;
     private final NhanVienRepository nhanVienRepository;
     private final UserRepository userRepository;
-    private final NotificationService notificationService;
+    private final HRNotificationService hrNotificationService;
 
     public NghiPhepService(NghiPhepRepository nghiPhepRepository, 
                           NhanVienRepository nhanVienRepository,
                           UserRepository userRepository,
-                          NotificationService notificationService) {
+                          HRNotificationService hrNotificationService) {
         this.nghiPhepRepository = nghiPhepRepository;
         this.nhanVienRepository = nhanVienRepository;
         this.userRepository = userRepository;
-        this.notificationService = notificationService;
+        this.hrNotificationService = hrNotificationService;
     }
 
     // Tạo đơn nghỉ phép mới - Employee tự tạo
@@ -210,7 +209,7 @@ public class NghiPhepService {
         // 🔔 Gửi notification cho nhân viên
         try {
             if (nghiPhep.getNhanVien().getUser() != null) {
-                notificationService.createLeaveApprovedNotification(
+                hrNotificationService.createLeaveApprovedNotification(
                     nghiPhep.getNhanVien().getUser().getUserId(),
                     nghiPhep.getNgayBatDau().toString(),
                     nghiPhep.getNgayKetThuc().toString()
@@ -240,12 +239,12 @@ public class NghiPhepService {
         
         nghiPhep.reject(currentUser, note);
         NghiPhep saved = nghiPhepRepository.save(nghiPhep);
-        log.info("❌ Đã từ chối đơn nghỉ phép cho nhân viên: {} - Lý do: {}", nghiPhep.getNhanVien().getHoTen(), note);
+        log.info("❌ Đã từ chối đơn nghỉ phép cho nhân viên: {}", nghiPhep.getNhanVien().getHoTen());
         
         // 🔔 Gửi notification cho nhân viên
         try {
             if (nghiPhep.getNhanVien().getUser() != null) {
-                notificationService.createLeaveRejectedNotification(
+                hrNotificationService.createLeaveRejectedNotification(
                     nghiPhep.getNhanVien().getUser().getUserId(),
                     nghiPhep.getNgayBatDau().toString(),
                     nghiPhep.getNgayKetThuc().toString(),
