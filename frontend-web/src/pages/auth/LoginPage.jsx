@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 import bgImage from '../picture/v882batch2-kul-13.jpg'
 
 export default function LoginPage() {
@@ -7,52 +9,24 @@ export default function LoginPage() {
   const [staySignedIn, setStaySignedIn] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  
+  const { login } = useAuth()
+  const navigate = useNavigate()
 
   const onSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    setSuccess('')
     setLoading(true)
+    
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      })
-
-      if (!res.ok) {
-        let message = 'Đăng nhập thất bại'
-        try {
-          const errJson = await res.json()
-          message = errJson?.message || message
-        } catch {}
-        throw new Error(message)
-      }
-
-      const data = await res.json()
-      localStorage.setItem('accessToken', data.accessToken)
-      localStorage.setItem('refreshToken', data.refreshToken)
-      localStorage.setItem('tokenType', data.tokenType || 'Bearer')
-      if (data?.user?.role) localStorage.setItem('userRole', data.user.role)
-      if (data?.user?.username) localStorage.setItem('username', data.user.username)
-      if (typeof data?.expiresIn === 'number') {
-        const expiresAt = Date.now() + data.expiresIn * 1000
-        localStorage.setItem('expiresAt', String(expiresAt))
-      }
-      if (staySignedIn) localStorage.setItem('staySignedIn', '1')
+      const result = await login({ username, password })
       
-      // Reload page to trigger App.jsx routing based on role
-      if (data?.user?.role === 'ADMIN' || 
-          data?.user?.role === 'MANAGER_HR' || 
-          data?.user?.role === 'MANAGER_ACCOUNTING' || 
-          data?.user?.role === 'MANAGER_PROJECT' || 
-          data?.user?.role === 'EMPLOYEE') {
-        window.location.reload()
-        return
+      if (result.success) {
+        // Navigate to dashboard based on role
+        navigate(result.redirectTo)
+      } else {
+        setError(result.error)
       }
-      
-      setSuccess('Đăng nhập thành công')
     } catch (err) {
       setError(err.message || 'Đăng nhập thất bại')
     } finally {
@@ -107,7 +81,6 @@ export default function LoginPage() {
           </div>
 
           {error && <div style={styles.error}>{error}</div>}
-          {success && <div style={styles.success}>{success}</div>}
 
           <button type="submit" style={styles.primaryBtn} disabled={loading}>
             {loading ? 'Signing in...' : 'Sign in'}

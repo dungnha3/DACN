@@ -1,3 +1,1796 @@
 2025-11-14 16:12:53 [main] INFO  DoAn.BE.BeApplication - Starting BeApplication using Java 21.0.8 with PID 5236 (E:\Project in Univers\DoAnChuyenNganh\DACN\BE\BE\target\classes started by 12a8d in E:\Project in Univers\DoAnChuyenNganh\DACN)
 2025-11-14 16:12:53 [main] DEBUG DoAn.BE.BeApplication - Running with Spring Boot v3.5.6, Spring v6.2.11
 2025-11-14 16:12:53 [main] INFO  DoAn.BE.BeApplication - No active profile set, falling back to 1 default profile: "default"
+2025-11-17 19:39:33 [main] INFO  DoAn.BE.BeApplication - Starting BeApplication using Java 21.0.8 with PID 7316 (E:\Project in Univers\DoAnChuyenNganh\DACN\BE\BE\target\classes started by 12a8d in E:\Project in Univers\DoAnChuyenNganh\DACN)
+2025-11-17 19:39:33 [main] DEBUG DoAn.BE.BeApplication - Running with Spring Boot v3.5.6, Spring v6.2.11
+2025-11-17 19:39:33 [main] INFO  DoAn.BE.BeApplication - No active profile set, falling back to 1 default profile: "default"
+2025-11-17 19:39:37 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-11-17 19:39:38 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 163 ms. Found 28 JPA repository interfaces.
+2025-11-17 19:39:39 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-11-17 19:39:39 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-11-17 19:39:39 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.46]
+2025-11-17 19:39:39 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-11-17 19:39:39 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 5793 ms
+2025-11-17 19:39:39 [main] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-11-17 19:39:39 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.29.Final
+2025-11-17 19:39:39 [main] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2025-11-17 19:39:40 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-11-17 19:39:40 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-11-17 19:39:40 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection ConnectionID:1 ClientConnectionId: fee2df5b-80c1-4d1d-aec7-3ed3c3ff7300
+2025-11-17 19:39:40 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-11-17 19:39:40 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: SQLServerDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-11-17 19:39:40 [main] INFO  o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 16.0
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-11-17 19:39:41 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-11-17 19:39:42 [main] DEBUG org.hibernate.SQL - 
+    alter table hop_dong 
+       alter column noi_dung NVARCHAR(MAX)
+2025-11-17 19:39:42 [main] DEBUG org.hibernate.SQL - 
+    alter table issue_activities 
+       alter column description NVARCHAR(MAX)
+2025-11-17 19:39:42 [main] DEBUG org.hibernate.SQL - 
+    alter table issue_activities 
+       alter column new_value NVARCHAR(MAX)
+2025-11-17 19:39:42 [main] DEBUG org.hibernate.SQL - 
+    alter table issue_activities 
+       alter column old_value NVARCHAR(MAX)
+2025-11-17 19:39:42 [main] DEBUG org.hibernate.SQL - 
+    alter table issue_comments 
+       alter column content NVARCHAR(MAX)
+2025-11-17 19:39:42 [main] DEBUG org.hibernate.SQL - 
+    alter table issues 
+       alter column description NVARCHAR(MAX)
+2025-11-17 19:39:42 [main] DEBUG org.hibernate.SQL - 
+    alter table messages 
+       alter column content NVARCHAR(MAX)
+2025-11-17 19:39:42 [main] DEBUG org.hibernate.SQL - 
+    alter table projects 
+       alter column description NVARCHAR(MAX)
+2025-11-17 19:39:42 [main] DEBUG org.hibernate.SQL - 
+    alter table sprints 
+       alter column goal NVARCHAR(MAX)
+2025-11-17 19:39:42 [main] DEBUG org.hibernate.SQL - 
+    alter table thong_bao 
+       alter column loai NVARCHAR(50)
+2025-11-17 19:39:42 [main] DEBUG org.hibernate.SQL - 
+    alter table thong_bao 
+       alter column metadata NVARCHAR(MAX)
+2025-11-17 19:39:42 [main] DEBUG org.hibernate.SQL - 
+    alter table thong_bao 
+       alter column noi_dung NVARCHAR(MAX)
+2025-11-17 19:39:42 [main] DEBUG org.hibernate.SQL - 
+    alter table thong_bao 
+       alter column url_lien_ket NVARCHAR(500)
+2025-11-17 19:39:42 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-11-17 19:39:43 [main] INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-11-17 19:39:44 [main] DEBUG D.B.a.filter.JwtAuthenticationFilter - Filter 'jwtAuthenticationFilter' configured for use
+2025-11-17 19:39:44 [main] WARN  o.s.aop.framework.CglibAopProxy - Unable to proxy interface-implementing method [public final void org.springframework.web.filter.GenericFilterBean.init(jakarta.servlet.FilterConfig) throws jakarta.servlet.ServletException] because it is marked as final, consider using interface-based JDK proxies instead.
+2025-11-17 19:39:45 [main] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-11-17 19:39:45 [main] DEBUG o.s.s.c.a.a.c.AuthenticationConfiguration$DefaultPasswordEncoderAuthenticationManagerBuilder - No authenticationProviders and no parentAuthenticationManager defined. Returning null.
+2025-11-17 19:39:45 [main] DEBUG o.s.s.web.DefaultSecurityFilterChain - Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, CorsFilter, LogoutFilter, JwtAuthenticationFilter$$SpringCGLIB$$0, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, SessionManagementFilter, ExceptionTranslationFilter, AuthorizationFilter
+2025-11-17 19:39:46 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Starting...
+2025-11-17 19:39:46 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@4344a5]]
+2025-11-17 19:39:46 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Started.
+2025-11-17 19:39:46 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-11-17 19:39:46 [main] INFO  DoAn.BE.BeApplication - Started BeApplication in 13.042 seconds (process running for 13.322)
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        count_big(*) 
+    from
+        issue_statuses is1_0
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:46 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: admin (ADMIN)
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:46 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: hr (MANAGER_HR)
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:46 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: accounting (MANAGER_ACCOUNTING)
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:46 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: pm (MANAGER_PROJECT)
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:46 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: employee (EMPLOYEE)
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:46 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: admin1 (ADMIN)
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:46 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: admin2 (ADMIN)
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:46 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: admin3 (ADMIN)
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:46 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: admin4 (ADMIN)
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:46 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: admin5 (ADMIN)
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:46 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: hr_nguyen_van_a (MANAGER_HR)
+2025-11-17 19:39:46 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:47 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: hr_tran_thi_b (MANAGER_HR)
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:47 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: hr_le_van_c (MANAGER_HR)
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:47 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: hr_pham_thi_d (MANAGER_HR)
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:47 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: hr_hoang_van_e (MANAGER_HR)
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:47 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: acc_nguyen_thi_f (MANAGER_ACCOUNTING)
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:47 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: acc_tran_van_g (MANAGER_ACCOUNTING)
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:47 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: acc_le_thi_h (MANAGER_ACCOUNTING)
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:47 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: acc_pham_van_i (MANAGER_ACCOUNTING)
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:47 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: acc_hoang_thi_j (MANAGER_ACCOUNTING)
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:47 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: pm_nguyen_van_k (MANAGER_PROJECT)
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:47 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: pm_tran_thi_l (MANAGER_PROJECT)
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:47 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: pm_le_van_m (MANAGER_PROJECT)
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:47 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: pm_pham_thi_n (MANAGER_PROJECT)
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:47 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: pm_hoang_van_o (MANAGER_PROJECT)
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:47 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: emp_nguyen_thi_p (EMPLOYEE)
+2025-11-17 19:39:47 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:48 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:48 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:48 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: emp_tran_van_q (EMPLOYEE)
+2025-11-17 19:39:48 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:48 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:48 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:48 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: emp_le_thi_r (EMPLOYEE)
+2025-11-17 19:39:48 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:48 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:48 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:48 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: emp_pham_van_s (EMPLOYEE)
+2025-11-17 19:39:48 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-17 19:39:48 [main] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-17 19:39:48 [main] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-17 19:39:48 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: emp_hoang_thi_t (EMPLOYEE)
