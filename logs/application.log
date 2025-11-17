@@ -1794,3 +1794,6 @@
     where
         user_id=?
 2025-11-17 19:39:48 [main] INFO  D.B.u.config.DefaultUsersInitializer - 🔁 Đã cập nhật tài khoản mặc định: emp_hoang_thi_t (EMPLOYEE)
+2025-11-17 21:19:25 [main] INFO  DoAn.BE.BeApplication - Starting BeApplication using Java 21.0.7 with PID 13088 (C:\Users\ADMIN\Desktop\DACN\DACN\BE\BE\target\classes started by ADMIN in C:\Users\ADMIN\Desktop\DACN\DACN)
+2025-11-17 21:19:25 [main] DEBUG DoAn.BE.BeApplication - Running with Spring Boot v3.5.6, Spring v6.2.11
+2025-11-17 21:19:25 [main] INFO  DoAn.BE.BeApplication - No active profile set, falling back to 1 default profile: "default"

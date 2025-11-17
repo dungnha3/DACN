@@ -1173,6 +1173,257 @@ export const styles = {
     fontSize: 12,
     color: '#7b809a',
     marginTop: 4
+  },
+  
+  // PROJECTS PAGE STYLES
+  projectsContainer: {
+    padding: '24px',
+    background: '#f0f2f5',
+    minHeight: '100vh'
+  },
+  projectsTable: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    background: '#fff',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+  },
+  projectsTh: {
+    padding: '14px 16px',
+    background: '#f8f9fa',
+    borderBottom: '2px solid #e9ecef',
+    textAlign: 'left',
+    fontSize: '12px',
+    fontWeight: '700',
+    color: '#7b809a',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
+  },
+  projectsTd: {
+    padding: '14px 16px',
+    borderBottom: '1px solid #e9ecef',
+    fontSize: '13px',
+    color: '#344767',
+    verticalAlign: 'middle'
+  },
+  projectsTr: {
+    transition: 'background 0.2s'
+  },
+  projectsEmpty: {
+    textAlign: 'center',
+    padding: '40px 20px',
+    background: '#fff',
+    color: '#7b809a'
+  },
+  projectsPagination: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '16px 24px',
+    background: '#fff',
+    borderTop: '1px solid #e9ecef',
+    fontSize: '13px',
+    color: '#7b809a'
+  },
+  projectsHeaderBar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '12px 24px',
+    background: 'linear-gradient(180deg, rgba(30, 58, 138, 0.1) 0%, transparent 100%)',
+    borderBottom: '1px solid #e9ecef',
+    marginBottom: '16px',
+    borderRadius: '8px 8px 0 0'
+  },
+  projectsHeaderBar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '12px 24px',
+    background: 'linear-gradient(180deg, rgba(30, 58, 138, 0.1) 0%, transparent 100%)',
+    borderBottom: '1px solid #e9ecef',
+    marginBottom: '16px',
+    borderRadius: '8px 8px 0 0'
+  },
+  projectsFilterTab: {
+    background: 'rgba(255, 255, 255, 0.3)',
+    border: '1px solid rgba(30, 58, 138, 0.2)',
+    color: '#344767',
+    padding: '8px 12px',
+    borderRadius: '6px',
+    fontSize: '12px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    transition: 'all 0.2s'
+  },
+  
+  // PROJECT DETAIL PAGE STYLES
+  projectDetailContainer: {
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    minHeight: '100vh',
+    padding: '24px'
+  },
+  projectDetailHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '24px',
+    color: '#fff'
+  },
+  projectDetailTitle: {
+    fontSize: '28px',
+    fontWeight: '700',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px'
+  },
+  projectDetailActions: {
+    display: 'flex',
+    gap: '12px'
+  },
+  projectDetailBtn: {
+    background: '#fff',
+    color: '#344767',
+    border: 'none',
+    padding: '10px 20px',
+    borderRadius: '6px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    fontSize: '13px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    transition: 'all 0.2s'
+  },
+  projectDetailBtnPrimary: {
+    background: '#2196F3',
+    color: '#fff'
+  },
+  projectDetailTabs: {
+    display: 'flex',
+    gap: '8px',
+    marginBottom: '16px',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.3)',
+    paddingBottom: '12px'
+  },
+  projectDetailTab: {
+    background: 'rgba(255, 255, 255, 0.1)',
+    border: 'none',
+    color: '#fff',
+    padding: '10px 16px',
+    borderRadius: '6px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    fontSize: '13px',
+    transition: 'all 0.2s'
+  },
+  projectDetailTabActive: {
+    background: '#fff',
+    color: '#667eea'
+  },
+  projectDetailContent: {
+    background: '#fff',
+    borderRadius: '12px',
+    padding: '24px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+    marginBottom: '24px'
+  },
+  projectDetailSearchBar: {
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'center',
+    marginBottom: '16px',
+    padding: '16px',
+    background: '#f8f9fa',
+    borderRadius: '8px',
+    borderBottom: '1px solid #e9ecef'
+  },
+  projectDetailSearchInput: {
+    padding: '10px 14px',
+    border: '1px solid #e9ecef',
+    borderRadius: '6px',
+    fontSize: '13px',
+    fontFamily: 'inherit',
+    minWidth: '150px'
+  },
+  projectDetailSearchInputLarge: {
+    padding: '10px 14px',
+    border: '1px solid #e9ecef',
+    borderRadius: '6px',
+    fontSize: '13px',
+    fontFamily: 'inherit',
+    flex: 1
+  },
+  projectDetailToolbar: {
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'center',
+    marginBottom: '16px',
+    flexWrap: 'wrap'
+  },
+  projectDetailToolbarBtn: {
+    background: '#2196F3',
+    color: '#fff',
+    border: 'none',
+    padding: '8px 16px',
+    borderRadius: '6px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    fontSize: '13px',
+    transition: 'all 0.2s'
+  },
+  projectDetailStats: {
+    display: 'flex',
+    gap: '16px',
+    padding: '12px 16px',
+    background: '#f8f9fa',
+    borderRadius: '8px',
+    marginBottom: '16px',
+    fontSize: '13px',
+    color: '#7b809a',
+    fontWeight: '600'
+  },
+  projectDetailRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+  },
+  projectDetailBackBtn: {
+    background: 'rgba(255, 255, 255, 0.2)',
+    border: 'none',
+    color: '#fff',
+    padding: '8px 16px',
+    borderRadius: '6px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    fontSize: '13px',
+    marginBottom: '16px',
+    transition: 'all 0.2s'
+  },
+  projectDetailTaskTable: {
+    width: '100%',
+    borderCollapse: 'collapse'
+  },
+  projectDetailTaskTh: {
+    textAlign: 'left',
+    padding: '14px 16px',
+    background: '#f8f9fa',
+    borderBottom: '1px solid #e9ecef',
+    fontSize: '12px',
+    fontWeight: '700',
+    color: '#7b809a',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
+  },
+  projectDetailTaskTd: {
+    padding: '14px 16px',
+    borderBottom: '1px solid #e9ecef',
+    fontSize: '13px',
+    color: '#344767',
+    verticalAlign: 'middle'
+  },
+  projectDetailTaskTr: {
+    transition: 'background 0.2s'
   }
-  // END: NEW PROJECT DETAIL STYLES
+  // END: PROJECT DETAIL STYLES
 }

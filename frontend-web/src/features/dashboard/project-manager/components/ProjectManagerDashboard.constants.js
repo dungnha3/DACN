@@ -89,6 +89,28 @@ export const notifications = [
   { title: 'Thông báo nghỉ lễ', desc: 'Công ty nghỉ lễ Quốc khánh 2/9', date: '3 ngày trước' },
 ]
 
+// Projects List Data
+export const projectsListData = [
+  {
+    id: 3,
+    name: 'dự án 2',
+    lastUpdate: '18 tháng 11, 2:02 am',
+    performance: 100,
+    members: 2,
+    role: 'Thành viên dự án',
+    privacy: 'Công khai'
+  },
+  {
+    id: 5,
+    name: 'testmoi2',
+    lastUpdate: '18 tháng 11, 2:04 am',
+    performance: 100,
+    members: 2,
+    role: 'Người quản lý dự án',
+    privacy: 'Công khai'
+  },
+]
+
 // Menu Sections Configuration
 export const sectionsConfig = {
   dashboard: {
@@ -193,6 +215,65 @@ export const mockStorageItems = [
   { id: 4, type: 'file', name: 'Project_Charter_QLNS.pdf', lastModified: '05/10/2025', size: '2.2 MB' },
   { id: 5, type: 'file', name: 'Timeline_Gantt_Chart.xlsx', lastModified: '14/11/2025', size: '1.5 MB' },
   { id: 6, type: 'file', name: 'Meeting_Notes_10-11.docx', lastModified: '10/11/2025', size: '350 KB' },
+]
+
+// TASKS DATA FOR PROJECT DETAIL VIEW
+export const projectTasksData = [
+  {
+    id: 1,
+    name: 'Thiết kế giao diện trang chủ',
+    kanbanStage: 'To Do',
+    activity: '18 tháng 11, 2:02 am',
+    dueDate: '20 tháng 11, 2024',
+    creator: 'Nguyễn Văn A',
+    assignee: 'Trần Thị B',
+    project: 'dự án 2',
+    storage: 'Thiết kế'
+  },
+  {
+    id: 2,
+    name: 'Phát triển API thanh toán',
+    kanbanStage: 'In Progress',
+    activity: '17 tháng 11, 10:30 am',
+    dueDate: '25 tháng 11, 2024',
+    creator: 'Trần Thị B',
+    assignee: 'Lê Văn C',
+    project: 'dự án 2',
+    storage: 'Phát triển'
+  },
+  {
+    id: 3,
+    name: 'Kiểm thử chức năng đăng nhập',
+    kanbanStage: 'In Review',
+    activity: '16 tháng 11, 3:15 pm',
+    dueDate: '19 tháng 11, 2024',
+    creator: 'Lê Văn C',
+    assignee: 'Nguyễn Văn A',
+    project: 'dự án 2',
+    storage: 'QA'
+  },
+  {
+    id: 4,
+    name: 'Cập nhật tài liệu API',
+    kanbanStage: 'Done',
+    activity: '15 tháng 11, 9:00 am',
+    dueDate: '18 tháng 11, 2024',
+    creator: 'Nguyễn Văn A',
+    assignee: 'Trần Thị B',
+    project: 'dự án 2',
+    storage: 'Tài liệu'
+  },
+  {
+    id: 5,
+    name: 'Tối ưu hóa hiệu suất database',
+    kanbanStage: 'In Progress',
+    activity: '14 tháng 11, 2:20 pm',
+    dueDate: '28 tháng 11, 2024',
+    creator: 'Trần Thị B',
+    assignee: 'Lê Văn C',
+    project: 'dự án 2',
+    storage: 'Phát triển'
+  },
 ]
 
 export const mockSprints = [

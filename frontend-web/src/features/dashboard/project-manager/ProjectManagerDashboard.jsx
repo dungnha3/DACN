@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { styles } from './ProjectManagerDashboard.styles'
-import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar, ApprovalStatusBadge } from './components/ProjectManagerDashboard.components'
+import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar, ApprovalStatusBadge, MemberAvatar, RoleBadgeProject } from './components/ProjectManagerDashboard.components'
 import { 
   kpiData, attendanceHistory, leaveRequests, notifications, sectionsConfig, pendingApprovals, 
-  mockProjects, mockIssues, mockStorageItems, mockSprints, mockProjectMembers, mockActivities 
+  mockProjects, mockIssues, mockStorageItems, mockSprints, mockProjectMembers, mockActivities, projectsListData, projectTasksData 
 } from './components/ProjectManagerDashboard.constants'
 import { chatContacts, chatMessages } from '../employee/components/EmployeeDashboard.constants'
 
@@ -16,6 +16,7 @@ export default function ProjectManagerDashboard() {
   const [selectedContact, setSelectedContact] = useState(chatContacts?.[0] || null)
   const [messageInput, setMessageInput] = useState('')
   const [isCheckedIn, setIsCheckedIn] = useState(false)
+  const [selectedProject, setSelectedProject] = useState(null) // Dự án được chọn để xem chi tiết
   
   // STATE MỚI: Quản lý dự án đang được chọn
   const [allProjects, setAllProjects] = useState(mockProjects)
@@ -558,7 +559,7 @@ export default function ProjectManagerDashboard() {
         )}
 
         {/* START: PROJECT PAGE (REDESIGNED) */}
-        {active === 'projects' && (
+        {active === 'projects' && !selectedProject && (
           <div style={styles.pageContent}>
             {/* Project Tab Navigation */}
             <div style={styles.projectTabContainer}>
@@ -588,42 +589,75 @@ export default function ProjectManagerDashboard() {
               {/* Tab 1: Project Management (ProjectController) */}
               {projectTab === 'management' && (
                 <>
-                  <div style={styles.tableHeader}>
-                    <h4 style={styles.tableTitle}>Danh sách dự án của tôi</h4>
-                    <button style={styles.addBtn}>+ Tạo dự án mới</button>
+                  {/* Header with filter tabs */}
+                  <div style={styles.projectsHeaderBar}>
+                    <button style={styles.projectsFilterTab}>0️⃣ Quá hạn</button>
+                    <button style={styles.projectsFilterTab}>0️⃣ Bình luận</button>
+                    <button style={{...styles.projectsFilterTab, background: 'rgba(255, 255, 255, 0.6)'}}>✓ Đánh dấu đã đọc tất cả</button>
                   </div>
-                  <div style={styles.projectGrid}>
-                    {allProjects.map(project => (
-                      <div key={project.id} style={styles.projectCard}>
-                        <div style={styles.projectCardHeader}>
-                          <div>
-                            <div style={styles.projectCardTitle}>{project.name}</div>
-                          </div>
-                          <span style={styles.projectCardStatus(project.status)}>{project.status}</span>
-                        </div>
-                        <div>
-                          <div style={{ ...styles.projectCardProgress, marginBottom: 4 }}>
-                            <div style={styles.projectCardProgressBar(project.progress)} />
-                          </div>
-                          <span style={{ fontSize: 12, color: '#67748e', fontWeight: 600 }}>{project.progress}% Hoàn thành</span>
-                        </div>
-                        <div style={styles.projectCardFooter}>
-                          <div style={styles.projectCardTeam}>
-                            {project.team.map((avatar, idx) => (
-                              <div key={idx} style={{...styles.projectCardAvatar, zIndex: idx, marginLeft: idx === 0 ? 0 : -10}}>
-                                {avatar}
-                              </div>
-                            ))}
-                          </div>
-                          <button 
-                            style={styles.approveBtn} 
-                            onClick={() => handleSelectProject(project.id)}
-                          >
-                            Quản lý
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+
+                  {/* Projects Table */}
+                  <table style={styles.projectsTable}>
+                    <thead>
+                      <tr>
+                        <th style={{...styles.projectsTh, width: '40px'}}>
+                          <input type="checkbox" style={{cursor: 'pointer'}} />
+                        </th>
+                        <th style={{...styles.projectsTh, width: '50px'}}>ID</th>
+                        <th style={styles.projectsTh}>Tên</th>
+                        <th style={styles.projectsTh}>Hoạt động</th>
+                        <th style={styles.projectsTh}>Performance</th>
+                        <th style={styles.projectsTh}>Xem các thành viên</th>
+                        <th style={styles.projectsTh}>Vai trò</th>
+                        <th style={styles.projectsTh}>Quyền riêng tư</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {projectsListData.map((project) => (
+                        <tr 
+                          key={project.id} 
+                          style={{...styles.projectsTr, cursor: 'pointer'}}
+                          onClick={() => setSelectedProject(project)}
+                          onMouseEnter={(e) => e.currentTarget.style.background = '#e8f4f8'} 
+                          onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
+                        >
+                          <td style={{...styles.projectsTd, width: '40px', textAlign: 'center'}}>
+                            <input type="checkbox" style={{cursor: 'pointer'}} onClick={(e) => e.stopPropagation()} />
+                          </td>
+                          <td style={{...styles.projectsTd, width: '50px', color: '#1e3a8a', fontWeight: '600'}}>{project.id}</td>
+                          <td style={{...styles.projectsTd, fontWeight: '600', color: '#1e3a8a'}}>
+                            <span style={{display: 'inline-flex', alignItems: 'center', gap: '8px'}}>
+                              📁 {project.name}
+                            </span>
+                          </td>
+                          <td style={styles.projectsTd}>{project.lastUpdate}</td>
+                          <td style={{...styles.projectsTd, fontWeight: '600', color: '#1e3a8a'}}>{project.performance}%</td>
+                          <td style={styles.projectsTd}>
+                            <div style={{display: 'flex', gap: '4px'}}>
+                              <MemberAvatar color="#65B741" />
+                              <MemberAvatar color="#999999" />
+                            </div>
+                          </td>
+                          <td style={styles.projectsTd}>
+                            <RoleBadgeProject role={project.role} />
+                          </td>
+                          <td style={styles.projectsTd}>
+                            <span style={{color: '#2d5a2d', fontSize: '13px'}}>🌐 {project.privacy}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {/* Pagination */}
+                  <div style={styles.projectsPagination}>
+                    <div>ĐÃ CHỌN: 0 / 2</div>
+                    <div>TỔNG: 1</div>
+                    <div>TRANG: 1</div>
+                    <div style={{marginLeft: 'auto', display: 'flex', gap: '12px', alignItems: 'center'}}>
+                      <button style={{background: 'none', border: 'none', color: '#1e3a8a', cursor: 'pointer', fontWeight: '600'}}>‹ TRƯỚC</button>
+                      <button style={{background: 'none', border: 'none', color: '#1e3a8a', cursor: 'pointer', fontWeight: '600'}}>TIẾP THEO ›</button>
+                    </div>
                   </div>
                 </>
               )}
@@ -708,6 +742,101 @@ export default function ProjectManagerDashboard() {
           </div>
         )}
         {/* END: PROJECT PAGE */}
+
+        {/* PROJECT DETAIL VIEW */}
+        {active === 'projects' && selectedProject && (
+          <div style={styles.projectDetailContainer}>
+            {/* Header */}
+            <div style={styles.projectDetailHeader}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '16px', flex: 1}}>
+                <button 
+                  style={styles.projectDetailBackBtn}
+                  onClick={() => setSelectedProject(null)}
+                  title="Quay lại danh sách"
+                >
+                  ← Quay lại
+                </button>
+                <h1 style={styles.projectDetailTitle}>{selectedProject.name}</h1>
+              </div>
+              <div style={{display: 'flex', gap: '12px'}}>
+                <button style={styles.projectDetailBtn}>🎬 Cuộc gọi video</button>
+                <button style={styles.projectDetailBtn}>ℹ️ Giới thiệu về dự án</button>
+                <button style={{...styles.projectDetailBtn, padding: '8px 12px', fontSize: '16px'}}>⋯</button>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div style={styles.projectDetailTabs}>
+              <button style={{...styles.projectDetailTab, ...styles.projectDetailTabActive}}>📋 Tác vụ</button>
+              <button style={styles.projectDetailTab}>📰 Bản tin</button>
+              <button style={styles.projectDetailTab}>📅 Lịch</button>
+              <button style={styles.projectDetailTab}>📂 Drive</button>
+              <button style={styles.projectDetailTab}>➕ Thêm</button>
+            </div>
+
+            {/* Content Area */}
+            <div style={styles.projectDetailContent}>
+              {/* Search & Filter Bar */}
+              <div style={styles.projectDetailSearchBar}>
+                <input 
+                  type="text" 
+                  placeholder="Tìm tác vụ..." 
+                  style={styles.projectDetailSearchInput}
+                />
+                <div style={{display: 'flex', gap: '8px'}}>
+                  <button style={{...styles.projectDetailBtn, padding: '6px 12px', fontSize: '13px'}}>🔽 Sắp xếp</button>
+                  <button style={{...styles.projectDetailBtn, padding: '6px 12px', fontSize: '13px'}}>⚙️ Bộ lọc</button>
+                </div>
+              </div>
+
+              {/* Tasks Table */}
+              <table style={styles.projectDetailTaskTable}>
+                <thead>
+                  <tr style={{borderBottom: '2px solid rgba(255,255,255,0.3)'}}>
+                    <th style={{...styles.projectDetailTaskTh, width: '30%'}}>Tên</th>
+                    <th style={{...styles.projectDetailTaskTh, width: '12%'}}>Giai đoạn Kanban</th>
+                    <th style={{...styles.projectDetailTaskTh, width: '14%'}}>Hoạt động</th>
+                    <th style={{...styles.projectDetailTaskTh, width: '14%'}}>Hạn chót</th>
+                    <th style={{...styles.projectDetailTaskTh, width: '12%'}}>Người tạo</th>
+                    <th style={{...styles.projectDetailTaskTh, width: '12%'}}>Người được phân công</th>
+                    <th style={{...styles.projectDetailTaskTh, width: '8%'}}>Dự án</th>
+                    <th style={{...styles.projectDetailTaskTh, width: '8%'}}>Lưu trữ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projectTasksData.map((task) => (
+                    <tr key={task.id} style={{...styles.projectDetailTaskTr, cursor: 'pointer'}} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                      <td style={{...styles.projectDetailTaskTd, fontWeight: '600'}}>📌 {task.name}</td>
+                      <td style={styles.projectDetailTaskTd}>
+                        <span style={{
+                          background: task.kanbanStage === 'To Do' ? '#e9ecef' : task.kanbanStage === 'In Progress' ? '#fff3cd' : '#d4edda',
+                          color: task.kanbanStage === 'To Do' ? '#495057' : task.kanbanStage === 'In Progress' ? '#856404' : '#155724',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          fontWeight: '500'
+                        }}>
+                          {task.kanbanStage}
+                        </span>
+                      </td>
+                      <td style={styles.projectDetailTaskTd}>{task.activity}</td>
+                      <td style={styles.projectDetailTaskTd}>{task.dueDate}</td>
+                      <td style={styles.projectDetailTaskTd}>{task.creator}</td>
+                      <td style={styles.projectDetailTaskTd}>{task.assignee}</td>
+                      <td style={styles.projectDetailTaskTd}>
+                        <span style={{fontSize: '12px', color: 'rgba(255,255,255,0.7)'}}>📁 {task.project}</span>
+                      </td>
+                      <td style={styles.projectDetailTaskTd}>
+                        <span style={{fontSize: '12px', color: 'rgba(255,255,255,0.7)'}}>🗂️ {task.storage}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        {/* END PROJECT DETAIL VIEW */}
 
         {/* Chat Page */}
         {active === 'chat' && (
