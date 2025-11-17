@@ -1424,6 +1424,74 @@ export const styles = {
   },
   projectDetailTaskTr: {
     transition: 'background 0.2s'
+  },
+
+  // CALENDAR STYLES
+  calendarContainer: {
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    padding: '20px',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
+  },
+  calendarHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '20px',
+    padding: '10px 0',
+    borderBottom: '1px solid #e9ecef'
+  },
+  monthNavButton: {
+    backgroundColor: '#f8f9fa',
+    border: '1px solid #e9ecef',
+    borderRadius: '8px',
+    padding: '8px 16px',
+    fontSize: '13px',
+    fontWeight: '500',
+    color: '#344767',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    ':hover': {
+      backgroundColor: '#e9ecef',
+      borderColor: '#d3d7e8'
+    }
+  },
+  calendarDayHeader: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(7, 1fr)',
+    gap: '8px',
+    marginBottom: '8px',
+    marginTop: '12px'
+  },
+  calendarDayHeaderCell: {
+    textAlign: 'center',
+    fontSize: '12px',
+    fontWeight: '700',
+    color: '#7b809a',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    padding: '8px'
+  },
+  calendarGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(7, 1fr)',
+    gap: '8px',
+    marginTop: '12px'
+  },
+  calendarDayCell: {
+    minHeight: '100px',
+    padding: '8px',
+    borderRadius: '8px',
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: 'white',
+    border: '1px solid #e0e0e0',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    ':hover': {
+      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+      borderColor: '#d3d7e8'
+    }
   }
-  // END: PROJECT DETAIL STYLES
+  // END: CALENDAR STYLES
 }
