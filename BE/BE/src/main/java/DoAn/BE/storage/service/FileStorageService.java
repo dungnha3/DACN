@@ -41,6 +41,7 @@ public class FileStorageService {
     private final FolderRepository folderRepository;
     private final UserRepository userRepository;
     private final StorageNotificationService storageNotificationService;
+    private final StorageProjectFileUploadListener projectFileUploadListener;
     
     @Value("${file.upload-dir:./uploads}")
     private String uploadDir;
@@ -123,6 +124,9 @@ public class FileStorageService {
                 originalFilename,
                 fileEntity.getFileSizeFormatted()
             );
+            
+            // Notify project members if this is a project file
+            projectFileUploadListener.notifyProjectMembersOnFileUpload(fileEntity);
             
             // Build response
             FileUploadResponse response = new FileUploadResponse();

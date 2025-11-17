@@ -138,5 +138,13 @@ public class ChatRoomController {
         List<ChatRoomMember> members = chatRoomService.getRoomMembers(roomId, currentUser.getUserId());
         return ResponseEntity.ok(members);
     }
+
+    // Lấy project chat room theo projectId
+    @GetMapping("/project/{projectId}")
+    public ResponseEntity<ChatRoomDTO> getProjectChatRoom(@PathVariable Long projectId) {
+        User currentUser = getCurrentUser();
+        ChatRoomDTO chatRoom = chatRoomService.getProjectChatRoom(projectId, currentUser.getUserId());
+        return ResponseEntity.ok(chatRoom);
+    }
 }
 

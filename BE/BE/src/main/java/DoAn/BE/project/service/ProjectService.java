@@ -4,6 +4,10 @@ import DoAn.BE.common.exception.*;
 import DoAn.BE.common.util.PermissionUtil;
 import DoAn.BE.hr.entity.PhongBan;
 import DoAn.BE.hr.repository.PhongBanRepository;
+import DoAn.BE.chat.entity.ChatRoom;
+import DoAn.BE.chat.entity.ChatRoomMember;
+import DoAn.BE.chat.repository.ChatRoomRepository;
+import DoAn.BE.chat.repository.ChatRoomMemberRepository;
 import lombok.extern.slf4j.Slf4j;
 import DoAn.BE.project.dto.*;
 import DoAn.BE.project.entity.Project;
@@ -17,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,6 +35,11 @@ public class ProjectService {
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
     private final PhongBanRepository phongBanRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final ProjectChatIntegrationService projectChatIntegrationService;
+    private final DoAn.BE.notification.service.ProjectNotificationService projectNotificationService;
+    private final DoAn.BE.storage.service.StorageProjectIntegrationService storageProjectIntegrationService;
     
     @Transactional
     public ProjectDTO createProject(CreateProjectRequest request, User currentUser) {
@@ -71,6 +81,29 @@ public class ProjectService {
         // Add creator as OWNER
         ProjectMember ownerMember = new ProjectMember(project, currentUser, ProjectRole.OWNER);
         projectMemberRepository.save(ownerMember);
+        
+        // Auto-create project chat room
+        ChatRoom projectChatRoom = new ChatRoom();
+        projectChatRoom.setName("💼 " + project.getName());
+        projectChatRoom.setType(ChatRoom.RoomType.PROJECT);
+        projectChatRoom.setProject(project);
+        projectChatRoom.setCreatedBy(currentUser);
+        projectChatRoom.setCreatedAt(LocalDateTime.now());
+        projectChatRoom = chatRoomRepository.save(projectChatRoom);
+        
+        // Add creator to chat room as ADMIN
+        ChatRoomMember chatMember = new ChatRoomMember();
+        chatMember.setChatRoom(projectChatRoom);
+        chatMember.setUser(currentUser);
+        chatMember.setRole(ChatRoomMember.MemberRole.ADMIN);
+        chatMember.setJoinedAt(LocalDateTime.now());
+        chatRoomMemberRepository.save(chatMember);
+        
+        log.info("Đã tạo project chat room {} cho project {}", projectChatRoom.getRoomId(), project.getProjectId());
+        
+        // Auto-create project storage folder
+        storageProjectIntegrationService.getOrCreateProjectFolder(project, currentUser);
+        log.info("Đã tạo project storage folder cho project {}", project.getProjectId());
         
         return convertToDTO(project);
     }
@@ -141,7 +174,46 @@ public class ProjectService {
             project.setDescription(request.getDescription());
         }
         if (request.getStatus() != null) {
+            Project.ProjectStatus oldStatus = project.getStatus();
             project.setStatus(request.getStatus());
+            
+            // Post system message if status changed
+            if (oldStatus != request.getStatus()) {
+                if (request.getStatus() == Project.ProjectStatus.COMPLETED) {
+                    projectChatIntegrationService.notifyProjectCompleted(project);
+                    
+                    // Send notification to all members
+                    List<ProjectMember> members = projectMemberRepository.findByProject_ProjectId(projectId);
+                    for (ProjectMember member : members) {
+                        if (member.getUser() != null) {
+                            projectNotificationService.createProjectCompletedNotification(
+                                member.getUser().getUserId(),
+                                project.getName(),
+                                project.getProjectId()
+                            );
+                        }
+                    }
+                } else {
+                    projectChatIntegrationService.notifyProjectStatusChanged(
+                        project, 
+                        oldStatus != null ? oldStatus.toString() : "N/A", 
+                        request.getStatus().toString()
+                    );
+                    
+                    // Send notification to all members
+                    List<ProjectMember> members = projectMemberRepository.findByProject_ProjectId(projectId);
+                    for (ProjectMember member : members) {
+                        if (member.getUser() != null) {
+                            projectNotificationService.createProjectStatusChangedNotification(
+                                member.getUser().getUserId(),
+                                project.getName(),
+                                request.getStatus().toString(),
+                                project.getProjectId()
+                            );
+                        }
+                    }
+                }
+            }
         }
         if (request.getStartDate() != null) {
             project.setStartDate(request.getStartDate());
@@ -181,8 +253,27 @@ public class ProjectService {
         
         // Soft delete
         project.setIsActive(false);
-        project.setStatus(Project.ProjectStatus.CANCELLED);
         projectRepository.save(project);
+        
+        // Archive project chat - set inactive but keep history
+        List<ChatRoom> projectChats = chatRoomRepository.findByProject(project);
+        if (!projectChats.isEmpty()) {
+            ChatRoom projectChatRoom = projectChats.get(0);
+            // Post final system message
+            projectChatIntegrationService.postSystemMessage(project, " Dự án đã được đóng. Chat room sẽ chuyển sang chế độ chỉ đọc.");
+            log.info("Archived project chat room {} for project {}", projectChatRoom.getRoomId(), projectId);
+        }
+        
+        // Send notification to all members
+        List<ProjectMember> members = projectMemberRepository.findByProject_ProjectId(projectId);
+        for (ProjectMember projectMember : members) {
+            if (projectMember.getUser() != null) {
+                projectNotificationService.createProjectArchivedNotification(
+                    projectMember.getUser().getUserId(),
+                    project.getName()
+                );
+            }
+        }
     }
     
     @Transactional
@@ -206,6 +297,40 @@ public class ProjectService {
         ProjectMember projectMember = new ProjectMember(project, newMember, request.getRole());
         projectMember = projectMemberRepository.save(projectMember);
         
+        // Sync to project chat room
+        List<ChatRoom> projectChats = chatRoomRepository.findByProject(project);
+        if (!projectChats.isEmpty()) {
+            ChatRoom projectChatRoom = projectChats.get(0);
+            
+            // Check if not already in chat
+            boolean alreadyInChat = chatRoomMemberRepository
+                .existsByChatRoom_RoomIdAndUser_UserId(projectChatRoom.getRoomId(), request.getUserId());
+            
+            if (!alreadyInChat) {
+                ChatRoomMember chatMember = new ChatRoomMember();
+                chatMember.setChatRoom(projectChatRoom);
+                chatMember.setUser(newMember);
+                // OWNER/MANAGER = ADMIN, others = MEMBER
+                chatMember.setRole(request.getRole() == ProjectRole.OWNER || request.getRole() == ProjectRole.MANAGER
+                    ? ChatRoomMember.MemberRole.ADMIN
+                    : ChatRoomMember.MemberRole.MEMBER);
+                chatMember.setJoinedAt(LocalDateTime.now());
+                chatRoomMemberRepository.save(chatMember);
+                
+                log.info("Đã thêm user {} vào project chat room {}", request.getUserId(), projectChatRoom.getRoomId());
+            }
+        }
+        
+        // Post system message
+        projectChatIntegrationService.notifyMemberAdded(project, newMember.getUsername(), request.getRole().toString());
+        
+        // Send notification to new member
+        projectNotificationService.createProjectMemberAddedNotification(
+            newMember.getUserId(),
+            project.getName(),
+            project.getProjectId()
+        );
+        
         return convertToMemberDTO(projectMember);
     }
     
@@ -227,6 +352,34 @@ public class ProjectService {
         }
         
         projectMemberRepository.delete(memberToRemove);
+        
+        // Sync to project chat room
+        Project project = projectRepository.findById(projectId).orElse(null);
+        if (project != null) {
+            List<ChatRoom> projectChats = chatRoomRepository.findByProject(project);
+            if (!projectChats.isEmpty()) {
+                ChatRoom projectChatRoom = projectChats.get(0);
+                
+                java.util.Optional<ChatRoomMember> chatMemberOpt = chatRoomMemberRepository
+                    .findByChatRoom_RoomIdAndUser_UserId(projectChatRoom.getRoomId(), memberId);
+                
+                if (chatMemberOpt.isPresent()) {
+                    chatRoomMemberRepository.delete(chatMemberOpt.get());
+                    log.info("Đã xóa user {} khỏi project chat room {}", memberId, projectChatRoom.getRoomId());
+                }
+            }
+            
+            // Post system message
+            projectChatIntegrationService.notifyMemberRemoved(project, memberToRemove.getUser().getUsername());
+            
+            // Send notification to removed member
+            if (memberToRemove.getUser() != null) {
+                projectNotificationService.createProjectMemberRemovedNotification(
+                    memberToRemove.getUser().getUserId(),
+                    project.getName()
+                );
+            }
+        }
     }
     
     @Transactional(readOnly = true)
@@ -255,6 +408,16 @@ public class ProjectService {
         
         member.setRole(newRole);
         member = projectMemberRepository.save(member);
+        
+        // Send notification to member
+        if (member.getUser() != null && member.getProject() != null) {
+            projectNotificationService.createProjectRoleChangedNotification(
+                member.getUser().getUserId(),
+                member.getProject().getName(),
+                newRole.toString(),
+                member.getProject().getProjectId()
+            );
+        }
         
         return convertToMemberDTO(member);
     }

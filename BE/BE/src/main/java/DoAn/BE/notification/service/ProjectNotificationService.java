@@ -16,11 +16,61 @@ public class ProjectNotificationService {
     /**
      * Tạo notification khi được thêm vào project
      */
-    public Notification createProjectMemberAddedNotification(Long userId, String projectName) {
+    public Notification createProjectMemberAddedNotification(Long userId, String projectName, Long projectId) {
         String title = "Được thêm vào dự án";
         String content = "Bạn đã được thêm vào dự án \"" + projectName + "\"";
-        String link = "/projects";
+        String link = "/projects/" + projectId;
         return notificationService.createNotification(userId, "PROJECT_MEMBER_ADDED", title, content, link);
+    }
+    
+    /**
+     * Tạo notification khi bị xóa khỏi project
+     */
+    public Notification createProjectMemberRemovedNotification(Long userId, String projectName) {
+        String title = "Bị xóa khỏi dự án";
+        String content = "Bạn đã bị xóa khỏi dự án \"" + projectName + "\"";
+        String link = "/projects";
+        return notificationService.createNotification(userId, "PROJECT_MEMBER_REMOVED", title, content, link);
+    }
+    
+    /**
+     * Tạo notification khi project status thay đổi
+     */
+    public Notification createProjectStatusChangedNotification(Long userId, String projectName, String newStatus, Long projectId) {
+        String title = "Trạng thái dự án thay đổi";
+        String content = "Dự án \"" + projectName + "\" đã chuyển sang trạng thái: " + newStatus;
+        String link = "/projects/" + projectId;
+        return notificationService.createNotification(userId, "PROJECT_STATUS_CHANGED", title, content, link);
+    }
+    
+    /**
+     * Tạo notification khi project hoàn thành
+     */
+    public Notification createProjectCompletedNotification(Long userId, String projectName, Long projectId) {
+        String title = "Dự án hoàn thành";
+        String content = "🎉 Chúc mừng! Dự án \"" + projectName + "\" đã hoàn thành!";
+        String link = "/projects/" + projectId;
+        return notificationService.createNotification(userId, "PROJECT_COMPLETED", title, content, link);
+    }
+    
+    /**
+     * Tạo notification khi project bị archive/delete
+     */
+    public Notification createProjectArchivedNotification(Long userId, String projectName) {
+        String title = "Dự án đã đóng";
+        String content = "Dự án \"" + projectName + "\" đã được đóng và chuyển sang chế độ chỉ đọc";
+        String link = "/projects";
+        return notificationService.createNotification(userId, "PROJECT_ARCHIVED", title, content, link);
+    }
+    
+    /**
+     * Tạo notification khi role thay đổi trong project
+     */
+    public Notification createProjectRoleChangedNotification(Long userId, String projectName, String newRole, Long projectId) {
+        String title = "Vai trò trong dự án thay đổi";
+        String content = "Vai trò của bạn trong dự án \"" + projectName + "\" đã thay đổi thành: " + newRole;
+        String link = "/projects/" + projectId;
+        return notificationService.createNotification(userId, "PROJECT_ROLE_CHANGED", title, content, link);
     }
     
     /**

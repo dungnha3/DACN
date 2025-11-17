@@ -37,6 +37,7 @@ public class IssueService {
     private final UserRepository userRepository;
     private final SprintRepository sprintRepository;
     private final IssueActivityRepository issueActivityRepository;
+    private final DoAn.BE.notification.service.ProjectNotificationService projectNotificationService;
     
     @Transactional
     public IssueDTO createIssue(CreateIssueRequest request, Long userId) {
@@ -223,6 +224,13 @@ public class IssueService {
         
         issue.assignTo(assignee);
         issue = issueRepository.save(issue);
+        
+        // Send notification to assignee
+        projectNotificationService.createIssueAssignedNotification(
+            assigneeId,
+            issue.getTitle(),
+            issue.getProject().getName()
+        );
         
         return convertToDTO(issue);
     }

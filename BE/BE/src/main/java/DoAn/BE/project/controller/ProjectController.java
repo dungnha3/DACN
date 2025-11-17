@@ -3,6 +3,10 @@ package DoAn.BE.project.controller;
 import DoAn.BE.project.dto.*;
 import DoAn.BE.project.entity.ProjectMember.ProjectRole;
 import DoAn.BE.project.service.ProjectService;
+import DoAn.BE.storage.service.StorageProjectIntegrationService;
+import DoAn.BE.storage.service.StorageProjectIntegrationService.ProjectFileStats;
+import DoAn.BE.storage.entity.File;
+import DoAn.BE.storage.dto.FileDTO;
 import DoAn.BE.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -20,6 +25,7 @@ import java.util.List;
 public class ProjectController {
     
     private final ProjectService projectService;
+    private final StorageProjectIntegrationService storageProjectIntegrationService;
     
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -114,5 +120,37 @@ public class ProjectController {
         Long userId = Long.parseLong(authentication.getName());
         ProjectMemberDTO member = projectService.updateMemberRole(projectId, memberId, role, userId);
         return ResponseEntity.ok(member);
+    }
+    
+    // File management endpoints
+    @GetMapping("/{projectId}/files")
+    public ResponseEntity<List<FileDTO>> getProjectFiles(@PathVariable Long projectId) {
+        List<File> files = storageProjectIntegrationService.getProjectFiles(projectId);
+        return ResponseEntity.ok(files.stream()
+            .map(this::convertToFileDTO)
+            .collect(Collectors.toList()));
+    }
+    
+    @GetMapping("/{projectId}/files/stats")
+    public ResponseEntity<ProjectFileStats> getProjectFileStats(@PathVariable Long projectId) {
+        return ResponseEntity.ok(storageProjectIntegrationService.getProjectFileStats(projectId));
+    }
+    
+    // Helper method to convert File entity to DTO
+    private FileDTO convertToFileDTO(File file) {
+        FileDTO dto = new FileDTO();
+        dto.setFileId(file.getFileId());
+        dto.setFilename(file.getFilename());
+        dto.setOriginalFilename(file.getOriginalFilename());
+        dto.setFilePath(file.getFilePath());
+        dto.setFileSize(file.getFileSize());
+        dto.setMimeType(file.getMimeType());
+        if (file.getOwner() != null) {
+            dto.setOwnerId(file.getOwner().getUserId());
+            dto.setOwnerName(file.getOwner().getUsername());
+        }
+        dto.setCreatedAt(file.getCreatedAt());
+        dto.setUpdatedAt(file.getUpdatedAt());
+        return dto;
     }
 }

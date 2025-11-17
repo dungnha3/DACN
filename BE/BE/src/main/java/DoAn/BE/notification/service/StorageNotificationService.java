@@ -72,4 +72,14 @@ public class StorageNotificationService {
         String link = "/storage/shared";
         return notificationService.createNotification(receiverId, "STORAGE_FOLDER_SHARED", title, content, link);
     }
+    
+    /**
+     * Tạo notification khi có file mới trong project
+     */
+    public Notification createProjectFileUploadedNotification(Long userId, String uploaderName, String filename, Long projectId, String projectName) {
+        String title = "File mới trong dự án";
+        String content = uploaderName + " đã upload file \"" + filename + "\" vào dự án \"" + projectName + "\"";
+        String link = "/projects/" + projectId + "/files";
+        return notificationService.createNotification(userId, "PROJECT_FILE_UPLOADED", title, content, link);
+    }
 }

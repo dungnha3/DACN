@@ -26,6 +26,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import org.springframework.data.domain.Pageable;
 
 @Service
@@ -83,8 +85,9 @@ public class MessageService {
         message.setSentAt(LocalDateTime.now());
         message.setIsDeleted(false);
 
+        Message replyToMessage = null;
         if (request.getReplyToMessageId() != null) {
-            Message replyToMessage = messageRepository.findById(request.getReplyToMessageId())
+            replyToMessage = messageRepository.findById(request.getReplyToMessageId())
                 .orElseThrow(() -> new EntityNotFoundException("Tin nhắn được reply không tồn tại"));
 
             if (!replyToMessage.getChatRoom().getRoomId().equals(request.getRoomId())) {
@@ -122,7 +125,25 @@ public class MessageService {
                 && !member.getUser().getUserId().equals(senderId))
             .toList();
 
+        // Nếu là reply, gửi notification đặc biệt cho người được reply
+        if (replyToMessage != null && replyToMessage.getSender() != null 
+            && !replyToMessage.getSender().getUserId().equals(senderId)) {
+            chatNotificationService.createMessageRepliedNotification(
+                replyToMessage.getSender().getUserId(),
+                sender.getUsername(),
+                request.getContent(),
+                request.getRoomId()
+            );
+        }
+
+        // Gửi notification tin nhắn mới cho các members khác (trừ người gửi và người được reply)
         for (ChatRoomMember member : otherMembers) {
+            // Bỏ qua nếu đã gửi reply notification cho user này
+            if (replyToMessage != null && replyToMessage.getSender() != null 
+                && member.getUser().getUserId().equals(replyToMessage.getSender().getUserId())) {
+                continue;
+            }
+            
             chatNotificationService.createNewMessageNotification(
                 member.getUser().getUserId(),
                 sender.getUsername(),
@@ -132,8 +153,77 @@ public class MessageService {
         }
 
         typingIndicatorService.forceStopTyping(request.getRoomId(), senderId);
+        
+        // Detect and process mentions in message content
+        processMentions(message, sender, chatRoom);
 
         return messageDTO;
+    }
+    
+    /**
+     * Phát hiện và xử lý mentions trong message
+     * Hỗ trợ: @username, @TASK-123, @ISSUE-456
+     */
+    private void processMentions(Message message, User sender, ChatRoom chatRoom) {
+        String content = message.getContent();
+        if (content == null || content.isEmpty()) {
+            return;
+        }
+        
+        // Pattern 1: @username - mention user
+        Pattern userPattern = Pattern.compile("@(\\w+)");
+        Matcher userMatcher = userPattern.matcher(content);
+        while (userMatcher.find()) {
+            String username = userMatcher.group(1);
+            
+            // Skip if it's a task/issue pattern
+            if (content.contains("@TASK-") || content.contains("@ISSUE-")) {
+                continue;
+            }
+            
+            // Find user and send notification
+            Optional<User> mentionedUserOpt = userRepository.findByUsername(username);
+            if (mentionedUserOpt.isPresent()) {
+                User mentionedUser = mentionedUserOpt.get();
+                
+                // Check if mentioned user is in the chat room
+                boolean isMember = chatRoomMemberRepository.existsByChatRoom_RoomIdAndUser_UserId(
+                    chatRoom.getRoomId(), mentionedUser.getUserId());
+                
+                if (isMember && !mentionedUser.getUserId().equals(sender.getUserId())) {
+                    // Send special mention notification
+                    chatNotificationService.createChatNotification(
+                        mentionedUser.getUserId(),
+                        "MENTION",
+                        sender.getUsername() + " đã nhắc đến bạn",
+                        message.getContent().length() > 100 
+                            ? message.getContent().substring(0, 97) + "..." 
+                            : message.getContent(),
+                        "/chat/rooms/" + chatRoom.getRoomId()
+                    );
+                }
+            }
+        }
+        
+        // Pattern 2: @TASK-123 hoặc @ISSUE-456
+        Pattern taskPattern = Pattern.compile("@(TASK|ISSUE)-(\\w+)");
+        Matcher taskMatcher = taskPattern.matcher(content);
+        while (taskMatcher.find()) {
+            String type = taskMatcher.group(1);
+            String key = taskMatcher.group(2);
+            String fullKey = type + "-" + key;
+            
+            // Log mention for potential future processing
+            // Could send notification to task/issue assignee here
+            // For now, just log it
+            System.out.println("🔗 Detected " + type + " mention: " + fullKey + " in message " + message.getMessageId());
+            
+            // TODO: Query task/issue and notify assignee if needed
+            // Task task = taskRepository.findByKey(fullKey);
+            // if (task != null && task.getAssignee() != null) {
+            //     // Send notification to assignee
+            // }
+        }
     }
 
     // Lấy tin nhắn trong phòng chat

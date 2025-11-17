@@ -8,6 +8,8 @@ import DoAn.BE.chat.repository.ChatRoomMemberRepository;
 import DoAn.BE.chat.repository.ChatRoomRepository;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.user.repository.UserRepository;
+import DoAn.BE.project.entity.Project;
+import DoAn.BE.project.repository.ProjectRepository;
 import DoAn.BE.common.exception.BadRequestException;
 import DoAn.BE.common.exception.EntityNotFoundException;
 import DoAn.BE.common.exception.ForbiddenException;
@@ -34,17 +36,20 @@ public class ChatRoomService {
     private final UserRepository userRepository;
     private final WebSocketNotificationService webSocketNotificationService;
     private final ChatNotificationService chatNotificationService;
+    private final ProjectRepository projectRepository;
 
     public ChatRoomService(ChatRoomRepository chatRoomRepository,
                           ChatRoomMemberRepository chatRoomMemberRepository,
                           UserRepository userRepository,
                           WebSocketNotificationService webSocketNotificationService,
-                          ChatNotificationService chatNotificationService) {
+                          ChatNotificationService chatNotificationService,
+                          ProjectRepository projectRepository) {
         this.chatRoomRepository = chatRoomRepository;
         this.chatRoomMemberRepository = chatRoomMemberRepository;
         this.userRepository = userRepository;
         this.webSocketNotificationService = webSocketNotificationService;
         this.chatNotificationService = chatNotificationService;
+        this.projectRepository = projectRepository;
     }
 
     // Tạo phòng chat mới
@@ -65,6 +70,16 @@ public class ChatRoomService {
             chatRoom.setType(request.getRoomType());
             chatRoom.setAvatarUrl(request.getAvatarUrl());
             chatRoom.setCreatedAt(LocalDateTime.now());
+            
+            // Handle project chat creation
+            if (request.getProjectId() != null) {
+                Project project = projectRepository.findById(request.getProjectId())
+                    .orElseThrow(() -> new EntityNotFoundException("Project không tồn tại"));
+                chatRoom.setProject(project);
+                chatRoom.setType(ChatRoom.RoomType.PROJECT);
+                log.info("Tạo project chat room cho project {}", project.getName());
+            }
+            
             chatRoom = chatRoomRepository.save(chatRoom);
             
             ChatRoomMember creatorMember = new ChatRoomMember();
@@ -346,6 +361,34 @@ public class ChatRoomService {
         return chatRoomMemberRepository.findByChatRoom_RoomId(roomId);
     }
     
+    // Lấy project chat room theo projectId
+    public ChatRoomDTO getProjectChatRoom(Long projectId, Long userId) {
+        if (projectId == null || userId == null) {
+            throw new BadRequestException("Project ID và User ID không được để trống");
+        }
+        
+        // Validate project exists
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new EntityNotFoundException("Project không tồn tại"));
+        
+        // Get project chat room
+        List<ChatRoom> projectChats = chatRoomRepository.findByProject(project);
+        if (projectChats.isEmpty()) {
+            throw new EntityNotFoundException("Project chat room không tồn tại");
+        }
+        
+        ChatRoom chatRoom = projectChats.get(0);
+        
+        // Verify user is member
+        boolean isMember = chatRoomMemberRepository
+            .existsByChatRoom_RoomIdAndUser_UserId(chatRoom.getRoomId(), userId);
+        if (!isMember) {
+            throw new BadRequestException("Bạn không có quyền truy cập chat room này");
+        }
+        
+        return convertToChatRoomDTO(chatRoom);
+    }
+    
     private ChatRoomDTO convertToChatRoomDTO(ChatRoom chatRoom) {
         if (chatRoom == null) {
             throw new IllegalArgumentException("ChatRoom không được null");
@@ -356,6 +399,12 @@ public class ChatRoomService {
         dto.setRoomType(chatRoom.getType());
         dto.setAvatarUrl(chatRoom.getAvatarUrl());
         dto.setCreatedAt(chatRoom.getCreatedAt());
+        
+        // Set project info if this is a project chat
+        if (chatRoom.getProject() != null) {
+            dto.setProjectID(chatRoom.getProject().getProjectId());
+            dto.setProjectName(chatRoom.getProject().getName());
+        }
         
         long memberCount = chatRoomMemberRepository.countByChatRoom_RoomId(chatRoom.getRoomId());
         dto.setMemberCount((int) memberCount);

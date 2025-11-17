@@ -64,4 +64,38 @@ public class ChatNotificationService {
         
         return createChatNotification(userId, "ROOM_UPDATED", title, content, link);
     }
+
+    /**
+     * Tạo notification khi được thêm vào phòng chat
+     */
+    public Notification createAddedToRoomNotification(Long userId, String roomName, String addedBy, Long roomId) {
+        String title = "Bạn được thêm vào phòng chat";
+        String content = addedBy + " đã thêm bạn vào phòng \"" + roomName + "\"";
+        String link = "/chat/rooms/" + roomId;
+        
+        return createChatNotification(userId, "ADDED_TO_ROOM", title, content, link);
+    }
+
+    /**
+     * Tạo notification khi được reply tin nhắn
+     */
+    public Notification createMessageRepliedNotification(Long userId, String replierName, String replyContent, Long roomId) {
+        String title = replierName + " đã trả lời tin nhắn của bạn";
+        String truncatedContent = replyContent != null && replyContent.length() > 50 ? 
+            replyContent.substring(0, 47) + "..." : replyContent;
+        String link = "/chat/rooms/" + roomId;
+        
+        return createChatNotification(userId, "MESSAGE_REPLIED", title, truncatedContent, link);
+    }
+
+    /**
+     * Tạo notification khi role thay đổi
+     */
+    public Notification createRoleChangedNotification(Long userId, String newRole, String changedBy, Long roomId, String roomName) {
+        String title = "Quyền của bạn đã thay đổi";
+        String content = changedBy + " đã thay đổi quyền của bạn thành " + newRole + " trong phòng \"" + roomName + "\"";
+        String link = "/chat/rooms/" + roomId;
+        
+        return createChatNotification(userId, "ROLE_CHANGED", title, content, link);
+    }
 }
