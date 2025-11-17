@@ -3,26 +3,16 @@ import { styles } from './AccountingManagerDashboard.styles'
 // Navigation Item Component
 export function NavItem({ active, onClick, children, icon }) {
   return (
-    <div
+    <button
       onClick={onClick}
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        padding: '12px 16px',
-        borderRadius: 12,
-        cursor: 'pointer',
-        transition: 'all 0.3s ease',
-        background: active ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
-        color: active ? '#ffffff' : 'rgba(255, 255, 255, 0.8)',
-        fontWeight: active ? 600 : 500,
-        fontSize: 14,
-        boxShadow: active ? '0 2px 8px rgba(0, 0, 0, 0.2)' : 'none'
+        ...styles.navItem,
+        ...(active ? styles.navItemActive : {})
       }}
     >
-      <span style={{ fontSize: 16 }}>{icon}</span>
-      {children}
-    </div>
+      <span style={styles.navIcon}>{icon}</span>
+      <span>{children}</span>
+    </button>
   )
 }
 
