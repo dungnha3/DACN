@@ -885,4 +885,6 @@ export const styles = {
     transition: 'all 0.2s',
     boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
   }
+
+  
 }

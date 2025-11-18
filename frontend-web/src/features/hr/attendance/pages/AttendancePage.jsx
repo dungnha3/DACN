@@ -1,155 +1,466 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
+// --- MOCK DATA (Mô phỏng ChamCongDTO từ Backend) ---
 const mockAttendance = [
-  { id: 1, nhanVien: 'Nguyễn Văn A', ngay: '2024-11-17', gioVao: '08:00', gioRa: '17:30', soGioLam: 8.5, trangThai: 'CO_MAT', ghiChu: '' },
-  { id: 2, nhanVien: 'Trần Thị B', ngay: '2024-11-17', gioVao: '08:15', gioRa: '17:45', soGioLam: 8.5, trangThai: 'DI_MUON', ghiChu: 'Đi muộn 15 phút' },
-  { id: 3, nhanVien: 'Lê Văn C', ngay: '2024-11-17', gioVao: '08:00', gioRa: '20:00', soGioLam: 11, trangThai: 'TANG_CA', ghiChu: 'Làm thêm 2.5 giờ' },
-  { id: 4, nhanVien: 'Phạm Thị D', ngay: '2024-11-17', gioVao: null, gioRa: null, soGioLam: 0, trangThai: 'VANG_MAT', ghiChu: 'Nghỉ không phép' },
-  { id: 5, nhanVien: 'Hoàng Văn E', ngay: '2024-11-17', gioVao: '08:00', gioRa: '17:00', soGioLam: 8, trangThai: 'NGHI_PHEP', ghiChu: 'Nghỉ phép có lương' },
+  { 
+    chamcongId: 1, 
+    nhanvienId: 101,
+    hoTenNhanVien: 'Nguyễn Văn A', 
+    avatar: '👨‍💻',
+    chucVu: 'Developer',
+    ngayCham: '2024-11-18', 
+    gioVao: '07:55:00', 
+    gioRa: '17:30:00', 
+    soGioLam: 8.5, 
+    trangThai: 'DU_GIO', 
+    phuongThuc: 'GPS',
+    diaChiCheckin: '123 Lê Lợi, Q.1, TP.HCM',
+    isLate: false,
+    isEarlyLeave: false,
+    ghiChu: '' 
+  },
+  { 
+    chamcongId: 2, 
+    nhanvienId: 102,
+    hoTenNhanVien: 'Trần Thị B', 
+    avatar: '👩‍💼',
+    chucVu: 'HR Manager',
+    ngayCham: '2024-11-18', 
+    gioVao: '08:15:00', 
+    gioRa: '17:45:00', 
+    soGioLam: 8.5, 
+    trangThai: 'DI_TRE', 
+    phuongThuc: 'FACE_ID',
+    diaChiCheckin: 'Văn phòng chính',
+    isLate: true,
+    isEarlyLeave: false,
+    ghiChu: 'Kẹt xe cầu Sài Gòn' 
+  },
+  { 
+    chamcongId: 3, 
+    nhanvienId: 103,
+    hoTenNhanVien: 'Lê Văn C', 
+    avatar: '⚡',
+    chucVu: 'Tech Lead',
+    ngayCham: '2024-11-18', 
+    gioVao: '08:00:00', 
+    gioRa: '16:30:00', 
+    soGioLam: 7.5, 
+    trangThai: 'VE_SOM', 
+    phuongThuc: 'GPS',
+    diaChiCheckin: 'Khách hàng ABC Corp',
+    isLate: false,
+    isEarlyLeave: true,
+    ghiChu: 'Về sớm đón con' 
+  },
+  { 
+    chamcongId: 4, 
+    nhanvienId: 104,
+    hoTenNhanVien: 'Phạm Thị D', 
+    avatar: '📊',
+    chucVu: 'Accountant',
+    ngayCham: '2024-11-18', 
+    gioVao: null, 
+    gioRa: null, 
+    soGioLam: 0, 
+    trangThai: 'NGHI_PHEP', 
+    phuongThuc: null,
+    diaChiCheckin: null,
+    isLate: false,
+    isEarlyLeave: false,
+    ghiChu: 'Phép năm' 
+  },
+  { 
+    chamcongId: 5, 
+    nhanvienId: 105,
+    hoTenNhanVien: 'Hoàng Văn E', 
+    avatar: '👤',
+    chucVu: 'Intern',
+    ngayCham: '2024-11-18', 
+    gioVao: null, 
+    gioRa: null, 
+    soGioLam: 0, 
+    trangThai: 'NGHI_KHONG_PHEP', 
+    phuongThuc: null,
+    diaChiCheckin: null,
+    isLate: false,
+    isEarlyLeave: false,
+    ghiChu: 'Không liên lạc được' 
+  },
 ];
 
 export default function AttendancePage() {
-  const [attendance, setAttendance] = useState(mockAttendance);
-  const [selectedDate, setSelectedDate] = useState('2024-11-17');
+  const [attendanceData, setAttendanceData] = useState(mockAttendance);
+  const [filterDate, setFilterDate] = useState('2024-11-18');
   const [filterStatus, setFilterStatus] = useState('ALL');
-  const [showCheckInModal, setShowCheckInModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Modal States
+  const [showGPSModal, setShowGPSModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [isSimulating, setIsSimulating] = useState(false);
 
-  const filteredAttendance = attendance.filter(a => {
-    const matchDate = a.ngay === selectedDate;
-    const matchStatus = filterStatus === 'ALL' || a.trangThai === filterStatus;
-    return matchDate && matchStatus;
-  });
+  // --- LOGIC ---
+  const filteredData = useMemo(() => {
+    return attendanceData.filter(item => {
+      const matchDate = item.ngayCham === filterDate;
+      const matchStatus = filterStatus === 'ALL' || item.trangThai === filterStatus;
+      const matchSearch = item.hoTenNhanVien.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchDate && matchStatus && matchSearch;
+    });
+  }, [attendanceData, filterDate, filterStatus, searchTerm]);
 
+  const stats = {
+    total: filteredData.length,
+    present: filteredData.filter(a => a.gioVao).length,
+    late: filteredData.filter(a => a.isLate || a.trangThai === 'DI_TRE').length,
+    early: filteredData.filter(a => a.isEarlyLeave || a.trangThai === 'VE_SOM').length,
+    absent: filteredData.filter(a => !a.gioVao && a.trangThai.includes('NGHI')).length
+  };
+
+  // --- HANDLERS ---
+  const handleGPSCheckIn = () => {
+    setIsSimulating(true);
+    setTimeout(() => {
+      setIsSimulating(false);
+      alert("✅ Đã lấy tọa độ GPS thành công!\nLat: 10.762622\nLng: 106.660172");
+      setShowGPSModal(false);
+    }, 2000);
+  };
+
+  const handleEdit = (record) => {
+    setSelectedRecord(record);
+    setShowEditModal(true);
+  };
+
+  // --- HELPERS ---
   const getStatusBadge = (status) => {
-    const statusStyles = {
-      CO_MAT: { bg: '#dcfce7', color: '#166534', label: '✓ Có mặt' },
-      VANG_MAT: { bg: '#fee2e2', color: '#991b1b', label: '✗ Vắng mặt' },
-      DI_MUON: { bg: '#fef3c7', color: '#92400e', label: '⏰ Đi muộn' },
-      VE_SOM: { bg: '#fef3c7', color: '#92400e', label: '⏰ Về sớm' },
-      NGHI_PHEP: { bg: '#dbeafe', color: '#1e3a8a', label: '📋 Nghỉ phép' },
-      TANG_CA: { bg: '#e0e7ff', color: '#3730a3', label: '🌙 Tăng ca' },
+    const config = {
+      DU_GIO: { bg: '#ecfdf5', color: '#059669', label: 'Đúng giờ', border: '#a7f3d0' },
+      DI_TRE: { bg: '#fffbeb', color: '#d97706', label: 'Đi muộn', border: '#fde68a' },
+      VE_SOM: { bg: '#fff7ed', color: '#ea580c', label: 'Về sớm', border: '#fed7aa' },
+      NGHI_PHEP: { bg: '#eff6ff', color: '#2563eb', label: 'Nghỉ phép', border: '#bfdbfe' },
+      NGHI_KHONG_PHEP: { bg: '#fef2f2', color: '#dc2626', label: 'Vắng mặt', border: '#fecaca' }
     };
-    const s = statusStyles[status] || statusStyles.CO_MAT;
+    const s = config[status] || { bg: '#f3f4f6', color: '#4b5563', label: 'Chưa rõ', border: '#e5e7eb' };
+    
     return (
-      <span style={{ background: s.bg, color: s.color, padding: '4px 12px', borderRadius: '12px', fontSize: '13px', fontWeight: 500 }}>
+      <span style={{
+        display: 'inline-block', padding: '4px 10px', borderRadius: '20px',
+        fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
+        background: s.bg, color: s.color, border: `1px solid ${s.border}`
+      }}>
         {s.label}
       </span>
     );
   };
 
-  const stats = {
-    total: filteredAttendance.length,
-    present: filteredAttendance.filter(a => a.trangThai === 'CO_MAT').length,
-    absent: filteredAttendance.filter(a => a.trangThai === 'VANG_MAT').length,
-    late: filteredAttendance.filter(a => a.trangThai === 'DI_MUON').length,
+  const getMethodIcon = (method) => {
+    if (method === 'GPS') return <span title="GPS Check-in">📡</span>;
+    if (method === 'FACE_ID') return <span title="Face ID">🙂</span>;
+    if (method === 'MANUAL') return <span title="Thủ công">📝</span>;
+    return <span title="Chưa chấm">-</span>;
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
+    <div style={s.container}>
+      {/* HEADER */}
+      <div style={s.headerWrapper}>
         <div>
-          <h1 style={styles.title}>Quản lý Chấm công</h1>
-          <p style={styles.subtitle}>Theo dõi giờ làm việc của nhân viên</p>
+          <div style={s.breadcrumb}>Quản lý nhân sự / Chấm công</div>
+          <h1 style={s.pageTitle}>Theo dõi Chấm Công</h1>
         </div>
-        <button style={styles.checkInBtn} onClick={() => setShowCheckInModal(true)}>
-          ⏱️ Chấm công
+        <button style={s.btnGPS} onClick={() => setShowGPSModal(true)}>
+          📍 Check-in GPS
         </button>
       </div>
 
-      {/* Stats Cards */}
-      <div style={styles.statsGrid}>
-        <div style={{ ...styles.statCard, borderLeft: '4px solid #10b981' }}>
-          <div style={styles.statValue}>{stats.present}</div>
-          <div style={styles.statLabel}>Có mặt</div>
+      {/* STATS CARDS */}
+      <div style={s.statsGrid}>
+        <StatCard title="Tổng nhân sự" value={stats.total} icon="👥" color="#4b5563" bg="#f3f4f6" />
+        <StatCard title="Có mặt" value={stats.present} icon="✅" color="#059669" bg="#ecfdf5" />
+        <StatCard title="Đi muộn / Về sớm" value={stats.late + stats.early} icon="⚠️" color="#d97706" bg="#fffbeb" />
+        <StatCard title="Vắng mặt" value={stats.absent} icon="🚫" color="#dc2626" bg="#fef2f2" />
+      </div>
+
+      {/* FILTER BAR */}
+      <div style={s.filterBar}>
+        <div style={s.searchWrapper}>
+          <span style={s.searchIcon}>🔍</span>
+          <input 
+            style={s.searchInput} 
+            placeholder="Tìm nhân viên..." 
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
         </div>
-        <div style={{ ...styles.statCard, borderLeft: '4px solid #ef4444' }}>
-          <div style={styles.statValue}>{stats.absent}</div>
-          <div style={styles.statLabel}>Vắng mặt</div>
-        </div>
-        <div style={{ ...styles.statCard, borderLeft: '4px solid #f59e0b' }}>
-          <div style={styles.statValue}>{stats.late}</div>
-          <div style={styles.statLabel}>Đi muộn</div>
-        </div>
-        <div style={{ ...styles.statCard, borderLeft: '4px solid #3b82f6' }}>
-          <div style={styles.statValue}>{stats.total}</div>
-          <div style={styles.statLabel}>Tổng số</div>
+        <div style={s.filterGroup}>
+          <input 
+            type="date" 
+            style={s.dateInput}
+            value={filterDate}
+            onChange={e => setFilterDate(e.target.value)}
+          />
+          <select 
+            style={s.filterSelect} 
+            value={filterStatus} 
+            onChange={e => setFilterStatus(e.target.value)}
+          >
+            <option value="ALL">Tất cả trạng thái</option>
+            <option value="DU_GIO">Đúng giờ</option>
+            <option value="DI_TRE">Đi muộn</option>
+            <option value="VE_SOM">Về sớm</option>
+            <option value="NGHI_PHEP">Nghỉ phép</option>
+            <option value="NGHI_KHONG_PHEP">Vắng mặt</option>
+          </select>
         </div>
       </div>
 
-      {/* Filters */}
-      <div style={styles.filters}>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          style={styles.dateInput}
-        />
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={styles.select}>
-          <option value="ALL">Tất cả trạng thái</option>
-          <option value="CO_MAT">Có mặt</option>
-          <option value="VANG_MAT">Vắng mặt</option>
-          <option value="DI_MUON">Đi muộn</option>
-          <option value="NGHI_PHEP">Nghỉ phép</option>
-          <option value="TANG_CA">Tăng ca</option>
-        </select>
-      </div>
-
-      {/* Table */}
-      <div style={styles.tableCard}>
-        <table style={styles.table}>
+      {/* TABLE */}
+      <div style={s.tableCard}>
+        <table style={s.table}>
           <thead>
             <tr>
-              <th style={styles.th}>Nhân viên</th>
-              <th style={styles.th}>Ngày</th>
-              <th style={styles.th}>Giờ vào</th>
-              <th style={styles.th}>Giờ ra</th>
-              <th style={styles.th}>Số giờ làm</th>
-              <th style={styles.th}>Trạng thái</th>
-              <th style={styles.th}>Ghi chú</th>
-              <th style={styles.th}>Thao tác</th>
+              <th style={{...s.th, width: '25%'}}>Nhân viên</th>
+              <th style={{...s.th, width: '10%'}}>Giờ vào</th>
+              <th style={{...s.th, width: '10%'}}>Giờ ra</th>
+              <th style={{...s.th, width: '8%'}}>Giờ làm</th>
+              <th style={{...s.th, width: '20%'}}>Địa điểm / Ghi chú</th>
+              <th style={{...s.th, width: '12%', textAlign: 'center'}}>Trạng thái</th>
+              <th style={{...s.th, width: '15%', textAlign: 'center'}}>Phương thức</th>
+              <th style={{...s.th, width: '5%'}}></th>
             </tr>
           </thead>
           <tbody>
-            {filteredAttendance.map(a => (
-              <tr key={a.id} style={styles.tr}>
-                <td style={styles.td}><strong>{a.nhanVien}</strong></td>
-                <td style={styles.td}>{a.ngay}</td>
-                <td style={styles.td}>{a.gioVao || '-'}</td>
-                <td style={styles.td}>{a.gioRa || '-'}</td>
-                <td style={styles.td}><strong>{a.soGioLam}h</strong></td>
-                <td style={styles.td}>{getStatusBadge(a.trangThai)}</td>
-                <td style={styles.td} title={a.ghiChu}>
-                  {a.ghiChu ? a.ghiChu.slice(0, 30) + '...' : '-'}
+            {filteredData.map(row => (
+              <tr key={row.chamcongId} style={s.tr}>
+                <td style={s.td}>
+                  <div style={s.profileCell}>
+                    <div style={s.avatarBox}>{row.avatar}</div>
+                    <div>
+                      <div style={s.empName}>{row.hoTenNhanVien}</div>
+                      <div style={s.empRole}>{row.chucVu}</div>
+                    </div>
+                  </div>
                 </td>
-                <td style={styles.td}>
-                  <button style={styles.editBtn}>✏️</button>
+                <td style={s.td}>
+                  <div style={{fontWeight: 600, color: row.isLate ? '#d97706' : '#344767'}}>
+                    {row.gioVao || '--:--'}
+                  </div>
+                </td>
+                <td style={s.td}>
+                   <div style={{fontWeight: 600, color: row.isEarlyLeave ? '#d97706' : '#344767'}}>
+                    {row.gioRa || '--:--'}
+                  </div>
+                </td>
+                <td style={s.td}>
+                  {row.soGioLam > 0 ? 
+                    <span style={s.workHours}>{row.soGioLam}h</span> : 
+                    <span style={{color: '#adb5bd'}}>-</span>
+                  }
+                </td>
+                <td style={s.td}>
+                  <div style={s.locationCell}>
+                    {row.diaChiCheckin ? (
+                      <div style={s.addressText} title={row.diaChiCheckin}>{row.diaChiCheckin}</div>
+                    ) : (
+                      <div style={{color: '#adb5bd', fontSize: 12}}>Không có địa điểm</div>
+                    )}
+                    {row.ghiChu && <div style={s.noteText}>Note: {row.ghiChu}</div>}
+                  </div>
+                </td>
+                <td style={{...s.td, textAlign: 'center'}}>
+                  {getStatusBadge(row.trangThai)}
+                </td>
+                <td style={{...s.td, textAlign: 'center'}}>
+                   <div style={s.methodBadge}>
+                      {getMethodIcon(row.phuongThuc)} 
+                      <span style={{marginLeft: 4}}>{row.phuongThuc || 'N/A'}</span>
+                   </div>
+                </td>
+                <td style={s.td}>
+                  <button style={s.editBtn} onClick={() => handleEdit(row)} title="Sửa công">
+                    ✏️
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* GPS MODAL */}
+      {showGPSModal && (
+        <div style={s.modalOverlay}>
+          <div style={s.modal}>
+            <div style={s.modalHeader}>
+              <h3 style={s.modalTitle}>📍 Chấm công GPS</h3>
+              <button style={s.closeBtn} onClick={() => setShowGPSModal(false)}>×</button>
+            </div>
+            <div style={s.modalBody}>
+              <div style={s.gpsPlaceholder}>
+                {isSimulating ? (
+                  <div style={s.loadingPulse}>📡 Đang xác định vị trí...</div>
+                ) : (
+                  <>
+                     <div style={{fontSize: 40, marginBottom: 10}}>🗺️</div>
+                     <div>Vị trí hiện tại: <b>Văn phòng HCM</b></div>
+                     <div style={{fontSize: 12, color: '#7b809a'}}>Bán kính chính xác: 10m</div>
+                  </>
+                )}
+              </div>
+              <button 
+                style={s.confirmBtn} 
+                onClick={handleGPSCheckIn}
+                disabled={isSimulating}
+              >
+                {isSimulating ? 'Đang xử lý...' : 'Xác nhận Check-in'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-const styles = {
-  container: { padding: 24, background: '#f8fafc', minHeight: '100vh' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  title: { fontSize: 28, fontWeight: 700, color: '#0f172a', margin: 0 },
-  subtitle: { color: '#64748b', fontSize: 14, margin: '4px 0 0 0' },
-  checkInBtn: { padding: '10px 20px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 },
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 },
-  statCard: { background: '#fff', padding: 20, borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' },
-  statValue: { fontSize: 32, fontWeight: 700, color: '#0f172a' },
-  statLabel: { fontSize: 14, color: '#64748b', marginTop: 4 },
-  filters: { display: 'flex', gap: 12, marginBottom: 20 },
-  dateInput: { padding: '10px 16px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, minWidth: 200 },
-  select: { padding: '10px 16px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, minWidth: 200 },
-  tableCard: { background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' },
+// --- SUB COMPONENT ---
+function StatCard({ title, value, icon, color, bg }) {
+  return (
+    <div style={{...s.statCard, background: bg, borderLeft: `4px solid ${color}`}}>
+      <div style={s.statContent}>
+        <div>
+           <div style={{...s.statTitle, color: color}}>{title}</div>
+           <div style={{...s.statValue, color: color}}>{value}</div>
+        </div>
+        <div style={{...s.statIcon, color: color}}>{icon}</div>
+      </div>
+    </div>
+  )
+}
+
+// --- STYLES ---
+const s = {
+  container: {
+    padding: '24px 32px',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    color: '#344767'
+  },
+  headerWrapper: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24
+  },
+  breadcrumb: {
+    fontSize: 13, color: '#7b809a', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase'
+  },
+  pageTitle: {
+    fontSize: 28, fontWeight: 700, margin: 0, color: '#344767'
+  },
+  btnGPS: {
+    background: 'linear-gradient(195deg, #059669, #10b981)',
+    color: '#fff', border: 'none', borderRadius: 8, padding: '10px 24px',
+    fontSize: 13, fontWeight: 700, cursor: 'pointer',
+    boxShadow: '0 4px 6px rgba(16, 185, 129, 0.2)',
+    transition: 'transform 0.2s'
+  },
+  
+  // Stats
+  statsGrid: {
+    display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginBottom: 24
+  },
+  statCard: {
+    padding: 20, borderRadius: 12, boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+  },
+  statContent: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+  },
+  statTitle: { fontSize: 13, fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 },
+  statValue: { fontSize: 28, fontWeight: 700 },
+  statIcon: { fontSize: 24, opacity: 0.8 },
+
+  // Filter
+  filterBar: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: 24, background: '#fff', padding: 16, borderRadius: 16,
+    boxShadow: '0 4px 20px rgba(0,0,0,0.03)'
+  },
+  searchWrapper: {
+    position: 'relative', display: 'flex', alignItems: 'center', width: 300
+  },
+  searchIcon: { position: 'absolute', left: 12, color: '#7b809a' },
+  searchInput: {
+    width: '100%', padding: '10px 12px 10px 40px', border: '1px solid #d2d6da',
+    borderRadius: 8, outline: 'none', fontSize: 14
+  },
+  filterGroup: { display: 'flex', gap: 12 },
+  dateInput: {
+    padding: '10px 12px', border: '1px solid #d2d6da', borderRadius: 8,
+    outline: 'none', fontSize: 14, color: '#344767'
+  },
+  filterSelect: {
+    padding: '10px 12px', border: '1px solid #d2d6da', borderRadius: 8,
+    outline: 'none', fontSize: 14, minWidth: 160, cursor: 'pointer', color: '#344767'
+  },
+
+  // Table
+  tableCard: {
+    background: '#fff', borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+    overflow: 'hidden', border: '1px solid rgba(0,0,0,0.02)'
+  },
   table: { width: '100%', borderCollapse: 'collapse' },
-  th: { padding: '14px 16px', textAlign: 'left', background: '#f1f5f9', fontSize: 13, fontWeight: 600, color: '#475569', borderBottom: '2px solid #e2e8f0' },
-  tr: { borderBottom: '1px solid #f1f5f9' },
-  td: { padding: '14px 16px', fontSize: 14, color: '#334155' },
-  editBtn: { padding: '6px 10px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 },
+  th: {
+    padding: '16px 20px', textAlign: 'left', fontSize: 12, fontWeight: 700,
+    color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5', background: '#fff'
+  },
+  tr: { borderBottom: '1px solid #f0f2f5' },
+  td: { padding: '14px 20px', fontSize: 14, verticalAlign: 'middle', color: '#344767' },
+  
+  // Cells
+  profileCell: { display: 'flex', alignItems: 'center', gap: 12 },
+  avatarBox: {
+    width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(195deg, #42424a, #191919)',
+    color: '#fff', display: 'grid', placeItems: 'center', fontSize: 16, boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+  },
+  empName: { fontWeight: 600, fontSize: 14 },
+  empRole: { fontSize: 12, color: '#7b809a' },
+  
+  workHours: {
+    background: '#e0e7ff', color: '#3730a3', padding: '4px 8px', 
+    borderRadius: 6, fontSize: 12, fontWeight: 700
+  },
+  locationCell: { display: 'flex', flexDirection: 'column', gap: 2 },
+  addressText: { fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 },
+  noteText: { fontSize: 12, color: '#ef4444', fontStyle: 'italic' },
+  
+  methodBadge: {
+    display: 'inline-flex', alignItems: 'center', padding: '4px 8px',
+    background: '#f8f9fa', borderRadius: 6, fontSize: 12, color: '#4b5563', border: '1px solid #e9ecef'
+  },
+  editBtn: {
+    border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 16, opacity: 0.6, transition: 'opacity 0.2s'
+  },
+
+  // Modal
+  modalOverlay: {
+    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', 
+    backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+  },
+  modal: {
+    background: '#fff', borderRadius: 16, width: 400, maxWidth: '90%',
+    boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: 24
+  },
+  modalHeader: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20
+  },
+  modalTitle: { margin: 0, fontSize: 18, fontWeight: 700 },
+  closeBtn: { border: 'none', background: 'none', fontSize: 24, cursor: 'pointer', color: '#7b809a' },
+  modalBody: { textAlign: 'center' },
+  gpsPlaceholder: {
+    background: '#f0f9ff', padding: 30, borderRadius: 12, marginBottom: 20, border: '2px dashed #bae6fd'
+  },
+  loadingPulse: { color: '#0284c7', fontWeight: 600, fontSize: 14 },
+  confirmBtn: {
+    width: '100%', padding: '12px', borderRadius: 8, border: 'none',
+    background: 'linear-gradient(195deg, #3b82f6, #2563eb)', color: '#fff', fontWeight: 700, cursor: 'pointer'
+  }
 };
