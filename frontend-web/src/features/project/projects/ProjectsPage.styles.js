@@ -171,6 +171,9 @@ export const styles = {
   tr: {
     borderBottom: '1px solid #e2e8f0',
     transition: 'background-color 0.2s',
+    ':hover': {
+      backgroundColor: '#f7fafc',
+    },
   },
   td: {
     padding: '12px 16px',

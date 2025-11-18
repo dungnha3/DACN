@@ -5,6 +5,7 @@ import CreateProjectModal from './components/CreateProjectModal'
 import CreateIssueModal from './components/CreateIssueModal'
 import { projectApi } from './api/projectApi'
 import { issueApi } from './api/issueApi'
+import ProjectDetailPage from './pages/ProjectDetailPage'
 
 export default function ProjectsPage() {
   const [mainTab, setMainTab] = useState('tasks') // tasks | projects
@@ -331,6 +332,18 @@ const getStatusText = (status) => {
 // Tab "Dự án"
 function ProjectsTab({ projects, loading, onProjectCreated }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedProjectId, setSelectedProjectId] = useState(null)
+  const [hoveredRow, setHoveredRow] = useState(null)
+
+  // Nếu đã chọn project, hiển thị ProjectDetailPage
+  if (selectedProjectId) {
+    return (
+      <ProjectDetailPage 
+        projectId={selectedProjectId}
+        onBack={() => setSelectedProjectId(null)}
+      />
+    )
+  }
 
   const handleOpenModal = () => {
     setIsModalOpen(true)
@@ -412,7 +425,17 @@ function ProjectsTab({ projects, loading, onProjectCreated }) {
                 </tr>
               ) : (
                 projects.map((project) => (
-                  <tr key={project.projectId} style={styles.tr}>
+                  <tr 
+                    key={project.projectId} 
+                    style={{
+                      ...styles.tr,
+                      cursor: 'pointer',
+                      backgroundColor: hoveredRow === project.projectId ? '#f7fafc' : 'transparent',
+                    }}
+                    onClick={() => setSelectedProjectId(project.projectId)}
+                    onMouseEnter={() => setHoveredRow(project.projectId)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                  >
                     <td style={styles.td}>
                       <input type="checkbox" />
                     </td>
