@@ -10,6 +10,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  define: {
+    global: 'window',
+  },
   server: {
     port: 5173,
     proxy: {
@@ -18,6 +21,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         // keep /api prefix because backend maps /api/auth
+      },
+      '/ws': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
       },
       '/phong-ban': {
         target: 'http://localhost:8080',

@@ -39,6 +39,13 @@ public class ChatRoomController {
             throw new UnauthorizedException("User chưa đăng nhập");
         }
         
+        // Get User from principal (set by JwtAuthenticationFilter)
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof User) {
+            return (User) principal;
+        }
+        
+        // Fallback: try to find by username
         String username = authentication.getName();
         return userRepository.findByUsername(username)
             .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
