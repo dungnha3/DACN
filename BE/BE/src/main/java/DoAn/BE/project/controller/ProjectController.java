@@ -65,19 +65,16 @@ public class ProjectController {
     @PutMapping("/{projectId}")
     public ResponseEntity<ProjectDTO> updateProject(
             @PathVariable Long projectId,
-            @Valid @RequestBody UpdateProjectRequest request,
-            Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        ProjectDTO project = projectService.updateProject(projectId, request, userId);
+            @Valid @RequestBody UpdateProjectRequest request) {
+        User currentUser = getCurrentUser();
+        ProjectDTO project = projectService.updateProject(projectId, request, currentUser.getUserId());
         return ResponseEntity.ok(project);
     }
     
     @DeleteMapping("/{projectId}")
-    public ResponseEntity<Void> deleteProject(
-            @PathVariable Long projectId,
-            Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        projectService.deleteProject(projectId, userId);
+    public ResponseEntity<Void> deleteProject(@PathVariable Long projectId) {
+        User currentUser = getCurrentUser();
+        projectService.deleteProject(projectId, currentUser.getUserId());
         return ResponseEntity.noContent().build();
     }
     
@@ -85,29 +82,25 @@ public class ProjectController {
     @PostMapping("/{projectId}/members")
     public ResponseEntity<ProjectMemberDTO> addMember(
             @PathVariable Long projectId,
-            @Valid @RequestBody AddMemberRequest request,
-            Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        ProjectMemberDTO member = projectService.addMember(projectId, request, userId);
+            @Valid @RequestBody AddMemberRequest request) {
+        User currentUser = getCurrentUser();
+        ProjectMemberDTO member = projectService.addMember(projectId, request, currentUser.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED).body(member);
     }
     
     @GetMapping("/{projectId}/members")
-    public ResponseEntity<List<ProjectMemberDTO>> getProjectMembers(
-            @PathVariable Long projectId,
-            Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        List<ProjectMemberDTO> members = projectService.getProjectMembers(projectId, userId);
+    public ResponseEntity<List<ProjectMemberDTO>> getProjectMembers(@PathVariable Long projectId) {
+        User currentUser = getCurrentUser();
+        List<ProjectMemberDTO> members = projectService.getProjectMembers(projectId, currentUser.getUserId());
         return ResponseEntity.ok(members);
     }
     
     @DeleteMapping("/{projectId}/members/{memberId}")
     public ResponseEntity<Void> removeMember(
             @PathVariable Long projectId,
-            @PathVariable Long memberId,
-            Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        projectService.removeMember(projectId, memberId, userId);
+            @PathVariable Long memberId) {
+        User currentUser = getCurrentUser();
+        projectService.removeMember(projectId, memberId, currentUser.getUserId());
         return ResponseEntity.noContent().build();
     }
     
@@ -115,10 +108,9 @@ public class ProjectController {
     public ResponseEntity<ProjectMemberDTO> updateMemberRole(
             @PathVariable Long projectId,
             @PathVariable Long memberId,
-            @RequestParam ProjectRole role,
-            Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        ProjectMemberDTO member = projectService.updateMemberRole(projectId, memberId, role, userId);
+            @RequestParam ProjectRole role) {
+        User currentUser = getCurrentUser();
+        ProjectMemberDTO member = projectService.updateMemberRole(projectId, memberId, role, currentUser.getUserId());
         return ResponseEntity.ok(member);
     }
     

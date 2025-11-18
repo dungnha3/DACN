@@ -39,6 +39,11 @@ public class ProjectChatIntegrationService {
             
             ChatRoom chatRoom = projectChats.get(0);
             
+            // TEMPORARY FIX: Skip system messages until database is updated
+            log.info("SKIPPED system message to project chat {}: {}", chatRoom.getRoomId(), message);
+            return;
+            
+            /* TODO: Enable after running fix_message_sender_null.sql
             Message systemMessage = new Message();
             systemMessage.setChatRoom(chatRoom);
             systemMessage.setSender(null); // System message không có sender
@@ -49,6 +54,7 @@ public class ProjectChatIntegrationService {
             
             messageRepository.save(systemMessage);
             log.info("Posted system message to project chat {}: {}", chatRoom.getRoomId(), message);
+            */
             
         } catch (Exception e) {
             log.error("Error posting system message to project chat: {}", e.getMessage(), e);

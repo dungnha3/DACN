@@ -6,6 +6,7 @@ import DoAn.BE.hr.entity.PhongBan;
 import DoAn.BE.hr.repository.PhongBanRepository;
 import DoAn.BE.chat.entity.ChatRoom;
 import DoAn.BE.chat.entity.ChatRoomMember;
+import DoAn.BE.chat.entity.ChatRoomMemberId;
 import DoAn.BE.chat.repository.ChatRoomRepository;
 import DoAn.BE.chat.repository.ChatRoomMemberRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -93,6 +94,11 @@ public class ProjectService {
         
         // Add creator to chat room as ADMIN
         ChatRoomMember chatMember = new ChatRoomMember();
+        // Create composite key first
+        ChatRoomMemberId chatMemberId = new ChatRoomMemberId();
+        chatMemberId.setRoomId(projectChatRoom.getRoomId());
+        chatMemberId.setUserId(currentUser.getUserId());
+        chatMember.setId(chatMemberId);
         chatMember.setChatRoom(projectChatRoom);
         chatMember.setUser(currentUser);
         chatMember.setRole(ChatRoomMember.MemberRole.ADMIN);
@@ -308,6 +314,11 @@ public class ProjectService {
             
             if (!alreadyInChat) {
                 ChatRoomMember chatMember = new ChatRoomMember();
+                // Create composite key first
+                ChatRoomMemberId chatMemberId = new ChatRoomMemberId();
+                chatMemberId.setRoomId(projectChatRoom.getRoomId());
+                chatMemberId.setUserId(newMember.getUserId());
+                chatMember.setId(chatMemberId);
                 chatMember.setChatRoom(projectChatRoom);
                 chatMember.setUser(newMember);
                 // OWNER/MANAGER = ADMIN, others = MEMBER
