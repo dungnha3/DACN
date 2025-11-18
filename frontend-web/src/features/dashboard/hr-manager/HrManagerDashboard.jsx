@@ -1,40 +1,39 @@
 import { useMemo, useState } from 'react'
-import { styles } from './EmployeeDashboard.styles'
-<<<<<<< Updated upstream:frontend-web/src/pages/dashboard/EmployeeDashboard.jsx
-import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar } from './EmployeeDashboard.components'
-import { kpiData, attendanceHistory, leaveRequests, notifications, sectionsConfig } from './EmployeeDashboard.constants'
-=======
-import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar } from './components/EmployeeDashboard.components'
-import { kpiData, attendanceHistory, leaveRequests, notifications, sectionsConfig, chatContacts, chatMessages } from './components/EmployeeDashboard.constants'
+import { useAuth } from '@/features/auth/hooks/useAuth'
+import { styles } from './HrManagerDashboard.styles'
+import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar, ApprovalStatusBadge } from './components/HrManagerDashboard.components'
+import { kpiData, attendanceHistory, leaveRequests, notifications, sectionsConfig, pendingApprovals, chatContacts, chatMessages } from './components/HrManagerDashboard.constants'
+import { EmployeesPage, AttendancePage, PayrollPage, LeavesPage, DepartmentsPage, ContractsPage, PositionsPage, EvaluationsPage, HRDashboardPage } from '@/features/hr'
 import ProfilePage from '@/pages/profile/ProfilePage'
->>>>>>> Stashed changes:frontend-web/src/features/dashboard/employee/EmployeeDashboard.jsx
 
-export default function EmployeeDashboard() {
+export default function HrManagerDashboard() {
   const [active, setActive] = useState('dashboard')
-  const username = typeof localStorage !== 'undefined' ? localStorage.getItem('username') : 'Employee'
-  const user = useMemo(() => ({ name: username || 'Nguyễn Văn A', role: 'Nhân viên' }), [username])
+  const [approvals, setApprovals] = useState(pendingApprovals)
+  const [selectedContact, setSelectedContact] = useState(chatContacts[0])
+  const [messageInput, setMessageInput] = useState('')
+  const { logout, user: authUser } = useAuth()
+  const username = authUser?.username || localStorage.getItem('username') || 'HR Manager'
+  const user = useMemo(() => ({ name: username || 'Nguyễn Thị C', role: 'Quản lý nhân sự' }), [username])
 
   const sections = useMemo(() => sectionsConfig, [])
   const meta = sections[active]
 
   const handleLogout = async () => {
-    try {
-      const refreshToken = typeof localStorage !== 'undefined' ? localStorage.getItem('refreshToken') : null
-      if (refreshToken) {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken })
-        })
-      }
-    } catch {}
-    finally {
-      const ls = typeof localStorage !== 'undefined' ? localStorage : null
-      if (ls) {
-        ;['accessToken','refreshToken','tokenType','userRole','username','expiresAt','staySignedIn'].forEach(k=> ls.removeItem(k))
-      }
-      if (typeof window !== 'undefined') window.location.reload()
-    }
+    await logout()
+  }
+
+  const handleApprove = (id) => {
+    setApprovals(prev => prev.map(item => 
+      item.id === id ? { ...item, status: 'approved' } : item
+    ))
+    alert('Đã duyệt đơn thành công!')
+  }
+
+  const handleReject = (id) => {
+    setApprovals(prev => prev.map(item => 
+      item.id === id ? { ...item, status: 'rejected' } : item
+    ))
+    alert('Đã từ chối đơn!')
   }
 
   return (
@@ -43,7 +42,7 @@ export default function EmployeeDashboard() {
         <div style={styles.brand}>
           <div style={styles.brandIcon}>⚡</div>
           <div>
-            <div style={styles.brandName}>QLNS Employee</div>
+            <div style={styles.brandName}>QLNS HR Manager</div>
             <div style={styles.brandSubtitle}>Portal</div>
           </div>
         </div>
@@ -54,31 +53,61 @@ export default function EmployeeDashboard() {
           <div style={styles.userAvatar}>{user.name.slice(0, 1).toUpperCase()}</div>
           <div style={styles.userInfo}>
             <div style={styles.userName}>{user.name}</div>
-            <div style={styles.userRole}>🎯 {user.role}</div>
+            <div style={styles.userRole}>👥 {user.role}</div>
           </div>
         </div>
 
         <div style={styles.divider} />
 
         <div style={styles.navGroup}>
-          <div style={styles.navGroupLabel}>Menu chính</div>
+          <div style={styles.navGroupLabel}>Tổng quan</div>
           <NavItem active={active === 'dashboard'} onClick={() => setActive('dashboard')} icon="🏠">
-            {sections.dashboard.title}
+            Dashboard
+          </NavItem>
+          <NavItem active={active === 'hr-dashboard'} onClick={() => setActive('hr-dashboard')} icon="📊">
+            Thống kê HR
           </NavItem>
           <NavItem active={active === 'profile'} onClick={() => setActive('profile')} icon="👤">
-            {sections.profile.title}
+            Hồ sơ cá nhân
           </NavItem>
-          <NavItem active={active === 'timesheet'} onClick={() => setActive('timesheet')} icon="🕐">
-            {sections.timesheet.title}
+        </div>
+
+        <div style={styles.navGroup}>
+          <div style={styles.navGroupLabel}>Quản lý nhân sự</div>
+          <NavItem active={active === 'employees'} onClick={() => setActive('employees')} icon="👥">
+            Nhân viên
           </NavItem>
-          <NavItem active={active === 'leave'} onClick={() => setActive('leave')} icon="📋">
-            {sections.leave.title}
+          <NavItem active={active === 'departments'} onClick={() => setActive('departments')} icon="🏢">
+            Phòng ban
+          </NavItem>
+          <NavItem active={active === 'positions'} onClick={() => setActive('positions')} icon="💼">
+            Chức vụ
+          </NavItem>
+          <NavItem active={active === 'contracts'} onClick={() => setActive('contracts')} icon="📝">
+            Hợp đồng
+          </NavItem>
+        </div>
+
+        <div style={styles.navGroup}>
+          <div style={styles.navGroupLabel}>Chấm công & Lương</div>
+          <NavItem active={active === 'attendance'} onClick={() => setActive('attendance')} icon="🕐">
+            Chấm công
           </NavItem>
           <NavItem active={active === 'payroll'} onClick={() => setActive('payroll')} icon="💰">
-            {sections.payroll.title}
+            Bảng lương
           </NavItem>
-          <NavItem active={active === 'documents'} onClick={() => setActive('documents')} icon="📄">
-            {sections.documents.title}
+          <NavItem active={active === 'leaves'} onClick={() => setActive('leaves')} icon="📋">
+            Nghỉ phép
+          </NavItem>
+        </div>
+
+        <div style={styles.navGroup}>
+          <div style={styles.navGroupLabel}>Đánh giá & Khác</div>
+          <NavItem active={active === 'evaluations'} onClick={() => setActive('evaluations')} icon="⭐">
+            Đánh giá
+          </NavItem>
+          <NavItem active={active === 'chat'} onClick={() => setActive('chat')} icon="💬">
+            Chat
           </NavItem>
         </div>
 
@@ -88,26 +117,29 @@ export default function EmployeeDashboard() {
       </aside>
 
       <main style={styles.content}>
-        <header style={styles.header}>
-          <div>
-            <div style={styles.pageHeading}>{meta.title}</div>
-            <div style={styles.subHeading}>Xin chào, {user.name}</div>
-          </div>
+        {/* Only show header for old dashboard pages */}
+        {!['hr-dashboard', 'employees', 'attendance', 'payroll', 'leaves', 'departments', 'contracts', 'positions', 'evaluations', 'profile'].includes(active) && (
+          <header style={styles.header}>
+            <div>
+              <div style={styles.pageHeading}>{meta?.title || 'HR Dashboard'}</div>
+              {active !== 'chat' && <div style={styles.subHeading}>Xin chào, {user.name}</div>}
+            </div>
 
-          <div style={styles.rightCluster}>
-            <RoleBadge role={user.role} />
-          </div>
-        </header>
+            <div style={styles.rightCluster}>
+              <RoleBadge role={user.role} />
+            </div>
+          </header>
+        )}
 
         {/* Dashboard Main */}
         {active === 'dashboard' && (
           <div style={styles.dashboardContent}>
             {/* KPI Cards Row */}
             <div style={styles.kpiGrid}>
-              <KPICard title="Lương dự kiến" value={`${kpiData.salary}đ`} icon="💵" color="success" change="+5%" />
-              <KPICard title="Ngày phép còn" value={`${kpiData.leaveDays} ngày`} icon="📅" color="info" change="+3 ngày" />
-              <KPICard title="Số lần đi muộn" value={`${kpiData.lateDays} lần`} icon="⏰" color="warning" change="-2 lần" />
-              <KPICard title="Tổng giờ làm (Tháng)" value={`${kpiData.totalHours}h`} icon="🕐" color="primary" change="+8h" />
+              <KPICard title="Tổng nhân viên" value={`${kpiData.totalEmployees} người`} icon="👥" color="success" change="+5 người" />
+              <KPICard title="Đơn chờ duyệt" value={`${kpiData.pendingLeaves} đơn`} icon="⏳" color="warning" change="Cần xử lý" />
+              <KPICard title="Đã duyệt hôm nay" value={`${kpiData.approvedToday} đơn`} icon="✓" color="info" change="+3 đơn" />
+              <KPICard title="Tuyển dụng mới" value={`${kpiData.newHires} người`} icon="📊" color="primary" change="+2 người" />
             </div>
 
             {/* Welcome & Notifications Row */}
@@ -116,10 +148,10 @@ export default function EmployeeDashboard() {
                 <div style={styles.welcomeContent}>
                   <h3 style={styles.welcomeTitle}>Chào mừng, {user.name}!</h3>
                   <p style={styles.welcomeText}>
-                    Hãy bắt đầu ngày làm việc của bạn bằng cách chấm công. Chúc bạn một ngày làm việc hiệu quả!
+                    Bạn có {kpiData.pendingLeaves} đơn nghỉ phép đang chờ duyệt và {kpiData.newHires} hồ sơ tuyển dụng mới cần xem xét.
                   </p>
-                  <button style={styles.checkInBtn}>
-                    ✓ Chấm công vào
+                  <button style={styles.checkInBtn} onClick={() => setActive('approvals')}>
+                    ✓ Xem đơn chờ duyệt
                   </button>
                 </div>
               </div>
@@ -144,14 +176,14 @@ export default function EmployeeDashboard() {
             {/* Charts Row */}
             <div style={styles.chartsRow}>
               <div style={styles.chartCard}>
-                <h4 style={styles.cardTitle}>Biểu đồ giờ làm theo ngày</h4>
+                <h4 style={styles.cardTitle}>Biểu đồ chấm công toàn công ty</h4>
                 <div style={styles.chartPlaceholder}>
                   <div style={styles.chartInfo}>📊 Biểu đồ đang được phát triển</div>
                 </div>
               </div>
 
               <div style={styles.chartCard}>
-                <h4 style={styles.cardTitle}>Thống kê nghỉ phép</h4>
+                <h4 style={styles.cardTitle}>Thống kê tuyển dụng</h4>
                 <div style={styles.chartPlaceholder}>
                   <div style={styles.chartInfo}>📈 Biểu đồ đang được phát triển</div>
                 </div>
@@ -208,7 +240,7 @@ export default function EmployeeDashboard() {
             <div style={styles.leaveLayout}>
               <div style={styles.tableCard}>
                 <div style={styles.tableHeader}>
-                  <h4 style={styles.tableTitle}>Lịch sử đơn từ</h4>
+                  <h4 style={styles.tableTitle}>Lịch sử đơn từ của tôi</h4>
                   <button style={styles.addBtn}>+ Đăng ký nghỉ phép</button>
                 </div>
                 <div style={styles.tableWrap}>
@@ -259,8 +291,63 @@ export default function EmployeeDashboard() {
           </div>
         )}
 
-<<<<<<< Updated upstream:frontend-web/src/pages/dashboard/EmployeeDashboard.jsx
-=======
+        {/* Approvals Page - HR MANAGER FEATURE */}
+        {active === 'approvals' && (
+          <div style={styles.pageContent}>
+            <div style={styles.tableCard}>
+              <div style={styles.tableHeader}>
+                <h4 style={styles.tableTitle}>Duyệt nghỉ phép nhân viên</h4>
+              </div>
+              
+              {approvals.map((approval) => (
+                <div key={approval.id} style={styles.approvalCard}>
+                  <div style={styles.approvalHeader}>
+                    <div>
+                      <div style={styles.approvalEmployee}>{approval.employeeName}</div>
+                      <div style={styles.approvalType}>{approval.type}</div>
+                    </div>
+                    <ApprovalStatusBadge status={approval.status} />
+                  </div>
+
+                  <div style={styles.approvalBody}>
+                    <div style={styles.approvalField}>
+                      <div style={styles.approvalLabel}>Từ ngày</div>
+                      <div style={styles.approvalValue}>{approval.fromDate}</div>
+                    </div>
+                    <div style={styles.approvalField}>
+                      <div style={styles.approvalLabel}>Đến ngày</div>
+                      <div style={styles.approvalValue}>{approval.toDate}</div>
+                    </div>
+                    <div style={styles.approvalField}>
+                      <div style={styles.approvalLabel}>Số ngày</div>
+                      <div style={styles.approvalValue}>{approval.days} ngày</div>
+                    </div>
+                    <div style={styles.approvalField}>
+                      <div style={styles.approvalLabel}>Ngày gửi</div>
+                      <div style={styles.approvalValue}>{approval.submitDate}</div>
+                    </div>
+                    <div style={styles.approvalReason}>
+                      <div style={styles.approvalReasonLabel}>Lý do</div>
+                      <div style={styles.approvalReasonText}>{approval.reason}</div>
+                    </div>
+                  </div>
+
+                  {approval.status === 'pending' && (
+                    <div style={styles.approvalActions}>
+                      <button style={styles.rejectBtn} onClick={() => handleReject(approval.id)}>
+                        ✗ Từ chối
+                      </button>
+                      <button style={styles.approveBtn} onClick={() => handleApprove(approval.id)}>
+                        ✓ Phê duyệt
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Chat Page */}
         {active === 'chat' && (
           <div style={styles.chatContainer}>
@@ -460,16 +547,24 @@ export default function EmployeeDashboard() {
           </div>
         )}
 
-        {/* Profile Page */}
+        {/* HR Management Pages */}
+        {active === 'hr-dashboard' && <HRDashboardPage />}
+        {active === 'employees' && <EmployeesPage />}
+        {active === 'departments' && <DepartmentsPage />}
+        {active === 'positions' && <PositionsPage />}
+        {active === 'contracts' && <ContractsPage />}
+        {active === 'attendance' && <AttendancePage />}
+        {active === 'payroll' && <PayrollPage />}
+        {active === 'leaves' && <LeavesPage />}
+        {active === 'evaluations' && <EvaluationsPage />}
         {active === 'profile' && <ProfilePage />}
 
->>>>>>> Stashed changes:frontend-web/src/features/dashboard/employee/EmployeeDashboard.jsx
         {/* Other Pages Placeholder */}
-        {(active === 'payroll' || active === 'documents') && (
+        {(active === 'documents') && (
           <div style={styles.pageContent}>
             <div style={styles.placeholderCard}>
               <div style={styles.placeholderIcon}>
-                {active === 'payroll' ? '💰' : '📄'}
+                {active === 'profile' ? '👤' : '📄'}
               </div>
               <h3 style={styles.placeholderTitle}>{meta.pageTitle}</h3>
               <p style={styles.placeholderText}>
@@ -482,4 +577,3 @@ export default function EmployeeDashboard() {
     </div>
   )
 }
-
