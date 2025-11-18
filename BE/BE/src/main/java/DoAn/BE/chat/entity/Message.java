@@ -25,7 +25,7 @@ public class Message {
     private ChatRoom chatRoom;
 
     @ManyToOne
-    @JoinColumn(name = "sender_id", nullable = false)
+    @JoinColumn(name = "sender_id")  // Allow null for system messages
     private User sender;
 
     @Column(columnDefinition = "NVARCHAR(MAX)")  
