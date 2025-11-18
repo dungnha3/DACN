@@ -26,7 +26,7 @@ public class CreateIssueRequest {
     @Size(max = 2000, message = "Mô tả không được quá 2000 ký tự")
     private String description;
     
-    @NotNull(message = "Status ID không được để trống")
+    // StatusId có thể null, mặc định là To Do (id: 1)
     private Integer statusId;
     
     private Priority priority;

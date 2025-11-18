@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ChamCongGPSRequest {
     
-    @NotNull(message = "ID nhân viên không được để trống")
+    // Nếu null, sẽ tự động lấy từ user hiện tại
     private Long nhanvienId;
     
     @NotNull(message = "Latitude không được để trống")

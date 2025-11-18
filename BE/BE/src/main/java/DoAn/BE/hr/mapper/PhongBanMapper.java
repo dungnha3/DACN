@@ -27,8 +27,14 @@ public class PhongBanMapper {
         
         dto.setCreatedAt(phongBan.getCreatedAt());
         
-        if (phongBan.getNhanViens() != null) {
-            dto.setSoLuongNhanVien(phongBan.getNhanViens().size());
+        // Safely handle lazy-loaded collection
+        try {
+            if (phongBan.getNhanViens() != null) {
+                dto.setSoLuongNhanVien(phongBan.getNhanViens().size());
+            }
+        } catch (Exception e) {
+            // LazyInitializationException - collection not loaded
+            dto.setSoLuongNhanVien(0);
         }
         
         return dto;

@@ -1,13 +1,36 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { styles } from './HrManagerDashboard.styles'
 import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar, ApprovalStatusBadge } from './components/HrManagerDashboard.components'
-import { kpiData, attendanceHistory, leaveRequests, notifications, sectionsConfig, pendingApprovals, chatContacts, chatMessages } from './components/HrManagerDashboard.constants'
-import { EmployeesPage, AttendancePage, PayrollPage, LeavesPage, DepartmentsPage, ContractsPage, PositionsPage, EvaluationsPage, HRDashboardPage } from '@/features/hr'
+import { sectionsConfig, chatContacts, chatMessages, notifications } from './components/HrManagerDashboard.constants'
+import { dashboardService, attendanceService, leavesService, contractsService } from '@/features/hr/shared/services'
+import { 
+  EmployeesPage, 
+  AttendancePage, 
+  PayrollPage, 
+  LeavesPage, 
+  DepartmentsPage, 
+  ContractsPage, 
+  PositionsPage, 
+  EvaluationsPage, 
+  HRDashboardPage 
+} from '@/features/hr'
+
+// --- THƯ VIỆN BIỂU ĐỒ ---
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 export default function HrManagerDashboard() {
   const [active, setActive] = useState('dashboard')
-  const [approvals, setApprovals] = useState(pendingApprovals)
+  const [loading, setLoading] = useState(false)
+  
+  // State cho dữ liệu từ API
+  const [kpiData, setKpiData] = useState({ totalEmployees: 0, pendingLeaves: 0, approvedToday: 0, newHires: 0 })
+  const [chartData, setChartData] = useState([])
+  const [expiringContracts, setExpiringContracts] = useState([])
+  const [attendanceHistory, setAttendanceHistory] = useState([])
+  const [leaveRequests, setLeaveRequests] = useState([])
+  const [approvals, setApprovals] = useState([])
+  
   const [selectedContact, setSelectedContact] = useState(chatContacts[0])
   const [messageInput, setMessageInput] = useState('')
   const { logout, user: authUser } = useAuth()
@@ -16,27 +39,68 @@ export default function HrManagerDashboard() {
 
   const sections = useMemo(() => sectionsConfig, [])
   const meta = sections[active]
+  
+  // Load dữ liệu khi component mount
+  useEffect(() => {
+    loadDashboardData()
+  }, [])
+  
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true)
+      const [stats, contracts, attendance, leaves, pending] = await Promise.all([
+        dashboardService.getStats(),
+        contractsService.getExpiring(30),
+        attendanceService.getAll(),
+        leavesService.getAll(),
+        leavesService.getPending()
+      ])
+      
+      setKpiData({
+        totalEmployees: stats.tongNhanVien || 0,
+        pendingLeaves: pending.length || 0,
+        approvedToday: stats.donDaDuyet || 0,
+        newHires: stats.nhanVienMoi || 0
+      })
+      setChartData(stats.chamCongPhongBan || [])
+      setExpiringContracts(contracts.slice(0, 3) || [])
+      setAttendanceHistory(attendance.slice(0, 5) || [])
+      setLeaveRequests(leaves.slice(0, 3) || [])
+      setApprovals(pending || [])
+    } catch (err) {
+      console.error('Error loading dashboard:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleLogout = async () => {
     await logout()
   }
 
-  const handleApprove = (id) => {
-    setApprovals(prev => prev.map(item => 
-      item.id === id ? { ...item, status: 'approved' } : item
-    ))
-    alert('Đã duyệt đơn thành công!')
+  const handleApprove = async (id) => {
+    try {
+      await leavesService.approve(id, 'Phê duyệt')
+      await loadDashboardData()
+      alert('Đã duyệt đơn thành công!')
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message))
+    }
   }
 
-  const handleReject = (id) => {
-    setApprovals(prev => prev.map(item => 
-      item.id === id ? { ...item, status: 'rejected' } : item
-    ))
-    alert('Đã từ chối đơn!')
+  const handleReject = async (id) => {
+    try {
+      await leavesService.reject(id, 'Từ chối')
+      await loadDashboardData()
+      alert('Đã từ chối đơn!')
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message))
+    }
   }
 
   return (
     <div style={styles.appShell}>
+      {/* --- SIDEBAR --- */}
       <aside style={styles.sidebar}>
         <div style={styles.brand}>
           <div style={styles.brandIcon}>⚡</div>
@@ -62,9 +126,6 @@ export default function HrManagerDashboard() {
           <div style={styles.navGroupLabel}>Tổng quan</div>
           <NavItem active={active === 'dashboard'} onClick={() => setActive('dashboard')} icon="🏠">
             Dashboard
-          </NavItem>
-          <NavItem active={active === 'hr-dashboard'} onClick={() => setActive('hr-dashboard')} icon="📊">
-            Thống kê HR
           </NavItem>
         </div>
 
@@ -112,9 +173,11 @@ export default function HrManagerDashboard() {
         </button>
       </aside>
 
+      {/* --- MAIN CONTENT --- */}
       <main style={styles.content}>
-        {/* Only show header for old dashboard pages */}
-        {!['hr-dashboard', 'employees', 'attendance', 'payroll', 'leaves', 'departments', 'contracts', 'positions', 'evaluations'].includes(active) && (
+        
+        {/* Dynamic Header (Ẩn trên các trang chi tiết để giữ không gian) */}
+        {!['employees', 'attendance', 'payroll', 'leaves', 'departments', 'contracts', 'positions', 'evaluations'].includes(active) && (
           <header style={styles.header}>
             <div>
               <div style={styles.pageHeading}>{meta?.title || 'HR Dashboard'}</div>
@@ -127,33 +190,92 @@ export default function HrManagerDashboard() {
           </header>
         )}
 
-        {/* Dashboard Main */}
+        {/* --- DASHBOARD SCREEN (MOCK UI) --- */}
         {active === 'dashboard' && (
           <div style={styles.dashboardContent}>
-            {/* KPI Cards Row */}
+            
+            {/* 1. KPI CARDS ROW */}
             <div style={styles.kpiGrid}>
-              <KPICard title="Tổng nhân viên" value={`${kpiData.totalEmployees} người`} icon="👥" color="success" change="+5 người" />
-              <KPICard title="Đơn chờ duyệt" value={`${kpiData.pendingLeaves} đơn`} icon="⏳" color="warning" change="Cần xử lý" />
-              <KPICard title="Đã duyệt hôm nay" value={`${kpiData.approvedToday} đơn`} icon="✓" color="info" change="+3 đơn" />
-              <KPICard title="Tuyển dụng mới" value={`${kpiData.newHires} người`} icon="📊" color="primary" change="+2 người" />
+              <KPICard 
+                title="Tổng nhân viên" 
+                value={`${kpiData.totalEmployees} người`} 
+                icon="👥" color="success" change="+5 người" 
+              />
+              <KPICard 
+                title="Đơn chờ duyệt" 
+                value={`${kpiData.pendingLeaves} đơn`} 
+                icon="⏳" color="warning" change="Cần xử lý" 
+              />
+              <KPICard 
+                title="Đã duyệt hôm nay" 
+                value={`${kpiData.approvedToday} đơn`} 
+                icon="✓" color="info" change="+3 đơn" 
+              />
+              <KPICard 
+                title="Hợp đồng sắp hết hạn" 
+                value={`${expiringContracts.length} HĐ`} 
+                icon="📝" color="primary" change="Trong 30 ngày tới" 
+              />
             </div>
 
-            {/* Welcome & Notifications Row */}
+            {/* 2. WELCOME & NOTIFICATIONS ROW */}
             <div style={styles.cardsRow}>
               <div style={styles.welcomeCard}>
                 <div style={styles.welcomeContent}>
                   <h3 style={styles.welcomeTitle}>Chào mừng, {user.name}!</h3>
                   <p style={styles.welcomeText}>
-                    Bạn có {kpiData.pendingLeaves} đơn nghỉ phép đang chờ duyệt và {kpiData.newHires} hồ sơ tuyển dụng mới cần xem xét.
+                    Hệ thống ghi nhận bạn có <b>{kpiData.pendingLeaves}</b> đơn nghỉ phép đang chờ duyệt và <b>{kpiData.newHires}</b> hồ sơ tuyển dụng mới cần xem xét.
                   </p>
                   <button style={styles.checkInBtn} onClick={() => setActive('approvals')}>
-                    ✓ Xem đơn chờ duyệt
+                    ✓ Duyệt đơn ngay
                   </button>
                 </div>
               </div>
 
+              {/* Widget Hợp đồng sắp hết hạn */}
               <div style={styles.notificationCard}>
-                <h4 style={styles.cardTitle}>Thông báo & Sự kiện</h4>
+                <h4 style={styles.cardTitle}>⚠️ Hợp đồng cần chú ý</h4>
+                <div style={styles.notificationList}>
+                  {expiringContracts.map((contract, idx) => (
+                    <div key={idx} style={styles.notificationItem}>
+                      <div style={{...styles.notifIcon, fontSize: 16}}>📄</div>
+                      <div style={styles.notifContent}>
+                        <div style={styles.notifTitle}>{contract.nhanVien || contract.tenNhanVien} <span style={{fontWeight: 'normal', fontSize: 12, color: '#7b809a'}}>({contract.chucVu || contract.tenChucVu})</span></div>
+                        <div style={styles.notifDesc}>Hết hạn: {contract.ngayKetThuc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 3. CHARTS ROW (Sử dụng Recharts với Mock Data) */}
+            <div style={styles.chartsRow}>
+              {/* Biểu đồ Cột: Thống kê chấm công */}
+              <div style={styles.chartCard}>
+                <h4 style={styles.cardTitle}>📊 Thống kê giờ làm việc theo phòng ban</h4>
+                <div style={{ height: 300, marginTop: 20 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData.map(d => ({ name: d.phongBan, hours: (d.coMat || 0) * 8 }))} margin={{top: 5, right: 30, left: 20, bottom: 5}}>
+                      <XAxis dataKey="name" fontSize={12} />
+                      <YAxis fontSize={12} />
+                      <Tooltip 
+                        cursor={{fill: 'transparent'}} 
+                        contentStyle={{borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}}
+                      />
+                      <Bar dataKey="hours" name="Tổng giờ làm" radius={[4, 4, 0, 0]} barSize={40}>
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={['#fb8c00', '#43a047', '#1e88e5', '#e53935', '#8e24aa'][index % 5]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Widget Thông báo */}
+              <div style={styles.notificationCard}>
+                <h4 style={styles.cardTitle}>📌 Thông báo & Sự kiện</h4>
                 <div style={styles.notificationList}>
                   {notifications.map((notif, idx) => (
                     <div key={idx} style={styles.notificationItem}>
@@ -168,27 +290,11 @@ export default function HrManagerDashboard() {
                 </div>
               </div>
             </div>
-
-            {/* Charts Row */}
-            <div style={styles.chartsRow}>
-              <div style={styles.chartCard}>
-                <h4 style={styles.cardTitle}>Biểu đồ chấm công toàn công ty</h4>
-                <div style={styles.chartPlaceholder}>
-                  <div style={styles.chartInfo}>📊 Biểu đồ đang được phát triển</div>
-                </div>
-              </div>
-
-              <div style={styles.chartCard}>
-                <h4 style={styles.cardTitle}>Thống kê tuyển dụng</h4>
-                <div style={styles.chartPlaceholder}>
-                  <div style={styles.chartInfo}>📈 Biểu đồ đang được phát triển</div>
-                </div>
-              </div>
-            </div>
           </div>
         )}
 
-        {/* Timesheet Page */}
+        {/* --- CÁC TRANG CHỨC NĂNG KHÁC --- */}
+
         {active === 'timesheet' && (
           <div style={styles.pageContent}>
             <div style={styles.tableCard}>
@@ -230,7 +336,6 @@ export default function HrManagerDashboard() {
           </div>
         )}
 
-        {/* Leave Page */}
         {active === 'leave' && (
           <div style={styles.pageContent}>
             <div style={styles.leaveLayout}>
@@ -287,7 +392,7 @@ export default function HrManagerDashboard() {
           </div>
         )}
 
-        {/* Approvals Page - HR MANAGER FEATURE */}
+        {/* Approvals Page */}
         {active === 'approvals' && (
           <div style={styles.pageContent}>
             <div style={styles.tableCard}>
@@ -543,8 +648,7 @@ export default function HrManagerDashboard() {
           </div>
         )}
 
-        {/* HR Management Pages */}
-        {active === 'hr-dashboard' && <HRDashboardPage />}
+        {/* HR Management Modules - Import từ components con */}
         {active === 'employees' && <EmployeesPage />}
         {active === 'departments' && <DepartmentsPage />}
         {active === 'positions' && <PositionsPage />}
@@ -554,20 +658,6 @@ export default function HrManagerDashboard() {
         {active === 'leaves' && <LeavesPage />}
         {active === 'evaluations' && <EvaluationsPage />}
 
-        {/* Other Pages Placeholder */}
-        {(active === 'profile' || active === 'documents') && (
-          <div style={styles.pageContent}>
-            <div style={styles.placeholderCard}>
-              <div style={styles.placeholderIcon}>
-                {active === 'profile' ? '👤' : '📄'}
-              </div>
-              <h3 style={styles.placeholderTitle}>{meta.pageTitle}</h3>
-              <p style={styles.placeholderText}>
-                Chức năng đang được phát triển. Bạn sẽ có thể {meta.subtitle.toLowerCase()} tại đây.
-              </p>
-            </div>
-          </div>
-        )}
       </main>
     </div>
   )

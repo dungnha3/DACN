@@ -46,7 +46,10 @@ public class IssueService {
         Project project = projectRepository.findById(request.getProjectId())
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy dự án"));
         validateProjectAccess(request.getProjectId(), userId);
-        IssueStatus status = issueStatusRepository.findById(request.getStatusId())
+        
+        // Nếu không có statusId, mặc định là To Do (id: 1)
+        Integer statusId = request.getStatusId() != null ? request.getStatusId() : 1;
+        IssueStatus status = issueStatusRepository.findById(statusId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy trạng thái"));
         User assignee = null;
         if (request.getAssigneeId() != null) {

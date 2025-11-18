@@ -220,7 +220,8 @@ public class ChamCongController {
      */
     @PostMapping("/gps")
     public ResponseEntity<Map<String, Object>> chamCongGPS(@Valid @RequestBody ChamCongGPSRequest request) {
-        Map<String, Object> response = chamCongService.chamCongGPS(request);
+        User currentUser = getCurrentUser();
+        Map<String, Object> response = chamCongService.chamCongGPS(request, currentUser);
         return ResponseEntity.ok(response);
     }
     

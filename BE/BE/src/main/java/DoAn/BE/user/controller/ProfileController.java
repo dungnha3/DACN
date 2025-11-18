@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/profile")
+@RequestMapping("/api/profile")
 public class ProfileController {
     
     private final ProfileService profileService;
@@ -32,6 +32,17 @@ public class ProfileController {
      */
     @GetMapping
     public ResponseEntity<UserDTO> getCurrentUserProfile() {
+        Long userId = getCurrentUserId();
+        User user = profileService.getCurrentUserProfile(userId);
+        return ResponseEntity.ok(userMapper.toDTO(user));
+    }
+    
+    /**
+     * Lấy thông tin profile của user hiện tại (alias)
+     * GET /api/profile/me
+     */
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> getMe() {
         Long userId = getCurrentUserId();
         User user = profileService.getCurrentUserProfile(userId);
         return ResponseEntity.ok(userMapper.toDTO(user));

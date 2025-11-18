@@ -20,6 +20,13 @@ public class ChucVuService {
     public ChucVuService(ChucVuRepository chucVuRepository) {
         this.chucVuRepository = chucVuRepository;
     }
+    
+    /**
+     * Đếm số lượng nhân viên theo chức vụ
+     */
+    public long countNhanVienByChucVu(Long chucvuId) {
+        return chucVuRepository.countNhanVienByChucVu(chucvuId);
+    }
 
     public ChucVu createChucVu(ChucVuRequest request) {
         if (chucVuRepository.existsByTenChucVu(request.getTenChucVu())) {

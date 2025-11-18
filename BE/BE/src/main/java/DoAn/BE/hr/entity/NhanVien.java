@@ -1,5 +1,6 @@
 package DoAn.BE.hr.entity;
 
+import DoAn.BE.hr.converter.GioiTinhConverter;
 import DoAn.BE.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -36,7 +37,7 @@ public class NhanVien {
     @Column(name = "ngay_sinh", nullable = false)
     private LocalDate ngaySinh;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = GioiTinhConverter.class)
     @Column(name = "gioi_tinh", nullable = false, length = 10)
     private GioiTinh gioiTinh;
 

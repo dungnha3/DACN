@@ -22,8 +22,14 @@ public class ChucVuMapper {
         dto.setLevel(chucVu.getLevel());
         dto.setCreatedAt(chucVu.getCreatedAt());
         
-        if (chucVu.getNhanViens() != null) {
-            dto.setSoLuongNhanVien(chucVu.getNhanViens().size());
+        // Safely handle lazy-loaded collection
+        try {
+            if (chucVu.getNhanViens() != null) {
+                dto.setSoLuongNhanVien(chucVu.getNhanViens().size());
+            }
+        } catch (Exception e) {
+            // LazyInitializationException - collection not loaded
+            dto.setSoLuongNhanVien(0);
         }
         
         return dto;

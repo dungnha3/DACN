@@ -1,150 +1,338 @@
-import { useState } from 'react';
-import { exportEmployees } from '../../shared/utils/export.utils';
-
-const mockEmployees = [
-  { id: 1, hoTen: 'Nguyễn Văn A', email: 'nva@company.com', sdt: '0901234567', phongBan: 'IT', chucVu: 'Developer', luongCoBan: 15000000, trangThai: 'DANG_LAM_VIEC', ngayVaoLam: '2023-01-15' },
-  { id: 2, hoTen: 'Trần Thị B', email: 'ttb@company.com', sdt: '0912345678', phongBan: 'HR', chucVu: 'HR Manager', luongCoBan: 20000000, trangThai: 'DANG_LAM_VIEC', ngayVaoLam: '2022-05-20' },
-  { id: 3, hoTen: 'Lê Văn C', email: 'lvc@company.com', sdt: '0923456789', phongBan: 'IT', chucVu: 'Tech Lead', luongCoBan: 25000000, trangThai: 'DANG_LAM_VIEC', ngayVaoLam: '2021-03-10' },
-  { id: 4, hoTen: 'Phạm Thị D', email: 'ptd@company.com', sdt: '0934567890', phongBan: 'Accounting', chucVu: 'Accountant', luongCoBan: 12000000, trangThai: 'NGHI_VIEC', ngayVaoLam: '2023-06-01' },
-  { id: 5, hoTen: 'Hoàng Văn E', email: 'hve@company.com', sdt: '0945678901', phongBan: 'Marketing', chucVu: 'Marketing Manager', luongCoBan: 18000000, trangThai: 'DANG_LAM_VIEC', ngayVaoLam: '2022-11-15' },
-];
+import { useState, useEffect } from 'react';
+import { employeesService, departmentsService, positionsService } from '@/features/hr/shared/services';
+import { apiService } from '@/shared/services/api.service';
 
 export default function EmployeesPage() {
-  const [employees, setEmployees] = useState(mockEmployees);
+  const [employees, setEmployees] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [positions, setPositions] = useState([]);
+  const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('ALL');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const filteredEmployees = employees.filter(emp => {
-    const matchSearch = emp.hoTen.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       emp.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus = filterStatus === 'ALL' || emp.trangThai === filterStatus;
-    return matchSearch && matchStatus;
+  const [newEmp, setNewEmp] = useState({
+    userId: '',
+    hoTen: '',
+    cccd: '',
+    ngaySinh: '',
+    gioiTinh: 'Nam',
+    diaChi: '',
+    ngayVaoLam: new Date().toISOString().split('T')[0],
+    phongbanId: '',
+    chucvuId: '',
+    luongCoBan: '',
+    phuCap: ''
   });
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  // Load dữ liệu từ API
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // Load employees, departments, positions
+      const [empData, deptData, posData] = await Promise.all([
+        employeesService.getAll(),
+        departmentsService.getAll(),
+        positionsService.getAll()
+      ]);
+      setEmployees(empData);
+      setDepartments(deptData);
+      setPositions(posData);
+      
+      // Load users (for dropdown) - Try both /users and /api/users
+      try {
+        const usersData = await apiService.get('/users');
+        setUsers(usersData || []);
+      } catch (err) {
+        console.log('Could not load users from /users, trying /api/users:', err.message);
+        try {
+          const usersData = await apiService.get('/api/users');
+          setUsers(usersData || []);
+        } catch (err2) {
+          console.error('Could not load users from both endpoints:', err2);
+          setUsers([]);
+        }
+      }
+    } catch (err) {
+      setError(err.message || 'Không thể tải dữ liệu');
+      console.error('Error loading data:', err);
+      console.error('Error response:', err.response?.data);
+      console.error('Error status:', err.response?.status);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewEmp({ ...newEmp, [name]: value });
+  };
+
+  const handleSave = async () => {
+    // Validation
+    if (!newEmp.hoTen) {
+      return alert("Vui lòng điền Họ tên!");
+    }
+    if (!newEmp.userId) {
+      return alert("Vui lòng chọn tài khoản!");
+    }
+    if (!newEmp.ngaySinh) {
+      return alert("Vui lòng chọn ngày sinh!");
+    }
+    if (!newEmp.ngayVaoLam) {
+      return alert("Vui lòng chọn ngày vào làm!");
+    }
+    
+    try {
+      setLoading(true);
+      await employeesService.create({
+        userId: Number(newEmp.userId),
+        hoTen: newEmp.hoTen,
+        cccd: newEmp.cccd || null,
+        ngaySinh: newEmp.ngaySinh,
+        gioiTinh: newEmp.gioiTinh,
+        diaChi: newEmp.diaChi || null,
+        ngayVaoLam: newEmp.ngayVaoLam,
+        phongbanId: newEmp.phongbanId ? Number(newEmp.phongbanId) : null,
+        chucvuId: newEmp.chucvuId ? Number(newEmp.chucvuId) : null,
+        luongCoBan: newEmp.luongCoBan ? Number(newEmp.luongCoBan) : 0,
+        phuCap: newEmp.phuCap ? Number(newEmp.phuCap) : 0
+      });
+      await loadData();
+      setShowModal(false);
+      setNewEmp({
+        userId: '',
+        hoTen: '',
+        cccd: '',
+        ngaySinh: '',
+        gioiTinh: 'Nam',
+        diaChi: '',
+        ngayVaoLam: new Date().toISOString().split('T')[0],
+        phongbanId: '',
+        chucvuId: '',
+        luongCoBan: '',
+        phuCap: ''
+      });
+      alert('Thêm nhân viên thành công!');
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message));
+      console.error('Create employee error:', err.response?.data);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if(confirm('Bạn chắc chắn muốn xóa nhân viên này?')) {
+      try {
+        setLoading(true);
+        await employeesService.delete(id);
+        await loadData();
+        alert('Xóa nhân viên thành công!');
+      } catch (err) {
+        alert('Lỗi: ' + (err.response?.data?.message || err.message));
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  const filteredEmployees = employees.filter(emp => 
+    emp.hoTen?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.maNhanVien?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+
   const getStatusBadge = (status) => {
-    const statusStyles = {
-      DANG_LAM_VIEC: { bg: '#dcfce7', color: '#166534', label: 'Đang làm việc' },
-      NGHI_VIEC: { bg: '#fee2e2', color: '#991b1b', label: 'Nghỉ việc' },
-      NGHI_THAI_SAN: { bg: '#fef3c7', color: '#92400e', label: 'Nghỉ thai sản' },
+    const config = {
+      DANG_LAM_VIEC: { color: '#16a34a', bg: '#dcfce7', text: 'Đang làm' },
+      NGHI_VIEC: { color: '#dc2626', bg: '#fee2e2', text: 'Nghỉ việc' },
+      NGHI_THAI_SAN: { color: '#d97706', bg: '#fef3c7', text: 'Thai sản' }
     };
-    const s = statusStyles[status] || statusStyles.DANG_LAM_VIEC;
+    const style = config[status] || config.DANG_LAM_VIEC;
     return (
-      <span style={{ 
-        background: s.bg, 
-        color: s.color, 
-        padding: '4px 12px', 
-        borderRadius: '12px', 
-        fontSize: '13px',
-        fontWeight: 500
+      <span style={{
+        background: style.bg, color: style.color,
+        padding: '4px 8px', borderRadius: '6px',
+        fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', 
+        display: 'inline-block', whiteSpace: 'nowrap'
       }}>
-        {s.label}
+        {style.text}
       </span>
     );
   };
 
   return (
-    <div style={styles.container}>
+    <div style={s.container}>
       {/* Header */}
-      <div style={styles.header}>
+      <div style={s.headerWrapper}>
         <div>
-          <h1 style={styles.title}>Quản lý Nhân viên</h1>
-          <p style={styles.subtitle}>Tổng số: {employees.length} nhân viên</p>
+          <div style={s.breadcrumb}>Quản lý nhân sự / Nhân viên</div>
+          <h1 style={s.pageTitle}>Danh sách Nhân viên</h1>
+          <div style={s.totalBadge}>Tổng số: {employees.length} nhân viên</div>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button style={styles.exportBtn} onClick={exportEmployees}>
-            📥 Export Excel
-          </button>
-          <button style={styles.addBtn} onClick={() => setShowAddModal(true)}>
-            ➕ Thêm nhân viên mới
-          </button>
+        <div style={s.headerActions}>
+          <button style={s.btnExport}>📥 Xuất Excel</button>
+          <button style={s.btnAdd} onClick={() => setShowModal(true)}>+ Thêm mới</button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div style={styles.filters}>
-        <input
-          type="text"
-          placeholder="🔍 Tìm kiếm theo tên, email..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={styles.searchInput}
-        />
-        <select 
-          value={filterStatus} 
-          onChange={(e) => setFilterStatus(e.target.value)}
-          style={styles.select}
-        >
-          <option value="ALL">Tất cả trạng thái</option>
-          <option value="DANG_LAM_VIEC">Đang làm việc</option>
-          <option value="NGHI_VIEC">Nghỉ việc</option>
-          <option value="NGHI_THAI_SAN">Nghỉ thai sản</option>
-        </select>
+      {/* Filter Bar */}
+      <div style={s.filterBar}>
+        <div style={s.searchWrapper}>
+          <span style={s.searchIcon}>🔍</span>
+          <input 
+            style={s.searchInput} 
+            placeholder="Tìm kiếm..." 
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <select style={s.filterSelect}><option>Tất cả trạng thái</option></select>
+        <select style={s.filterSelect}><option>Tất cả phòng ban</option></select>
       </div>
 
-      {/* Table */}
-      <div style={styles.tableCard}>
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>Họ tên</th>
-              <th style={styles.th}>Email / SĐT</th>
-              <th style={styles.th}>Phòng ban</th>
-              <th style={styles.th}>Chức vụ</th>
-              <th style={styles.th}>Lương cơ bản</th>
-              <th style={styles.th}>Ngày vào làm</th>
-              <th style={styles.th}>Trạng thái</th>
-              <th style={styles.th}>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredEmployees.map(emp => (
-              <tr key={emp.id} style={styles.tr}>
-                <td style={styles.td}>
-                  <div style={{ fontWeight: 600 }}>{emp.hoTen}</div>
-                </td>
-                <td style={styles.td}>
-                  <div style={{ fontSize: '13px' }}>{emp.email}</div>
-                  <div style={{ fontSize: '12px', color: '#64748b' }}>{emp.sdt}</div>
-                </td>
-                <td style={styles.td}>{emp.phongBan}</td>
-                <td style={styles.td}>{emp.chucVu}</td>
-                <td style={styles.td}>{formatCurrency(emp.luongCoBan)}</td>
-                <td style={styles.td}>{emp.ngayVaoLam}</td>
-                <td style={styles.td}>{getStatusBadge(emp.trangThai)}</td>
-                <td style={styles.td}>
-                  <button style={styles.actionBtn} onClick={() => setSelectedEmployee(emp)}>
-                    👁️ Xem
-                  </button>
-                  <button style={styles.editBtn}>✏️</button>
-                </td>
+      {/* Table Container - Đã fix lỗi scroll ngang */}
+      <div style={s.tableCard}>
+        <div style={s.tableResponsive}>
+          <table style={s.table}>
+            <thead>
+              <tr>
+                {/* Sử dụng width % thay vì px để fix layout */}
+                <th style={{...s.th, width: '25%'}}>Nhân viên</th>
+                <th style={{...s.th, width: '20%'}}>Liên hệ</th>
+                <th style={{...s.th, width: '15%'}}>Vị trí</th>
+                <th style={{...s.th, width: '15%'}}>Lương CB</th>
+                <th style={{...s.th, width: '10%'}}>Ngày vào</th>
+                <th style={{...s.th, width: '10%'}}>Trạng thái</th>
+                <th style={{...s.thRight, width: '5%'}}></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredEmployees.map(emp => (
+                <tr key={emp.nhanvienId} style={s.tr}>
+                  <td style={s.td}>
+                    <div style={s.profileCell}>
+                      <div style={s.avatarBox}>{emp.avatar}</div>
+                      <div style={{minWidth: 0}}>
+                        <div style={s.empName}>{emp.hoTen}</div>
+                        <div style={s.empCode}>{emp.maNhanVien || `NV${emp.nhanvienId}`}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={s.td}>
+                    <div style={s.contactCell}>
+                      <span title={emp.email} style={s.contactItem}>📧 {emp.email}</span>
+                      <span style={s.contactItem}>📞 {emp.sdt}</span>
+                    </div>
+                  </td>
+                  <td style={s.td}>
+                    <div style={{fontWeight: 600, color: '#344767'}}>{emp.phongban?.tenPhongBan || 'N/A'}</div>
+                    <div style={{fontSize: 12, color: '#7b809a'}}>{emp.chucvu?.tenChucVu || 'N/A'}</div>
+                  </td>
+                  <td style={{...s.td, fontWeight: 700, color: '#344767'}}>{formatCurrency(emp.luongCoBan)}</td>
+                  <td style={s.td}>{emp.ngayVaoLam}</td>
+                  <td style={s.td}>{getStatusBadge(emp.trangThai)}</td>
+                  <td style={s.tdRight}>
+                     <div style={s.actions}>
+                        <button style={s.iconBtn} title="Sửa">✏️</button>
+                        <button style={{...s.iconBtn, color: '#ef4444', background: '#fef2f2'}} onClick={() => handleDelete(emp.nhanvienId)} title="Xóa">🗑️</button>
+                     </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Employee Detail Modal */}
-      {selectedEmployee && (
-        <div style={styles.modalOverlay} onClick={() => setSelectedEmployee(null)}>
-          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginBottom: 20 }}>Chi tiết nhân viên</h2>
-            <div style={styles.detailGrid}>
-              <div><strong>Họ tên:</strong> {selectedEmployee.hoTen}</div>
-              <div><strong>Email:</strong> {selectedEmployee.email}</div>
-              <div><strong>Số điện thoại:</strong> {selectedEmployee.sdt}</div>
-              <div><strong>Phòng ban:</strong> {selectedEmployee.phongBan}</div>
-              <div><strong>Chức vụ:</strong> {selectedEmployee.chucVu}</div>
-              <div><strong>Lương cơ bản:</strong> {formatCurrency(selectedEmployee.luongCoBan)}</div>
-              <div><strong>Ngày vào làm:</strong> {selectedEmployee.ngayVaoLam}</div>
-              <div><strong>Trạng thái:</strong> {getStatusBadge(selectedEmployee.trangThai)}</div>
+      {/* Modal giữ nguyên logic */}
+      {showModal && (
+        <div style={s.modalOverlay}>
+          <div style={s.modalContent}>
+            <div style={s.modalHeader}>
+              <h2 style={s.modalTitle}>Thêm nhân viên mới</h2>
+              <button style={s.closeBtn} onClick={() => setShowModal(false)}>×</button>
             </div>
-            <button style={styles.closeBtn} onClick={() => setSelectedEmployee(null)}>Đóng</button>
+            <div style={s.modalBody}>
+              <div style={s.formGrid}>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Tài khoản <span style={{color:'red'}}>*</span></label>
+                  <select style={s.select} name="userId" value={newEmp.userId} onChange={handleInputChange}>
+                    <option value="">-- Chọn tài khoản --</option>
+                    {users.map(user => (
+                      <option key={user.userId} value={user.userId}>{user.username} ({user.email})</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Họ và tên <span style={{color:'red'}}>*</span></label>
+                  <input style={s.input} name="hoTen" value={newEmp.hoTen} onChange={handleInputChange} placeholder="Nguyễn Văn A" />
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>CCCD</label>
+                  <input style={s.input} name="cccd" value={newEmp.cccd} onChange={handleInputChange} placeholder="001234567890" />
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Ngày sinh <span style={{color:'red'}}>*</span></label>
+                  <input style={s.input} type="date" name="ngaySinh" value={newEmp.ngaySinh} onChange={handleInputChange} />
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Giới tính <span style={{color:'red'}}>*</span></label>
+                  <select style={s.select} name="gioiTinh" value={newEmp.gioiTinh} onChange={handleInputChange}>
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                    <option value="Khác">Khác</option>
+                  </select>
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Địa chỉ</label>
+                  <input style={s.input} name="diaChi" value={newEmp.diaChi} onChange={handleInputChange} placeholder="123 Nguyễn Trãi, Q1" />
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Ngày vào làm <span style={{color:'red'}}>*</span></label>
+                  <input style={s.input} type="date" name="ngayVaoLam" value={newEmp.ngayVaoLam} onChange={handleInputChange} />
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Phòng ban</label>
+                  <select style={s.select} name="phongbanId" value={newEmp.phongbanId} onChange={handleInputChange}>
+                    <option value="">-- Chọn phòng ban --</option>
+                    {departments.map(dept => (
+                      <option key={dept.phongbanId} value={dept.phongbanId}>{dept.tenPhongBan}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Chức vụ</label>
+                  <select style={s.select} name="chucvuId" value={newEmp.chucvuId} onChange={handleInputChange}>
+                    <option value="">-- Chọn chức vụ --</option>
+                    {positions.map(pos => (
+                      <option key={pos.chucvuId} value={pos.chucvuId}>{pos.tenChucVu}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Lương cơ bản</label>
+                  <input style={s.input} type="number" name="luongCoBan" value={newEmp.luongCoBan} onChange={handleInputChange} placeholder="VD: 10000000" />
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Phụ cấp</label>
+                  <input style={s.input} type="number" name="phuCap" value={newEmp.phuCap} onChange={handleInputChange} placeholder="VD: 2000000" />
+                </div>
+              </div>
+            </div>
+            <div style={s.modalFooter}>
+              <button style={s.btnCancel} onClick={() => setShowModal(false)}>Hủy bỏ</button>
+              <button style={s.btnSave} onClick={handleSave}>Lưu nhân viên</button>
+            </div>
           </div>
         </div>
       )}
@@ -152,25 +340,73 @@ export default function EmployeesPage() {
   );
 }
 
-const styles = {
-  container: { padding: 24, background: '#f8fafc', minHeight: '100vh' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  title: { fontSize: 28, fontWeight: 700, color: '#0f172a', margin: 0 },
-  subtitle: { color: '#64748b', fontSize: 14, margin: '4px 0 0 0' },
-  exportBtn: { padding: '10px 20px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 },
-  addBtn: { padding: '10px 20px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 },
-  filters: { display: 'flex', gap: 12, marginBottom: 20 },
-  searchInput: { flex: 1, padding: '10px 16px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14 },
-  select: { padding: '10px 16px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, minWidth: 200 },
-  tableCard: { background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' },
-  table: { width: '100%', borderCollapse: 'collapse' },
-  th: { padding: '14px 16px', textAlign: 'left', background: '#f1f5f9', fontSize: 13, fontWeight: 600, color: '#475569', borderBottom: '2px solid #e2e8f0' },
-  tr: { borderBottom: '1px solid #f1f5f9' },
-  td: { padding: '14px 16px', fontSize: 14, color: '#334155' },
-  actionBtn: { padding: '6px 12px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, marginRight: 8 },
-  editBtn: { padding: '6px 10px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 },
-  modalOverlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
-  modal: { background: '#fff', borderRadius: 12, padding: 32, maxWidth: 600, width: '90%', maxHeight: '80vh', overflow: 'auto' },
-  detailGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 },
-  closeBtn: { padding: '10px 24px', background: '#64748b', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', width: '100%' },
+// Styles - Đã fix lỗi tràn màn hình
+const s = {
+  container: { padding: '24px 32px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', color: '#344767', boxSizing: 'border-box' },
+  
+  headerWrapper: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 },
+  breadcrumb: { fontSize: 13, color: '#7b809a', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' },
+  pageTitle: { fontSize: 28, fontWeight: 700, margin: 0, color: '#344767' },
+  totalBadge: { fontSize: 14, color: '#7b809a', marginTop: 4 },
+  headerActions: { display: 'flex', gap: 12 },
+  
+  btnAdd: { background: 'linear-gradient(195deg, #f59e0b 0%, #d97706 100%)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 6px rgba(251, 140, 0, 0.2)', textTransform: 'uppercase', transition: 'all 0.2s' },
+  btnExport: { background: '#fff', color: '#344767', border: '1px solid #d2d6da', borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' },
+
+  filterBar: { display: 'flex', gap: 16, marginBottom: 24, background: '#fff', padding: 16, borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.03)', alignItems: 'center' },
+  searchWrapper: { flex: 1, position: 'relative', display: 'flex', alignItems: 'center' },
+  searchIcon: { position: 'absolute', left: 12, color: '#7b809a' },
+  searchInput: { width: '100%', padding: '12px 12px 12px 40px', border: '1px solid #d2d6da', borderRadius: 8, outline: 'none', fontSize: 14, boxSizing: 'border-box', transition: 'all 0.2s', background: '#fff', color: '#344767' },
+  filterSelect: { padding: '12px 16px', border: '1px solid #d2d6da', borderRadius: 8, outline: 'none', fontSize: 14, minWidth: 150, cursor: 'pointer', background: '#fff', color: '#344767' },
+
+  // Table Styles Fixes
+  tableCard: { background: '#fff', borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.02)' },
+  tableResponsive: { width: '100%' }, // Bỏ overflowX auto để tránh scroll
+  table: { 
+    width: '100%', 
+    borderCollapse: 'collapse', 
+    tableLayout: 'fixed' // Quan trọng: Giữ cột không bị vỡ layout
+  }, 
+  
+  th: { padding: '16px 12px', textAlign: 'left', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', color: '#7b809a', borderBottom: '1px solid #f0f2f5', background: '#fff' },
+  thRight: { padding: '16px 12px', textAlign: 'right', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', color: '#7b809a', borderBottom: '1px solid #f0f2f5', background: '#fff' },
+  tr: { borderBottom: '1px solid #f0f2f5', transition: 'background 0.2s' },
+  
+  // Cell Fixes: allow wrap, break word
+  td: { 
+    padding: '16px 12px', 
+    fontSize: 14, 
+    color: '#344767', 
+    verticalAlign: 'middle',
+    whiteSpace: 'normal', // Cho phép xuống dòng
+    wordBreak: 'break-word' // Ngắt từ nếu quá dài
+  },
+  tdRight: { padding: '16px 12px', textAlign: 'right', verticalAlign: 'middle' },
+
+  profileCell: { display: 'flex', alignItems: 'center', gap: 12 },
+  avatarBox: { width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(195deg, #42424a, #191919)', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 16, boxShadow: '0 4px 6px rgba(0,0,0,0.12)', flexShrink: 0 },
+  empName: { fontWeight: 700, fontSize: 14, color: '#344767', marginBottom: 2 },
+  empCode: { fontSize: 11, color: '#7b809a', fontWeight: 500 },
+  contactCell: { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 13, color: '#7b809a' },
+  contactItem: { display: 'block', wordBreak: 'break-all' }, // Fix email dài quá
+  actions: { display: 'flex', justifyContent: 'flex-end', gap: 8 },
+  iconBtn: { width: 30, height: 30, border: 'none', background: '#f8f9fa', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', fontSize: 14, color: '#7b809a' },
+
+  // Modal
+  modalOverlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
+  modalContent: { background: '#fff', borderRadius: 16, width: 700, maxWidth: '95%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', maxHeight: '90vh', animation: 'fadeIn 0.3s ease-out' },
+  modalHeader: { padding: '24px', borderBottom: '1px solid #f0f2f5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  modalTitle: { margin: 0, fontSize: 20, fontWeight: 700, color: '#344767' },
+  closeBtn: { border: 'none', background: 'none', fontSize: 24, cursor: 'pointer', color: '#7b809a' },
+  modalBody: { padding: 24, overflowY: 'auto' },
+  
+  formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 },
+  formGroup: { marginBottom: 0 },
+  label: { display: 'block', marginBottom: 8, fontSize: 13, fontWeight: 600, color: '#344767' },
+  input: { width: '100%', padding: '10px 12px', border: '1px solid #d2d6da', borderRadius: 8, outline: 'none', fontSize: 14, boxSizing: 'border-box', transition: 'all 0.2s', color: '#344767', background: '#fff' },
+  select: { width: '100%', padding: '10px 12px', border: '1px solid #d2d6da', borderRadius: 8, outline: 'none', fontSize: 14, boxSizing: 'border-box', background: '#fff', color: '#344767', cursor: 'pointer' },
+  
+  modalFooter: { padding: '20px 24px', borderTop: '1px solid #f0f2f5', display: 'flex', justifyContent: 'flex-end', gap: 12 },
+  btnCancel: { padding: '10px 20px', border: 'none', background: '#f0f2f5', borderRadius: 8, fontWeight: 600, cursor: 'pointer', color: '#7b809a', transition: 'all 0.2s' },
+  btnSave: { padding: '10px 24px', border: 'none', background: 'linear-gradient(195deg, #f59e0b 0%, #d97706 100%)', color: '#fff', borderRadius: 8, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 6px rgba(251, 140, 0, 0.2)', transition: 'all 0.2s' }
 };
