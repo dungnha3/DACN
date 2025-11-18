@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { styles } from './ProjectsPage.styles'
 import { mockTasks } from './data/projects.constants'
 import CreateProjectModal from './components/CreateProjectModal'
+import CreateIssueModal from './components/CreateIssueModal'
 import { projectApi } from './api/projectApi'
+import { issueApi } from './api/issueApi'
 
 export default function ProjectsPage() {
   const [mainTab, setMainTab] = useState('tasks') // tasks | projects
@@ -57,7 +59,7 @@ export default function ProjectsPage() {
 
       {/* Content Area */}
       {mainTab === 'tasks' ? (
-        <TasksTab />
+        <TasksTab key="tasks-tab" />
       ) : (
         <ProjectsTab 
           projects={projects} 
@@ -72,13 +74,46 @@ export default function ProjectsPage() {
 // Tab "Tác vụ của tôi"
 function TasksTab() {
   const [viewMode, setViewMode] = useState('list') // list | deadline | calendar | gantt
+  const [issues, setIssues] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  
+  // Load issues khi component mount
+  useEffect(() => {
+    loadIssues()
+  }, [])
+
+  const loadIssues = async () => {
+    setLoading(true)
+    try {
+      const data = await issueApi.getMyIssues()
+      setIssues(data)
+    } catch (error) {
+      console.error('Error loading issues:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+  }
+
+  const handleIssueCreated = (newIssue) => {
+    // Reload issues sau khi tạo mới
+    loadIssues()
+  }
   
   return (
     <div style={styles.tabContent}>
       {/* Toolbar */}
       <div style={styles.toolbar}>
         <div style={styles.toolbarLeft}>
-          <button style={styles.createBtn}>+ Tạo</button>
+          <button style={styles.createBtn} onClick={handleOpenModal}>+ Tạo</button>
           <select style={styles.filterSelect}>
             <option>Tất cả các vai trò</option>
             <option>Người tạo</option>
@@ -132,8 +167,20 @@ function TasksTab() {
         <button style={styles.settingsBtn}>🎨 Phím mở rộng</button>
       </div>
 
+      {/* Create Issue Modal */}
+      <CreateIssueModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSuccess={handleIssueCreated}
+      />
+
       {/* Tasks Table */}
       <div style={styles.tableWrapper}>
+        {loading ? (
+          <div style={styles.loadingContainer}>
+            <div style={styles.loadingText}>Đang tải dữ liệu...</div>
+          </div>
+        ) : (
         <table style={styles.table}>
           <thead>
             <tr>
@@ -153,8 +200,15 @@ function TasksTab() {
             </tr>
           </thead>
           <tbody>
-            {mockTasks.map((task, idx) => (
-              <tr key={idx} style={styles.tr}>
+            {issues.length === 0 ? (
+              <tr>
+                <td colSpan="8" style={{...styles.td, textAlign: 'center', padding: '32px'}}>
+                  Chưa có tác vụ nào. Nhấn nút "Tạo" để tạo tác vụ mới.
+                </td>
+              </tr>
+            ) : (
+              issues.map((task) => (
+              <tr key={task.issueId} style={styles.tr}>
                 <td style={styles.td}>
                   <input type="checkbox" />
                 </td>
@@ -164,39 +218,53 @@ function TasksTab() {
                 <td style={styles.td}>
                   <div style={styles.taskName}>
                     <span style={styles.taskIcon}>☰</span>
-                    {task.name}
-                  </div>
-                </td>
-                <td style={styles.td}>{task.activity}</td>
-                <td style={styles.td}>
-                  <span style={styles.deadlineBadge}>{task.deadline}</span>
-                </td>
-                <td style={styles.td}>
-                  <div style={styles.userBadge}>
-                    <span style={styles.avatar}>{task.creator.charAt(0)}</span>
-                    {task.creator}
+                    {task.issueKey}: {task.title}
                   </div>
                 </td>
                 <td style={styles.td}>
-                  <div style={styles.userBadge}>
-                    <span style={styles.avatar}>{task.assignee.charAt(0)}</span>
-                    {task.assignee}
-                  </div>
+                  <span style={{...styles.statusBadge, backgroundColor: task.statusColor || '#e5e7eb'}}>
+                    {task.statusName}
+                  </span>
                 </td>
                 <td style={styles.td}>
-                  <span style={styles.projectBadge}>{task.project}</span>
+                  {task.dueDate ? (
+                    <span style={{...styles.deadlineBadge, ...(task.isOverdue ? {backgroundColor: '#fee2e2', color: '#991b1b'} : {})}}>
+                      {new Date(task.dueDate).toLocaleDateString('vi-VN')}
+                    </span>
+                  ) : '-'}
+                </td>
+                <td style={styles.td}>
+                  {task.reporterName ? (
+                    <div style={styles.userBadge}>
+                      <span style={styles.avatar}>{task.reporterName.charAt(0).toUpperCase()}</span>
+                      {task.reporterName}
+                    </div>
+                  ) : '-'}
+                </td>
+                <td style={styles.td}>
+                  {task.assigneeName ? (
+                    <div style={styles.userBadge}>
+                      <span style={styles.avatar}>{task.assigneeName.charAt(0).toUpperCase()}</span>
+                      {task.assigneeName}
+                    </div>
+                  ) : '-'}
+                </td>
+                <td style={styles.td}>
+                  <span style={styles.projectBadge}>{task.projectName || '-'}</span>
                 </td>
               </tr>
-            ))}
+            ))
+            )}
           </tbody>
         </table>
+        )}
       </div>
 
       {/* Footer */}
       <div style={styles.tableFooter}>
         <div style={styles.footerLeft}>
-          <span>ĐÃ CHỌN: 0 / {mockTasks.length}</span>
-          <span style={{marginLeft: '20px'}}>TỔNG: HIỆN THỊ</span>
+          <span>ĐÃ CHỌN: 0 / {issues.length}</span>
+          <span style={{marginLeft: '20px'}}>TỔNG: {issues.length}</span>
         </div>
         <div style={styles.footerCenter}>
           <span>TRANG: 1</span>

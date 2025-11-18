@@ -4,8 +4,10 @@ import DoAn.BE.project.dto.CreateIssueRequest;
 import DoAn.BE.project.dto.IssueDTO;
 import DoAn.BE.project.dto.UpdateIssueRequest;
 import DoAn.BE.project.service.IssueService;
+import DoAn.BE.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -16,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/issues")
 @RequiredArgsConstructor
+@Slf4j
 public class IssueController {
     
     private final IssueService issueService;
@@ -24,17 +27,26 @@ public class IssueController {
     public ResponseEntity<IssueDTO> createIssue(
             @Valid @RequestBody CreateIssueRequest request,
             Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        IssueDTO issue = issueService.createIssue(request, userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(issue);
+        try {
+            log.info("Creating issue - Request: {}", request);
+            User user = (User) authentication.getPrincipal();
+            Long userId = user.getUserId();
+            log.info("User ID: {}", userId);
+            IssueDTO issue = issueService.createIssue(request, userId);
+            log.info("Issue created successfully: {}", issue.getIssueId());
+            return ResponseEntity.status(HttpStatus.CREATED).body(issue);
+        } catch (Exception e) {
+            log.error("Error creating issue", e);
+            throw e;
+        }
     }
     
     @GetMapping("/{issueId}")
     public ResponseEntity<IssueDTO> getIssue(
             @PathVariable Long issueId,
             Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        IssueDTO issue = issueService.getIssueById(issueId, userId);
+        User user = (User) authentication.getPrincipal();
+        IssueDTO issue = issueService.getIssueById(issueId, user.getUserId());
         return ResponseEntity.ok(issue);
     }
     
@@ -42,8 +54,8 @@ public class IssueController {
     public ResponseEntity<List<IssueDTO>> getProjectIssues(
             @PathVariable Long projectId,
             Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        List<IssueDTO> issues = issueService.getProjectIssues(projectId, userId);
+        User user = (User) authentication.getPrincipal();
+        List<IssueDTO> issues = issueService.getProjectIssues(projectId, user.getUserId());
         return ResponseEntity.ok(issues);
     }
     
@@ -51,8 +63,8 @@ public class IssueController {
     public ResponseEntity<List<IssueDTO>> getProjectBacklog(
             @PathVariable Long projectId,
             Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        List<IssueDTO> issues = issueService.getProjectBacklog(projectId, userId);
+        User user = (User) authentication.getPrincipal();
+        List<IssueDTO> issues = issueService.getProjectBacklog(projectId, user.getUserId());
         return ResponseEntity.ok(issues);
     }
     
@@ -60,22 +72,22 @@ public class IssueController {
     public ResponseEntity<List<IssueDTO>> getSprintIssues(
             @PathVariable Long sprintId,
             Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        List<IssueDTO> issues = issueService.getSprintIssues(sprintId, userId);
+        User user = (User) authentication.getPrincipal();
+        List<IssueDTO> issues = issueService.getSprintIssues(sprintId, user.getUserId());
         return ResponseEntity.ok(issues);
     }
     
     @GetMapping("/my-issues")
     public ResponseEntity<List<IssueDTO>> getMyIssues(Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        List<IssueDTO> issues = issueService.getMyIssues(userId);
+        User user = (User) authentication.getPrincipal();
+        List<IssueDTO> issues = issueService.getMyIssues(user.getUserId());
         return ResponseEntity.ok(issues);
     }
     
     @GetMapping("/my-reported")
     public ResponseEntity<List<IssueDTO>> getMyReportedIssues(Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        List<IssueDTO> issues = issueService.getMyReportedIssues(userId);
+        User user = (User) authentication.getPrincipal();
+        List<IssueDTO> issues = issueService.getMyReportedIssues(user.getUserId());
         return ResponseEntity.ok(issues);
     }
     
@@ -84,8 +96,8 @@ public class IssueController {
             @PathVariable Long issueId,
             @Valid @RequestBody UpdateIssueRequest request,
             Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        IssueDTO issue = issueService.updateIssue(issueId, request, userId);
+        User user = (User) authentication.getPrincipal();
+        IssueDTO issue = issueService.updateIssue(issueId, request, user.getUserId());
         return ResponseEntity.ok(issue);
     }
     
@@ -93,8 +105,8 @@ public class IssueController {
     public ResponseEntity<Void> deleteIssue(
             @PathVariable Long issueId,
             Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        issueService.deleteIssue(issueId, userId);
+        User user = (User) authentication.getPrincipal();
+        issueService.deleteIssue(issueId, user.getUserId());
         return ResponseEntity.noContent().build();
     }
     
@@ -103,8 +115,8 @@ public class IssueController {
             @PathVariable Long issueId,
             @PathVariable Long assigneeId,
             Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        IssueDTO issue = issueService.assignIssue(issueId, assigneeId, userId);
+        User user = (User) authentication.getPrincipal();
+        IssueDTO issue = issueService.assignIssue(issueId, assigneeId, user.getUserId());
         return ResponseEntity.ok(issue);
     }
     
@@ -113,8 +125,8 @@ public class IssueController {
             @PathVariable Long issueId,
             @PathVariable Integer statusId,
             Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        IssueDTO issue = issueService.changeIssueStatus(issueId, statusId, userId);
+        User user = (User) authentication.getPrincipal();
+        IssueDTO issue = issueService.changeIssueStatus(issueId, statusId, user.getUserId());
         return ResponseEntity.ok(issue);
     }
 }

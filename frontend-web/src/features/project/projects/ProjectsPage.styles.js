@@ -206,6 +206,12 @@ export const styles = {
   projectIcon: {
     fontSize: '12px',
   },
+  statusBadge: {
+    padding: '4px 10px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: '500',
+  },
   deadlineBadge: {
     padding: '4px 10px',
     backgroundColor: '#e0f2fe',
