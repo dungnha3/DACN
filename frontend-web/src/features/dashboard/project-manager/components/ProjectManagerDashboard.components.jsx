@@ -94,3 +94,45 @@ export function ApprovalStatusBadge({ status }) {
     </div>
   )
 }
+
+// Member Avatar Component
+export function MemberAvatar({ color = '#65B741' }) {
+  return (
+    <div style={{
+      width: '28px',
+      height: '28px',
+      borderRadius: '50%',
+      background: color,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: '#fff',
+      fontWeight: 'bold',
+      fontSize: '12px',
+      marginRight: '-8px',
+      border: '2px solid #fff'
+    }}>👤</div>
+  )
+}
+
+// Role Badge Component
+export function RoleBadgeProject({ role }) {
+  const roleStyle = role.includes('Người quản lý') 
+    ? { bg: '#d4edda', color: '#155724', text: role }
+    : { bg: '#e2e3e5', color: '#383d41', text: role }
+  
+  return (
+    <div style={{
+      display: 'inline-block',
+      background: roleStyle.bg,
+      color: roleStyle.color,
+      padding: '6px 12px',
+      borderRadius: '4px',
+      fontSize: '12px',
+      fontWeight: '600',
+      whiteSpace: 'nowrap'
+    }}>
+      {roleStyle.text}
+    </div>
+  )
+}
