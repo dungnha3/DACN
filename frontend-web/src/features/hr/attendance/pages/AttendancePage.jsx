@@ -1,97 +1,14 @@
-import { useState, useMemo } from 'react';
-
-// --- MOCK DATA (Mô phỏng ChamCongDTO từ Backend) ---
-const mockAttendance = [
-  { 
-    chamcongId: 1, 
-    nhanvienId: 101,
-    hoTenNhanVien: 'Nguyễn Văn A', 
-    avatar: '👨‍💻',
-    chucVu: 'Developer',
-    ngayCham: '2024-11-18', 
-    gioVao: '07:55:00', 
-    gioRa: '17:30:00', 
-    soGioLam: 8.5, 
-    trangThai: 'DU_GIO', 
-    phuongThuc: 'GPS',
-    diaChiCheckin: '123 Lê Lợi, Q.1, TP.HCM',
-    isLate: false,
-    isEarlyLeave: false,
-    ghiChu: '' 
-  },
-  { 
-    chamcongId: 2, 
-    nhanvienId: 102,
-    hoTenNhanVien: 'Trần Thị B', 
-    avatar: '👩‍💼',
-    chucVu: 'HR Manager',
-    ngayCham: '2024-11-18', 
-    gioVao: '08:15:00', 
-    gioRa: '17:45:00', 
-    soGioLam: 8.5, 
-    trangThai: 'DI_TRE', 
-    phuongThuc: 'FACE_ID',
-    diaChiCheckin: 'Văn phòng chính',
-    isLate: true,
-    isEarlyLeave: false,
-    ghiChu: 'Kẹt xe cầu Sài Gòn' 
-  },
-  { 
-    chamcongId: 3, 
-    nhanvienId: 103,
-    hoTenNhanVien: 'Lê Văn C', 
-    avatar: '⚡',
-    chucVu: 'Tech Lead',
-    ngayCham: '2024-11-18', 
-    gioVao: '08:00:00', 
-    gioRa: '16:30:00', 
-    soGioLam: 7.5, 
-    trangThai: 'VE_SOM', 
-    phuongThuc: 'GPS',
-    diaChiCheckin: 'Khách hàng ABC Corp',
-    isLate: false,
-    isEarlyLeave: true,
-    ghiChu: 'Về sớm đón con' 
-  },
-  { 
-    chamcongId: 4, 
-    nhanvienId: 104,
-    hoTenNhanVien: 'Phạm Thị D', 
-    avatar: '📊',
-    chucVu: 'Accountant',
-    ngayCham: '2024-11-18', 
-    gioVao: null, 
-    gioRa: null, 
-    soGioLam: 0, 
-    trangThai: 'NGHI_PHEP', 
-    phuongThuc: null,
-    diaChiCheckin: null,
-    isLate: false,
-    isEarlyLeave: false,
-    ghiChu: 'Phép năm' 
-  },
-  { 
-    chamcongId: 5, 
-    nhanvienId: 105,
-    hoTenNhanVien: 'Hoàng Văn E', 
-    avatar: '👤',
-    chucVu: 'Intern',
-    ngayCham: '2024-11-18', 
-    gioVao: null, 
-    gioRa: null, 
-    soGioLam: 0, 
-    trangThai: 'NGHI_KHONG_PHEP', 
-    phuongThuc: null,
-    diaChiCheckin: null,
-    isLate: false,
-    isEarlyLeave: false,
-    ghiChu: 'Không liên lạc được' 
-  },
-];
+import { useState, useMemo, useEffect } from 'react';
+import { attendanceService } from '@/features/hr/shared/services';
 
 export default function AttendancePage() {
-  const [attendanceData, setAttendanceData] = useState(mockAttendance);
-  const [filterDate, setFilterDate] = useState('2024-11-18');
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Get current date
+  const today = new Date().toISOString().split('T')[0];
+  const [filterDate, setFilterDate] = useState(today);
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -100,6 +17,28 @@ export default function AttendancePage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [isSimulating, setIsSimulating] = useState(false);
+
+  // Fetch attendance data
+  useEffect(() => {
+    fetchAttendanceData();
+  }, [filterDate]);
+
+  const fetchAttendanceData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Fetch data by date range (same day for start and end)
+      const data = await attendanceService.getByDateRange(filterDate, filterDate);
+      setAttendanceData(data || []);
+    } catch (err) {
+      console.error('Error fetching attendance:', err);
+      setError('Không thể tải dữ liệu chấm công');
+      setAttendanceData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // --- LOGIC ---
   const filteredData = useMemo(() => {
@@ -120,13 +59,45 @@ export default function AttendancePage() {
   };
 
   // --- HANDLERS ---
-  const handleGPSCheckIn = () => {
+  const handleGPSCheckIn = async () => {
     setIsSimulating(true);
-    setTimeout(() => {
+    try {
+      // Lấy tọa độ GPS
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              const gpsData = {
+                // Backend sẽ tự động lấy nhanvienId từ user hiện tại
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                diaChiCheckin: 'Vị trí hiện tại'
+              };
+              
+              await attendanceService.gpsCheckIn(gpsData);
+              alert('✅ Chấm công GPS thành công!');
+              setShowGPSModal(false);
+              fetchAttendanceData(); // Refresh data
+            } catch (err) {
+              console.error('GPS check-in error:', err);
+              alert('❌ Chấm công thất bại: ' + (err.response?.data?.message || err.message));
+            } finally {
+              setIsSimulating(false);
+            }
+          },
+          (error) => {
+            alert('❌ Không thể lấy vị trí GPS');
+            setIsSimulating(false);
+          }
+        );
+      } else {
+        alert('❌ Trình duyệt không hỗ trợ GPS');
+        setIsSimulating(false);
+      }
+    } catch (err) {
+      alert('❌ Lỗi: ' + err.message);
       setIsSimulating(false);
-      alert("✅ Đã lấy tọa độ GPS thành công!\nLat: 10.762622\nLng: 106.660172");
-      setShowGPSModal(false);
-    }, 2000);
+    }
   };
 
   const handleEdit = (record) => {
@@ -390,16 +361,16 @@ const s = {
   searchIcon: { position: 'absolute', left: 12, color: '#7b809a' },
   searchInput: {
     width: '100%', padding: '10px 12px 10px 40px', border: '1px solid #d2d6da',
-    borderRadius: 8, outline: 'none', fontSize: 14
+    borderRadius: 8, outline: 'none', fontSize: 14, background: '#fff', color: '#344767'
   },
   filterGroup: { display: 'flex', gap: 12 },
   dateInput: {
     padding: '10px 12px', border: '1px solid #d2d6da', borderRadius: 8,
-    outline: 'none', fontSize: 14, color: '#344767'
+    outline: 'none', fontSize: 14, color: '#344767', background: '#fff'
   },
   filterSelect: {
     padding: '10px 12px', border: '1px solid #d2d6da', borderRadius: 8,
-    outline: 'none', fontSize: 14, minWidth: 160, cursor: 'pointer', color: '#344767'
+    outline: 'none', fontSize: 14, minWidth: 160, cursor: 'pointer', color: '#344767', background: '#fff'
   },
 
   // Table

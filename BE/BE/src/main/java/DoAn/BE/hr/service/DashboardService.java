@@ -334,17 +334,19 @@ public class DashboardService {
         List<Object[]> results = nghiPhepRepository.getStatsByLoaiPhep();
         
         for (Object[] result : results) {
-            String loaiNghi = (String) result[0];
+            // result[0] là enum LoaiPhep, không phải String
+            NghiPhep.LoaiPhep loaiPhepEnum = (NghiPhep.LoaiPhep) result[0];
             long soLuong = (Long) result[1];
+            
             long choDuyet = nghiPhepRepository.countByLoaiPhepAndTrangThai(
-                NghiPhep.LoaiPhep.valueOf(loaiNghi), NghiPhep.TrangThaiNghiPhep.CHO_DUYET);
+                loaiPhepEnum, NghiPhep.TrangThaiNghiPhep.CHO_DUYET);
             long daDuyet = nghiPhepRepository.countByLoaiPhepAndTrangThai(
-                NghiPhep.LoaiPhep.valueOf(loaiNghi), NghiPhep.TrangThaiNghiPhep.DA_DUYET);
+                loaiPhepEnum, NghiPhep.TrangThaiNghiPhep.DA_DUYET);
             long tuChoi = nghiPhepRepository.countByLoaiPhepAndTrangThai(
-                NghiPhep.LoaiPhep.valueOf(loaiNghi), NghiPhep.TrangThaiNghiPhep.TU_CHOI);
+                loaiPhepEnum, NghiPhep.TrangThaiNghiPhep.TU_CHOI);
             
             stats.add(new DashboardStatsDTO.NghiPhepStats(
-                loaiNghi, soLuong, choDuyet, daDuyet, tuChoi));
+                loaiPhepEnum.name(), soLuong, choDuyet, daDuyet, tuChoi));
         }
         
         return stats;

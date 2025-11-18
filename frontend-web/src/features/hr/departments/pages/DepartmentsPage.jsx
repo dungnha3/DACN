@@ -1,64 +1,32 @@
-import { useState, useMemo } from 'react';
-
-// --- MOCK DATA ---
-const mockDepartments = [
-  { 
-    phongbanId: 1, 
-    tenPhongBan: 'Phòng Công Nghệ (IT)', 
-    moTa: 'Phát triển, bảo trì hệ thống phần mềm và hạ tầng mạng.', 
-    soNhanVien: 15, 
-    truongPhongId: 101,
-    tenTruongPhong: 'Nguyễn Văn A', 
-    createdAt: '2023-01-15' 
-  },
-  { 
-    phongbanId: 2, 
-    tenPhongBan: 'Phòng Nhân Sự (HR)', 
-    moTa: 'Quản lý tuyển dụng, đào tạo, lương thưởng và phúc lợi.', 
-    soNhanVien: 8, 
-    truongPhongId: 102,
-    tenTruongPhong: 'Trần Thị B', 
-    createdAt: '2023-02-20' 
-  },
-  { 
-    phongbanId: 3, 
-    tenPhongBan: 'Phòng Kế Toán', 
-    moTa: 'Quản lý tài chính, thu chi, báo cáo thuế và kiểm toán.', 
-    soNhanVien: 6, 
-    truongPhongId: 103,
-    tenTruongPhong: 'Lê Văn C', 
-    createdAt: '2023-03-10' 
-  },
-  { 
-    phongbanId: 4, 
-    tenPhongBan: 'Phòng Marketing', 
-    moTa: 'Xây dựng thương hiệu, quảng cáo và truyền thông.', 
-    soNhanVien: 10, 
-    truongPhongId: 104,
-    tenTruongPhong: 'Phạm Thị D', 
-    createdAt: '2023-04-05' 
-  },
-  { 
-    phongbanId: 5, 
-    tenPhongBan: 'Phòng Kinh Doanh', 
-    moTa: 'Tìm kiếm khách hàng, bán hàng và mở rộng thị trường.', 
-    soNhanVien: 20, 
-    truongPhongId: null,
-    tenTruongPhong: null,
-    createdAt: '2023-05-12' 
-  },
-];
-
-const mockEmployees = [
-  { id: 101, name: 'Nguyễn Văn A' },
-  { id: 102, name: 'Trần Thị B' },
-  { id: 103, name: 'Lê Văn C' },
-  { id: 104, name: 'Phạm Thị D' },
-  { id: 105, name: 'Hoàng Văn E' },
-];
+import { useState, useMemo, useEffect } from 'react';
+import { departmentsService, employeesService } from '@/features/hr/shared/services';
 
 export default function DepartmentsPage() {
-  const [departments, setDepartments] = useState(mockDepartments);
+  const [departments, setDepartments] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(false);
+  
+  useEffect(() => {
+    loadData();
+  }, []);
+  
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [depts, emps] = await Promise.all([
+        departmentsService.getAll(),
+        employeesService.getAll()
+      ]);
+      setDepartments(depts);
+      setEmployees(emps);
+    } catch (err) {
+      console.error('Error loading data:', err);
+      alert('Không thể tải dữ liệu: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const [searchTerm, setSearchTerm] = useState('');
   
   const [showModal, setShowModal] = useState(false);
@@ -78,7 +46,7 @@ export default function DepartmentsPage() {
 
   const stats = {
     totalDepts: departments.length,
-    totalEmps: departments.reduce((acc, cur) => acc + cur.soNhanVien, 0),
+    totalEmps: departments.reduce((acc, cur) => acc + (cur.soLuongNhanVien || 0), 0),
     noManager: departments.filter(d => !d.tenTruongPhong).length
   };
 
@@ -99,35 +67,39 @@ export default function DepartmentsPage() {
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if(confirm('Bạn có chắc chắn muốn xóa phòng ban này?')) {
-      setDepartments(prev => prev.filter(d => d.phongbanId !== id));
+      try {
+        setLoading(true);
+        await departmentsService.delete(id);
+        await loadData();
+        alert('Xóa phòng ban thành công!');
+      } catch (err) {
+        alert('Lỗi: ' + (err.response?.data?.message || err.message));
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.tenPhongBan) return alert("Tên phòng ban là bắt buộc!");
 
-    if (isEditing) {
-      setDepartments(prev => prev.map(d => {
-        if (d.phongbanId === formData.phongbanId) {
-          const managerName = mockEmployees.find(e => e.id == formData.truongPhongId)?.name;
-          return { ...d, ...formData, tenTruongPhong: managerName };
-        }
-        return d;
-      }));
-    } else {
-      const managerName = mockEmployees.find(e => e.id == formData.truongPhongId)?.name;
-      const newDept = {
-        phongbanId: Date.now(),
-        ...formData,
-        tenTruongPhong: managerName,
-        soNhanVien: 0,
-        createdAt: new Date().toISOString().split('T')[0]
-      };
-      setDepartments([...departments, newDept]);
+    try {
+      setLoading(true);
+      if (isEditing) {
+        await departmentsService.update(formData.phongbanId, formData);
+      } else {
+        await departmentsService.create(formData);
+      }
+      await loadData();
+      setShowModal(false);
+      alert(isEditing ? 'Cập nhật phòng ban thành công!' : 'Thêm phòng ban thành công!');
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
     }
-    setShowModal(false);
   };
 
   return (
@@ -192,7 +164,7 @@ export default function DepartmentsPage() {
               <div style={s.infoItem}>
                 <span style={s.infoLabel}>Nhân sự</span>
                 <div style={s.empCountBadge}>
-                  👥 {dept.soNhanVien}
+                  👥 {dept.soLuongNhanVien || 0}
                 </div>
               </div>
             </div>
@@ -235,8 +207,8 @@ export default function DepartmentsPage() {
                   onChange={e => setFormData({...formData, truongPhongId: e.target.value})}
                 >
                   <option value="">-- Chọn nhân viên --</option>
-                  {mockEmployees.map(e => (
-                    <option key={e.id} value={e.id}>{e.name}</option>
+                  {employees.map(e => (
+                    <option key={e.nhanvienId} value={e.nhanvienId}>{e.hoTen}</option>
                   ))}
                 </select>
               </div>

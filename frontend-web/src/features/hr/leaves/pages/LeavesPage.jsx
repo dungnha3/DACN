@@ -1,79 +1,10 @@
-import { useState, useMemo } from 'react';
-
-// --- MOCK DATA ---
-const mockLeaves = [
-  { 
-    nghiphepId: 1, 
-    nhanvienId: 101,
-    hoTenNhanVien: 'Nguyễn Văn A', 
-    avatar: '👨‍💻',
-    chucVu: 'Developer',
-    loaiPhep: 'PHEP_NAM', 
-    ngayBatDau: '2025-11-20', 
-    ngayKetThuc: '2025-11-22', 
-    soNgay: 3, 
-    lyDo: 'Giải quyết việc gia đình ở quê', 
-    trangThai: 'CHO_DUYET', 
-    nguoiDuyetId: null,
-    tenNguoiDuyet: null,
-    ghiChuDuyet: null,
-    createdAt: '2025-11-15T08:00:00'
-  },
-  { 
-    nghiphepId: 2, 
-    nhanvienId: 102,
-    hoTenNhanVien: 'Trần Thị B', 
-    avatar: '👩‍💼',
-    chucVu: 'HR Staff',
-    loaiPhep: 'OM', 
-    ngayBatDau: '2025-11-18', 
-    ngayKetThuc: '2025-11-18', 
-    soNgay: 1, 
-    lyDo: 'Sốt cao, có giấy bệnh viện', 
-    trangThai: 'DA_DUYET', 
-    nguoiDuyetId: 999,
-    tenNguoiDuyet: 'HR Manager',
-    ghiChuDuyet: 'Đã nhận giấy khám',
-    createdAt: '2025-11-17T09:30:00'
-  },
-  { 
-    nghiphepId: 3, 
-    nhanvienId: 103,
-    hoTenNhanVien: 'Lê Văn C', 
-    avatar: '⚡',
-    chucVu: 'Tech Lead',
-    loaiPhep: 'KO_LUONG', 
-    ngayBatDau: '2025-12-01', 
-    ngayKetThuc: '2025-12-05', 
-    soNgay: 5, 
-    lyDo: 'Đi du lịch nước ngoài', 
-    trangThai: 'CHO_DUYET', 
-    nguoiDuyetId: null,
-    tenNguoiDuyet: null,
-    ghiChuDuyet: null,
-    createdAt: '2025-11-18T10:00:00'
-  },
-  { 
-    nghiphepId: 4, 
-    nhanvienId: 104,
-    hoTenNhanVien: 'Phạm Thị D', 
-    avatar: '📊',
-    chucVu: 'Accountant',
-    loaiPhep: 'PHEP_NAM', 
-    ngayBatDau: '2025-11-10', 
-    ngayKetThuc: '2025-11-10', 
-    soNgay: 1, 
-    lyDo: 'Việc cá nhân', 
-    trangThai: 'TU_CHOI', 
-    nguoiDuyetId: 999,
-    tenNguoiDuyet: 'HR Manager',
-    ghiChuDuyet: 'Phòng kế toán đang chốt sổ, không thể nghỉ',
-    createdAt: '2025-11-08T14:20:00'
-  },
-];
+import { useState, useMemo, useEffect } from 'react';
+import { leavesService } from '@/features/hr/shared/services';
 
 export default function LeavesPage() {
-  const [leaves, setLeaves] = useState(mockLeaves);
+  const [leaves, setLeaves] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -81,6 +12,26 @@ export default function LeavesPage() {
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [approvalNote, setApprovalNote] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Fetch leaves data
+  useEffect(() => {
+    fetchLeavesData();
+  }, []);
+
+  const fetchLeavesData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await leavesService.getAll();
+      setLeaves(data || []);
+    } catch (err) {
+      console.error('Error fetching leaves:', err);
+      setError('Không thể tải dữ liệu nghỉ phép');
+      setLeaves([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // --- LOGIC ---
   const filteredLeaves = useMemo(() => {
@@ -98,17 +49,26 @@ export default function LeavesPage() {
     tongNgayPhep: leaves.filter(l => l.trangThai === 'DA_DUYET').reduce((acc, curr) => acc + curr.soNgay, 0)
   };
 
-  const handleAction = (action) => {
+  const handleAction = async (action) => {
     if (!selectedLeave) return;
-    const newStatus = action === 'APPROVE' ? 'DA_DUYET' : 'TU_CHOI';
-    setLeaves(prev => prev.map(item => 
-      item.nghiphepId === selectedLeave.nghiphepId 
-        ? { ...item, trangThai: newStatus, ghiChuDuyet: approvalNote, tenNguoiDuyet: 'HR Manager', ngayDuyet: new Date().toISOString() } 
-        : item
-    ));
-    alert(`Đã ${action === 'APPROVE' ? 'duyệt' : 'từ chối'} đơn thành công!`);
-    setSelectedLeave(null);
-    setApprovalNote('');
+    
+    try {
+      if (action === 'APPROVE') {
+        await leavesService.approve(selectedLeave.nghiphepId, approvalNote);
+        alert('✅ Đã duyệt đơn thành công!');
+      } else {
+        await leavesService.reject(selectedLeave.nghiphepId, approvalNote);
+        alert('✅ Đã từ chối đơn thành công!');
+      }
+      
+      // Refresh data
+      fetchLeavesData();
+      setSelectedLeave(null);
+      setApprovalNote('');
+    } catch (err) {
+      console.error('Error processing leave:', err);
+      alert('❌ Xử lý đơn thất bại: ' + (err.response?.data?.message || err.message));
+    }
   };
 
   // Helpers
@@ -419,11 +379,11 @@ const s = {
   searchIcon: { position: 'absolute', left: 12, color: '#7b809a' },
   searchInput: {
     width: '100%', padding: '12px 12px 12px 40px', border: '1px solid #d2d6da',
-    borderRadius: 8, outline: 'none', fontSize: 14
+    borderRadius: 8, outline: 'none', fontSize: 14, background: '#fff', color: '#344767'
   },
   filterSelect: {
     padding: '12px 16px', border: '1px solid #d2d6da', borderRadius: 8,
-    outline: 'none', fontSize: 14, minWidth: 180, cursor: 'pointer', color: '#344767'
+    outline: 'none', fontSize: 14, minWidth: 180, cursor: 'pointer', color: '#344767', background: '#fff'
   },
 
   // Table
@@ -504,7 +464,8 @@ const s = {
   },
   noteInput: {
     width: '100%', padding: 12, borderRadius: 8, border: '1px solid #fdba74',
-    marginBottom: 16, outline: 'none', fontSize: 14, boxSizing: 'border-box', minHeight: 80
+    marginBottom: 16, outline: 'none', fontSize: 14, boxSizing: 'border-box', minHeight: 80,
+    background: '#fff', color: '#344767', fontWeight: 600
   },
   approvalActions: { display: 'flex', gap: 12, justifyContent: 'flex-end' },
   btnReject: {

@@ -1,17 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { styles } from './HrManagerDashboard.styles'
 import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar, ApprovalStatusBadge } from './components/HrManagerDashboard.components'
-import { 
-  kpiData, 
-  attendanceHistory, 
-  leaveRequests, 
-  notifications, 
-  sectionsConfig, 
-  pendingApprovals, 
-  chatContacts, 
-  chatMessages 
-} from './components/HrManagerDashboard.constants'
+import { sectionsConfig, chatContacts, chatMessages, notifications } from './components/HrManagerDashboard.constants'
+import { dashboardService, attendanceService, leavesService, contractsService } from '@/features/hr/shared/services'
 import { 
   EmployeesPage, 
   AttendancePage, 
@@ -29,24 +21,16 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 
 export default function HrManagerDashboard() {
   const [active, setActive] = useState('dashboard')
-  const [approvals, setApprovals] = useState(pendingApprovals)
+  const [loading, setLoading] = useState(false)
   
-  // --- DỮ LIỆU GIẢ CHO BIỂU ĐỒ & WIDGET (MOCK DATA) ---
-  const mockChartData = [
-    { name: 'IT', hours: 1250 },
-    { name: 'HR', hours: 450 },
-    { name: 'Sales', hours: 980 },
-    { name: 'Marketing', hours: 800 },
-    { name: 'Accounting', hours: 600 },
-  ];
-
-  const mockExpiringContracts = [
-    { id: 1, name: 'Lê Văn C', role: 'Tech Lead', date: '25/11/2025' },
-    { id: 2, name: 'Phạm Thị D', role: 'Accountant', date: '01/12/2025' },
-    { id: 3, name: 'Nguyễn Văn A', role: 'Developer', date: '15/12/2025' },
-  ];
-  // ----------------------------------------------------
-
+  // State cho dữ liệu từ API
+  const [kpiData, setKpiData] = useState({ totalEmployees: 0, pendingLeaves: 0, approvedToday: 0, newHires: 0 })
+  const [chartData, setChartData] = useState([])
+  const [expiringContracts, setExpiringContracts] = useState([])
+  const [attendanceHistory, setAttendanceHistory] = useState([])
+  const [leaveRequests, setLeaveRequests] = useState([])
+  const [approvals, setApprovals] = useState([])
+  
   const [selectedContact, setSelectedContact] = useState(chatContacts[0])
   const [messageInput, setMessageInput] = useState('')
   const { logout, user: authUser } = useAuth()
@@ -55,23 +39,63 @@ export default function HrManagerDashboard() {
 
   const sections = useMemo(() => sectionsConfig, [])
   const meta = sections[active]
+  
+  // Load dữ liệu khi component mount
+  useEffect(() => {
+    loadDashboardData()
+  }, [])
+  
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true)
+      const [stats, contracts, attendance, leaves, pending] = await Promise.all([
+        dashboardService.getStats(),
+        contractsService.getExpiring(30),
+        attendanceService.getAll(),
+        leavesService.getAll(),
+        leavesService.getPending()
+      ])
+      
+      setKpiData({
+        totalEmployees: stats.tongNhanVien || 0,
+        pendingLeaves: pending.length || 0,
+        approvedToday: stats.donDaDuyet || 0,
+        newHires: stats.nhanVienMoi || 0
+      })
+      setChartData(stats.chamCongPhongBan || [])
+      setExpiringContracts(contracts.slice(0, 3) || [])
+      setAttendanceHistory(attendance.slice(0, 5) || [])
+      setLeaveRequests(leaves.slice(0, 3) || [])
+      setApprovals(pending || [])
+    } catch (err) {
+      console.error('Error loading dashboard:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleLogout = async () => {
     await logout()
   }
 
-  const handleApprove = (id) => {
-    setApprovals(prev => prev.map(item => 
-      item.id === id ? { ...item, status: 'approved' } : item
-    ))
-    alert('Đã duyệt đơn thành công!')
+  const handleApprove = async (id) => {
+    try {
+      await leavesService.approve(id, 'Phê duyệt')
+      await loadDashboardData()
+      alert('Đã duyệt đơn thành công!')
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message))
+    }
   }
 
-  const handleReject = (id) => {
-    setApprovals(prev => prev.map(item => 
-      item.id === id ? { ...item, status: 'rejected' } : item
-    ))
-    alert('Đã từ chối đơn!')
+  const handleReject = async (id) => {
+    try {
+      await leavesService.reject(id, 'Từ chối')
+      await loadDashboardData()
+      alert('Đã từ chối đơn!')
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message))
+    }
   }
 
   return (
@@ -189,7 +213,7 @@ export default function HrManagerDashboard() {
               />
               <KPICard 
                 title="Hợp đồng sắp hết hạn" 
-                value={`${mockExpiringContracts.length} HĐ`} 
+                value={`${expiringContracts.length} HĐ`} 
                 icon="📝" color="primary" change="Trong 30 ngày tới" 
               />
             </div>
@@ -212,12 +236,12 @@ export default function HrManagerDashboard() {
               <div style={styles.notificationCard}>
                 <h4 style={styles.cardTitle}>⚠️ Hợp đồng cần chú ý</h4>
                 <div style={styles.notificationList}>
-                  {mockExpiringContracts.map((contract, idx) => (
+                  {expiringContracts.map((contract, idx) => (
                     <div key={idx} style={styles.notificationItem}>
                       <div style={{...styles.notifIcon, fontSize: 16}}>📄</div>
                       <div style={styles.notifContent}>
-                        <div style={styles.notifTitle}>{contract.name} <span style={{fontWeight: 'normal', fontSize: 12, color: '#7b809a'}}>({contract.role})</span></div>
-                        <div style={styles.notifDesc}>Hết hạn: {contract.date}</div>
+                        <div style={styles.notifTitle}>{contract.nhanVien || contract.tenNhanVien} <span style={{fontWeight: 'normal', fontSize: 12, color: '#7b809a'}}>({contract.chucVu || contract.tenChucVu})</span></div>
+                        <div style={styles.notifDesc}>Hết hạn: {contract.ngayKetThuc}</div>
                       </div>
                     </div>
                   ))}
@@ -232,7 +256,7 @@ export default function HrManagerDashboard() {
                 <h4 style={styles.cardTitle}>📊 Thống kê giờ làm việc theo phòng ban</h4>
                 <div style={{ height: 300, marginTop: 20 }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={mockChartData} margin={{top: 5, right: 30, left: 20, bottom: 5}}>
+                    <BarChart data={chartData.map(d => ({ name: d.phongBan, hours: (d.coMat || 0) * 8 }))} margin={{top: 5, right: 30, left: 20, bottom: 5}}>
                       <XAxis dataKey="name" fontSize={12} />
                       <YAxis fontSize={12} />
                       <Tooltip 
@@ -240,7 +264,7 @@ export default function HrManagerDashboard() {
                         contentStyle={{borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}}
                       />
                       <Bar dataKey="hours" name="Tổng giờ làm" radius={[4, 4, 0, 0]} barSize={40}>
-                        {mockChartData.map((entry, index) => (
+                        {chartData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={['#fb8c00', '#43a047', '#1e88e5', '#e53935', '#8e24aa'][index % 5]} />
                         ))}
                       </Bar>
@@ -428,14 +452,40 @@ export default function HrManagerDashboard() {
         {/* Chat Page */}
         {active === 'chat' && (
           <div style={styles.chatContainer}>
+            {/* Left Column - Chat List */}
             <div style={styles.chatSidebar}>
               <div style={styles.chatSidebarHeader}>
-                <input 
-                  type="text" 
-                  placeholder="Tìm kiếm..." 
-                  style={styles.chatSearchInput}
-                />
+                <div style={{
+                  position: 'relative',
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  <svg 
+                    style={{
+                      position: 'absolute',
+                      left: '14px',
+                      width: '18px',
+                      height: '18px',
+                      pointerEvents: 'none',
+                      zIndex: 1
+                    }}
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="#7b809a" 
+                    strokeWidth="2"
+                  >
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                  </svg>
+                  <input 
+                    type="text" 
+                    placeholder="Tìm kiếm cuộc trò chuyện..." 
+                    style={styles.chatSearchInput}
+                  />
+                </div>
               </div>
+              
               <div style={styles.chatContactList}>
                 {chatContacts.map((contact) => (
                   <div 
@@ -446,46 +496,154 @@ export default function HrManagerDashboard() {
                     }}
                     onClick={() => setSelectedContact(contact)}
                   >
-                    <div style={styles.chatContactAvatar}>{contact.avatar}</div>
+                    <div style={styles.chatContactAvatar}>
+                      <span style={styles.chatContactAvatarIcon}>{contact.avatar}</span>
+                      {contact.online && <div style={styles.chatOnlineBadge} />}
+                    </div>
                     <div style={styles.chatContactInfo}>
-                      <div style={styles.chatContactName}>{contact.name}</div>
+                      <div style={styles.chatContactHeader}>
+                        <div style={styles.chatContactName}>{contact.name}</div>
+                        <div style={styles.chatContactTime}>{contact.time}</div>
+                      </div>
                       <div style={styles.chatContactMessage}>{contact.lastMessage}</div>
                     </div>
+                    {contact.unread > 0 && (
+                      <div style={styles.chatUnreadBadge}>{contact.unread}</div>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
 
+            {/* Right Column - Chat Window */}
             <div style={styles.chatWindow}>
-               <div style={styles.chatWindowHeader}>
-                  <div style={styles.chatWindowName}>{selectedContact.name}</div>
-               </div>
-               <div style={styles.chatMessagesArea}>
-                  {chatMessages.map(msg => (
-                    <div key={msg.id} style={{
+              {/* Chat Header */}
+              <div style={styles.chatWindowHeader}>
+                <div style={styles.chatWindowHeaderLeft}>
+                  <div style={styles.chatWindowAvatar}>{selectedContact.avatar}</div>
+                  <div>
+                    <div style={styles.chatWindowName}>{selectedContact.name}</div>
+                    <div style={styles.chatWindowStatus}>
+                      {selectedContact.online ? '🟢 Đang hoạt động' : '⚫ Không hoạt động'}
+                    </div>
+                  </div>
+                </div>
+                <div style={styles.chatWindowActions}>
+                  <button style={styles.chatActionButton} title="Tìm kiếm">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="11" cy="11" r="8"/>
+                      <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                  </button>
+                  <button style={styles.chatActionButton} title="Gọi điện">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                  </button>
+                  <button style={styles.chatActionButton} title="Video call">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polygon points="23 7 16 12 23 17 23 7"/>
+                      <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                    </svg>
+                  </button>
+                  <button style={styles.chatActionButton} title="Thêm">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="1"/>
+                      <circle cx="12" cy="5" r="1"/>
+                      <circle cx="12" cy="19" r="1"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Messages Area */}
+              <div style={styles.chatMessagesArea}>
+                <div style={styles.chatDateDivider}>
+                  <span style={styles.chatDateText}>Hôm nay</span>
+                </div>
+                {chatMessages.map((message) => (
+                  <div 
+                    key={message.id}
+                    style={{
                       ...styles.chatMessageRow,
-                      ...(msg.isOwn ? styles.chatMessageRowOwn : {})
-                    }}>
+                      ...(message.isOwn ? styles.chatMessageRowOwn : {})
+                    }}
+                  >
+                    {!message.isOwn && (
+                      <div style={styles.chatMessageAvatar}>{selectedContact.avatar}</div>
+                    )}
+                    <div style={styles.chatMessageGroup}>
                       <div style={{
                         ...styles.chatMessageBubble,
-                        ...(msg.isOwn ? styles.chatMessageBubbleOwn : {})
+                        ...(message.isOwn ? styles.chatMessageBubbleOwn : {})
                       }}>
-                        {msg.content}
+                        {message.content}
+                      </div>
+                      <div style={{
+                        ...styles.chatMessageTime,
+                        ...(message.isOwn ? styles.chatMessageTimeOwn : {})
+                      }}>
+                        {message.time}
                       </div>
                     </div>
-                  ))}
-               </div>
-               <div style={styles.chatInputArea}>
-                  <div style={styles.chatInputWrapper}>
-                    <input 
-                      style={styles.chatMessageInput} 
-                      placeholder="Nhập tin nhắn..."
-                      value={messageInput}
-                      onChange={e => setMessageInput(e.target.value)}
-                    />
-                    <button style={styles.chatSendButton}>➤</button>
                   </div>
-               </div>
+                ))}
+              </div>
+
+              {/* Input Area */}
+              <div style={styles.chatInputArea}>
+                <div style={styles.chatInputToolbar}>
+                  <button style={styles.chatToolButton} title="Đính kèm file">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                    </svg>
+                  </button>
+                  <button style={styles.chatToolButton} title="Hình ảnh">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5"/>
+                      <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                  </button>
+                  <button style={styles.chatToolButton} title="Emoji">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                      <line x1="9" y1="9" x2="9.01" y2="9"/>
+                      <line x1="15" y1="9" x2="15.01" y2="9"/>
+                    </svg>
+                  </button>
+                </div>
+                <div style={styles.chatInputWrapper}>
+                  <input 
+                    type="text"
+                    placeholder={`Nhắn tin tới ${selectedContact.name}...`}
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
+                    style={styles.chatMessageInput}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && messageInput.trim()) {
+                        // Handle send message
+                        setMessageInput('')
+                      }
+                    }}
+                  />
+                  <button 
+                    style={styles.chatSendButton}
+                    onClick={() => {
+                      if (messageInput.trim()) {
+                        // Handle send message
+                        setMessageInput('')
+                      }
+                    }}
+                  >
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13"/>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

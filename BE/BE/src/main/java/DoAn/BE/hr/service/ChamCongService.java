@@ -347,12 +347,31 @@ public class ChamCongService {
     /**
      * ⭐⭐⭐ CHẤM CÔNG GPS - Tính năng mới
      * Chấm công bằng GPS với kiểm tra vị trí
+     * Tự động lấy nhanvienId từ user hiện tại nếu không được cung cấp
      */
-    public Map<String, Object> chamCongGPS(ChamCongGPSRequest request) {
-        log.info("Chấm công GPS cho nhân viên ID: {}", request.getNhanvienId());
+    public Map<String, Object> chamCongGPS(ChamCongGPSRequest request, User currentUser) {
+        log.info("Chấm công GPS cho user: {}", currentUser.getUsername());
         
-        // 1. Lấy thông tin nhân viên
-        NhanVien nhanVien = nhanVienRepository.findById(request.getNhanvienId())
+        // 1. Lấy thông tin nhân viên từ user hiện tại
+        Long nhanvienId = request.getNhanvienId();
+        if (nhanvienId == null) {
+            // Tự động lấy nhanvienId từ userId
+            NhanVien nhanVien = nhanVienRepository.findByUser_UserId(currentUser.getUserId())
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy thông tin nhân viên cho user hiện tại"));
+            nhanvienId = nhanVien.getNhanvienId();
+            log.info("Tự động lấy nhanvienId: {} từ userId: {}", nhanvienId, currentUser.getUserId());
+        } else {
+            // Kiểm tra quyền: chỉ cho phép chấm công cho chính mình (trừ HR/Accounting Manager)
+            if (!currentUser.isManagerHR() && !currentUser.isManagerAccounting()) {
+                NhanVien myNhanVien = nhanVienRepository.findByUser_UserId(currentUser.getUserId())
+                    .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy thông tin nhân viên cho user hiện tại"));
+                if (!nhanvienId.equals(myNhanVien.getNhanvienId())) {
+                    throw new ForbiddenException("Bạn chỉ có thể chấm công cho chính mình");
+                }
+            }
+        }
+        
+        NhanVien nhanVien = nhanVienRepository.findById(nhanvienId)
             .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
         
         // 2. Tính khoảng cách từ công ty

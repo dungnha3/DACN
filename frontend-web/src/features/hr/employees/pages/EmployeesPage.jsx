@@ -1,57 +1,152 @@
-import { useState } from 'react';
-
-const initialEmployees = [
-  { id: 1, code: 'NV001', hoTen: 'Nguyễn Văn A', email: 'nva@company.com', sdt: '0901234567', phongBan: 'IT', chucVu: 'Developer', luongCoBan: 15000000, trangThai: 'DANG_LAM_VIEC', ngayVaoLam: '2023-01-15', avatar: '👨‍💻' },
-  { id: 2, code: 'NV002', hoTen: 'Trần Thị B', email: 'ttb@company.com', sdt: '0912345678', phongBan: 'HR', chucVu: 'HR Manager', luongCoBan: 20000000, trangThai: 'DANG_LAM_VIEC', ngayVaoLam: '2022-05-20', avatar: '👩‍💼' },
-  { id: 3, code: 'NV003', hoTen: 'Lê Văn C', email: 'lvc@company.com', sdt: '0923456789', phongBan: 'IT', chucVu: 'Tech Lead', luongCoBan: 25000000, trangThai: 'DANG_LAM_VIEC', ngayVaoLam: '2021-03-10', avatar: '⚡' },
-  { id: 4, code: 'NV004', hoTen: 'Phạm Thị D', email: 'ptd@company.com', sdt: '0934567890', phongBan: 'Accounting', chucVu: 'Accountant', luongCoBan: 12000000, trangThai: 'NGHI_VIEC', ngayVaoLam: '2023-06-01', avatar: '📊' },
-  { id: 5, code: 'NV005', hoTen: 'Hoàng Văn E', email: 'hve@company.com', sdt: '0945678901', phongBan: 'Marketing', chucVu: 'Marketing Manager', luongCoBan: 18000000, trangThai: 'NGHI_THAI_SAN', ngayVaoLam: '2022-11-15', avatar: '📢' },
-];
+import { useState, useEffect } from 'react';
+import { employeesService, departmentsService, positionsService } from '@/features/hr/shared/services';
+import { apiService } from '@/shared/services/api.service';
 
 export default function EmployeesPage() {
-  const [employees, setEmployees] = useState(initialEmployees);
+  const [employees, setEmployees] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [positions, setPositions] = useState([]);
+  const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const [newEmp, setNewEmp] = useState({
-    hoTen: '', email: '', sdt: '', phongBan: 'IT', chucVu: '', luongCoBan: '', trangThai: 'DANG_LAM_VIEC', ngayVaoLam: new Date().toISOString().split('T')[0]
+    userId: '',
+    hoTen: '',
+    cccd: '',
+    ngaySinh: '',
+    gioiTinh: 'Nam',
+    diaChi: '',
+    ngayVaoLam: new Date().toISOString().split('T')[0],
+    phongbanId: '',
+    chucvuId: '',
+    luongCoBan: '',
+    phuCap: ''
   });
+
+  // Load dữ liệu từ API
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // Load employees, departments, positions
+      const [empData, deptData, posData] = await Promise.all([
+        employeesService.getAll(),
+        departmentsService.getAll(),
+        positionsService.getAll()
+      ]);
+      setEmployees(empData);
+      setDepartments(deptData);
+      setPositions(posData);
+      
+      // Load users (for dropdown) - Try both /users and /api/users
+      try {
+        const usersData = await apiService.get('/users');
+        setUsers(usersData || []);
+      } catch (err) {
+        console.log('Could not load users from /users, trying /api/users:', err.message);
+        try {
+          const usersData = await apiService.get('/api/users');
+          setUsers(usersData || []);
+        } catch (err2) {
+          console.error('Could not load users from both endpoints:', err2);
+          setUsers([]);
+        }
+      }
+    } catch (err) {
+      setError(err.message || 'Không thể tải dữ liệu');
+      console.error('Error loading data:', err);
+      console.error('Error response:', err.response?.data);
+      console.error('Error status:', err.response?.status);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewEmp({ ...newEmp, [name]: value });
   };
 
-  const handleSave = () => {
-    if (!newEmp.hoTen || !newEmp.email) {
-      alert("Vui lòng điền Họ tên và Email!");
-      return;
+  const handleSave = async () => {
+    // Validation
+    if (!newEmp.hoTen) {
+      return alert("Vui lòng điền Họ tên!");
+    }
+    if (!newEmp.userId) {
+      return alert("Vui lòng chọn tài khoản!");
+    }
+    if (!newEmp.ngaySinh) {
+      return alert("Vui lòng chọn ngày sinh!");
+    }
+    if (!newEmp.ngayVaoLam) {
+      return alert("Vui lòng chọn ngày vào làm!");
     }
     
-    const newId = employees.length + 1;
-    const newEmployeeData = {
-      id: newId,
-      code: `NV00${newId}`,
-      ...newEmp,
-      luongCoBan: Number(newEmp.luongCoBan),
-      avatar: '👤'
-    };
-
-    setEmployees([newEmployeeData, ...employees]);
-    setShowModal(false);
-    setNewEmp({ hoTen: '', email: '', sdt: '', phongBan: 'IT', chucVu: '', luongCoBan: '', trangThai: 'DANG_LAM_VIEC', ngayVaoLam: '' });
+    try {
+      setLoading(true);
+      await employeesService.create({
+        userId: Number(newEmp.userId),
+        hoTen: newEmp.hoTen,
+        cccd: newEmp.cccd || null,
+        ngaySinh: newEmp.ngaySinh,
+        gioiTinh: newEmp.gioiTinh,
+        diaChi: newEmp.diaChi || null,
+        ngayVaoLam: newEmp.ngayVaoLam,
+        phongbanId: newEmp.phongbanId ? Number(newEmp.phongbanId) : null,
+        chucvuId: newEmp.chucvuId ? Number(newEmp.chucvuId) : null,
+        luongCoBan: newEmp.luongCoBan ? Number(newEmp.luongCoBan) : 0,
+        phuCap: newEmp.phuCap ? Number(newEmp.phuCap) : 0
+      });
+      await loadData();
+      setShowModal(false);
+      setNewEmp({
+        userId: '',
+        hoTen: '',
+        cccd: '',
+        ngaySinh: '',
+        gioiTinh: 'Nam',
+        diaChi: '',
+        ngayVaoLam: new Date().toISOString().split('T')[0],
+        phongbanId: '',
+        chucvuId: '',
+        luongCoBan: '',
+        phuCap: ''
+      });
+      alert('Thêm nhân viên thành công!');
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message));
+      console.error('Create employee error:', err.response?.data);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if(confirm('Bạn chắc chắn muốn xóa nhân viên này?')) {
-      setEmployees(employees.filter(e => e.id !== id));
+      try {
+        setLoading(true);
+        await employeesService.delete(id);
+        await loadData();
+        alert('Xóa nhân viên thành công!');
+      } catch (err) {
+        alert('Lỗi: ' + (err.response?.data?.message || err.message));
+      } finally {
+        setLoading(false);
+      }
     }
   }
 
   const filteredEmployees = employees.filter(emp => 
-    emp.hoTen.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.code.toLowerCase().includes(searchTerm.toLowerCase())
+    emp.hoTen?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.maNhanVien?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
@@ -123,13 +218,13 @@ export default function EmployeesPage() {
             </thead>
             <tbody>
               {filteredEmployees.map(emp => (
-                <tr key={emp.id} style={s.tr}>
+                <tr key={emp.nhanvienId} style={s.tr}>
                   <td style={s.td}>
                     <div style={s.profileCell}>
                       <div style={s.avatarBox}>{emp.avatar}</div>
                       <div style={{minWidth: 0}}>
                         <div style={s.empName}>{emp.hoTen}</div>
-                        <div style={s.empCode}>{emp.code}</div>
+                        <div style={s.empCode}>{emp.maNhanVien || `NV${emp.nhanvienId}`}</div>
                       </div>
                     </div>
                   </td>
@@ -140,8 +235,8 @@ export default function EmployeesPage() {
                     </div>
                   </td>
                   <td style={s.td}>
-                    <div style={{fontWeight: 600, color: '#344767'}}>{emp.phongBan}</div>
-                    <div style={{fontSize: 12, color: '#7b809a'}}>{emp.chucVu}</div>
+                    <div style={{fontWeight: 600, color: '#344767'}}>{emp.phongban?.tenPhongBan || 'N/A'}</div>
+                    <div style={{fontSize: 12, color: '#7b809a'}}>{emp.chucvu?.tenChucVu || 'N/A'}</div>
                   </td>
                   <td style={{...s.td, fontWeight: 700, color: '#344767'}}>{formatCurrency(emp.luongCoBan)}</td>
                   <td style={s.td}>{emp.ngayVaoLam}</td>
@@ -149,7 +244,7 @@ export default function EmployeesPage() {
                   <td style={s.tdRight}>
                      <div style={s.actions}>
                         <button style={s.iconBtn} title="Sửa">✏️</button>
-                        <button style={{...s.iconBtn, color: '#ef4444', background: '#fef2f2'}} onClick={() => handleDelete(emp.id)} title="Xóa">🗑️</button>
+                        <button style={{...s.iconBtn, color: '#ef4444', background: '#fef2f2'}} onClick={() => handleDelete(emp.nhanvienId)} title="Xóa">🗑️</button>
                      </div>
                   </td>
                 </tr>
@@ -170,45 +265,67 @@ export default function EmployeesPage() {
             <div style={s.modalBody}>
               <div style={s.formGrid}>
                 <div style={s.formGroup}>
+                  <label style={s.label}>Tài khoản <span style={{color:'red'}}>*</span></label>
+                  <select style={s.select} name="userId" value={newEmp.userId} onChange={handleInputChange}>
+                    <option value="">-- Chọn tài khoản --</option>
+                    {users.map(user => (
+                      <option key={user.userId} value={user.userId}>{user.username} ({user.email})</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={s.formGroup}>
                   <label style={s.label}>Họ và tên <span style={{color:'red'}}>*</span></label>
                   <input style={s.input} name="hoTen" value={newEmp.hoTen} onChange={handleInputChange} placeholder="Nguyễn Văn A" />
                 </div>
                 <div style={s.formGroup}>
-                  <label style={s.label}>Email <span style={{color:'red'}}>*</span></label>
-                  <input style={s.input} name="email" value={newEmp.email} onChange={handleInputChange} placeholder="email@company.com" />
+                  <label style={s.label}>CCCD</label>
+                  <input style={s.input} name="cccd" value={newEmp.cccd} onChange={handleInputChange} placeholder="001234567890" />
                 </div>
                 <div style={s.formGroup}>
-                  <label style={s.label}>Số điện thoại</label>
-                  <input style={s.input} name="sdt" value={newEmp.sdt} onChange={handleInputChange} placeholder="09xx..." />
+                  <label style={s.label}>Ngày sinh <span style={{color:'red'}}>*</span></label>
+                  <input style={s.input} type="date" name="ngaySinh" value={newEmp.ngaySinh} onChange={handleInputChange} />
                 </div>
                 <div style={s.formGroup}>
-                  <label style={s.label}>Ngày vào làm</label>
+                  <label style={s.label}>Giới tính <span style={{color:'red'}}>*</span></label>
+                  <select style={s.select} name="gioiTinh" value={newEmp.gioiTinh} onChange={handleInputChange}>
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                    <option value="Khác">Khác</option>
+                  </select>
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Địa chỉ</label>
+                  <input style={s.input} name="diaChi" value={newEmp.diaChi} onChange={handleInputChange} placeholder="123 Nguyễn Trãi, Q1" />
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Ngày vào làm <span style={{color:'red'}}>*</span></label>
                   <input style={s.input} type="date" name="ngayVaoLam" value={newEmp.ngayVaoLam} onChange={handleInputChange} />
                 </div>
                 <div style={s.formGroup}>
                   <label style={s.label}>Phòng ban</label>
-                  <select style={s.select} name="phongBan" value={newEmp.phongBan} onChange={handleInputChange}>
-                    <option value="IT">IT</option>
-                    <option value="HR">HR</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Accounting">Accounting</option>
+                  <select style={s.select} name="phongbanId" value={newEmp.phongbanId} onChange={handleInputChange}>
+                    <option value="">-- Chọn phòng ban --</option>
+                    {departments.map(dept => (
+                      <option key={dept.phongbanId} value={dept.phongbanId}>{dept.tenPhongBan}</option>
+                    ))}
                   </select>
                 </div>
                 <div style={s.formGroup}>
                   <label style={s.label}>Chức vụ</label>
-                  <input style={s.input} name="chucVu" value={newEmp.chucVu} onChange={handleInputChange} placeholder="VD: Developer" />
+                  <select style={s.select} name="chucvuId" value={newEmp.chucvuId} onChange={handleInputChange}>
+                    <option value="">-- Chọn chức vụ --</option>
+                    {positions.map(pos => (
+                      <option key={pos.chucvuId} value={pos.chucvuId}>{pos.tenChucVu}</option>
+                    ))}
+                  </select>
                 </div>
                 <div style={s.formGroup}>
                   <label style={s.label}>Lương cơ bản</label>
-                  <input style={s.input} type="number" name="luongCoBan" value={newEmp.luongCoBan} onChange={handleInputChange} placeholder="VNĐ" />
+                  <input style={s.input} type="number" name="luongCoBan" value={newEmp.luongCoBan} onChange={handleInputChange} placeholder="VD: 10000000" />
                 </div>
                 <div style={s.formGroup}>
-                  <label style={s.label}>Trạng thái</label>
-                  <select style={s.select} name="trangThai" value={newEmp.trangThai} onChange={handleInputChange}>
-                    <option value="DANG_LAM_VIEC">Đang làm việc</option>
-                    <option value="NGHI_THAI_SAN">Nghỉ thai sản</option>
-                    <option value="NGHI_VIEC">Đã nghỉ việc</option>
-                  </select>
+                  <label style={s.label}>Phụ cấp</label>
+                  <input style={s.input} type="number" name="phuCap" value={newEmp.phuCap} onChange={handleInputChange} placeholder="VD: 2000000" />
                 </div>
               </div>
             </div>
@@ -239,7 +356,7 @@ const s = {
   filterBar: { display: 'flex', gap: 16, marginBottom: 24, background: '#fff', padding: 16, borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.03)', alignItems: 'center' },
   searchWrapper: { flex: 1, position: 'relative', display: 'flex', alignItems: 'center' },
   searchIcon: { position: 'absolute', left: 12, color: '#7b809a' },
-  searchInput: { width: '100%', padding: '12px 12px 12px 40px', border: '1px solid #d2d6da', borderRadius: 8, outline: 'none', fontSize: 14, boxSizing: 'border-box', transition: 'all 0.2s' },
+  searchInput: { width: '100%', padding: '12px 12px 12px 40px', border: '1px solid #d2d6da', borderRadius: 8, outline: 'none', fontSize: 14, boxSizing: 'border-box', transition: 'all 0.2s', background: '#fff', color: '#344767' },
   filterSelect: { padding: '12px 16px', border: '1px solid #d2d6da', borderRadius: 8, outline: 'none', fontSize: 14, minWidth: 150, cursor: 'pointer', background: '#fff', color: '#344767' },
 
   // Table Styles Fixes
@@ -286,8 +403,8 @@ const s = {
   formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 },
   formGroup: { marginBottom: 0 },
   label: { display: 'block', marginBottom: 8, fontSize: 13, fontWeight: 600, color: '#344767' },
-  input: { width: '100%', padding: '10px 12px', border: '1px solid #d2d6da', borderRadius: 8, outline: 'none', fontSize: 14, boxSizing: 'border-box', transition: 'all 0.2s', color: '#495057' },
-  select: { width: '100%', padding: '10px 12px', border: '1px solid #d2d6da', borderRadius: 8, outline: 'none', fontSize: 14, boxSizing: 'border-box', background: '#fff', color: '#495057', cursor: 'pointer' },
+  input: { width: '100%', padding: '10px 12px', border: '1px solid #d2d6da', borderRadius: 8, outline: 'none', fontSize: 14, boxSizing: 'border-box', transition: 'all 0.2s', color: '#344767', background: '#fff' },
+  select: { width: '100%', padding: '10px 12px', border: '1px solid #d2d6da', borderRadius: 8, outline: 'none', fontSize: 14, boxSizing: 'border-box', background: '#fff', color: '#344767', cursor: 'pointer' },
   
   modalFooter: { padding: '20px 24px', borderTop: '1px solid #f0f2f5', display: 'flex', justifyContent: 'flex-end', gap: 12 },
   btnCancel: { padding: '10px 20px', border: 'none', background: '#f0f2f5', borderRadius: 8, fontWeight: 600, cursor: 'pointer', color: '#7b809a', transition: 'all 0.2s' },

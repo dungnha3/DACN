@@ -576,13 +576,13 @@ export const styles = {
     margin: '0 auto'
   },
 
-  // Chat Styles
+  // Chat Styles - Soft UI / Neumorphism Design
   chatContainer: {
     display: 'grid',
-    gridTemplateColumns: '320px 1fr',
+    gridTemplateColumns: '360px 1fr',
+    height: 'calc(100vh - 120px)',
     gap: 20,
-    height: 'calc(100vh - 140px)',
-    overflow: 'hidden'
+    background: 'transparent'
   },
 
   // Chat Sidebar (Left Column)
@@ -595,53 +595,57 @@ export const styles = {
     overflow: 'hidden'
   },
   chatSidebarHeader: {
-    padding: '20px 16px 16px',
-    borderBottom: '1px solid #f0f2f5'
+    padding: '20px',
+    borderBottom: 'none'
   },
   chatSearchInput: {
     width: '100%',
     padding: '12px 16px 12px 44px',
-    border: '1px solid #e9ecef',
-    borderRadius: 12,
+    border: 'none',
+    borderRadius: 14,
     fontSize: 14,
     outline: 'none',
-    transition: 'all 0.2s',
-    background: '#f8f9fa'
+    background: '#e8eaf0',
+    boxShadow: 'inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.9)',
+    transition: 'all 0.3s ease',
+    color: '#344767',
+    position: 'relative'
   },
   chatContactList: {
     flex: 1,
     overflowY: 'auto',
-    padding: '8px 0'
+    padding: '8px'
   },
   chatContactItem: {
     display: 'flex',
     alignItems: 'center',
     gap: 12,
-    padding: '12px 16px',
+    padding: '14px 12px',
+    margin: '4px 0',
+    borderRadius: 16,
     cursor: 'pointer',
-    transition: 'all 0.2s',
-    borderRadius: 0,
-    position: 'relative'
+    transition: 'all 0.3s ease',
+    position: 'relative',
+    border: 'none'
   },
   chatContactItemActive: {
-    background: 'linear-gradient(90deg, rgba(55, 65, 81, 0.1) 0%, rgba(75, 85, 99, 0.05) 100%)',
-    borderLeft: '3px solid #374151'
+    background: '#e8eaf0',
+    boxShadow: 'inset 3px 3px 8px rgba(0, 0, 0, 0.1), inset -3px -3px 8px rgba(255, 255, 255, 0.9)'
   },
   chatContactAvatar: {
     position: 'relative',
-    flexShrink: 0
-  },
-  chatContactAvatarIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    background: 'linear-gradient(145deg, #374151, #4b5563)',
-    color: '#fff',
+    width: 50,
+    height: 50,
+    borderRadius: 16,
+    background: 'linear-gradient(145deg, #667eea, #764ba2)',
+    boxShadow: '5px 5px 15px rgba(102, 126, 234, 0.4), -3px -3px 10px rgba(255, 255, 255, 0.8)',
     display: 'grid',
     placeItems: 'center',
-    fontSize: 18,
-    fontWeight: 700,
-    boxShadow: '0 4px 12px rgba(55, 65, 81, 0.3)'
+    flexShrink: 0,
+    border: 'none'
+  },
+  chatContactAvatarIcon: {
+    fontSize: 26
   },
   chatOnlineBadge: {
     position: 'absolute',
@@ -650,9 +654,9 @@ export const styles = {
     width: 12,
     height: 12,
     background: '#10b981',
-    borderRadius: '50%',
     border: '2px solid #fff',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+    borderRadius: '50%',
+    boxShadow: '0 0 8px rgba(16, 185, 129, 0.5)'
   },
   chatContactInfo: {
     flex: 1,
@@ -689,7 +693,7 @@ export const styles = {
     minWidth: 22,
     height: 22,
     padding: '0 7px',
-    background: 'linear-gradient(145deg, #f59e0b, #d97706)',
+    background: 'linear-gradient(145deg, #dc2626, #991b1b)',
     color: '#fff',
     borderRadius: 11,
     fontSize: 11,
@@ -697,7 +701,7 @@ export const styles = {
     display: 'grid',
     placeItems: 'center',
     flexShrink: 0,
-    boxShadow: '2px 2px 6px rgba(245, 158, 11, 0.4)'
+    boxShadow: '2px 2px 6px rgba(220, 38, 38, 0.4)'
   },
 
   // Chat Window (Right Column)
@@ -714,129 +718,144 @@ export const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '16px 24px',
-    borderBottom: '1px solid #f0f2f5',
-    background: '#fafbfc'
+    borderBottom: 'none',
+    background: '#ffffff',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)'
   },
   chatWindowHeaderLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: 12
+    gap: 14
   },
   chatWindowAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    background: 'linear-gradient(145deg, #374151, #4b5563)',
-    color: '#fff',
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    background: 'linear-gradient(145deg, #667eea, #764ba2)',
+    boxShadow: '5px 5px 15px rgba(102, 126, 234, 0.4), -3px -3px 10px rgba(255, 255, 255, 0.8)',
     display: 'grid',
     placeItems: 'center',
-    fontSize: 16,
-    fontWeight: 700,
-    boxShadow: '0 4px 12px rgba(55, 65, 81, 0.3)'
+    fontSize: 24,
+    border: 'none'
   },
   chatWindowName: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 700,
-    color: '#344767'
+    color: '#344767',
+    marginBottom: 2
   },
   chatWindowStatus: {
-    fontSize: 12,
-    color: '#7b809a',
-    marginTop: 2
+    fontSize: 13,
+    color: '#7b809a'
   },
   chatWindowActions: {
     display: 'flex',
     gap: 8
   },
   chatActionButton: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     border: 'none',
-    background: 'transparent',
-    borderRadius: 8,
+    borderRadius: 14,
+    background: '#e8eaf0',
+    boxShadow: '4px 4px 10px rgba(0, 0, 0, 0.1), -4px -4px 10px rgba(255, 255, 255, 0.9)',
     cursor: 'pointer',
-    color: '#7b809a',
-    display: 'grid',
-    placeItems: 'center',
-    transition: 'all 0.2s'
+    fontSize: 18,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.3s ease',
+    color: '#667eea',
+    padding: 0
   },
+
+  // Messages Area
   chatMessagesArea: {
     flex: 1,
-    padding: '20px 24px',
     overflowY: 'auto',
-    background: '#fafbfc'
+    padding: '24px',
+    background: '#f8f9fa',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 16
   },
   chatDateDivider: {
-    display: 'flex',
-    justifyContent: 'center',
-    margin: '16px 0'
+    textAlign: 'center',
+    margin: '12px 0'
   },
   chatDateText: {
+    display: 'inline-block',
     padding: '6px 16px',
-    background: '#e9ecef',
-    borderRadius: 20,
+    background: '#ffffff',
+    borderRadius: 16,
     fontSize: 12,
+    color: '#7b809a',
     fontWeight: 600,
-    color: '#6c757d'
+    boxShadow: '2px 2px 6px rgba(0, 0, 0, 0.06), -2px -2px 6px rgba(255, 255, 255, 0.9)'
   },
   chatMessageRow: {
     display: 'flex',
-    gap: 12,
-    marginBottom: 16,
-    alignItems: 'flex-end'
+    gap: 10,
+    alignItems: 'flex-start'
   },
   chatMessageRowOwn: {
     flexDirection: 'row-reverse'
   },
   chatMessageAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    background: 'linear-gradient(145deg, #374151, #4b5563)',
-    color: '#fff',
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    background: 'linear-gradient(145deg, #667eea, #764ba2)',
+    boxShadow: '3px 3px 8px rgba(102, 126, 234, 0.3)',
     display: 'grid',
     placeItems: 'center',
-    fontSize: 14,
-    fontWeight: 700,
-    flexShrink: 0,
-    boxShadow: '0 2px 8px rgba(55, 65, 81, 0.3)'
+    fontSize: 18,
+    flexShrink: 0
   },
   chatMessageGroup: {
     display: 'flex',
     flexDirection: 'column',
     gap: 4,
-    maxWidth: '70%'
+    maxWidth: '65%'
   },
   chatMessageBubble: {
     padding: '12px 16px',
-    borderRadius: '18px 18px 18px 4px',
-    background: '#fff',
-    color: '#344767',
+    borderRadius: 18,
+    background: '#ffffff',
+    boxShadow: '5px 5px 15px rgba(0, 0, 0, 0.1), -3px -3px 10px rgba(255, 255, 255, 0.9)',
     fontSize: 14,
-    lineHeight: 1.5,
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-    border: '1px solid #f0f2f5'
+    color: '#344767',
+    lineHeight: 1.6,
+    wordWrap: 'break-word',
+    borderBottomLeftRadius: 4,
+    border: 'none'
   },
   chatMessageBubbleOwn: {
-    background: 'linear-gradient(145deg, #374151, #4b5563)',
-    color: '#fff',
-    borderRadius: '18px 18px 4px 18px',
+    background: 'linear-gradient(145deg, #667eea, #764ba2)',
+    color: '#ffffff',
+    boxShadow: '5px 5px 15px rgba(102, 126, 234, 0.4), -3px -3px 10px rgba(255, 255, 255, 0.8)',
+    borderBottomRightRadius: 4,
+    borderBottomLeftRadius: 18,
     border: 'none'
   },
   chatMessageTime: {
     fontSize: 11,
     color: '#adb5bd',
-    alignSelf: 'flex-start',
-    marginLeft: 4
+    paddingLeft: 8
   },
   chatMessageTimeOwn: {
-    alignSelf: 'flex-end',
-    marginRight: 4
+    textAlign: 'right',
+    paddingLeft: 0,
+    paddingRight: 8,
+    color: '#d1d5db'
   },
+
+  // Input Area
   chatInputArea: {
     padding: '16px 24px',
-    borderTop: '1px solid #f0f2f5',
-    background: '#fff'
+    borderTop: 'none',
+    background: '#ffffff',
+    boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.05)'
   },
   chatInputToolbar: {
     display: 'flex',
@@ -844,46 +863,58 @@ export const styles = {
     marginBottom: 12
   },
   chatToolButton: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     border: 'none',
-    background: '#f8f9fa',
-    borderRadius: 8,
+    borderRadius: 12,
+    background: '#e8eaf0',
+    boxShadow: '3px 3px 8px rgba(0, 0, 0, 0.08), -3px -3px 8px rgba(255, 255, 255, 0.9)',
     cursor: 'pointer',
+    fontSize: 18,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.3s ease',
     color: '#7b809a',
-    display: 'grid',
-    placeItems: 'center',
-    transition: 'all 0.2s'
+    padding: 0
   },
   chatInputWrapper: {
     display: 'flex',
     gap: 12,
-    alignItems: 'flex-end'
+    alignItems: 'center'
   },
   chatMessageInput: {
     flex: 1,
-    padding: '12px 16px',
-    border: '1px solid #e9ecef',
-    borderRadius: 12,
+    padding: '14px 20px',
+    border: 'none',
+    borderRadius: 18,
     fontSize: 14,
     outline: 'none',
-    resize: 'none',
-    minHeight: 44,
-    maxHeight: 120,
-    transition: 'all 0.2s'
+    background: '#e8eaf0',
+    boxShadow: 'inset 4px 4px 10px rgba(0, 0, 0, 0.1), inset -4px -4px 10px rgba(255, 255, 255, 0.9)',
+    transition: 'all 0.3s ease',
+    color: '#344767'
   },
   chatSendButton: {
-    width: 44,
-    height: 44,
+    width: 52,
+    height: 52,
     border: 'none',
-    background: 'linear-gradient(145deg, #f59e0b, #d97706)',
-    borderRadius: 12,
+    borderRadius: 16,
+    background: 'linear-gradient(145deg, #667eea, #764ba2)',
+    boxShadow: '5px 5px 15px rgba(102, 126, 234, 0.4), -3px -3px 10px rgba(255, 255, 255, 0.8)',
     cursor: 'pointer',
-    color: '#fff',
-    display: 'grid',
-    placeItems: 'center',
-    transition: 'all 0.2s',
-    boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
+    fontSize: 20,
+    color: '#ffffff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.3s ease',
+    fontWeight: 700,
+    padding: 0,
+    flexShrink: 0
+  },
+  chatSendButtonPressed: {
+    boxShadow: 'inset 4px 4px 10px rgba(102, 126, 234, 0.5), inset -2px -2px 6px rgba(255, 255, 255, 0.3)'
   }
 
   

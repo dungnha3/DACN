@@ -65,7 +65,7 @@ public class SecurityConfig {
                 // ===== EMPLOYEE ENDPOINTS =====
                 // Employee truy cập dữ liệu của chính mình
                 .requestMatchers("/api/profile/**").authenticated()
-                .requestMatchers("/cham-cong/gps").hasAnyRole("EMPLOYEE", "MANAGER_PROJECT")
+                .requestMatchers("/cham-cong/gps").hasAnyRole("EMPLOYEE", "MANAGER_PROJECT", "MANAGER_HR", "MANAGER_ACCOUNTING")
                 .requestMatchers("/cham-cong/my/**").authenticated()
                 .requestMatchers("/bang-luong/my/**").authenticated()
                 .requestMatchers("/nghi-phep/my/**").authenticated()

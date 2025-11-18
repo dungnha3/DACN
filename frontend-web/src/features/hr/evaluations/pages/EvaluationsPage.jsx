@@ -1,146 +1,65 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { evaluationsService, employeesService } from '@/features/hr/shared/services';
 
-// --- MOCK DATA (Cấu trúc theo DanhGiaDTO từ BE) ---
-const mockEvaluations = [
-  {
-    danhGiaId: 1,
-    nhanvienId: 101,
-    tenNhanVien: 'Nguyễn Văn A',
-    avatar: '👨‍💻',
-    chucVu: 'Senior Developer',
-    phongBan: 'Phòng IT',
-    nguoiDanhGiaId: 201,
-    tenNguoiDanhGia: 'Trần Minh Quân',
-    kyDanhGia: 'Q4-2024',
-    loaiDanhGia: 'HANG_QUY',
-    diemChuyenMon: 8.5,
-    diemThaiDo: 9.0,
-    diemKyNangMem: 8.2,
-    diemDongDoi: 8.8,
-    diemTong: 8.6,
-    xepLoai: 'TOT',
-    nhanXet: 'Nhân viên làm việc tốt, nhiệt tình, có tinh thần trách nhiệm cao.',
-    mucTieuTiepTheo: 'Hoàn thành dự án X trong Q1 2025',
-    keHoachPhatTrien: 'Tham gia khóa học leadership',
-    trangThai: 'CHO_DUYET',
-    ngayBatDau: '2024-10-01',
-    ngayKetThuc: '2024-12-31',
-    ngayHoanThanh: null,
-    createdAt: '2024-11-15T08:30:00'
-  },
-  {
-    danhGiaId: 2,
-    nhanvienId: 102,
-    tenNhanVien: 'Trần Thị B',
-    avatar: '👩‍💼',
-    chucVu: 'HR Staff',
-    phongBan: 'Phòng Nhân Sự',
-    nguoiDanhGiaId: 202,
-    tenNguoiDanhGia: 'Lê Thị Hoa',
-    kyDanhGia: 'Q4-2024',
-    loaiDanhGia: 'HANG_QUY',
-    diemChuyenMon: 9.2,
-    diemThaiDo: 9.5,
-    diemKyNangMem: 9.0,
-    diemDongDoi: 9.3,
-    diemTong: 9.2,
-    xepLoai: 'XUAT_SAC',
-    nhanXet: 'Xuất sắc trong công việc, là tấm gương cho các nhân viên khác.',
-    mucTieuTiepTheo: 'Lên kế hoạch tuyển dụng 2025',
-    keHoachPhatTrien: 'Tham gia hội thảo HR toàn quốc',
-    trangThai: 'DA_DUYET',
-    ngayBatDau: '2024-10-01',
-    ngayKetThuc: '2024-12-31',
-    ngayHoanThanh: '2024-11-18',
-    createdAt: '2024-11-10T10:00:00'
-  },
-  {
-    danhGiaId: 3,
-    nhanvienId: 103,
-    tenNhanVien: 'Lê Văn C',
-    avatar: '⚡',
-    chucVu: 'Thử việc - Developer',
-    phongBan: 'Phòng IT',
-    nguoiDanhGiaId: 201,
-    tenNguoiDanhGia: 'Trần Minh Quân',
-    kyDanhGia: 'Tháng 11/2024',
-    loaiDanhGia: 'THU_VIEC',
-    diemChuyenMon: 7.0,
-    diemThaiDo: 7.5,
-    diemKyNangMem: 6.8,
-    diemDongDoi: 7.2,
-    diemTong: 7.1,
-    xepLoai: 'KHA',
-    nhanXet: 'Đáp ứng yêu cầu công việc, cần cải thiện kỹ năng giao tiếp.',
-    mucTieuTiepTheo: 'Hoàn thành thử việc, học thêm React Native',
-    keHoachPhatTrien: 'Mentoring từ senior developer',
-    trangThai: 'CHO_DUYET',
-    ngayBatDau: '2024-11-01',
-    ngayKetThuc: '2024-11-30',
-    ngayHoanThanh: null,
-    createdAt: '2024-11-16T14:20:00'
-  },
-  {
-    danhGiaId: 4,
-    tenNhanVien: 'Phạm Thị D',
-    avatar: '📊',
-    chucVu: 'Accountant',
-    phongBan: 'Phòng Kế Toán',
-    nguoiDanhGiaId: 203,
-    tenNguoiDanhGia: 'Nguyễn Văn Tài',
-    kyDanhGia: '2024',
-    loaiDanhGia: 'HANG_NAM',
-    diemChuyenMon: 6.0,
-    diemThaiDo: 6.5,
-    diemKyNangMem: 6.2,
-    diemDongDoi: 6.0,
-    diemTong: 6.2,
-    xepLoai: 'TRUNG_BINH',
-    nhanXet: 'Công việc đạt yêu cầu nhưng chưa có điểm nổi bật.',
-    mucTieuTiepTheo: 'Cải thiện kỹ năng Excel và báo cáo',
-    keHoachPhatTrien: 'Đào tạo thêm về phần mềm kế toán',
-    trangThai: 'TU_CHOI',
-    ngayBatDau: '2024-01-01',
-    ngayKetThuc: '2024-12-31',
-    ngayHoanThanh: null,
-    createdAt: '2024-11-12T09:00:00'
-  },
-  {
-    danhGiaId: 5,
-    nhanvienId: 105,
-    tenNhanVien: 'Hoàng Văn E',
-    avatar: '🎯',
-    chucVu: 'Marketing Manager',
-    phongBan: 'Phòng Marketing',
-    nguoiDanhGiaId: 204,
-    tenNguoiDanhGia: 'Phạm Thu Hà',
-    kyDanhGia: 'Q3-2024',
-    loaiDanhGia: 'THANG_CHUC',
-    diemChuyenMon: 8.8,
-    diemThaiDo: 9.2,
-    diemKyNangMem: 8.5,
-    diemDongDoi: 9.0,
-    diemTong: 8.9,
-    xepLoai: 'TOT',
-    nhanXet: 'Đạt yêu cầu thăng chức, lãnh đạo tốt, tầm nhìn chiến lược.',
-    mucTieuTiepTheo: 'Mở rộng thị trường khu vực miền Bắc',
-    keHoachPhatTrien: 'Khóa đào tạo Digital Marketing chuyên sâu',
-    trangThai: 'DANG_DANH_GIA',
-    ngayBatDau: '2024-07-01',
-    ngayKetThuc: '2024-09-30',
-    ngayHoanThanh: null,
-    createdAt: '2024-11-18T11:15:00'
-  }
-];
 
 export default function EvaluationsPage() {
-  const [evaluations, setEvaluations] = useState(mockEvaluations);
+  const [evaluations, setEvaluations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEval, setSelectedEval] = useState(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [approvalNote, setApprovalNote] = useState('');
   const [approvalAction, setApprovalAction] = useState(null); // 'APPROVE' or 'REJECT'
+  
+  // Create Modal States
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [employees, setEmployees] = useState([]);
+  const [formData, setFormData] = useState({
+    nhanvienId: '',
+    kyDanhGia: '',
+    loaiDanhGia: 'HANG_QUY',
+    diemChuyenMon: '',
+    diemThaiDo: '',
+    diemKyNangMem: '',
+    diemDongDoi: '',
+    nhanXet: '',
+    mucTieuTiepTheo: '',
+    keHoachPhatTrien: '',
+    ngayBatDau: new Date().toISOString().split('T')[0],
+    ngayKetThuc: ''
+  });
+
+  // Fetch evaluations data and employees
+  useEffect(() => {
+    fetchEvaluationsData();
+    fetchEmployees();
+  }, []);
+
+  const fetchEvaluationsData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await evaluationsService.getAll();
+      setEvaluations(data || []);
+    } catch (err) {
+      console.error('Error fetching evaluations:', err);
+      setError('Không thể tải dữ liệu đánh giá');
+      setEvaluations([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchEmployees = async () => {
+    try {
+      const data = await employeesService.getAll();
+      setEmployees(data || []);
+    } catch (err) {
+      console.error('Error fetching employees:', err);
+    }
+  };
 
   // --- LOGIC ---
   const filteredEvals = useMemo(() => {
@@ -169,19 +88,102 @@ export default function EvaluationsPage() {
     setShowApprovalModal(true);
   };
 
-  const handleApprovalSubmit = () => {
+  const handleApprovalSubmit = async () => {
     if (!selectedEval) return;
     
-    // Giả lập gọi API PATCH /api/danh-gia/{id}/approve hoặc /reject
-    const newStatus = approvalAction === 'APPROVE' ? 'DA_DUYET' : 'TU_CHOI';
-    setEvaluations(prev => prev.map(e => 
-      e.danhGiaId === selectedEval.danhGiaId
-        ? { ...e, trangThai: newStatus, ngayHoanThanh: new Date().toISOString().split('T')[0] }
-        : e
-    ));
+    try {
+      if (approvalAction === 'APPROVE') {
+        await evaluationsService.approve(selectedEval.danhGiaId, approvalNote);
+        alert('✅ Đã phê duyệt đánh giá thành công!');
+      } else {
+        if (!approvalNote.trim()) {
+          alert('❌ Vui lòng nhập lý do từ chối');
+          return;
+        }
+        await evaluationsService.reject(selectedEval.danhGiaId, approvalNote);
+        alert('✅ Đã từ chối đánh giá!');
+      }
+      
+      // Refresh data
+      fetchEvaluationsData();
+      setShowApprovalModal(false);
+      setSelectedEval(null);
+      setApprovalNote('');
+    } catch (err) {
+      console.error('Error processing evaluation:', err);
+      alert('❌ Xử lý đánh giá thất bại: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleCreateSubmit = async () => {
+    // Validation
+    if (!formData.nhanvienId) {
+      return alert('❌ Vui lòng chọn nhân viên!');
+    }
+    if (!formData.kyDanhGia.trim()) {
+      return alert('❌ Vui lòng nhập kỳ đánh giá!');
+    }
+    if (!formData.diemChuyenMon || !formData.diemThaiDo || !formData.diemKyNangMem || !formData.diemDongDoi) {
+      return alert('❌ Vui lòng nhập đầy đủ điểm số!');
+    }
+    if (!formData.ngayBatDau || !formData.ngayKetThuc) {
+      return alert('❌ Vui lòng chọn ngày bắt đầu và kết thúc!');
+    }
+    if (new Date(formData.ngayKetThuc) < new Date(formData.ngayBatDau)) {
+      return alert('❌ Ngày kết thúc phải sau ngày bắt đầu!');
+    }
+
+    try {
+      const payload = {
+        ...formData,
+        nhanvienId: Number(formData.nhanvienId),
+        diemChuyenMon: Number(formData.diemChuyenMon),
+        diemThaiDo: Number(formData.diemThaiDo),
+        diemKyNangMem: Number(formData.diemKyNangMem),
+        diemDongDoi: Number(formData.diemDongDoi)
+      };
+
+      await evaluationsService.create(payload);
+      alert('✅ Tạo đánh giá thành công!');
+      
+      // Reset form
+      setFormData({
+        nhanvienId: '',
+        kyDanhGia: '',
+        loaiDanhGia: 'HANG_QUY',
+        diemChuyenMon: '',
+        diemThaiDo: '',
+        diemKyNangMem: '',
+        diemDongDoi: '',
+        nhanXet: '',
+        mucTieuTiepTheo: '',
+        keHoachPhatTrien: '',
+        ngayBatDau: new Date().toISOString().split('T')[0],
+        ngayKetThuc: ''
+      });
+      
+      // Refresh and close
+      fetchEvaluationsData();
+      setShowCreateModal(false);
+    } catch (err) {
+      console.error('Error creating evaluation:', err);
+      alert('❌ Tạo đánh giá thất bại: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleSubmitForApproval = async (evalItem) => {
+    if (!confirm(`Xác nhận gửi đánh giá của ${evalItem.tenNhanVien} để duyệt?`)) {
+      return;
+    }
     
-    alert(`Đã ${approvalAction === 'APPROVE' ? 'phê duyệt' : 'từ chối'} đánh giá!`);
-    setShowApprovalModal(false);
+    try {
+      await evaluationsService.submit(evalItem.danhGiaId);
+      alert('✅ Đã gửi đánh giá để duyệt!');
+      fetchEvaluationsData();
+    } catch (err) {
+      console.error('Error submitting evaluation:', err);
+      alert('❌ Gửi đánh giá thất bại: ' + (err.response?.data?.message || err.message));
+    }
   };
 
   // --- BADGE HELPERS ---
@@ -245,7 +247,7 @@ export default function EvaluationsPage() {
           <h1 style={s.pageTitle}>Đánh giá Hiệu suất Nhân viên</h1>
           <p style={s.subtitle}>{stats.approved} đã duyệt, {stats.pending} chờ duyệt, điểm trung bình: {stats.avgScore}</p>
         </div>
-        <button style={s.btnAdd}>
+        <button style={s.btnAdd} onClick={() => setShowCreateModal(true)}>
           <span style={{marginRight: 6}}>+</span> Tạo đánh giá mới
         </button>
       </div>
@@ -324,6 +326,18 @@ export default function EvaluationsPage() {
                 <td style={{...s.td, textAlign: 'center'}}>{getStatusBadge(e.trangThai)}</td>
                 <td style={s.tdActions}>
                   <div style={s.actionGroup}>
+                    {/* Nút Gửi duyệt - cho đánh giá đang làm */}
+                    {e.trangThai === 'DANG_DANH_GIA' && (
+                      <button 
+                        style={s.submitBtn} 
+                        onClick={() => handleSubmitForApproval(e)}
+                        title="Gửi duyệt"
+                      >
+                        📤
+                      </button>
+                    )}
+                    
+                    {/* Nút Duyệt/Từ chối - cho đánh giá chờ duyệt */}
                     {e.trangThai === 'CHO_DUYET' && (
                       <>
                         <button 
@@ -342,6 +356,7 @@ export default function EvaluationsPage() {
                         </button>
                       </>
                     )}
+                    
                     <button style={s.viewBtn} onClick={() => setSelectedEval(e)} title="Xem chi tiết">
                       👁️
                     </button>
@@ -443,34 +458,269 @@ export default function EvaluationsPage() {
         </div>
       )}
 
+      {/* CREATE MODAL */}
+      {showCreateModal && (
+        <div style={s.modalOverlay}>
+          <div style={{...s.modal, maxWidth: 800}}>
+            <div style={s.modalHeader}>
+              <h3 style={s.modalTitle}>➕ Tạo đánh giá mới</h3>
+              <button style={s.closeBtn} onClick={() => setShowCreateModal(false)}>×</button>
+            </div>
+            
+            <div style={s.modalBody}>
+              <div style={s.formGrid}>
+                {/* Nhân viên */}
+                <div style={s.formGroup}>
+                  <label style={s.label}>Nhân viên <span style={{color: 'red'}}>*</span></label>
+                  <select
+                    style={s.input}
+                    value={formData.nhanvienId}
+                    onChange={e => setFormData({...formData, nhanvienId: e.target.value})}
+                  >
+                    <option value="">-- Chọn nhân viên --</option>
+                    {employees.map(emp => (
+                      <option key={emp.nhanvienId} value={emp.nhanvienId}>
+                        {emp.hoTen} - {emp.chucVu?.tenChucVu || 'N/A'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Kỳ đánh giá */}
+                <div style={s.formGroup}>
+                  <label style={s.label}>Kỳ đánh giá <span style={{color: 'red'}}>*</span></label>
+                  <input
+                    style={s.input}
+                    type="text"
+                    placeholder="VD: Q1-2024, Q2-2024, 2024"
+                    value={formData.kyDanhGia}
+                    onChange={e => setFormData({...formData, kyDanhGia: e.target.value})}
+                  />
+                </div>
+
+                {/* Loại đánh giá */}
+                <div style={s.formGroup}>
+                  <label style={s.label}>Loại đánh giá <span style={{color: 'red'}}>*</span></label>
+                  <select
+                    style={s.input}
+                    value={formData.loaiDanhGia}
+                    onChange={e => setFormData({...formData, loaiDanhGia: e.target.value})}
+                  >
+                    <option value="HANG_QUY">📅 Hàng quý</option>
+                    <option value="HANG_NAM">🎆 Hàng năm</option>
+                    <option value="THU_VIEC">👤 Thử việc</option>
+                    <option value="THANG_CHUC">🚀 Thăng chức</option>
+                    <option value="DANG_KY_TANG_LUONG">💰 Đăng ký tăng lương</option>
+                  </select>
+                </div>
+
+                {/* Ngày bắt đầu */}
+                <div style={s.formGroup}>
+                  <label style={s.label}>Ngày bắt đầu <span style={{color: 'red'}}>*</span></label>
+                  <input
+                    style={s.input}
+                    type="date"
+                    value={formData.ngayBatDau}
+                    onChange={e => setFormData({...formData, ngayBatDau: e.target.value})}
+                  />
+                </div>
+
+                {/* Ngày kết thúc */}
+                <div style={s.formGroup}>
+                  <label style={s.label}>Ngày kết thúc <span style={{color: 'red'}}>*</span></label>
+                  <input
+                    style={s.input}
+                    type="date"
+                    value={formData.ngayKetThuc}
+                    onChange={e => setFormData({...formData, ngayKetThuc: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              {/* Scores Section */}
+              <div style={{...s.scoresSection, marginTop: 20}}>
+                <h4 style={s.sectionTitle}>📊 Điểm đánh giá (0-10)</h4>
+                <div style={s.scoresGrid}>
+                  <div style={s.formGroup}>
+                    <label style={s.label}>Chuyên môn (40%) <span style={{color: 'red'}}>*</span></label>
+                    <input
+                      style={s.input}
+                      type="number"
+                      min="0"
+                      max="10"
+                      step="0.1"
+                      placeholder="0-10"
+                      value={formData.diemChuyenMon}
+                      onChange={e => setFormData({...formData, diemChuyenMon: e.target.value})}
+                    />
+                  </div>
+
+                  <div style={s.formGroup}>
+                    <label style={s.label}>Thái độ (30%) <span style={{color: 'red'}}>*</span></label>
+                    <input
+                      style={s.input}
+                      type="number"
+                      min="0"
+                      max="10"
+                      step="0.1"
+                      placeholder="0-10"
+                      value={formData.diemThaiDo}
+                      onChange={e => setFormData({...formData, diemThaiDo: e.target.value})}
+                    />
+                  </div>
+
+                  <div style={s.formGroup}>
+                    <label style={s.label}>Kỹ năng mềm (20%) <span style={{color: 'red'}}>*</span></label>
+                    <input
+                      style={s.input}
+                      type="number"
+                      min="0"
+                      max="10"
+                      step="0.1"
+                      placeholder="0-10"
+                      value={formData.diemKyNangMem}
+                      onChange={e => setFormData({...formData, diemKyNangMem: e.target.value})}
+                    />
+                  </div>
+
+                  <div style={s.formGroup}>
+                    <label style={s.label}>Đồng đội (10%) <span style={{color: 'red'}}>*</span></label>
+                    <input
+                      style={s.input}
+                      type="number"
+                      min="0"
+                      max="10"
+                      step="0.1"
+                      placeholder="0-10"
+                      value={formData.diemDongDoi}
+                      onChange={e => setFormData({...formData, diemDongDoi: e.target.value})}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Comments */}
+              <div style={{marginTop: 16}}>
+                <div style={s.formGroup}>
+                  <label style={s.label}>📝 Nhận xét</label>
+                  <textarea
+                    style={s.textarea}
+                    placeholder="Nhận xét về hiệu suất làm việc..."
+                    value={formData.nhanXet}
+                    onChange={e => setFormData({...formData, nhanXet: e.target.value})}
+                    rows={3}
+                  />
+                </div>
+
+                <div style={s.formGroup}>
+                  <label style={s.label}>🎯 Mục tiêu tiếp theo</label>
+                  <textarea
+                    style={s.textarea}
+                    placeholder="Đặt mục tiêu cho kỳ tiếp theo..."
+                    value={formData.mucTieuTiepTheo}
+                    onChange={e => setFormData({...formData, mucTieuTiepTheo: e.target.value})}
+                    rows={2}
+                  />
+                </div>
+
+                <div style={s.formGroup}>
+                  <label style={s.label}>🚀 Kế hoạch phát triển</label>
+                  <textarea
+                    style={s.textarea}
+                    placeholder="Kế hoạch phát triển năng lực..."
+                    value={formData.keHoachPhatTrien}
+                    onChange={e => setFormData({...formData, keHoachPhatTrien: e.target.value})}
+                    rows={2}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div style={s.modalFooter}>
+              <button style={s.btnCancel} onClick={() => setShowCreateModal(false)}>Hủy</button>
+              <button style={s.btnCreate} onClick={handleCreateSubmit}>
+                ✓ Tạo đánh giá
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* APPROVAL MODAL */}
       {showApprovalModal && selectedEval && (
         <div style={s.modalOverlay}>
-          <div style={s.modal}>
+          <div style={{...s.modal, maxWidth: 600}}>
             <div style={s.modalHeader}>
               <h3 style={s.modalTitle}>
-                {approvalAction === 'APPROVE' ? '🟢 Phê duyệt' : '🔴 Từ chối'} Đánh giá
+                {approvalAction === 'APPROVE' ? '🟢 Phê duyệt đánh giá' : '🔴 Từ chối đánh giá'}
               </h3>
               <button style={s.closeBtn} onClick={() => setShowApprovalModal(false)}>×</button>
             </div>
             
             <div style={s.modalBody}>
-              <div style={{...s.infoSection, marginBottom: 16}}>
-                Đánh giá cho <b>{selectedEval.tenNhanVien}</b> - {selectedEval.kyDanhGia}
+              {/* Employee Info */}
+              <div style={s.approvalInfoCard}>
+                <div style={s.profileCell}>
+                  <div style={{...s.avatarBox, width: 42, height: 42}}>{selectedEval.avatar || '👤'}</div>
+                  <div>
+                    <div style={{...s.empName, fontSize: 15}}>{selectedEval.tenNhanVien}</div>
+                    <div style={s.empRole}>{selectedEval.chucVu} - {selectedEval.kyDanhGia}</div>
+                  </div>
+                </div>
+                <div style={{textAlign: 'right'}}>
+                  <div style={{fontSize: 12, color: '#7b809a', marginBottom: 4}}>Xếp loại</div>
+                  {getRankBadge(selectedEval.xepLoai)}
+                </div>
+              </div>
+
+              {/* Scores Display */}
+              <div style={s.approvalScoresBox}>
+                <div style={s.approvalScoreItem}>
+                  <span style={s.approvalScoreLabel}>Chuyên môn:</span>
+                  <span style={s.approvalScoreValue}>{selectedEval.diemChuyenMon}</span>
+                </div>
+                <div style={s.approvalScoreItem}>
+                  <span style={s.approvalScoreLabel}>Thái độ:</span>
+                  <span style={s.approvalScoreValue}>{selectedEval.diemThaiDo}</span>
+                </div>
+                <div style={s.approvalScoreItem}>
+                  <span style={s.approvalScoreLabel}>Kỹ năng mềm:</span>
+                  <span style={s.approvalScoreValue}>{selectedEval.diemKyNangMem}</span>
+                </div>
+                <div style={s.approvalScoreItem}>
+                  <span style={s.approvalScoreLabel}>Đồng đội:</span>
+                  <span style={s.approvalScoreValue}>{selectedEval.diemDongDoi}</span>
+                </div>
+                <div style={{...s.approvalScoreItem, borderTop: '2px solid #e9ecef', paddingTop: 8, marginTop: 8}}>
+                  <span style={{...s.approvalScoreLabel, fontWeight: 700}}>Điểm tổng:</span>
+                  <span style={{...s.approvalScoreValue, fontSize: 18, fontWeight: 700, color: '#ec4899'}}>{selectedEval.diemTong}</span>
+                </div>
               </div>
               
+              {/* Note/Reason Input */}
               <div style={s.formGroup}>
                 <label style={s.label}>
-                  {approvalAction === 'APPROVE' ? 'Ghi chú (không bắt buộc)' : 'Lý do từ chối *'}
+                  {approvalAction === 'APPROVE' 
+                    ? '📝 Ghi chú (không bắt buộc)' 
+                    : '❗ Lý do từ chối *'}
                 </label>
                 <textarea 
                   style={s.textarea}
-                  placeholder={approvalAction === 'APPROVE' ? 'Nhập ghi chú...' : 'Nhập lý do từ chối...'}
+                  placeholder={approvalAction === 'APPROVE' 
+                    ? 'Nhập ghi chú phê duyệt...' 
+                    : 'Nhập lý do từ chối (bắt buộc)...'}
                   value={approvalNote}
                   onChange={e => setApprovalNote(e.target.value)}
                   rows={4}
                 />
               </div>
+
+              {/* Warning for reject */}
+              {approvalAction === 'REJECT' && (
+                <div style={s.warningBox}>
+                  ⚠️ Đánh giá sẽ chuyển về trạng thái "Từ chối" và không thể hoàn tác.
+                </div>
+              )}
             </div>
             
             <div style={s.modalFooter}>
@@ -479,7 +729,7 @@ export default function EvaluationsPage() {
                 style={approvalAction === 'APPROVE' ? s.btnApprove : s.btnReject}
                 onClick={handleApprovalSubmit}
               >
-                {approvalAction === 'APPROVE' ? '✓ Phê duyệt' : '✗ Từ chối'}
+                {approvalAction === 'APPROVE' ? '✓ Xác nhận phê duyệt' : '✗ Xác nhận từ chối'}
               </button>
             </div>
           </div>
@@ -568,11 +818,11 @@ const s = {
   searchIcon: { position: 'absolute', left: 12, color: '#7b809a' },
   searchInput: {
     width: '100%', padding: '10px 12px 10px 40px', border: '1px solid #d2d6da',
-    borderRadius: 8, outline: 'none', fontSize: 14
+    borderRadius: 8, outline: 'none', fontSize: 14, background: '#fff', color: '#344767'
   },
   filterSelect: {
     padding: '10px 12px', border: '1px solid #d2d6da', borderRadius: 8,
-    outline: 'none', fontSize: 14, minWidth: 180, cursor: 'pointer', color: '#344767'
+    outline: 'none', fontSize: 14, minWidth: 180, cursor: 'pointer', color: '#344767', background: '#fff'
   },
 
   // Table
@@ -609,13 +859,20 @@ const s = {
 
   // Actions
   actionGroup: { display: 'flex', justifyContent: 'center', gap: 8 },
+  submitBtn: {
+    padding: '8px 10px', background: '#f59e0b', color: '#fff', border: 'none',
+    borderRadius: 6, cursor: 'pointer', fontSize: 14, fontWeight: 600,
+    transition: 'all 0.2s',
+  },
   approveBtn: {
     padding: '8px 10px', background: '#10b981', color: '#fff', border: 'none',
-    borderRadius: 6, cursor: 'pointer', fontSize: 14, fontWeight: 600
+    borderRadius: 6, cursor: 'pointer', fontSize: 14, fontWeight: 600,
+    transition: 'all 0.2s',
   },
   rejectBtn: {
     padding: '8px 10px', background: '#ef4444', color: '#fff', border: 'none',
-    borderRadius: 6, cursor: 'pointer', fontSize: 14, fontWeight: 600
+    borderRadius: 6, cursor: 'pointer', fontSize: 14, fontWeight: 600,
+    transition: 'all 0.2s',
   },
   viewBtn: {
     padding: '8px 10px', background: '#e9ecef', color: '#344767', border: 'none',
@@ -703,5 +960,44 @@ const s = {
     padding: '10px 24px', borderRadius: 8, border: 'none',
     background: 'linear-gradient(195deg, #ef4444, #dc2626)', color: '#fff',
     fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+  },
+  btnCreate: {
+    padding: '10px 24px', borderRadius: 8, border: 'none',
+    background: 'linear-gradient(195deg, #6366f1, #4f46e5)', color: '#fff',
+    fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+  },
+  
+  // Form styles
+  formGrid: {
+    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16
+  },
+  input: {
+    width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #d2d6da',
+    outline: 'none', fontSize: 14, color: '#344767', background: '#fff',
+    fontFamily: 'inherit', boxSizing: 'border-box'
+  },
+  
+  // Approval modal specific styles
+  approvalInfoCard: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: 16, background: '#f8f9fa', borderRadius: 12, marginBottom: 16
+  },
+  approvalScoresBox: {
+    background: '#fff', border: '1px solid #e9ecef', borderRadius: 12,
+    padding: 16, marginBottom: 16
+  },
+  approvalScoreItem: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '8px 0'
+  },
+  approvalScoreLabel: {
+    fontSize: 13, color: '#7b809a', fontWeight: 500
+  },
+  approvalScoreValue: {
+    fontSize: 15, color: '#344767', fontWeight: 600
+  },
+  warningBox: {
+    background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8,
+    padding: 12, fontSize: 13, color: '#c2410c', marginTop: 12
   }
 };

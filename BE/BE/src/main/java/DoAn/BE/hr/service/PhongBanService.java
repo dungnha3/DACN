@@ -24,6 +24,13 @@ public class PhongBanService {
         this.phongBanRepository = phongBanRepository;
         this.nhanVienRepository = nhanVienRepository;
     }
+    
+    /**
+     * Đếm số lượng nhân viên trong phòng ban
+     */
+    public long countNhanVienByPhongBan(Long phongbanId) {
+        return phongBanRepository.countNhanVienByPhongBan(phongbanId);
+    }
 
     public PhongBan createPhongBan(PhongBanRequest request) {
         if (phongBanRepository.existsByTenPhongBan(request.getTenPhongBan())) {

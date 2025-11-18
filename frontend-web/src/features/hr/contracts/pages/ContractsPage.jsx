@@ -1,76 +1,44 @@
-import { useState } from 'react';
-import { useMemo } from 'react';
-
-// --- MOCK DATA (Đã thêm soNgayConLai để bật cảnh báo) ---
-const mockContracts = [
-  { 
-    hopdongId: 1, 
-    nhanVien: 'Nguyễn Văn A', 
-    avatar: '👨‍💻', 
-    chucVu: 'Developer',
-    loaiHopDong: 'VO_THOI_HAN', 
-    ngayBatDau: '2023-01-15', 
-    ngayKetThuc: null, 
-    luongCoBan: 15000000, 
-    trangThai: 'HIEU_LUC', 
-    soNgayConLai: null
-  },
-  { 
-    hopdongId: 2, 
-    nhanVien: 'Trần Thị B', 
-    avatar: '👩‍💼', 
-    chucVu: 'HR Staff',
-    loaiHopDong: 'XAC_DINH_THOI_HAN', 
-    ngayBatDau: '2024-01-01', 
-    ngayKetThuc: '2025-12-31', 
-    luongCoBan: 12000000, 
-    trangThai: 'HIEU_LUC', 
-    soNgayConLai: 408 // Giả sử còn 408 ngày
-  },
-  { 
-    hopdongId: 3, 
-    nhanVien: 'Lê Văn C', 
-    avatar: '⚡', 
-    chucVu: 'Tech Lead',
-    loaiHopDong: 'THU_VIEC', 
-    ngayBatDau: '2025-11-01', 
-    ngayKetThuc: '2025-12-31', 
-    luongCoBan: 10000000, 
-    trangThai: 'HIEU_LUC', 
-    soNgayConLai: 43 // Sắp hết hạn
-  },
-  { 
-    hopdongId: 4, 
-    nhanVien: 'Phạm Thị D', 
-    avatar: '📊', 
-    chucVu: 'Accountant',
-    loaiHopDong: 'XAC_DINH_THOI_HAN', 
-    ngayBatDau: '2022-01-01', 
-    ngayKetThuc: '2024-01-01', 
-    luongCoBan: 11000000, 
-    trangThai: 'HET_HAN', 
-    soNgayConLai: 0
-  },
-  { 
-    hopdongId: 5, 
-    nhanVien: 'Hoàng Văn E', 
-    avatar: '👤', 
-    chucVu: 'Marketing',
-    loaiHopDong: 'THU_VIEC', 
-    ngayBatDau: '2025-10-01', 
-    ngayKetThuc: '2025-11-15', 
-    luongCoBan: 9000000, 
-    trangThai: 'BI_HUY', 
-    soNgayConLai: 0
-  },
-];
+import { useState, useMemo, useEffect } from 'react';
+import { contractsService, employeesService } from '@/features/hr/shared/services';
 
 export default function ContractsPage() {
-  const [contracts, setContracts] = useState(mockContracts);
+  const [contracts, setContracts] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('HIEU_LUC');
   const [showRenewModal, setShowRenewModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedContract, setSelectedContract] = useState(null);
   const [newEndDate, setNewEndDate] = useState('');
+  const [formData, setFormData] = useState({
+    nhanvienId: '',
+    loaiHopDong: 'THU_VIEC',
+    ngayBatDau: new Date().toISOString().split('T')[0],
+    ngayKetThuc: '',
+    luongCoBan: '',
+    noiDung: ''
+  });
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [contractsData, employeesData] = await Promise.all([
+        contractsService.getAll(),
+        employeesService.getAll()
+      ]);
+      setContracts(contractsData);
+      setEmployees(employeesData);
+    } catch (err) {
+      console.error('Error loading contracts:', err);
+      alert('Không thể tải dữ liệu: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
@@ -92,25 +60,75 @@ export default function ContractsPage() {
     setShowRenewModal(true);
   };
 
-  const handleConfirmRenew = () => {
+  const handleConfirmRenew = async () => {
     if (!newEndDate) return alert("Vui lòng chọn ngày kết thúc mới!");
     
-    // Giả lập gọi API PATCH /hop-dong/{id}/renew
-    setContracts(prev => prev.map(c => 
-      c.hopdongId === selectedContract.hopdongId
-      ? { ...c, ngayKetThuc: newEndDate, soNgayConLai: newEndDate > c.ngayKetThuc ? 999 : c.soNgayConLai } // Giả lập update
-      : c
-    ));
-    alert(`Đã gia hạn hợp đồng ${selectedContract.hopdongId} đến ${newEndDate}`);
-    setShowRenewModal(false);
+    try {
+      setLoading(true);
+      await contractsService.renew(selectedContract.hopdongId, newEndDate);
+      await loadData();
+      setShowRenewModal(false);
+      alert(`Đã gia hạn hợp đồng thành công đến ${newEndDate}`);
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCancel = (id) => {
+  const handleCancel = async (id) => {
     if(confirm('Bạn có chắc chắn muốn HỦY hợp đồng này? Thao tác không thể hoàn tác.')) {
-      // Giả lập gọi API PATCH /hop-dong/{id}/cancel
-      setContracts(prev => prev.map(c => 
-        c.hopdongId === id ? { ...c, trangThai: 'BI_HUY' } : c
-      ));
+      try {
+        setLoading(true);
+        await contractsService.cancel(id);
+        await loadData();
+        alert('Hủy hợp đồng thành công!');
+      } catch (err) {
+        alert('Lỗi: ' + (err.response?.data?.message || err.message));
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleCreateContract = async () => {
+    // Validation
+    if (!formData.nhanvienId) {
+      return alert('Vui lòng chọn nhân viên!');
+    }
+    if (!formData.ngayBatDau) {
+      return alert('Vui lòng chọn ngày bắt đầu!');
+    }
+    if (formData.loaiHopDong !== 'VO_THOI_HAN' && !formData.ngayKetThuc) {
+      return alert('Vui lòng chọn ngày kết thúc!');
+    }
+    if (!formData.luongCoBan || formData.luongCoBan <= 0) {
+      return alert('Vui lòng nhập lương cơ bản hợp lệ!');
+    }
+    
+    try {
+      setLoading(true);
+      await contractsService.create({
+        ...formData,
+        nhanvienId: Number(formData.nhanvienId),
+        luongCoBan: Number(formData.luongCoBan)
+      });
+      await loadData();
+      setShowCreateModal(false);
+      // Reset form
+      setFormData({
+        nhanvienId: '',
+        loaiHopDong: 'THU_VIEC',
+        ngayBatDau: new Date().toISOString().split('T')[0],
+        ngayKetThuc: '',
+        luongCoBan: '',
+        noiDung: ''
+      });
+      alert('Tạo hợp đồng thành công!');
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -142,7 +160,7 @@ export default function ContractsPage() {
   const getContractTypeBadge = (type) => {
     const types = {
       THU_VIEC: { label: 'Thử việc', color: '#f59e0b', icon: '📝' },
-      XAC_DINH_THOI_HAN: { label: 'Xác định T.Hạn', color: '#3b82f6', icon: '📋' },
+      XAC_DINH: { label: 'Xác định T.Hạn', color: '#3b82f6', icon: '📋' },
       VO_THOI_HAN: { label: 'Vô thời hạn', color: '#10b981', icon: '📜' },
     };
     const t = types[type] || types.THU_VIEC;
@@ -158,7 +176,7 @@ export default function ContractsPage() {
           <h1 style={s.pageTitle}>Quản lý Hợp Đồng</h1>
           <p style={s.subtitle}>{stats.active} hợp đồng đang hiệu lực, {stats.expiring} sắp hết hạn</p>
         </div>
-        <button style={s.btnAdd}>
+        <button style={s.btnAdd} onClick={() => setShowCreateModal(true)}>
           <span style={{marginRight: 6}}>+</span> Tạo hợp đồng mới
         </button>
       </div>
@@ -256,6 +274,98 @@ export default function ContractsPage() {
           <div style={s.emptyState}>Không tìm thấy hợp đồng nào trong trạng thái này.</div>
         )}
       </div>
+
+      {/* MODAL TẠO HỢP ĐỒNG MỚI */}
+      {showCreateModal && (
+        <div style={s.modalOverlay}>
+          <div style={s.modal}>
+            <div style={s.modalHeader}>
+              <h3 style={s.modalTitle}>Tạo hợp đồng mới</h3>
+              <button style={s.closeBtn} onClick={() => setShowCreateModal(false)}>×</button>
+            </div>
+            <div style={s.modalBody}>
+              <div style={s.formGroup}>
+                <label style={s.label}>Nhân viên <span style={{color:'red'}}>*</span></label>
+                <select
+                  style={s.input}
+                  value={formData.nhanvienId}
+                  onChange={(e) => setFormData({...formData, nhanvienId: e.target.value})}
+                >
+                  <option value="">-- Chọn nhân viên --</option>
+                  {employees.map(emp => (
+                    <option key={emp.nhanvienId} value={emp.nhanvienId}>
+                      {emp.hoTen} - {emp.maNhanVien || `NV${emp.nhanvienId}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div style={s.formGroup}>
+                <label style={s.label}>Loại hợp đồng <span style={{color:'red'}}>*</span></label>
+                <select
+                  style={s.input}
+                  value={formData.loaiHopDong}
+                  onChange={(e) => {
+                    setFormData({...formData, loaiHopDong: e.target.value});
+                    // Nếu chọn vô thời hạn, xóa ngày kết thúc
+                    if (e.target.value === 'VO_THOI_HAN') {
+                      setFormData(prev => ({...prev, loaiHopDong: e.target.value, ngayKetThuc: ''}));
+                    }
+                  }}
+                >
+                  <option value="THU_VIEC">Thử việc</option>
+                  <option value="XAC_DINH">Xác định thời hạn</option>
+                  <option value="VO_THOI_HAN">Vô thời hạn</option>
+                </select>
+              </div>
+              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Ngày bắt đầu <span style={{color:'red'}}>*</span></label>
+                  <input
+                    type="date"
+                    style={s.input}
+                    value={formData.ngayBatDau}
+                    onChange={(e) => setFormData({...formData, ngayBatDau: e.target.value})}
+                  />
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Ngày kết thúc {formData.loaiHopDong !== 'VO_THOI_HAN' && <span style={{color:'red'}}>*</span>}</label>
+                  <input
+                    type="date"
+                    style={s.input}
+                    value={formData.ngayKetThuc}
+                    onChange={(e) => setFormData({...formData, ngayKetThuc: e.target.value})}
+                    disabled={formData.loaiHopDong === 'VO_THOI_HAN'}
+                    min={formData.ngayBatDau}
+                  />
+                </div>
+              </div>
+              <div style={s.formGroup}>
+                <label style={s.label}>Lương cơ bản <span style={{color:'red'}}>*</span></label>
+                <input
+                  type="number"
+                  style={s.input}
+                  value={formData.luongCoBan}
+                  onChange={(e) => setFormData({...formData, luongCoBan: e.target.value})}
+                  placeholder="VD: 10000000"
+                />
+              </div>
+              <div style={s.formGroup}>
+                <label style={s.label}>Nội dung hợp đồng</label>
+                <textarea
+                  style={{...s.input, minHeight: 80, fontFamily: 'inherit', resize: 'vertical'}}
+                  value={formData.noiDung}
+                  onChange={(e) => setFormData({...formData, noiDung: e.target.value})}
+                  placeholder="Mô tả chi tiết nội dung hợp đồng..."
+                />
+              </div>
+            </div>
+            <div style={s.modalFooter}>
+              <button style={s.btnCancel} onClick={() => setShowCreateModal(false)}>Hủy</button>
+              <button style={s.btnSave} onClick={handleCreateContract}>Tạo hợp đồng</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL GIA HẠN */}
       {showRenewModal && selectedContract && (

@@ -1,33 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { positionsService } from '@/features/hr/shared/services';
 
 // Danh sách icon có thể chọn
 const AVAILABLE_ICONS = ['💻', '🚀', '⚡', '👥', '📊', '📢', '💼', '🔧', '🛡️', '🎯', '🎓', '💎'];
 
-const mockPositions = [
-  { id: 1, ten: 'Developer', moTa: 'Phát triển các tính năng core và bảo trì hệ thống.', heSoLuong: 1.5, soNhanVien: 12, icon: '💻' },
-  { id: 2, ten: 'Senior Developer', moTa: 'Review code, thiết kế architecture và mentoring.', heSoLuong: 2.0, soNhanVien: 8, icon: '🚀' },
-  { id: 3, ten: 'Tech Lead', moTa: 'Quản lý đội ngũ kỹ thuật, quyết định công nghệ.', heSoLuong: 2.5, soNhanVien: 3, icon: '⚡' },
-  { id: 4, ten: 'HR Manager', moTa: 'Quản lý quy trình tuyển dụng và phúc lợi.', heSoLuong: 2.2, soNhanVien: 2, icon: '👥' },
-  { id: 5, ten: 'Accountant', moTa: 'Kiểm soát thu chi và báo cáo thuế hàng tháng.', heSoLuong: 1.6, soNhanVien: 4, icon: '📊' },
-  { id: 6, ten: 'Marketing Manager', moTa: 'Xây dựng chiến lược quảng bá thương hiệu.', heSoLuong: 2.0, soNhanVien: 1, icon: '📢' },
-];
-
 export default function PositionsPage() {
-  const [positions, setPositions] = useState(mockPositions);
+  const [positions, setPositions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  
+  useEffect(() => {
+    loadData();
+  }, []);
+  
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const data = await positionsService.getAll();
+      setPositions(data);
+    } catch (err) {
+      console.error('Error loading positions:', err);
+      alert('Không thể tải dữ liệu: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const [showModal, setShowModal] = useState(false);
   const [editingPosition, setEditingPosition] = useState(null);
-  const [formData, setFormData] = useState({ ten: '', moTa: '', heSoLuong: 1.0, icon: '💼' });
+  const [formData, setFormData] = useState({ tenChucVu: '', moTa: '', heSoLuong: 1.0, icon: '💼' });
 
   const handleAdd = () => {
     setEditingPosition(null);
-    setFormData({ ten: '', moTa: '', heSoLuong: 1.0, icon: '💼' });
+    setFormData({ tenChucVu: '', moTa: '', heSoLuong: 1.0, icon: '💼' });
     setShowModal(true);
   };
 
   const handleEdit = (position) => {
     setEditingPosition(position);
     setFormData({ 
-      ten: position.ten, 
+      tenChucVu: position.tenChucVu, 
       moTa: position.moTa, 
       heSoLuong: position.heSoLuong,
       icon: position.icon || '💼'
@@ -35,23 +46,41 @@ export default function PositionsPage() {
     setShowModal(true);
   };
 
-  const handleSave = () => {
-    if (!formData.ten.trim()) {
+  const handleSave = async () => {
+    if (!formData.tenChucVu.trim()) {
       alert("Vui lòng nhập tên chức vụ");
       return;
     }
 
-    if (editingPosition) {
-      setPositions(positions.map(p => p.id === editingPosition.id ? { ...p, ...formData } : p));
-    } else {
-      setPositions([...positions, { id: Date.now(), ...formData, soNhanVien: 0 }]);
+    try {
+      setLoading(true);
+      if (editingPosition) {
+        await positionsService.update(editingPosition.chucvuId, formData);
+      } else {
+        await positionsService.create(formData);
+      }
+      await loadData();
+      setShowModal(false);
+      alert(editingPosition ? 'Cập nhật chức vụ thành công!' : 'Thêm chức vụ thành công!');
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
     }
-    setShowModal(false);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm('Bạn có chắc muốn xóa chức vụ này?')) {
-      setPositions(positions.filter(p => p.id !== id));
+      try {
+        setLoading(true);
+        await positionsService.delete(id);
+        await loadData();
+        alert('Xóa chức vụ thành công!');
+      } catch (err) {
+        alert('Lỗi: ' + (err.response?.data?.message || err.message));
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -71,7 +100,7 @@ export default function PositionsPage() {
       {/* Grid System */}
       <div style={s.grid}>
         {positions.map(pos => (
-          <div key={pos.id} style={s.card}>
+          <div key={pos.chucvuId} style={s.card}>
             <div style={s.cardTop}>
               <div style={s.iconBox}>
                 {pos.icon}
@@ -80,14 +109,14 @@ export default function PositionsPage() {
                 <button style={s.iconBtn} onClick={() => handleEdit(pos)} title="Chỉnh sửa">
                   ✏️
                 </button>
-                <button style={{...s.iconBtn, color: '#ef4444', background: '#fef2f2'}} onClick={() => handleDelete(pos.id)} title="Xóa">
+                <button style={{...s.iconBtn, color: '#ef4444', background: '#fef2f2'}} onClick={() => handleDelete(pos.chucvuId)} title="Xóa">
                   🗑️
                 </button>
               </div>
             </div>
 
             <div style={s.cardContent}>
-              <h3 style={s.positionName}>{pos.ten}</h3>
+              <h3 style={s.positionName}>{pos.tenChucVu}</h3>
               <p style={s.positionDesc}>{pos.moTa}</p>
 
               {/* Stats Box */}
@@ -99,7 +128,7 @@ export default function PositionsPage() {
                 <div style={s.dividerVertical}></div>
                 <div style={s.statCol}>
                   <span style={s.statLabel}>Nhân sự</span>
-                  <span style={s.statValue}>{pos.soNhanVien} <span style={{fontSize: 12, color: '#adb5bd', fontWeight: 400}}>/20</span></span>
+                  <span style={s.statValue}>{pos.soLuongNhanVien || 0} <span style={{fontSize: 12, color: '#adb5bd', fontWeight: 400}}>/20</span></span>
                 </div>
               </div>
             </div>
@@ -108,13 +137,13 @@ export default function PositionsPage() {
             <div style={s.cardFooter}>
               <div style={s.progressInfo}>
                 <span style={s.progressLabel}>Chỉ tiêu nhân sự</span>
-                <span style={s.progressPercent}>{Math.round((pos.soNhanVien / 20) * 100)}%</span>
+                <span style={s.progressPercent}>{Math.round(((pos.soLuongNhanVien || 0) / 20) * 100)}%</span>
               </div>
               <div style={s.progressBarBg}>
                 <div style={{
                   ...s.progressBarFill, 
-                  width: `${Math.min((pos.soNhanVien / 20) * 100, 100)}%`,
-                  background: pos.soNhanVien >= 20 ? '#4caf50' : 'linear-gradient(195deg, #fb8c00, #ffa726)'
+                  width: `${Math.min(((pos.soLuongNhanVien || 0) / 20) * 100, 100)}%`,
+                  background: (pos.soLuongNhanVien || 0) >= 20 ? '#4caf50' : 'linear-gradient(195deg, #fb8c00, #ffa726)'
                 }}></div>
               </div>
             </div>
@@ -157,8 +186,8 @@ export default function PositionsPage() {
                   <label style={s.label}>Tên chức vụ <span style={{color: 'red'}}>*</span></label>
                   <input
                     style={s.input}
-                    value={formData.ten}
-                    onChange={(e) => setFormData({ ...formData, ten: e.target.value })}
+                    value={formData.tenChucVu}
+                    onChange={(e) => setFormData({ ...formData, tenChucVu: e.target.value })}
                     placeholder="VD: Senior Developer"
                     autoFocus
                   />

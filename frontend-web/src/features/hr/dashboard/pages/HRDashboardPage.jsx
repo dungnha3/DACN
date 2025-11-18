@@ -1,39 +1,39 @@
-import { useState } from 'react';
-
-const mockStats = {
-  tongNhanVien: 45,
-  nhanVienMoi: 5,
-  nghiViec: 2,
-  donChoPheDuyet: 8,
-  chamCongPhongBan: [
-    { phongBan: 'IT', coMat: 12, vang: 2, diMuon: 1 },
-    { phongBan: 'HR', coMat: 6, vang: 1, diMuon: 0 },
-    { phongBan: 'Accounting', coMat: 5, vang: 0, diMuon: 1 },
-    { phongBan: 'Marketing', coMat: 8, vang: 1, diMuon: 2 },
-  ],
-  luongTheoThang: [
-    { thang: 'T7', tongLuong: 850000000 },
-    { thang: 'T8', tongLuong: 920000000 },
-    { thang: 'T9', tongLuong: 880000000 },
-    { thang: 'T10', tongLuong: 950000000 },
-    { thang: 'T11', tongLuong: 1020000000 },
-  ],
-  nhanVienTheoTuoi: [
-    { doTuoi: '20-25', soLuong: 8 },
-    { doTuoi: '26-30', soLuong: 15 },
-    { doTuoi: '31-35', soLuong: 12 },
-    { doTuoi: '36-40', soLuong: 7 },
-    { doTuoi: '>40', soLuong: 3 },
-  ],
-  gioiTinh: { nam: 28, nu: 17 },
-};
+import { useState, useEffect } from 'react';
+import { dashboardService } from '@/features/hr/shared/services';
 
 export default function HRDashboardPage() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+  
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+  
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      const data = await dashboardService.getStats();
+      setStats(data);
+    } catch (err) {
+      console.error('Error loading dashboard:', err);
+      alert('Không thể tải dữ liệu dashboard: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
+
+  if (loading || !stats) {
+    return (
+      <div style={{...s.container, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px'}}>
+        <div style={{fontSize: 18, color: '#7b809a'}}>Đang tải dữ liệu...</div>
+      </div>
+    );
+  }
 
   return (
     <div style={s.container}>
@@ -54,22 +54,22 @@ export default function HRDashboardPage() {
       <div style={s.kpiGrid}>
         <div style={{ ...s.kpiCard, borderLeft: '4px solid #3b82f6' }}>
           <div style={s.kpiLabel}>Tổng nhân viên</div>
-          <div style={s.kpiValue}>{mockStats.tongNhanVien}</div>
-          <div style={s.kpiChange}>+{mockStats.nhanVienMoi} tháng này</div>
+          <div style={s.kpiValue}>{stats.tongNhanVien || 0}</div>
+          <div style={s.kpiChange}>+{stats.nhanVienMoi || 0} tháng này</div>
         </div>
         <div style={{ ...s.kpiCard, borderLeft: '4px solid #10b981' }}>
           <div style={s.kpiLabel}>Nhân viên mới</div>
-          <div style={s.kpiValue}>{mockStats.nhanVienMoi}</div>
+          <div style={s.kpiValue}>{stats.nhanVienMoi || 0}</div>
           <div style={s.kpiChange}>Tuyển dụng mới</div>
         </div>
         <div style={{ ...s.kpiCard, borderLeft: '4px solid #ef4444' }}>
           <div style={s.kpiLabel}>Nghỉ việc</div>
-          <div style={s.kpiValue}>{mockStats.nghiViec}</div>
+          <div style={s.kpiValue}>{stats.nghiViec || 0}</div>
           <div style={s.kpiChange}>Tháng này</div>
         </div>
         <div style={{ ...s.kpiCard, borderLeft: '4px solid #f59e0b' }}>
           <div style={s.kpiLabel}>Đơn chờ duyệt</div>
-          <div style={s.kpiValue}>{mockStats.donChoPheDuyet}</div>
+          <div style={s.kpiValue}>{stats.donChoPheDuyet || 0}</div>
           <div style={s.kpiChange}>Cần xử lý</div>
         </div>
       </div>
@@ -80,7 +80,7 @@ export default function HRDashboardPage() {
         <div style={s.chartCard}>
           <h3 style={s.chartTitle}>📊 Chấm công theo phòng ban</h3>
           <div style={s.barChartContainer}>
-            {mockStats.chamCongPhongBan.map((dept, idx) => {
+            {(stats.chamCongPhongBan || []).map((dept, idx) => {
               const total = dept.coMat + dept.vang + dept.diMuon;
               return (
                 <div key={idx} style={s.barGroup}>
@@ -106,8 +106,8 @@ export default function HRDashboardPage() {
         <div style={s.chartCard}>
           <h3 style={s.chartTitle}>💰 Xu hướng lương theo tháng</h3>
           <div style={s.lineChartContainer}>
-            {mockStats.luongTheoThang.map((item, idx) => {
-              const maxSalary = Math.max(...mockStats.luongTheoThang.map(i => i.tongLuong));
+            {(stats.luongTheoThang || []).map((item, idx) => {
+              const maxSalary = Math.max(...(stats.luongTheoThang || []).map(i => i.tongLuong));
               const height = (item.tongLuong / maxSalary) * 100;
               return (
                 <div key={idx} style={s.lineBar}>
@@ -127,8 +127,8 @@ export default function HRDashboardPage() {
         <div style={s.chartCard}>
           <h3 style={s.chartTitle}>👥 Nhân viên theo độ tuổi</h3>
           <div style={s.pieContainer}>
-            {mockStats.nhanVienTheoTuoi.map((item, idx) => {
-              const total = mockStats.nhanVienTheoTuoi.reduce((sum, i) => sum + i.soLuong, 0);
+            {(stats.nhanVienTheoTuoi || []).map((item, idx) => {
+              const total = (stats.nhanVienTheoTuoi || []).reduce((sum, i) => sum + i.soLuong, 0);
               const percent = ((item.soLuong / total) * 100).toFixed(1);
               const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
               return (
@@ -153,13 +153,13 @@ export default function HRDashboardPage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200, gap: 40 }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>👨</div>
-              <div style={{ fontSize: 32, fontWeight: 700, color: '#3b82f6' }}>{mockStats.gioiTinh.nam}</div>
-              <div style={{ fontSize: 14, color: '#64748b' }}>Nam ({((mockStats.gioiTinh.nam / mockStats.tongNhanVien) * 100).toFixed(1)}%)</div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: '#3b82f6' }}>{stats.nhanVienTheoGioiTinh?.nam || 0}</div>
+              <div style={{ fontSize: 14, color: '#64748b' }}>Nam ({stats.tongNhanVien ? ((stats.nhanVienTheoGioiTinh?.nam / stats.tongNhanVien) * 100).toFixed(1) : 0}%)</div>
             </div>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>👩</div>
-              <div style={{ fontSize: 32, fontWeight: 700, color: '#ec4899' }}>{mockStats.gioiTinh.nu}</div>
-              <div style={{ fontSize: 14, color: '#64748b' }}>Nữ ({((mockStats.gioiTinh.nu / mockStats.tongNhanVien) * 100).toFixed(1)}%)</div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: '#ec4899' }}>{stats.nhanVienTheoGioiTinh?.nu || 0}</div>
+              <div style={{ fontSize: 14, color: '#64748b' }}>Nữ ({stats.tongNhanVien ? ((stats.nhanVienTheoGioiTinh?.nu / stats.tongNhanVien) * 100).toFixed(1) : 0}%)</div>
             </div>
           </div>
         </div>

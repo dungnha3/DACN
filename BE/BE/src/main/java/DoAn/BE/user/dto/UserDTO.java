@@ -23,4 +23,5 @@ public class UserDTO {
     private LocalDateTime lastSeen;
     private LocalDateTime createdAt;
     private LocalDateTime lastLogin;
+    private Long nhanvienId; // ID nhân viên nếu user có liên kết với NhanVien
 }
