@@ -32,10 +32,10 @@ public class PhongBan {
     @Column(name = "phongban_id")
     private Long phongbanId;
 
-    @Column(name = "ten_phong_ban", nullable = false, length = 100)
+    @Column(name = "ten_phong_ban", nullable = false, length = 100, columnDefinition = "NVARCHAR(100)")
     private String tenPhongBan;
 
-    @Column(name = "mo_ta", length = 500)
+    @Column(name = "mo_ta", length = 500, columnDefinition = "NVARCHAR(500)")
     private String moTa;
 
     @ManyToOne

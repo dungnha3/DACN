@@ -25,10 +25,10 @@ public class Project {
     @Column(name = "project_id")
     private Long projectId;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, length = 255, columnDefinition = "NVARCHAR(255)")
     private String name;
 
-    @Column(name = "key_project", nullable = false, unique = true, length = 10)
+    @Column(name = "key_project", nullable = false, unique = true, length = 10, columnDefinition = "NVARCHAR(10)")
     private String keyProject;  // VD: PROJ-001, HRM-001
 
     @Column(columnDefinition = "NVARCHAR(MAX)")

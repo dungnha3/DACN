@@ -20,10 +20,10 @@ public class ChucVu {
     @Column(name = "chucvu_id")
     private Long chucvuId;
 
-    @Column(name = "ten_chuc_vu", nullable = false, length = 100)
+    @Column(name = "ten_chuc_vu", nullable = false, length = 100, columnDefinition = "NVARCHAR(100)")
     private String tenChucVu;
 
-    @Column(name = "mo_ta", length = 500)
+    @Column(name = "mo_ta", length = 500, columnDefinition = "NVARCHAR(500)")
     private String moTa;
 
     @Column(name = "level", nullable = false)

@@ -28,7 +28,7 @@ public class Sprint {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, length = 255, columnDefinition = "NVARCHAR(255)")
     private String name;
 
     @Column(columnDefinition = "NVARCHAR(MAX)")

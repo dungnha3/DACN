@@ -30,10 +30,10 @@ public class Issue {
     @JoinColumn(name = "sprint_id")
     private Sprint sprint;
 
-    @Column(name = "issue_key", nullable = false, unique = true, length = 20)
+    @Column(name = "issue_key", nullable = false, unique = true, length = 20, columnDefinition = "NVARCHAR(20)")
     private String issueKey;  // VD: PROJ-001, PROJ-002
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, length = 255, columnDefinition = "NVARCHAR(255)")
     private String title;
 
     @Column(columnDefinition = "NVARCHAR(MAX)")

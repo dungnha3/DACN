@@ -33,16 +33,16 @@ public class Notification {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "type", nullable = false, length = 50)
+    @Column(name = "type", nullable = false, length = 50, columnDefinition = "NVARCHAR(50)")
     private String type;
 
-    @Column(name = "title", nullable = false, length = 255)
+    @Column(name = "title", nullable = false, length = 255, columnDefinition = "NVARCHAR(255)")
     private String title;
 
-    @Column(name = "content", length = 500)
+    @Column(name = "content", length = 500, columnDefinition = "NVARCHAR(500)")
     private String content;
 
-    @Column(name = "link", length = 500)
+    @Column(name = "link", length = 500, columnDefinition = "NVARCHAR(500)")
     private String link;
 
     @Column(name = "is_read", nullable = false)

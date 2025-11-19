@@ -16,10 +16,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class DefaultUsersInitializer {
 
     @Bean
+    @org.springframework.core.annotation.Order(1) // Chạy TRƯỚC DataSeed
     CommandLineRunner initDefaultUsers(UserService userService,
                                        UserRepository userRepository,
                                        PasswordEncoder passwordEncoder) {
         return args -> {
+            // Kiểm tra nếu đã có users thì skip
+            if (userRepository.count() > 0) {
+                log.info("⏭️  Users already exist, skipping initialization");
+                return;
+            }
+            
+            log.info("🌱 Initializing default users...");
+            
             // Tài khoản mặc định gốc
             upsertUser(userService, userRepository, passwordEncoder,
                     "admin", "Admin@123", "admin@example.com", User.Role.ADMIN);
@@ -101,24 +110,19 @@ public class DefaultUsersInitializer {
                             String password,
                             String email,
                             User.Role role) {
-        userRepository.findByUsername(username).ifPresentOrElse(existing -> {
-            existing.setRole(role);
-            existing.setIsActive(true);
-            existing.setPasswordHash(passwordEncoder.encode(password));
-            if (email != null && (existing.getEmail() == null || !existing.getEmail().equals(email))) {
-                existing.setEmail(email);
-            }
-            userRepository.save(existing);
-            log.info("🔁 Đã cập nhật tài khoản mặc định: {} ({})", username, role);
-        }, () -> {
-            CreateUserRequest req = new CreateUserRequest();
-            req.setUsername(username);
-            req.setPassword(password);
-            req.setEmail(email);
-            req.setPhoneNumber(null);
-            req.setRole(role);
-            userService.createUser(req);
-            log.info("✅ Đã tạo tài khoản mặc định: {} ({})", username, role);
-        });
+        // Chỉ tạo mới, không update (vì đã check count() ở trên)
+        if (userRepository.findByUsername(username).isPresent()) {
+            log.info("⏭️  User {} already exists, skipping", username);
+            return;
+        }
+        
+        CreateUserRequest req = new CreateUserRequest();
+        req.setUsername(username);
+        req.setPassword(password);
+        req.setEmail(email);
+        req.setPhoneNumber(null);
+        req.setRole(role);
+        userService.createUser(req);
+        log.info("✅ Đã tạo tài khoản mặc định: {} ({})", username, role);
     }
 }

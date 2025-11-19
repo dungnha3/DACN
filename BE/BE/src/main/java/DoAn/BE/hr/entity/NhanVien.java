@@ -28,7 +28,7 @@ public class NhanVien {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @Column(name = "ho_ten", nullable = false, length = 100)
+    @Column(name = "ho_ten", nullable = false, length = 100, columnDefinition = "NVARCHAR(100)")
     private String hoTen;
 
     @Column(name = "cccd", unique = true, length = 20)
@@ -38,10 +38,10 @@ public class NhanVien {
     private LocalDate ngaySinh;
 
     @Convert(converter = GioiTinhConverter.class)
-    @Column(name = "gioi_tinh", nullable = false, length = 10)
+    @Column(name = "gioi_tinh", nullable = false, length = 10, columnDefinition = "NVARCHAR(10)")
     private GioiTinh gioiTinh;
 
-    @Column(name = "dia_chi", length = 200)
+    @Column(name = "dia_chi", length = 255, columnDefinition = "NVARCHAR(255)")
     private String diaChi;
 
     @Column(name = "ngay_vao_lam", nullable = false)

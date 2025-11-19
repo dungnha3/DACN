@@ -28,19 +28,19 @@ public class User {
     @Column(name = "user_id")
     private Long userId;
 
-    @Column(name = "username", nullable = false, length = 50, unique = true)
+    @Column(name = "username", nullable = false, length = 50, unique = true, columnDefinition = "NVARCHAR(50)")
     private String username;
 
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
-    @Column(name = "email", unique = true, length = 100)
+    @Column(name = "email", unique = true, length = 100, columnDefinition = "NVARCHAR(100)")
     private String email;
 
-    @Column(name = "phone_number", length = 15)
+    @Column(name = "phone_number", length = 15, columnDefinition = "NVARCHAR(15)")
     private String phoneNumber;
 
-    @Column(name = "avatar_url", length = 500)
+    @Column(name = "avatar_url", length = 500, columnDefinition = "NVARCHAR(500)")
     private String avatarUrl;
 
     // Enum Role: ADMIN / MANAGER / EMPLOYEE

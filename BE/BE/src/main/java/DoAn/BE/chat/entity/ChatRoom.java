@@ -24,7 +24,7 @@ public class ChatRoom {
     @Column(name = "room_id")
     private Long roomId;  // Hoặc chatRoomId nếu muốn giữ tên
 
-    @Column(length = 100)
+    @Column(length = 100, columnDefinition = "NVARCHAR(100)")
     private String name;  // Có thể NULL (DIRECT chat không có tên)
 
     @Enumerated(EnumType.STRING)
@@ -35,7 +35,7 @@ public class ChatRoom {
     @JoinColumn(name = "project_id")
     private Project project;  // NULL nếu không phải project chat
 
-    @Column(name = "avatar_url", length = 500)
+    @Column(name = "avatar_url", length = 500, columnDefinition = "NVARCHAR(500)")
     private String avatarUrl;
 
     @ManyToOne
