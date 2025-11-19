@@ -275,9 +275,31 @@ public class IssueService {
         IssueStatus status = issueStatusRepository.findById(statusId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy trạng thái"));
         
+        // Get user for activity log
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
+        
+        // Save old status for activity log
         String oldStatus = issue.getIssueStatus() != null ? issue.getIssueStatus().getName() : "";
+        String newStatus = status.getName();
+        
+        // Change status
         issue.changeStatus(status);
         issue = issueRepository.save(issue);
+        
+        // Create activity log for status change
+        if (!oldStatus.equals(newStatus)) {
+            IssueActivity activity = new IssueActivity(
+                issue, 
+                user, 
+                ActivityType.STATUS_CHANGED,
+                "Status",
+                oldStatus,
+                newStatus
+            );
+            activity.setDescription(user.getUsername() + " đã thay đổi trạng thái");
+            issueActivityRepository.save(activity);
+        }
         
         // Notify assignee về status change
         if (issue.getAssignee() != null && !issue.getAssignee().getUserId().equals(userId)) {

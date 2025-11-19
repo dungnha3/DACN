@@ -5,10 +5,12 @@ import CreateProjectModal from './components/CreateProjectModal'
 import CreateIssueModal from './components/CreateIssueModal'
 import { projectApi } from './api/projectApi'
 import { issueApi } from './api/issueApi'
+import { dashboardApi } from './api/dashboardApi'
 import ProjectDetailPage from './pages/ProjectDetailPage'
+import IssueDetailPage from './pages/IssueDetailPage'
 
 export default function ProjectsPage() {
-  const [mainTab, setMainTab] = useState('tasks') // tasks | projects
+  const [mainTab, setMainTab] = useState('tasks') // tasks | projects | performance
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(false)
 
@@ -56,17 +58,28 @@ export default function ProjectsPage() {
         >
           Dự án
         </button>
+        <button
+          style={{
+            ...styles.mainTabButton,
+            ...(mainTab === 'performance' ? styles.mainTabButtonActive : {})
+          }}
+          onClick={() => setMainTab('performance')}
+        >
+          Hiệu suất 📊
+        </button>
       </div>
 
       {/* Content Area */}
       {mainTab === 'tasks' ? (
         <TasksTab key="tasks-tab" />
-      ) : (
+      ) : mainTab === 'projects' ? (
         <ProjectsTab 
           projects={projects} 
           loading={loading}
           onProjectCreated={handleProjectCreated}
         />
+      ) : (
+        <PerformanceTab key="performance-tab" />
       )}
     </div>
   )
@@ -78,6 +91,8 @@ function TasksTab() {
   const [issues, setIssues] = useState([])
   const [loading, setLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedIssueId, setSelectedIssueId] = useState(null)
+  const [hoveredRow, setHoveredRow] = useState(null)
   
   // Load issues khi component mount
   useEffect(() => {
@@ -107,6 +122,16 @@ function TasksTab() {
   const handleIssueCreated = (newIssue) => {
     // Reload issues sau khi tạo mới
     loadIssues()
+  }
+
+  // Nếu đã chọn issue, hiển thị IssueDetailPage
+  if (selectedIssueId) {
+    return (
+      <IssueDetailPage 
+        issueId={selectedIssueId}
+        onBack={() => setSelectedIssueId(null)}
+      />
+    )
   }
   
   return (
@@ -151,21 +176,11 @@ function TasksTab() {
         >
           ⏰ Hạn chót
         </button>
-        <button 
-          style={{...styles.viewModeTab, ...(viewMode === 'calendar' ? styles.viewModeTabActive : {})}}
-          onClick={() => setViewMode('calendar')}
-        >
-          📅 Trình lập kế hoạch
-        </button>
-        <button style={styles.viewModeTab}>📊 Lịch</button>
-        <button style={styles.viewModeTab}>📈 Gantt</button>
+        <button style={styles.viewModeTab}>� Lịch</button>
         <div style={styles.viewModeDivider} />
         <button style={styles.viewModeTab}>⚠️ 0 Quá hạn</button>
         <button style={styles.viewModeTab}>💬 0 Bình luận</button>
-        <button style={styles.viewModeTab}>✓ Đánh dấu đã đọc tất cả</button>
         <div style={{flex: 1}} />
-        <button style={styles.settingsBtn}>⚙️ Quy tắc tự động hóa</button>
-        <button style={styles.settingsBtn}>🎨 Phím mở rộng</button>
       </div>
 
       {/* Create Issue Modal */}
@@ -185,10 +200,6 @@ function TasksTab() {
         <table style={styles.table}>
           <thead>
             <tr>
-              <th style={styles.th}>
-                <input type="checkbox" />
-              </th>
-              <th style={styles.th}>⭐</th>
               <th style={styles.th}>Tên</th>
               <th style={styles.th}>
                 Hoạt động 
@@ -203,22 +214,25 @@ function TasksTab() {
           <tbody>
             {issues.length === 0 ? (
               <tr>
-                <td colSpan="8" style={{...styles.td, textAlign: 'center', padding: '32px'}}>
+                <td colSpan="6" style={{...styles.td, textAlign: 'center', padding: '32px'}}>
                   Chưa có tác vụ nào. Nhấn nút "Tạo" để tạo tác vụ mới.
                 </td>
               </tr>
             ) : (
               issues.map((task) => (
-              <tr key={task.issueId} style={styles.tr}>
-                <td style={styles.td}>
-                  <input type="checkbox" />
-                </td>
-                <td style={styles.td}>
-                  <button style={styles.starBtn}>☆</button>
-                </td>
+              <tr 
+                key={task.issueId} 
+                style={{
+                  ...styles.tr, 
+                  cursor: 'pointer',
+                  backgroundColor: hoveredRow === task.issueId ? '#f7fafc' : 'transparent'
+                }}
+                onClick={() => setSelectedIssueId(task.issueId)}
+                onMouseEnter={() => setHoveredRow(task.issueId)}
+                onMouseLeave={() => setHoveredRow(null)}
+              >
                 <td style={styles.td}>
                   <div style={styles.taskName}>
-                    <span style={styles.taskIcon}>☰</span>
                     {task.issueKey}: {task.title}
                   </div>
                 </td>
@@ -278,15 +292,6 @@ function TasksTab() {
             <option>200</option>
           </select>
         </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div style={styles.actionButtons}>
-        <button style={styles.actionBtnActive}>ÁP DỤNG</button>
-        <button style={styles.actionBtn}>
-          <input type="checkbox" style={{marginRight: '8px'}} />
-          ĐÁNH CHỜ TẤT CẢ
-        </button>
       </div>
     </div>
   )
@@ -386,10 +391,7 @@ function ProjectsTab({ projects, loading, onProjectCreated }) {
       <div style={styles.viewModeTabs}>
         <button style={styles.viewModeTab}>⚠️ 0 Quá hạn</button>
         <button style={styles.viewModeTab}>💬 0 Bình luận</button>
-        <button style={styles.viewModeTab}>✓ Đánh dấu đã đọc tất cả</button>
         <div style={{flex: 1}} />
-        <button style={styles.settingsBtn}>⚙️ Quy tắc tự động hóa</button>
-        <button style={styles.settingsBtn}>🎨 Phím mở rộng</button>
       </div>
 
       {/* Projects Table */}
@@ -496,6 +498,214 @@ function ProjectsTab({ projects, loading, onProjectCreated }) {
           <button style={styles.paginationBtn}>TIẾP THEO →</button>
         </div>
       </div>
+    </div>
+  )
+}
+
+// Tab "Hiệu suất"
+function PerformanceTab() {
+  const [stats, setStats] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [summary, setSummary] = useState({
+    totalProjects: 0,
+    totalIssues: 0,
+    completedIssues: 0,
+    avgCompletionRate: 0,
+    totalOverdue: 0
+  })
+
+  useEffect(() => {
+    loadPerformanceData()
+  }, [])
+
+  const loadPerformanceData = async () => {
+    setLoading(true)
+    try {
+      const data = await dashboardApi.getMyProjectsStats()
+      setStats(data)
+      
+      // Tính toán summary
+      const totalProjects = data.length
+      const totalIssues = data.reduce((sum, p) => sum + p.totalIssues, 0)
+      const completedIssues = data.reduce((sum, p) => sum + p.completedIssues, 0)
+      const avgCompletionRate = totalProjects > 0 
+        ? data.reduce((sum, p) => sum + p.completionRate, 0) / totalProjects 
+        : 0
+      const totalOverdue = data.reduce((sum, p) => sum + p.overdueIssues, 0)
+
+      setSummary({
+        totalProjects,
+        totalIssues,
+        completedIssues,
+        avgCompletionRate,
+        totalOverdue
+      })
+    } catch (error) {
+      console.error('Error loading performance data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getCompletionColor = (rate) => {
+    if (rate >= 80) return '#10b981'
+    if (rate >= 50) return '#f59e0b'
+    return '#ef4444'
+  }
+
+  return (
+    <div style={styles.tabContent}>
+      {/* Header */}
+      <div style={styles.performanceHeader}>
+        <h2 style={styles.performanceTitle}>Tổng quan hiệu suất</h2>
+        <p style={styles.performanceSubtitle}>Thống kê tất cả dự án của bạn</p>
+      </div>
+
+      {loading ? (
+        <div style={styles.loadingContainer}>
+          <div style={styles.loadingText}>Đang tải dữ liệu...</div>
+        </div>
+      ) : (
+        <>
+          {/* Summary Cards */}
+          <div style={styles.summaryCards}>
+            <div style={styles.summaryCard}>
+              <div style={styles.summaryIcon}>📁</div>
+              <div style={styles.summaryContent}>
+                <div style={styles.summaryLabel}>Tổng dự án</div>
+                <div style={styles.summaryValue}>{summary.totalProjects}</div>
+              </div>
+            </div>
+
+            <div style={styles.summaryCard}>
+              <div style={styles.summaryIcon}>📋</div>
+              <div style={styles.summaryContent}>
+                <div style={styles.summaryLabel}>Tổng tác vụ</div>
+                <div style={styles.summaryValue}>{summary.totalIssues}</div>
+                <div style={styles.summaryDetail}>
+                  Hoàn thành: {summary.completedIssues}
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.summaryCard}>
+              <div style={styles.summaryIcon}>✅</div>
+              <div style={styles.summaryContent}>
+                <div style={styles.summaryLabel}>Tỷ lệ hoàn thành TB</div>
+                <div style={{
+                  ...styles.summaryValue,
+                  color: getCompletionColor(summary.avgCompletionRate)
+                }}>
+                  {summary.avgCompletionRate.toFixed(1)}%
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.summaryCard}>
+              <div style={styles.summaryIcon}>⚠️</div>
+              <div style={styles.summaryContent}>
+                <div style={styles.summaryLabel}>Quá hạn</div>
+                <div style={{...styles.summaryValue, color: '#ef4444'}}>
+                  {summary.totalOverdue}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Projects Performance Table */}
+          <div style={styles.performanceTable}>
+            <h3 style={styles.sectionTitle}>Chi tiết theo dự án</h3>
+            
+            {stats.length === 0 ? (
+              <div style={styles.emptyState}>
+                <p>Chưa có dữ liệu thống kê</p>
+              </div>
+            ) : (
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Dự án</th>
+                    <th style={styles.th}>Trạng thái</th>
+                    <th style={styles.th}>Tổng tác vụ</th>
+                    <th style={styles.th}>Hoàn thành</th>
+                    <th style={styles.th}>Đang làm</th>
+                    <th style={styles.th}>Chưa làm</th>
+                    <th style={styles.th}>Quá hạn</th>
+                    <th style={styles.th}>Tỷ lệ hoàn thành</th>
+                    <th style={styles.th}>Sprints</th>
+                    <th style={styles.th}>Thành viên</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.map((project) => (
+                    <tr key={project.projectId} style={styles.tr}>
+                      <td style={styles.td}>
+                        <div style={styles.projectNameCell}>
+                          <span style={styles.projectKeyBadge}>{project.projectKey}</span>
+                          <span style={styles.projectNameText}>{project.projectName}</span>
+                        </div>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={styles.statusBadge}>{project.status}</span>
+                      </td>
+                      <td style={styles.td}>
+                        <strong>{project.totalIssues}</strong>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={{color: '#10b981', fontWeight: '600'}}>
+                          {project.completedIssues}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={{color: '#3b82f6', fontWeight: '600'}}>
+                          {project.inProgressIssues}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={{color: '#6b7280', fontWeight: '600'}}>
+                          {project.todoIssues}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={{color: '#ef4444', fontWeight: '600'}}>
+                          {project.overdueIssues}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <div style={styles.progressCell}>
+                          <div style={styles.progressBar}>
+                            <div style={{
+                              ...styles.progressFill,
+                              width: `${project.completionRate}%`,
+                              backgroundColor: getCompletionColor(project.completionRate)
+                            }} />
+                          </div>
+                          <span style={styles.progressText}>
+                            {project.completionRate.toFixed(1)}%
+                          </span>
+                        </div>
+                      </td>
+                      <td style={styles.td}>
+                        <div style={styles.sprintInfo}>
+                          <span>Hoạt động: {project.activeSprints}</span>
+                          <span style={{color: '#6b7280', fontSize: '12px'}}>
+                            / {project.totalSprints} tổng
+                          </span>
+                        </div>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={styles.memberBadge}>
+                          👥 {project.totalMembers}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }
