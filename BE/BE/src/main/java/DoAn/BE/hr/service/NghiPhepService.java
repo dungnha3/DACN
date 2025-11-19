@@ -188,6 +188,64 @@ public class NghiPhepService {
     }
 
     /**
+     * PM duyệt đơn nghỉ phép (Step 1: Kiểm tra tiến độ dự án)
+     */
+    public NghiPhep approvePM(Long id, String note, User currentUser) {
+        if (!currentUser.isManagerProject()) {
+            throw new ForbiddenException("Chỉ Project Manager mới có quyền duyệt về mặt tiến độ dự án");
+        }
+        
+        log.info("PM {} duyệt đơn nghỉ phép ID: {}", currentUser.getUsername(), id);
+        NghiPhep nghiPhep = getNghiPhepById(id);
+        
+        if (nghiPhep.getTrangThai() != TrangThaiNghiPhep.CHO_DUYET) {
+            throw new BadRequestException("Đơn này đã được xử lý hoặc đang chờ Accounting");
+        }
+        
+        nghiPhep.approvePM(currentUser, note);
+        NghiPhep saved = nghiPhepRepository.save(nghiPhep);
+        log.info("✅ PM đã duyệt đơn nghỉ phép, chờ Accounting duyệt phép tồn");
+        
+        return saved;
+    }
+    
+    /**
+     * Accounting duyệt đơn nghỉ phép (Step 2: Kiểm tra phép tồn/lương)
+     */
+    public NghiPhep approveAccounting(Long id, String note, User currentUser) {
+        if (!currentUser.isManagerAccounting()) {
+            throw new ForbiddenException("Chỉ Accounting Manager mới có quyền duyệt về mặt phép tồn/lương");
+        }
+        
+        log.info("Accounting {} duyệt đơn nghỉ phép ID: {}", currentUser.getUsername(), id);
+        NghiPhep nghiPhep = getNghiPhepById(id);
+        
+        if (nghiPhep.getTrangThai() != TrangThaiNghiPhep.PM_APPROVED) {
+            throw new BadRequestException("Đơn này cần PM duyệt trước hoặc đã được xử lý");
+        }
+        
+        nghiPhep.approveAccounting(currentUser, note);
+        NghiPhep saved = nghiPhepRepository.save(nghiPhep);
+        log.info("✅ Accounting đã duyệt đơn nghỉ phép - Hoàn tất 2-step approval");
+        
+        // 🔔 Gửi notification cho nhân viên khi hoàn tất
+        try {
+            if (nghiPhep.getNhanVien().getUser() != null) {
+                hrNotificationService.createLeaveApprovedNotification(
+                    nghiPhep.getNhanVien().getUser().getUserId(),
+                    nghiPhep.getNgayBatDau().toString(),
+                    nghiPhep.getNgayKetThuc().toString()
+                );
+            }
+        } catch (Exception e) {
+            log.warn("Không thể gửi notification: {}", e.getMessage());
+        }
+        
+        return saved;
+    }
+    
+    /**
+     * Legacy approve method (backward compatibility)
      * Duyệt đơn nghỉ phép - Chỉ Accounting/PM
      */
     public NghiPhep approveNghiPhep(Long id, String note, User currentUser) {

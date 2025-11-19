@@ -43,6 +43,29 @@ public class NghiPhep {
     @Column(name = "trang_thai", length = 30)
     private TrangThaiNghiPhep trangThai = TrangThaiNghiPhep.CHO_DUYET;
 
+    // PM Approval (Step 1: Kiểm tra tiến độ dự án)
+    @ManyToOne
+    @JoinColumn(name = "pm_approver_id")
+    private User pmApprover;
+    
+    @Column(name = "pm_approved_at")
+    private LocalDateTime pmApprovedAt;
+    
+    @Column(name = "pm_note", length = 500, columnDefinition = "NVARCHAR(500)")
+    private String pmNote;
+    
+    // Accounting Approval (Step 2: Kiểm tra phép tồn/lương)
+    @ManyToOne
+    @JoinColumn(name = "accounting_approver_id")
+    private User accountingApprover;
+    
+    @Column(name = "accounting_approved_at")
+    private LocalDateTime accountingApprovedAt;
+    
+    @Column(name = "accounting_note", length = 500, columnDefinition = "NVARCHAR(500)")
+    private String accountingNote;
+    
+    // Legacy fields (giữ để backward compatibility)
     @ManyToOne
     @JoinColumn(name = "nguoi_duyet_id")
     private User nguoiDuyet;
@@ -74,6 +97,37 @@ public class NghiPhep {
         }
     }
 
+    /**
+     * PM approve (Step 1)
+     */
+    public void approvePM(User pmUser, String note) {
+        this.pmApprover = pmUser;
+        this.pmApprovedAt = LocalDateTime.now();
+        this.pmNote = note;
+        // Chưa chuyển trạng thái, chờ Accounting approve
+        this.trangThai = TrangThaiNghiPhep.PM_APPROVED;
+    }
+    
+    /**
+     * Accounting approve (Step 2 - final)
+     */
+    public void approveAccounting(User accountingUser, String note) {
+        this.accountingApprover = accountingUser;
+        this.accountingApprovedAt = LocalDateTime.now();
+        this.accountingNote = note;
+        // Chỉ chuyển sang DA_DUYET khi cả PM và Accounting đều approve
+        if (this.pmApprover != null) {
+            this.trangThai = TrangThaiNghiPhep.DA_DUYET;
+            // Set legacy fields
+            this.nguoiDuyet = accountingUser;
+            this.ngayDuyet = LocalDateTime.now();
+            this.ghiChuDuyet = "PM: " + (pmNote != null ? pmNote : "OK") + " | ACC: " + note;
+        }
+    }
+    
+    /**
+     * Legacy approve method (backward compatibility)
+     */
     public void approve(User approver, String note) {
         this.trangThai = TrangThaiNghiPhep.DA_DUYET;
         this.nguoiDuyet = approver;
@@ -90,6 +144,10 @@ public class NghiPhep {
 
     public boolean isPending() {
         return trangThai == TrangThaiNghiPhep.CHO_DUYET;
+    }
+    
+    public boolean isPMApproved() {
+        return trangThai == TrangThaiNghiPhep.PM_APPROVED;
     }
 
     public boolean isApproved() {
@@ -108,8 +166,9 @@ public class NghiPhep {
     }
 
     public enum TrangThaiNghiPhep {
-        CHO_DUYET,
-        DA_DUYET,
-        TU_CHOI
+        CHO_DUYET,          // Chờ PM duyệt
+        PM_APPROVED,        // PM đã duyệt, chờ Accounting
+        DA_DUYET,           // Cả PM và Accounting đều approved
+        TU_CHOI             // Bị từ chối (PM hoặc Accounting)
     }
 }

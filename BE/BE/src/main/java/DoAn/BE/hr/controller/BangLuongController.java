@@ -97,7 +97,8 @@ public class BangLuongController {
     public ResponseEntity<List<BangLuongDTO>> getBangLuongByPeriod(
             @RequestParam Integer thang,
             @RequestParam Integer nam) {
-        List<BangLuong> bangLuongs = bangLuongService.getBangLuongByPeriod(thang, nam);
+        User currentUser = getCurrentUser();
+        List<BangLuong> bangLuongs = bangLuongService.getBangLuongByPeriod(thang, nam, currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTOList(bangLuongs));
     }
     
@@ -107,14 +108,16 @@ public class BangLuongController {
             @PathVariable Long nhanvienId,
             @RequestParam Integer thang,
             @RequestParam Integer nam) {
-        BangLuong bangLuong = bangLuongService.getBangLuongByNhanVienAndPeriod(nhanvienId, thang, nam);
+        User currentUser = getCurrentUser();
+        BangLuong bangLuong = bangLuongService.getBangLuongByNhanVienAndPeriod(nhanvienId, thang, nam, currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTO(bangLuong));
     }
     
     // Lấy bảng lương theo trạng thái
     @GetMapping("/trang-thai/{trangThai}")
     public ResponseEntity<List<BangLuongDTO>> getBangLuongByTrangThai(@PathVariable String trangThai) {
-        List<BangLuong> bangLuongs = bangLuongService.getBangLuongByTrangThai(trangThai);
+        User currentUser = getCurrentUser();
+        List<BangLuong> bangLuongs = bangLuongService.getBangLuongByTrangThai(trangThai, currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTOList(bangLuongs));
     }
     
@@ -129,7 +132,8 @@ public class BangLuongController {
     // Hủy bảng lương
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<BangLuongDTO> cancelBangLuong(@PathVariable Long id) {
-        BangLuong bangLuong = bangLuongService.cancelBangLuong(id);
+        User currentUser = getCurrentUser();
+        BangLuong bangLuong = bangLuongService.cancelBangLuong(id, currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTO(bangLuong));
     }
     
@@ -138,7 +142,8 @@ public class BangLuongController {
     public ResponseEntity<Map<String, Object>> getTotalSalaryByPeriod(
             @RequestParam Integer thang,
             @RequestParam Integer nam) {
-        BigDecimal total = bangLuongService.getTotalSalaryByPeriod(thang, nam);
+        User currentUser = getCurrentUser();
+        BigDecimal total = bangLuongService.getTotalSalaryByPeriod(thang, nam, currentUser);
         Map<String, Object> response = new HashMap<>();
         response.put("thang", thang);
         response.put("nam", nam);
@@ -151,7 +156,8 @@ public class BangLuongController {
     public ResponseEntity<Map<String, Object>> getTotalSalaryByNhanVienAndYear(
             @PathVariable Long nhanvienId,
             @PathVariable Integer nam) {
-        BigDecimal total = bangLuongService.getTotalSalaryByNhanVienAndYear(nhanvienId, nam);
+        User currentUser = getCurrentUser();
+        BigDecimal total = bangLuongService.getTotalSalaryByNhanVienAndYear(nhanvienId, nam, currentUser);
         Map<String, Object> response = new HashMap<>();
         response.put("nhanvienId", nhanvienId);
         response.put("nam", nam);
@@ -165,7 +171,8 @@ public class BangLuongController {
             @PathVariable Long nhanvienId,
             @RequestParam Integer thang,
             @RequestParam Integer nam) {
-        BangLuong bangLuong = bangLuongService.tinhLuongTuDong(nhanvienId, thang, nam);
+        User currentUser = getCurrentUser();
+        BangLuong bangLuong = bangLuongService.tinhLuongTuDong(nhanvienId, thang, nam, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(bangLuongMapper.toDTO(bangLuong));
     }
 
@@ -174,7 +181,8 @@ public class BangLuongController {
     public ResponseEntity<Map<String, Object>> tinhLuongTuDongChoTatCa(
             @RequestParam Integer thang,
             @RequestParam Integer nam) {
-        List<BangLuong> bangLuongs = bangLuongService.tinhLuongTuDongChoTatCa(thang, nam);
+        User currentUser = getCurrentUser();
+        List<BangLuong> bangLuongs = bangLuongService.tinhLuongTuDongChoTatCa(thang, nam, currentUser);
         Map<String, Object> response = new HashMap<>();
         response.put("thang", thang);
         response.put("nam", nam);
@@ -195,7 +203,8 @@ public class BangLuongController {
             Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         
-        Page<BangLuong> bangLuongPage = bangLuongService.getAllBangLuongPage(pageable);
+        User currentUser = getCurrentUser();
+        Page<BangLuong> bangLuongPage = bangLuongService.getAllBangLuongPage(pageable, currentUser);
         Page<BangLuongDTO> dtoPage = bangLuongPage.map(bangLuongMapper::toDTO);
         
         return ResponseEntity.ok(dtoPage);

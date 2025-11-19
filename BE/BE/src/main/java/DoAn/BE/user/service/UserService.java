@@ -12,6 +12,9 @@ import DoAn.BE.common.exception.BadRequestException;
 import DoAn.BE.common.exception.DuplicateException;
 import DoAn.BE.common.exception.EntityNotFoundException;
 import DoAn.BE.notification.service.AuthNotificationService;
+import DoAn.BE.audit.service.AuditLogService;
+import DoAn.BE.audit.entity.AuditLog;
+import DoAn.BE.common.exception.ForbiddenException;
 import DoAn.BE.hr.entity.ChucVu;
 import DoAn.BE.hr.entity.NhanVien;
 import DoAn.BE.hr.entity.PhongBan;
@@ -40,16 +43,19 @@ public class UserService {
     private final PhongBanRepository phongBanRepository;
     private final ChucVuRepository chucVuRepository;
     private final AuthNotificationService authNotificationService;
+    private final AuditLogService auditLogService;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
                       NhanVienRepository nhanVienRepository, PhongBanRepository phongBanRepository,
-                      ChucVuRepository chucVuRepository, AuthNotificationService authNotificationService) {
+                      ChucVuRepository chucVuRepository, AuthNotificationService authNotificationService,
+                      AuditLogService auditLogService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.nhanVienRepository = nhanVienRepository;
         this.phongBanRepository = phongBanRepository;
         this.chucVuRepository = chucVuRepository;
         this.authNotificationService = authNotificationService;
+        this.auditLogService = auditLogService;
     }
 
     public User createUser(CreateUserRequest request) {
@@ -86,6 +92,12 @@ public class UserService {
     // Cập nhật user (sử dụng bởi controller cũ - deprecated)
     public User updateUser(Long id, UpdateUserRequest request) {
         User user = getUserById(id);
+        
+        // Lưu old values để audit
+        String oldUsername = user.getUsername();
+        String oldEmail = user.getEmail();
+        User.Role oldRole = user.getRole();
+        Boolean oldIsActive = user.getIsActive();
 
         // Check duplicate username if changed
         if (request.getUsername() != null && !request.getUsername().equals(user.getUsername())) {
@@ -110,18 +122,35 @@ public class UserService {
         if (request.getAvatarUrl() != null) {
             user.setAvatarUrl(request.getAvatarUrl());
         }
-        if (request.getRole() != null) {
+        if (request.getRole() != null && !request.getRole().equals(oldRole)) {
+            // CRITICAL: Admin không được thay đổi role của Manager
+            if (user.isAnyManager()) {
+                throw new ForbiddenException(
+                    "🚫 BẢO MẬT: Admin không được phép thay đổi role của Manager accounts. " +
+                    "Liên hệ Super Admin hoặc tạo role change request."
+                );
+            }
             user.setRole(request.getRole());
         }
-        if (request.getIsActive() != null) {
+        if (request.getIsActive() != null && !request.getIsActive().equals(oldIsActive)) {
             user.setIsActive(request.getIsActive());
         }
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        
+        // Audit log nếu có thay đổi quan trọng
+        if (!oldRole.equals(savedUser.getRole()) || !oldIsActive.equals(savedUser.getIsActive())) {
+            log.warn("⚠️ User {} changed - Role: {} -> {}, Active: {} -> {}",
+                user.getUsername(), oldRole, savedUser.getRole(), oldIsActive, savedUser.getIsActive());
+        }
+        
+        return savedUser;
     }
 
     public User activateUser(Long id) {
         User user = getUserById(id);
+        
+        // Không cần restrict activate vì đây là hành động tích cực
         user.setIsActive(true);
         user = userRepository.save(user);
         
@@ -134,6 +163,15 @@ public class UserService {
 
     public User deactivateUser(Long id) {
         User user = getUserById(id);
+        
+        // CRITICAL: Admin không được deactivate Manager accounts
+        if (user.isAnyManager()) {
+            throw new ForbiddenException(
+                "🚫 BẢO MẬT: Admin không được phép vô hiệu hóa Manager accounts. " +
+                "Manager chỉ có thể bị deactivate bởi Super Admin hoặc qua approval process."
+            );
+        }
+        
         user.setIsActive(false);
         user = userRepository.save(user);
         
@@ -247,6 +285,7 @@ public class UserService {
         log.info("User {} cập nhật thông tin user ID: {}", currentUser.getUsername(), id);
         
         User user = getUserById(id);
+        User.Role oldRole = user.getRole();
         
         // Kiểm tra username trùng lặp
         if (userDTO.getUsername() != null && !userDTO.getUsername().equals(user.getUsername())) {
@@ -271,8 +310,20 @@ public class UserService {
         if (userDTO.getAvatarUrl() != null) {
             user.setAvatarUrl(userDTO.getAvatarUrl());
         }
-        if (userDTO.getRole() != null) {
+        if (userDTO.getRole() != null && !userDTO.getRole().equals(oldRole)) {
+            // CRITICAL: Chỉ Admin mới được đổi role, và không được đổi role của Manager
+            if (currentUser.isAdmin() && user.isAnyManager()) {
+                throw new ForbiddenException(
+                    "🚫 BẢO MẬT: Admin không được phép thay đổi role của Manager accounts."
+                );
+            }
             user.setRole(userDTO.getRole());
+            
+            // Audit log cho role change
+            if (currentUser.isAdmin()) {
+                log.warn("⚠️ CRITICAL: Admin {} changed role of user {} from {} to {}",
+                    currentUser.getUsername(), user.getUsername(), oldRole, userDTO.getRole());
+            }
         }
         
         return userRepository.save(user);
@@ -318,7 +369,19 @@ public class UserService {
         log.info("Admin {} xóa user ID: {}", currentUser.getUsername(), userId);
         
         User user = getUserById(userId);
+        
+        // CRITICAL: Admin không được xóa Manager accounts
+        if (user.isAnyManager()) {
+            log.error("🚫 ATTEMPTED: Admin {} tried to delete Manager {} ({})",
+                currentUser.getUsername(), user.getUsername(), user.getRole());
+            throw new ForbiddenException(
+                "🚫 BẢO MẬT: Admin không được phép xóa Manager accounts. " +
+                "Chỉ Super Admin mới có quyền này."
+            );
+        }
+        
         userRepository.delete(user);
+        log.warn("⚠️ User {} deleted by Admin {}", user.getUsername(), currentUser.getUsername());
     }
 
     public Optional<User> findByUsername(String username) {

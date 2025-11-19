@@ -36,11 +36,12 @@ public class PermissionUtil {
     }
     
     /**
-     * Kiểm tra user có quyền thao tác chấm công không (chỉ HR)
+     * Kiểm tra user có quyền thao tác chấm công không (chỉ ACCOUNTING)
+     * FIXED: Theo SecurityConfig line 57, chỉ ACCOUNTING manage chấm công
      */
     public static void checkAttendanceManagePermission(User currentUser) {
-        if (!currentUser.isManagerHR()) {
-            throw new ForbiddenException("Chỉ HR Manager mới có quyền quản lý chấm công");
+        if (!currentUser.isManagerAccounting()) {
+            throw new ForbiddenException("Chỉ Accounting Manager mới có quyền quản lý chấm công");
         }
     }
     

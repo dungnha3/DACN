@@ -43,14 +43,14 @@ public class NhanVienController {
     public ResponseEntity<NhanVienDTO> createNhanVien(@Valid @RequestBody NhanVienRequest request) {
         User currentUser = getCurrentUser();
         NhanVien nhanVien = nhanVienService.createNhanVien(request, currentUser);
-        return ResponseEntity.status(HttpStatus.CREATED).body(nhanVienMapper.toDTO(nhanVien));
+        return ResponseEntity.status(HttpStatus.CREATED).body(nhanVienMapper.toDTO(nhanVien, currentUser));
     }
     
     @GetMapping("/{id}")
     public ResponseEntity<NhanVienDTO> getNhanVienById(@PathVariable Long id) {
         User currentUser = getCurrentUser();
         NhanVien nhanVien = nhanVienService.getNhanVienById(id, currentUser);
-        return ResponseEntity.ok(nhanVienMapper.toDTO(nhanVien));
+        return ResponseEntity.ok(nhanVienMapper.toDTO(nhanVien, currentUser));
     }
     
     /**
@@ -58,8 +58,9 @@ public class NhanVienController {
      */
     @GetMapping
     public ResponseEntity<List<NhanVienDTO>> getAllNhanVien() {
-        List<NhanVien> nhanViens = nhanVienService.getAllNhanVien();
-        return ResponseEntity.ok(nhanVienMapper.toDTOList(nhanViens));
+        User currentUser = getCurrentUser();
+        List<NhanVien> nhanViens = nhanVienService.getAllNhanVien(currentUser);
+        return ResponseEntity.ok(nhanVienMapper.toDTOList(nhanViens, currentUser));
     }
     
     /**
@@ -77,8 +78,9 @@ public class NhanVienController {
             Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         
+        User currentUser = getCurrentUser();
         Page<NhanVien> nhanVienPage = nhanVienService.getAllNhanVienPage(pageable);
-        Page<NhanVienDTO> dtoPage = nhanVienPage.map(nhanVienMapper::toDTO);
+        Page<NhanVienDTO> dtoPage = nhanVienPage.map(nv -> nhanVienMapper.toDTO(nv, currentUser));
         
         return ResponseEntity.ok(dtoPage);
     }
@@ -89,7 +91,7 @@ public class NhanVienController {
             @Valid @RequestBody NhanVienRequest request) {
         User currentUser = getCurrentUser();
         NhanVien nhanVien = nhanVienService.updateNhanVien(id, request, currentUser);
-        return ResponseEntity.ok(nhanVienMapper.toDTO(nhanVien));
+        return ResponseEntity.ok(nhanVienMapper.toDTO(nhanVien, currentUser));
     }
     
     @DeleteMapping("/{id}")
@@ -102,34 +104,39 @@ public class NhanVienController {
     
     @GetMapping("/trang-thai/{trangThai}")
     public ResponseEntity<List<NhanVienDTO>> getNhanVienByTrangThai(@PathVariable TrangThaiNhanVien trangThai) {
+        User currentUser = getCurrentUser();
         List<NhanVien> nhanViens = nhanVienService.getNhanVienByTrangThai(trangThai);
-        return ResponseEntity.ok(nhanVienMapper.toDTOList(nhanViens));
+        return ResponseEntity.ok(nhanVienMapper.toDTOList(nhanViens, currentUser));
     }
     
     @GetMapping("/phong-ban/{phongbanId}")
     public ResponseEntity<List<NhanVienDTO>> getNhanVienByPhongBan(@PathVariable Long phongbanId) {
+        User currentUser = getCurrentUser();
         List<NhanVien> nhanViens = nhanVienService.getNhanVienByPhongBan(phongbanId);
-        return ResponseEntity.ok(nhanVienMapper.toDTOList(nhanViens));
+        return ResponseEntity.ok(nhanVienMapper.toDTOList(nhanViens, currentUser));
     }
     
     @GetMapping("/chuc-vu/{chucvuId}")
     public ResponseEntity<List<NhanVienDTO>> getNhanVienByChucVu(@PathVariable Long chucvuId) {
+        User currentUser = getCurrentUser();
         List<NhanVien> nhanViens = nhanVienService.getNhanVienByChucVu(chucvuId);
-        return ResponseEntity.ok(nhanVienMapper.toDTOList(nhanViens));
+        return ResponseEntity.ok(nhanVienMapper.toDTOList(nhanViens, currentUser));
     }
     
     @GetMapping("/search")
     public ResponseEntity<List<NhanVienDTO>> searchNhanVien(@RequestParam String keyword) {
+        User currentUser = getCurrentUser();
         List<NhanVien> nhanViens = nhanVienService.searchNhanVien(keyword);
-        return ResponseEntity.ok(nhanVienMapper.toDTOList(nhanViens));
+        return ResponseEntity.ok(nhanVienMapper.toDTOList(nhanViens, currentUser));
     }
     
     @PatchMapping("/{id}/trang-thai")
     public ResponseEntity<NhanVienDTO> updateTrangThai(
             @PathVariable Long id,
             @RequestParam TrangThaiNhanVien trangThai) {
+        User currentUser = getCurrentUser();
         NhanVien nhanVien = nhanVienService.updateTrangThai(id, trangThai);
-        return ResponseEntity.ok(nhanVienMapper.toDTO(nhanVien));
+        return ResponseEntity.ok(nhanVienMapper.toDTO(nhanVien, currentUser));
     }
     
     /**
@@ -138,8 +145,9 @@ public class NhanVienController {
      */
     @GetMapping("/user/{userId}")
     public ResponseEntity<NhanVienDTO> getNhanVienByUserId(@PathVariable Long userId) {
+        User currentUser = getCurrentUser();
         NhanVien nhanVien = nhanVienService.getNhanVienByUserId(userId);
-        return ResponseEntity.ok(nhanVienMapper.toDTO(nhanVien));
+        return ResponseEntity.ok(nhanVienMapper.toDTO(nhanVien, currentUser));
     }
     
     /**

@@ -2,6 +2,7 @@ package DoAn.BE.hr.mapper;
 
 import DoAn.BE.hr.dto.HopDongDTO;
 import DoAn.BE.hr.entity.HopDong;
+import DoAn.BE.user.entity.User;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -13,9 +14,9 @@ import java.util.stream.Collectors;
 public class HopDongMapper {
     
     /**
-     * Convert HopDong entity to HopDongDTO
+     * Convert HopDong entity to HopDongDTO - CHỈ HIỂN THỊ LƯƠNG CHO ACCOUNTING VÀ CHÍNH CHỦ
      */
-    public HopDongDTO toDTO(HopDong hopDong) {
+    public HopDongDTO toDTO(HopDong hopDong, User currentUser) {
         if (hopDong == null) {
             return null;
         }
@@ -33,7 +34,16 @@ public class HopDongMapper {
         dto.setLoaiHopDong(hopDong.getLoaiHopDong());
         dto.setNgayBatDau(hopDong.getNgayBatDau());
         dto.setNgayKetThuc(hopDong.getNgayKetThuc());
-        dto.setLuongCoBan(hopDong.getLuongCoBan());
+        
+        // 🔒 BẢO MẬT: CHỈ Accounting và chính chủ xem được lương
+        if (currentUser != null && 
+            (currentUser.isManagerAccounting() || isOwner(hopDong, currentUser))) {
+            dto.setLuongCoBan(hopDong.getLuongCoBan());
+        } else {
+            // HR/Admin/Others thấy null
+            dto.setLuongCoBan(null);
+        }
+        
         dto.setNoiDung(hopDong.getNoiDung());
         dto.setTrangThai(hopDong.getTrangThai());
         dto.setCreatedAt(hopDong.getCreatedAt());
@@ -51,15 +61,38 @@ public class HopDongMapper {
     }
     
     /**
+     * Legacy method - hide salary by default
+     */
+    public HopDongDTO toDTO(HopDong hopDong) {
+        return toDTO(hopDong, null);
+    }
+    
+    /**
+     * Check if currentUser is the owner of the contract
+     */
+    private boolean isOwner(HopDong hopDong, User currentUser) {
+        return hopDong.getNhanVien() != null &&
+               hopDong.getNhanVien().getUser() != null &&
+               hopDong.getNhanVien().getUser().getUserId().equals(currentUser.getUserId());
+    }
+    
+    /**
      * Convert list of HopDong entities to list of HopDongDTOs
      */
-    public List<HopDongDTO> toDTOList(List<HopDong> hopDongs) {
+    public List<HopDongDTO> toDTOList(List<HopDong> hopDongs, User currentUser) {
         if (hopDongs == null) {
             return null;
         }
         
         return hopDongs.stream()
-                .map(this::toDTO)
+                .map(hd -> toDTO(hd, currentUser))
                 .collect(Collectors.toList());
+    }
+    
+    /**
+     * Legacy method - hide salary by default
+     */
+    public List<HopDongDTO> toDTOList(List<HopDong> hopDongs) {
+        return toDTOList(hopDongs, null);
     }
 }

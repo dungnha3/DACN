@@ -4,6 +4,9 @@ import DoAn.BE.hr.dto.HopDongDTO;
 import DoAn.BE.hr.dto.HopDongRequest;
 import DoAn.BE.hr.entity.HopDong;
 import DoAn.BE.hr.entity.HopDong.TrangThaiHopDong;
+import DoAn.BE.user.entity.User;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import DoAn.BE.hr.mapper.HopDongMapper;
 import DoAn.BE.hr.service.HopDongService;
 import jakarta.validation.Valid;
@@ -29,14 +32,20 @@ public class HopDongController {
         this.hopDongMapper = hopDongMapper;
     }
     
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return (User) auth.getPrincipal();
+    }
+    
     /**
      * Tạo hợp đồng mới
      * POST /api/hop-dong
      */
     @PostMapping
     public ResponseEntity<HopDongDTO> createHopDong(@Valid @RequestBody HopDongRequest request) {
+        User currentUser = getCurrentUser();
         HopDong hopDong = hopDongService.createHopDong(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(hopDongMapper.toDTO(hopDong));
+        return ResponseEntity.status(HttpStatus.CREATED).body(hopDongMapper.toDTO(hopDong, currentUser));
     }
     
     /**
@@ -45,8 +54,9 @@ public class HopDongController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<HopDongDTO> getHopDongById(@PathVariable Long id) {
+        User currentUser = getCurrentUser();
         HopDong hopDong = hopDongService.getHopDongById(id);
-        return ResponseEntity.ok(hopDongMapper.toDTO(hopDong));
+        return ResponseEntity.ok(hopDongMapper.toDTO(hopDong, currentUser));
     }
     
     /**
@@ -55,8 +65,9 @@ public class HopDongController {
      */
     @GetMapping
     public ResponseEntity<List<HopDongDTO>> getAllHopDong() {
+        User currentUser = getCurrentUser();
         List<HopDong> hopDongs = hopDongService.getAllHopDong();
-        return ResponseEntity.ok(hopDongMapper.toDTOList(hopDongs));
+        return ResponseEntity.ok(hopDongMapper.toDTOList(hopDongs, currentUser));
     }
     
     /**
@@ -67,8 +78,9 @@ public class HopDongController {
     public ResponseEntity<HopDongDTO> updateHopDong(
             @PathVariable Long id,
             @Valid @RequestBody HopDongRequest request) {
+        User currentUser = getCurrentUser();
         HopDong hopDong = hopDongService.updateHopDong(id, request);
-        return ResponseEntity.ok(hopDongMapper.toDTO(hopDong));
+        return ResponseEntity.ok(hopDongMapper.toDTO(hopDong, currentUser));
     }
     
     /**
@@ -89,8 +101,9 @@ public class HopDongController {
      */
     @GetMapping("/nhan-vien/{nhanvienId}")
     public ResponseEntity<List<HopDongDTO>> getHopDongByNhanVien(@PathVariable Long nhanvienId) {
+        User currentUser = getCurrentUser();
         List<HopDong> hopDongs = hopDongService.getHopDongByNhanVien(nhanvienId);
-        return ResponseEntity.ok(hopDongMapper.toDTOList(hopDongs));
+        return ResponseEntity.ok(hopDongMapper.toDTOList(hopDongs, currentUser));
     }
     
     /**
@@ -99,8 +112,9 @@ public class HopDongController {
      */
     @GetMapping("/nhan-vien/{nhanvienId}/active")
     public ResponseEntity<HopDongDTO> getActiveHopDong(@PathVariable Long nhanvienId) {
+        User currentUser = getCurrentUser();
         HopDong hopDong = hopDongService.getActiveHopDong(nhanvienId);
-        return ResponseEntity.ok(hopDongMapper.toDTO(hopDong));
+        return ResponseEntity.ok(hopDongMapper.toDTO(hopDong, currentUser));
     }
     
     /**
@@ -109,8 +123,9 @@ public class HopDongController {
      */
     @GetMapping("/trang-thai/{trangThai}")
     public ResponseEntity<List<HopDongDTO>> getHopDongByTrangThai(@PathVariable TrangThaiHopDong trangThai) {
+        User currentUser = getCurrentUser();
         List<HopDong> hopDongs = hopDongService.getHopDongByTrangThai(trangThai);
-        return ResponseEntity.ok(hopDongMapper.toDTOList(hopDongs));
+        return ResponseEntity.ok(hopDongMapper.toDTOList(hopDongs, currentUser));
     }
     
     /**
@@ -119,8 +134,9 @@ public class HopDongController {
      */
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<HopDongDTO> cancelHopDong(@PathVariable Long id) {
+        User currentUser = getCurrentUser();
         HopDong hopDong = hopDongService.cancelHopDong(id);
-        return ResponseEntity.ok(hopDongMapper.toDTO(hopDong));
+        return ResponseEntity.ok(hopDongMapper.toDTO(hopDong, currentUser));
     }
     
     /**
@@ -131,8 +147,9 @@ public class HopDongController {
     public ResponseEntity<HopDongDTO> renewHopDong(
             @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate newEndDate) {
+        User currentUser = getCurrentUser();
         HopDong hopDong = hopDongService.renewHopDong(id, newEndDate);
-        return ResponseEntity.ok(hopDongMapper.toDTO(hopDong));
+        return ResponseEntity.ok(hopDongMapper.toDTO(hopDong, currentUser));
     }
     
     /**
@@ -142,8 +159,9 @@ public class HopDongController {
     @GetMapping("/expiring")
     public ResponseEntity<List<HopDongDTO>> getExpiringContracts(
             @RequestParam(defaultValue = "30") int daysAhead) {
+        User currentUser = getCurrentUser();
         List<HopDong> hopDongs = hopDongService.getExpiringContracts(daysAhead);
-        return ResponseEntity.ok(hopDongMapper.toDTOList(hopDongs));
+        return ResponseEntity.ok(hopDongMapper.toDTOList(hopDongs, currentUser));
     }
     
     /**

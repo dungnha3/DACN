@@ -11,6 +11,9 @@ import DoAn.BE.storage.repository.FolderRepository;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.user.repository.UserRepository;
 import DoAn.BE.notification.service.StorageNotificationService;
+import DoAn.BE.storage.validator.FileValidator;
+import DoAn.BE.audit.service.AuditLogService;
+import DoAn.BE.audit.entity.AuditLog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +45,8 @@ public class FileStorageService {
     private final UserRepository userRepository;
     private final StorageNotificationService storageNotificationService;
     private final StorageProjectFileUploadListener projectFileUploadListener;
+    private final FileValidator fileValidator;
+    private final AuditLogService auditLogService;
     
     @Value("${file.upload-dir:./uploads}")
     private String uploadDir;
@@ -60,17 +65,10 @@ public class FileStorageService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
         
-        // Validate file
-        if (file.isEmpty()) {
-            throw new BadRequestException("File không được để trống");
-        }
+        // ✅ SECURITY: Validate file (extension, MIME type, size, malicious content)
+        fileValidator.validateFile(file);
         
         String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
-        
-        // Check file name
-        if (originalFilename.contains("..")) {
-            throw new BadRequestException("Tên file không hợp lệ: " + originalFilename);
-        }
         
         // Check quota
         checkStorageQuota(userId, file.getSize());
@@ -151,8 +149,21 @@ public class FileStorageService {
         File file = fileRepository.findById(fileId)
             .orElseThrow(() -> new StorageFileNotFoundException("Không tìm thấy file"));
         
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
+        
         // Check if user owns the file
         if (!file.getOwner().getUserId().equals(userId)) {
+            // Audit failed download attempt
+            auditLogService.logFailedAction(
+                user,
+                "DOWNLOAD_FILE",
+                "FILE",
+                fileId,
+                "Unauthorized access attempt to file: " + file.getOriginalFilename(),
+                null,
+                null
+            );
             throw new ForbiddenException("Bạn không có quyền tải file này");
         }
         
@@ -166,6 +177,22 @@ public class FileStorageService {
             Resource resource = new UrlResource(filePath.toUri());
             
             if (resource.exists() && resource.isReadable()) {
+                // Log successful file download
+                auditLogService.logAction(
+                    user,
+                    "DOWNLOAD_FILE",
+                    "FILE",
+                    fileId,
+                    null,
+                    file.getOriginalFilename(),
+                    AuditLog.Severity.INFO,
+                    null,
+                    null
+                );
+                
+                log.info("User {} downloaded file: {} ({} bytes)",
+                    user.getUsername(), file.getOriginalFilename(), file.getFileSize());
+                
                 return resource;
             } else {
                 throw new StorageFileNotFoundException("File không tồn tại hoặc không thể đọc: " + file.getOriginalFilename());

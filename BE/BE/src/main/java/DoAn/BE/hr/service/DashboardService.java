@@ -1,5 +1,7 @@
 package DoAn.BE.hr.service;
 
+import DoAn.BE.common.exception.ForbiddenException;
+import DoAn.BE.user.entity.User;
 import DoAn.BE.hr.dto.DashboardDTO;
 import DoAn.BE.hr.dto.DashboardStatsDTO;
 import DoAn.BE.hr.entity.BangLuong;
@@ -63,9 +65,14 @@ public class DashboardService {
     }
 
     /**
-     * ⭐⭐ DASHBOARD TỔNG QUAN - Tính năng nổi bật từ QLNS
+     * ⭐⭐ DASHBOARD TỔNG QUAN - CHỈ Accounting/PM/HR
+     * Lưu ý: HR không thấy số tiền lương, chỉ thấy số lượng bảng lương
      */
-    public DashboardDTO getTongQuan() {
+    public DashboardDTO getTongQuan(User currentUser) {
+        // Admin bị chặn
+        if (currentUser.isAdmin()) {
+            throw new ForbiddenException("🚫 Admin không có quyền xem dashboard");
+        }
         log.info("Lấy thông tin dashboard tổng quan");
         
         DashboardDTO dashboard = new DashboardDTO();
@@ -91,13 +98,17 @@ public class DashboardService {
         long daThanhToan = bangLuongThangNay.stream()
             .filter(bl -> "DA_THANH_TOAN".equals(bl.getTrangThai()))
             .count();
-        BigDecimal tongLuong = bangLuongThangNay.stream()
-            .map(BangLuong::getLuongThucNhan)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // CHỈ Accounting mới thấy số tiền lương
+        BigDecimal tongLuong = BigDecimal.ZERO;
+        if (currentUser.isManagerAccounting()) {
+            tongLuong = bangLuongThangNay.stream()
+                .map(BangLuong::getLuongThucNhan)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
         
         dashboard.setBangLuongChuaThanhToan(chuaThanhToan);
         dashboard.setBangLuongDaThanhToan(daThanhToan);
-        dashboard.setTongLuongThangNay(tongLuong);
+        dashboard.setTongLuongThangNay(tongLuong); // HR sẽ thấy 0
         
         // 4. Thống kê hợp đồng
         dashboard.setHopDongHieuLuc(hopDongRepository.countByTrangThai(TrangThaiHopDong.HIEU_LUC));
@@ -151,9 +162,13 @@ public class DashboardService {
     }
 
     /**
-     * Thống kê theo tháng
+     * Thống kê theo tháng - CHỈ Accounting mới xem được số tiền lương
      */
-    public DashboardDTO getThongKeTheoThang(int thang, int nam) {
+    public DashboardDTO getThongKeTheoThang(int thang, int nam, User currentUser) {
+        // Admin bị chặn
+        if (currentUser.isAdmin()) {
+            throw new ForbiddenException("🚫 Admin không có quyền xem thống kê");
+        }
         log.info("Lấy thống kê tháng {}/{}", thang, nam);
         
         DashboardDTO dashboard = new DashboardDTO();
@@ -167,13 +182,18 @@ public class DashboardService {
         long daThanhToan = bangLuongs.stream()
             .filter(bl -> "DA_THANH_TOAN".equals(bl.getTrangThai()))
             .count();
-        BigDecimal tongLuong = bangLuongs.stream()
-            .map(BangLuong::getLuongThucNhan)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        // CHỈ Accounting mới thấy số tiền lương
+        BigDecimal tongLuong = BigDecimal.ZERO;
+        if (currentUser.isManagerAccounting()) {
+            tongLuong = bangLuongs.stream()
+                .map(BangLuong::getLuongThucNhan)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
         
         dashboard.setBangLuongChuaThanhToan(chuaThanhToan);
         dashboard.setBangLuongDaThanhToan(daThanhToan);
-        dashboard.setTongLuongThangNay(tongLuong);
+        dashboard.setTongLuongThangNay(tongLuong); // HR sẽ thấy 0
         
         // Thống kê chấm công theo tháng
         YearMonth yearMonth = YearMonth.of(nam, thang);
@@ -188,20 +208,25 @@ public class DashboardService {
 
     /**
      * ⭐⭐⭐ DASHBOARD NÂNG CAO - Biểu đồ và thống kê chi tiết
+     * CHỈ Accounting mới thấy số tiền lương
      */
-    public DashboardStatsDTO getDashboardStats() {
+    public DashboardStatsDTO getDashboardStats(User currentUser) {
+        // Admin bị chặn
+        if (currentUser.isAdmin()) {
+            throw new ForbiddenException("🚫 Admin không có quyền xem dashboard stats");
+        }
         log.info("Lấy thống kê dashboard nâng cao");
         
         DashboardStatsDTO stats = new DashboardStatsDTO();
         
         // 1. Thống kê tổng quan
-        stats.setTongQuan(getTongQuanStats());
+        stats.setTongQuan(getTongQuanStats(currentUser));
         
         // 2. Biểu đồ chấm công theo phòng ban
         stats.setChamCongPhongBan(getChamCongPhongBanStats());
         
-        // 3. Biểu đồ lương theo tháng (6 tháng gần nhất)
-        stats.setLuongTheoThang(getLuongTheoThangStats());
+        // 3. Biểu đồ lương theo tháng (6 tháng gần nhất) - CHỈ Accounting
+        stats.setLuongTheoThang(getLuongTheoThangStats(currentUser));
         
         // 4. Thống kê nghỉ phép
         stats.setNghiPhep(getNghiPhepStats());
@@ -218,7 +243,7 @@ public class DashboardService {
         return stats;
     }
     
-    private DashboardStatsDTO.TongQuanStats getTongQuanStats() {
+    private DashboardStatsDTO.TongQuanStats getTongQuanStats(User currentUser) {
         DashboardStatsDTO.TongQuanStats tongQuan = new DashboardStatsDTO.TongQuanStats();
         
         // Thống kê nhân viên
@@ -245,11 +270,14 @@ public class DashboardService {
         // Thống kê thông báo chưa đọc (tổng của tất cả user)
         tongQuan.setThongBaoChuaDoc(thongBaoRepository.count()); // Tạm thời lấy tổng
         
-        // Tổng chi phí lương tháng hiện tại
-        BigDecimal tongChiPhi = bangLuongThangNay.stream()
-            .map(BangLuong::getLuongThucNhan)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        tongQuan.setTongChiPhiLuongThang(tongChiPhi);
+        // Tổng chi phí lương tháng hiện tại - CHỈ Accounting
+        BigDecimal tongChiPhi = BigDecimal.ZERO;
+        if (currentUser.isManagerAccounting()) {
+            tongChiPhi = bangLuongThangNay.stream()
+                .map(BangLuong::getLuongThucNhan)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+        tongQuan.setTongChiPhiLuongThang(tongChiPhi); // HR sẽ thấy 0
         
         return tongQuan;
     }
@@ -298,9 +326,9 @@ public class DashboardService {
     }
     
     /**
-     * Biểu đồ cột lương theo từng tháng (6 tháng gần nhất)
+     * Biểu đồ cột lương theo từng tháng (6 tháng gần nhất) - CHỈ Accounting mới thấy số tiền
      */
-    private List<DashboardStatsDTO.LuongTheoThangStats> getLuongTheoThangStats() {
+    private List<DashboardStatsDTO.LuongTheoThangStats> getLuongTheoThangStats(User currentUser) {
         List<DashboardStatsDTO.LuongTheoThangStats> stats = new ArrayList<>();
         
         for (int i = 5; i >= 0; i--) {
@@ -308,19 +336,25 @@ public class DashboardService {
             List<BangLuong> bangLuongs = bangLuongRepository.findByThangAndNam(
                 month.getMonthValue(), month.getYear());
             
-            BigDecimal tongLuong = bangLuongs.stream()
-                .map(BangLuong::getLuongThucNhan)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            // CHỈ Accounting mới thấy số tiền lương
+            BigDecimal tongLuong = BigDecimal.ZERO;
+            BigDecimal luongTrungBinh = BigDecimal.ZERO;
             
-            BigDecimal luongTrungBinh = bangLuongs.size() > 0 ? 
-                tongLuong.divide(BigDecimal.valueOf(bangLuongs.size()), 2, RoundingMode.HALF_UP) : 
-                BigDecimal.ZERO;
+            if (currentUser.isManagerAccounting()) {
+                tongLuong = bangLuongs.stream()
+                    .map(BangLuong::getLuongThucNhan)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                
+                luongTrungBinh = bangLuongs.size() > 0 ? 
+                    tongLuong.divide(BigDecimal.valueOf(bangLuongs.size()), 2, RoundingMode.HALF_UP) : 
+                    BigDecimal.ZERO;
+            }
             
             stats.add(new DashboardStatsDTO.LuongTheoThangStats(
                 month.format(DateTimeFormatter.ofPattern("MM/yyyy")),
-                tongLuong,
+                tongLuong,  // HR sẽ thấy 0
                 bangLuongs.size(),
-                luongTrungBinh
+                luongTrungBinh  // HR sẽ thấy 0
             ));
         }
         

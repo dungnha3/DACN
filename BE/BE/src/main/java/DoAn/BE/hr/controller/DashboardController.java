@@ -27,7 +27,8 @@ public class DashboardController {
     // Dashboard tổng quan
     @GetMapping("/tong-quan")
     public ResponseEntity<DashboardDTO> getTongQuan() {
-        DashboardDTO dashboard = dashboardService.getTongQuan();
+        User currentUser = getCurrentUser();
+        DashboardDTO dashboard = dashboardService.getTongQuan(currentUser);
         return ResponseEntity.ok(dashboard);
     }
 
@@ -36,7 +37,8 @@ public class DashboardController {
     public ResponseEntity<DashboardDTO> getThongKeTheoThang(
             @RequestParam int thang,
             @RequestParam int nam) {
-        DashboardDTO dashboard = dashboardService.getThongKeTheoThang(thang, nam);
+        User currentUser = getCurrentUser();
+        DashboardDTO dashboard = dashboardService.getThongKeTheoThang(thang, nam, currentUser);
         return ResponseEntity.ok(dashboard);
     }
 
@@ -49,7 +51,7 @@ public class DashboardController {
             throw new RuntimeException("Chỉ Manager và Admin mới có quyền xem thống kê chi tiết");
         }
         
-        DashboardStatsDTO stats = dashboardService.getDashboardStats();
+        DashboardStatsDTO stats = dashboardService.getDashboardStats(currentUser);
         return ResponseEntity.ok(stats);
     }
 
@@ -61,7 +63,7 @@ public class DashboardController {
             throw new RuntimeException("Chỉ HR Manager, Accounting Manager và Admin mới có quyền xem thống kê này");
         }
         
-        DashboardStatsDTO stats = dashboardService.getDashboardStats();
+        DashboardStatsDTO stats = dashboardService.getDashboardStats(currentUser);
         return ResponseEntity.ok(stats.getChamCongPhongBan().toArray(new DashboardStatsDTO.ChamCongPhongBanStats[0]));
     }
 
@@ -73,7 +75,7 @@ public class DashboardController {
             throw new RuntimeException("Chỉ HR Manager, Accounting Manager và Admin mới có quyền xem thống kê lương");
         }
         
-        DashboardStatsDTO stats = dashboardService.getDashboardStats();
+        DashboardStatsDTO stats = dashboardService.getDashboardStats(currentUser);
         return ResponseEntity.ok(stats.getLuongTheoThang().toArray(new DashboardStatsDTO.LuongTheoThangStats[0]));
     }
 
@@ -85,7 +87,7 @@ public class DashboardController {
             throw new RuntimeException("Chỉ HR Manager và Admin mới có quyền xem thống kê này");
         }
         
-        DashboardStatsDTO stats = dashboardService.getDashboardStats();
+        DashboardStatsDTO stats = dashboardService.getDashboardStats(currentUser);
         return ResponseEntity.ok(stats.getNhanVienTheoTuoi().toArray(new DashboardStatsDTO.NhanVienTheoTuoiStats[0]));
     }
 
@@ -97,7 +99,7 @@ public class DashboardController {
             throw new RuntimeException("Chỉ HR Manager và Admin mới có quyền xem thống kê này");
         }
         
-        DashboardStatsDTO stats = dashboardService.getDashboardStats();
+        DashboardStatsDTO stats = dashboardService.getDashboardStats(currentUser);
         return ResponseEntity.ok(stats.getNhanVienTheoGioiTinh());
     }
 }

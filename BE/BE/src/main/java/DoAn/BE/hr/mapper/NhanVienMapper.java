@@ -2,6 +2,7 @@ package DoAn.BE.hr.mapper;
 
 import DoAn.BE.hr.dto.NhanVienDTO;
 import DoAn.BE.hr.entity.NhanVien;
+import DoAn.BE.user.entity.User;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -10,7 +11,11 @@ import java.util.stream.Collectors;
 @Component
 public class NhanVienMapper {
     
-    public NhanVienDTO toDTO(NhanVien nhanVien) {
+    /**
+     * Convert NhanVien to DTO - CHỈ HIỂN THỊ LƯƠNG CHO ACCOUNTING
+     * HR sẽ thấy null cho các trường lương
+     */
+    public NhanVienDTO toDTO(NhanVien nhanVien, User currentUser) {
         if (nhanVien == null) {
             return null;
         }
@@ -41,17 +46,46 @@ public class NhanVienMapper {
             dto.setTenChucVu(nhanVien.getChucVu().getTenChucVu());
         }
         
-        dto.setLuongCoBan(nhanVien.getLuongCoBan());
-        dto.setPhuCap(nhanVien.getPhuCap());
+        // 🔒 BẢO MẬT: CHỈ Accounting và chính chủ xem được lương
+        if (currentUser != null && 
+            (currentUser.isManagerAccounting() || 
+             (nhanVien.getUser() != null && nhanVien.getUser().getUserId().equals(currentUser.getUserId())))) {
+            dto.setLuongCoBan(nhanVien.getLuongCoBan());
+            dto.setPhuCap(nhanVien.getPhuCap());
+        } else {
+            // HR/Admin/Others thấy null
+            dto.setLuongCoBan(null);
+            dto.setPhuCap(null);
+        }
+        
         dto.setCreatedAt(nhanVien.getCreatedAt());
         
         return dto;
     }
     
-    public List<NhanVienDTO> toDTOList(List<NhanVien> nhanViens) {
+    /**
+     * Legacy method - hide salary by default
+     */
+    public NhanVienDTO toDTO(NhanVien nhanVien) {
+        return toDTO(nhanVien, null);
+    }
+    
+    /**
+     * Convert list with salary masking
+     */
+    public List<NhanVienDTO> toDTOList(List<NhanVien> nhanViens, User currentUser) {
         if (nhanViens == null) {
             return null;
         }
-        return nhanViens.stream().map(this::toDTO).collect(Collectors.toList());
+        return nhanViens.stream()
+            .map(nv -> toDTO(nv, currentUser))
+            .collect(Collectors.toList());
+    }
+    
+    /**
+     * Legacy method - hide salary by default
+     */
+    public List<NhanVienDTO> toDTOList(List<NhanVien> nhanViens) {
+        return toDTOList(nhanViens, null);
     }
 }

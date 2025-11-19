@@ -44,9 +44,12 @@ public class SalaryIncreaseProposalController {
         // Lấy thông tin nhân viên
         NhanVien nhanVien = nhanVienService.getNhanVienById(request.getNhanVienId(), currentUser);
         
-        // Kiểm tra lương hiện tại
-        BigDecimal currentSalary = nhanVien.getLuongCoBan();
-        if (request.getProposedSalary().compareTo(currentSalary) <= 0) {
+        // 🔒 BẢO MẬT: PM chỉ được đề xuất tăng lương, KHÔNG XEM được lương hiện tại
+        // Chỉ check xem nhân viên có tồn tại không, không check số tiền
+        BigDecimal currentSalary = nhanVien.getLuongCoBan(); // Sẽ là null nếu PM call
+        
+        // PM không cần biết lương hiện tại, chỉ cần đề xuất số tiền mới
+        if (currentSalary != null && request.getProposedSalary().compareTo(currentSalary) <= 0) {
             throw new RuntimeException("Lương đề xuất phải cao hơn lương hiện tại");
         }
         
@@ -62,7 +65,10 @@ public class SalaryIncreaseProposalController {
         Map<String, String> response = new HashMap<>();
         response.put("message", "Đề xuất tăng lương đã được gửi thành công");
         response.put("employeeName", nhanVien.getHoTen());
-        response.put("currentSalary", currentSalary.toString());
+        // PM không thấy lương hiện tại
+        if (currentSalary != null) {
+            response.put("currentSalary", currentSalary.toString());
+        }
         response.put("proposedSalary", request.getProposedSalary().toString());
         
         return ResponseEntity.ok(response);
