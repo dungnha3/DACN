@@ -32,7 +32,7 @@ public class IssueActivity {
     @Column(name = "activity_type", nullable = false, length = 50)
     private ActivityType activityType;
 
-    @Column(name = "field_name", length = 100)
+    @Column(name = "field_name", length = 100, columnDefinition = "NVARCHAR(100)")
     private String fieldName;
 
     @Column(name = "old_value", columnDefinition = "NVARCHAR(MAX)")

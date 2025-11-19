@@ -52,13 +52,13 @@ public class DanhGia {
     @Column(name = "xep_loai", length = 20)
     private XepLoai xepLoai;
     
-    @Column(name = "nhan_xet", columnDefinition = "TEXT")
+    @Column(name = "nhan_xet", columnDefinition = "NVARCHAR(MAX)")
     private String nhanXet;
     
-    @Column(name = "muc_tieu_tiep_theo", columnDefinition = "TEXT")
+    @Column(name = "muc_tieu_tiep_theo", columnDefinition = "NVARCHAR(MAX)")
     private String mucTieuTiepTheo;
     
-    @Column(name = "ke_hoach_phat_trien", columnDefinition = "TEXT")
+    @Column(name = "ke_hoach_phat_trien", columnDefinition = "NVARCHAR(MAX)")
     private String keHoachPhatTrien;
     
     @Enumerated(EnumType.STRING)

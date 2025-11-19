@@ -36,7 +36,7 @@ public class NghiPhep {
     @Column(name = "so_ngay", nullable = false)
     private Integer soNgay;
 
-    @Column(name = "ly_do", length = 500)
+    @Column(name = "ly_do", length = 500, columnDefinition = "NVARCHAR(500)")
     private String lyDo;
 
     @Enumerated(EnumType.STRING)
@@ -50,7 +50,7 @@ public class NghiPhep {
     @Column(name = "ngay_duyet")
     private LocalDateTime ngayDuyet;
 
-    @Column(name = "ghi_chu_duyet", length = 500)
+    @Column(name = "ghi_chu_duyet", length = 500, columnDefinition = "NVARCHAR(500)")
     private String ghiChuDuyet;
 
     @Column(name = "created_at")

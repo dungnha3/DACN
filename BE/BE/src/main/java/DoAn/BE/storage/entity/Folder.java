@@ -23,7 +23,7 @@ public class Folder {
     @Column(name = "folder_id")
     private Long folderId;
 
-    @Column(name = "name", nullable = false, length = 255)
+    @Column(name = "name", nullable = false, length = 255, columnDefinition = "NVARCHAR(255)")
     private String name;
 
     @ManyToOne

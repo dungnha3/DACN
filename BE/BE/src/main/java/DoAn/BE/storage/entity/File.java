@@ -35,19 +35,19 @@ public class File {
     @Column(name = "file_id")
     private Long fileId;
 
-    @Column(name = "filename", nullable = false, length = 255)
+    @Column(name = "filename", nullable = false, length = 255, columnDefinition = "NVARCHAR(255)")
     private String filename;
 
-    @Column(name = "original_filename", nullable = false, length = 255)
+    @Column(name = "original_filename", nullable = false, length = 255, columnDefinition = "NVARCHAR(255)")
     private String originalFilename;
 
-    @Column(name = "file_path", nullable = false, length = 500)
+    @Column(name = "file_path", nullable = false, length = 500, columnDefinition = "NVARCHAR(500)")
     private String filePath;
 
     @Column(name = "file_size", nullable = false)
     private Long fileSize;
 
-    @Column(name = "mime_type", length = 100)
+    @Column(name = "mime_type", length = 100, columnDefinition = "NVARCHAR(100)")
     private String mimeType;
 
     @ManyToOne
