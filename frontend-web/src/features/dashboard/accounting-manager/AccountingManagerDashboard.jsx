@@ -1,16 +1,23 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { styles } from './AccountingManagerDashboard.styles'
 import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar, ApprovalStatusBadge } from './components/AccountingManagerDashboard.components'
-import { kpiData, attendanceHistory, leaveRequests, notifications, sectionsConfig, pendingApprovals, chatContacts, chatMessages, payrollData, payrollSummary } from './components/AccountingManagerDashboard.constants'
+import { kpiData, leaveRequests, notifications, sectionsConfig, chatContacts, chatMessages, payrollSummary } from './components/AccountingManagerDashboard.constants'
+import { leavesService } from '@/features/hr/shared/services/leaves.service'
+import { attendanceService } from '@/features/hr/shared/services/attendance.service'
+import { employeesService } from '@/features/hr/shared/services/employees.service'
+import { payrollService } from '@/features/hr/shared/services/payroll.service'
+import { PayrollManagementPage, AttendanceManagementPage, LeaveApprovalsPage } from '@/modules/accounting'
 
 export default function AccountingManagerDashboard() {
   const [active, setActive] = useState('dashboard')
-  const [approvals, setApprovals] = useState(pendingApprovals)
+  const [approvals, setApprovals] = useState([])
   const [selectedContact, setSelectedContact] = useState(chatContacts[0])
   const [messageInput, setMessageInput] = useState('')
   const [isCheckedIn, setIsCheckedIn] = useState(false)
-  const [payroll, setPayroll] = useState(payrollData)
+  const [payroll, setPayroll] = useState([])
+  const [attendanceRecords, setAttendanceRecords] = useState([])
+  const [employeeId, setEmployeeId] = useState(null)
   const [selectedMonth, setSelectedMonth] = useState('11/2025')
   const [isCalculating, setIsCalculating] = useState(false)
   const { logout, user: authUser } = useAuth()
@@ -19,57 +26,165 @@ export default function AccountingManagerDashboard() {
 
   const sections = useMemo(() => sectionsConfig, [])
   const meta = sections[active]
+  const pendingApprovals = useMemo(() => approvals.filter(a => a.status === 'pending'), [approvals])
 
   const handleLogout = async () => {
     await logout()
   }
 
-  const handleApprove = (id) => {
-    setApprovals(prev => prev.map(item => 
-      item.id === id ? { ...item, status: 'approved' } : item
-    ))
-    alert('Đã duyệt đơn thành công!')
+  const mapLeaveStatus = (s) => {
+    const m = { CHO_DUYET: 'pending', DA_DUYET: 'approved', BI_TU_CHOI: 'rejected' }
+    return m[s] || s || 'pending'
   }
 
-  const handleReject = (id) => {
-    setApprovals(prev => prev.map(item => 
-      item.id === id ? { ...item, status: 'rejected' } : item
-    ))
-    alert('Đã từ chối đơn!')
+  const loadApprovals = async () => {
+    try {
+      const data = await leavesService.getPending()
+      const mapped = (data || []).map((item) => ({
+        id: item.nghiphepId || item.id,
+        employee: item.hoTenNhanVien || item.employee || item.tenNhanVien || 'N/A',
+        type: item.loaiPhepLabel || item.type || 'Nghỉ phép',
+        fromDate: item.ngayBatDau || item.fromDate,
+        toDate: item.ngayKetThuc || item.toDate,
+        days: item.soNgay ?? item.days ?? 0,
+        submitDate: item.ngayTao || item.submitDate || '',
+        reason: item.lyDo || item.reason || '',
+        status: mapLeaveStatus(item.trangThai || item.status)
+      }))
+      setApprovals(mapped)
+    } catch (err) {
+      console.warn('Failed to load approvals:', err)
+      // Don't show alert on initial load
+    }
   }
 
-  const handleCheckInOut = () => {
-    const now = new Date()
-    const currentTime = now.toLocaleTimeString('vi-VN', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false 
-    })
-    
-    if (!isCheckedIn) {
-      // Check in
-      setIsCheckedIn(true)
-      alert(`Đã chấm công vào lúc ${currentTime}`)
-    } else {
-      // Check out
-      setIsCheckedIn(false)
-      alert(`Đã chấm công ra lúc ${currentTime}`)
+  const loadAttendance = async (eid) => {
+    try {
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = now.getMonth() + 1
+      const list = await attendanceService.getByMonth(eid, year, month)
+      const mapped = (list || []).map((item) => ({
+        date: item.ngayCham || item.date || '',
+        timeIn: item.gioVao || item.timeIn || '-',
+        timeOut: item.gioRa || item.timeOut || '-',
+        hours: typeof item.tongGio === 'number' ? Number(item.tongGio.toFixed(1)) : item.hours ?? 0,
+        status: item.trangThai || item.status || 'normal'
+      }))
+      setAttendanceRecords(mapped)
+      const statusRes = await attendanceService.getStatus(eid)
+      const checkedIn = statusRes?.dangCheckin ?? statusRes?.checkedIn ?? statusRes?.isCheckedIn ?? false
+      setIsCheckedIn(Boolean(checkedIn))
+    } catch (err) {
+      console.warn('Failed to load attendance:', err)
+      // Don't show alert on initial load
+    }
+  }
+
+  const loadPayroll = async (mStr) => {
+    try {
+      const parts = String(mStr).split('/')
+      const thang = Number(parts[0])
+      const nam = Number(parts[1])
+      const data = await payrollService.getByMonth(thang, nam)
+      const mapped = (data || []).map((item) => ({
+        id: item.id || item.bangluongId || item.payrollId,
+        employeeId: item.maNhanVien || item.employeeId || '-',
+        employeeName: item.tenNhanVien || item.employeeName || '-',
+        department: item.tenPhongBan || item.department || '-',
+        position: item.chucVu || item.position || '-',
+        baseSalary: item.luongCoBan ?? item.baseSalary ?? 0,
+        allowances: item.phuCap ?? item.allowances ?? 0,
+        overtime: item.tangCa ?? item.overtime ?? 0,
+        deductions: item.khauTru ?? item.deductions ?? 0,
+        totalSalary: item.tongLuong ?? item.totalSalary ?? 0,
+        status: item.trangThai || item.status || 'calculated',
+        month: `${String(thang).padStart(2, '0')}/${nam}`,
+        calculatedDate: item.ngayTinhLuong || item.calculatedDate || null
+      }))
+      setPayroll(mapped)
+    } catch (err) {
+      console.warn('Failed to load payroll:', err)
+      // Don't show alert on initial load
+    }
+  }
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        await loadApprovals()
+      } catch (err) {
+        console.warn('Failed to load approvals:', err)
+      }
+      
+      try {
+        const uid = authUser?.userId
+        if (uid && typeof uid === 'number') {
+          const emp = await employeesService.getByUserId(uid)
+          const eid = emp?.nhanvienId || emp?.id || emp?.employeeId
+          if (eid && typeof eid === 'number') {
+            setEmployeeId(eid)
+            await loadAttendance(eid)
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load employee data:', err)
+      }
+      
+      try {
+        await loadPayroll(selectedMonth)
+      } catch (err) {
+        console.warn('Failed to load payroll:', err)
+      }
+    }
+    init()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    loadPayroll(selectedMonth)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMonth])
+
+  const handleCheckInOut = async () => {
+    try {
+      if (!employeeId) return alert('Không tìm thấy mã nhân viên')
+      const statusRes = await attendanceService.getStatus(employeeId)
+      const checkedIn = statusRes?.dangCheckin ?? statusRes?.checkedIn ?? statusRes?.isCheckedIn ?? false
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = now.getMonth() + 1
+      const day = String(now.getDate()).padStart(2, '0')
+      const todayStr = `${year}-${String(month).padStart(2, '0')}-${day}`
+      if (!checkedIn) {
+        await attendanceService.checkIn(employeeId, todayStr)
+        setIsCheckedIn(true)
+        await loadAttendance(employeeId)
+        alert('Đã chấm công vào')
+      } else {
+        const recId = statusRes?.chamcongId || statusRes?.id || null
+        if (!recId) return alert('Không tìm thấy bản ghi chấm công hôm nay')
+        await attendanceService.checkOut(recId)
+        setIsCheckedIn(false)
+        await loadAttendance(employeeId)
+        alert('Đã chấm công ra')
+      }
+    } catch (err) {
+      alert('Lỗi chấm công: ' + (err.response?.data?.message || err.message))
     }
   }
 
   const handleAutoCalculateSalary = async () => {
-    setIsCalculating(true)
-    
-    // Simulate API call
-    setTimeout(() => {
-      setPayroll(prev => prev.map(emp => ({
-        ...emp,
-        status: emp.status === 'pending' ? 'calculated' : emp.status,
-        calculatedDate: emp.status === 'pending' ? new Date().toLocaleDateString('vi-VN') : emp.calculatedDate
-      })))
+    try {
+      setIsCalculating(true)
+      await payrollService.calculate({ thang: Number(selectedMonth.split('/')[0]), nam: Number(selectedMonth.split('/')[1]) })
+      await loadPayroll(selectedMonth)
       setIsCalculating(false)
-      alert('Đã tính lương tự động thành công cho tất cả nhân viên!')
-    }, 2000)
+      alert('Đã tính lương tự động thành công!')
+    } catch (err) {
+      setIsCalculating(false)
+      alert('Lỗi tính lương: ' + (err.response?.data?.message || err.message))
+    }
   }
 
   const handleExportPayrollReport = () => {
@@ -190,7 +305,7 @@ export default function AccountingManagerDashboard() {
                 <div style={styles.welcomeContent}>
                   <h3 style={styles.welcomeTitle}>Chào mừng, {user.name}!</h3>
                   <p style={styles.welcomeText}>
-                    Hôm nay bạn có {pendingApprovals.filter(a => a.status === 'pending').length} đơn cần duyệt. 
+                    Hôm nay bạn có {pendingApprovals.length} đơn cần duyệt. 
                     Hãy xem xét và phê duyệt để đảm bảo quy trình kế toán diễn ra suôn sẻ.
                   </p>
                   <button style={styles.checkInBtn} onClick={() => setActive('approvals')}>
@@ -236,7 +351,8 @@ export default function AccountingManagerDashboard() {
         )}
 
         {/* Timesheet Page */}
-        {active === 'timesheet' && (
+        {active === 'timesheet' && <AttendanceManagementPage />}
+        {active === 'timesheet_OLD' && (
           <div style={styles.pageContent}>
             <div style={styles.tableCard}>
               <div style={styles.tableHeader}>
@@ -268,7 +384,7 @@ export default function AccountingManagerDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {attendanceHistory.map((record, idx) => (
+                    {attendanceRecords.map((record, idx) => (
                       <tr key={idx} style={styles.tr}>
                         <td style={styles.td}>{record.date}</td>
                         <td style={styles.td}>{record.timeIn}</td>
@@ -348,8 +464,9 @@ export default function AccountingManagerDashboard() {
           </div>
         )}
 
-        {/* Approvals Page - ACCOUNTING MANAGER FEATURE */}
-        {active === 'approvals' && (
+        {/* Approvals Page - Step 2 */}
+        {active === 'approvals' && <LeaveApprovalsPage />}
+        {active === 'approvals_OLD' && (
           <div style={styles.pageContent}>
             <div style={styles.tableCard}>
               <div style={styles.tableHeader}>
@@ -607,7 +724,8 @@ export default function AccountingManagerDashboard() {
         )}
 
         {/* Payroll Page */}
-        {active === 'payroll' && (
+        {active === 'payroll' && <PayrollManagementPage />}
+        {active === 'payroll_OLD' && (
           <div style={styles.pageContent}>
             {/* Summary Cards */}
             <div style={styles.kpiGrid}>

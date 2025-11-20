@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@modules': path.resolve(__dirname, './src/modules'),
     },
   },
   define: {
@@ -28,6 +29,11 @@ export default defineConfig({
         secure: false,
         ws: true,
       },
+      '/nhan-vien': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      },
       '/phong-ban': {
         target: 'http://localhost:8080',
         changeOrigin: true,
@@ -39,6 +45,21 @@ export default defineConfig({
         secure: false,
       },
       '/hop-dong': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/bang-luong': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/cham-cong': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/nghi-phep': {
         target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,

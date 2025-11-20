@@ -3,6 +3,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth'
 import { styles } from './EmployeeDashboard.styles'
 import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar } from './components/EmployeeDashboard.components'
 import { kpiData, attendanceHistory, leaveRequests, notifications, sectionsConfig, chatContacts, chatMessages } from './components/EmployeeDashboard.constants'
+import { ProfilePage, MyPayrollPage, MyAttendancePage, MyLeavePage, MyDocumentsPage } from '@/modules/employee'
 
 export default function EmployeeDashboard() {
   const [active, setActive] = useState('dashboard')
@@ -146,7 +147,8 @@ export default function EmployeeDashboard() {
         )}
 
         {/* Timesheet Page */}
-        {active === 'timesheet' && (
+        {active === 'timesheet' && <MyAttendancePage />}
+        {active === 'timesheet_OLD' && (
           <div style={styles.pageContent}>
             <div style={styles.tableCard}>
               <div style={styles.tableHeader}>
@@ -188,7 +190,8 @@ export default function EmployeeDashboard() {
         )}
 
         {/* Leave Page */}
-        {active === 'leave' && (
+        {active === 'leave' && <MyLeavePage />}
+        {active === 'leave_OLD' && (
           <div style={styles.pageContent}>
             <div style={styles.leaveLayout}>
               <div style={styles.tableCard}>
@@ -443,20 +446,14 @@ export default function EmployeeDashboard() {
           </div>
         )}
 
-        {/* Other Pages Placeholder */}
-        {(active === 'profile' || active === 'payroll' || active === 'documents') && (
-          <div style={styles.pageContent}>
-            <div style={styles.placeholderCard}>
-              <div style={styles.placeholderIcon}>
-                {active === 'profile' ? '👤' : active === 'payroll' ? '💰' : '📄'}
-              </div>
-              <h3 style={styles.placeholderTitle}>{meta.pageTitle}</h3>
-              <p style={styles.placeholderText}>
-                Chức năng đang được phát triển. Bạn sẽ có thể {meta.subtitle.toLowerCase()} tại đây.
-              </p>
-            </div>
-          </div>
-        )}
+        {/* Profile Page */}
+        {active === 'profile' && <ProfilePage />}
+
+        {/* Payroll Page */}
+        {active === 'payroll' && <MyPayrollPage />}
+
+        {/* Documents Page */}
+        {active === 'documents' && <MyDocumentsPage />}
       </main>
     </div>
   )

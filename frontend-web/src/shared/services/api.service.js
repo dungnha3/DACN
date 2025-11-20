@@ -47,8 +47,9 @@ apiClient.interceptors.response.use(
           refreshToken,
         });
 
-        const { accessToken, expiresAt } = response.data;
-        setAuthData({ accessToken, expiresAt });
+        const { accessToken, expiresAt, expiresIn } = response.data;
+        const computedExpiresAt = expiresAt || (expiresIn ? Date.now() + expiresIn : undefined);
+        setAuthData({ accessToken, expiresAt: computedExpiresAt });
 
         // Retry original request with new token
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;

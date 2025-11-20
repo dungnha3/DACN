@@ -17,26 +17,43 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Initialize auth state from localStorage
+  // Initialize auth state from localStorage  
   useEffect(() => {
-    const initAuth = async () => {
+    const initAuth = () => {
       const token = getToken();
       const valid = isTokenValid();
+      const storedRole = getUserRole();
+      const storedUsername = getUsername();
+      const expiresAt = localStorage.getItem('expiresAt');
+      
+      console.log('🔄 AuthContext init:', {
+        hasToken: !!token,
+        isValid: valid,
+        storedRole,
+        storedUsername,
+        expiresAt,
+        now: Date.now()
+      });
 
       if (token && valid) {
-        // Token exists and valid, fetch user profile
-        try {
-          const userData = await authService.getProfile();
-          setUser(userData);
+        // Token exists and valid, restore user from localStorage
+        if (storedRole && storedUsername) {
+          console.log('✅ Restoring user from localStorage:', { storedUsername, storedRole });
+          setUser({
+            username: storedUsername,
+            role: storedRole,
+          });
           setIsAuthenticated(true);
-        } catch (error) {
-          console.error('Failed to fetch profile:', error);
+        } else {
+          // Token valid but no user data → clear all
+          console.log('⚠️ Token valid but no user data, clearing...');
           removeToken();
           setUser(null);
           setIsAuthenticated(false);
         }
       } else {
         // No valid token
+        console.log('❌ No valid token, clearing...');
         removeToken();
         setUser(null);
         setIsAuthenticated(false);
@@ -55,17 +72,16 @@ export function AuthProvider({ children }) {
     try {
       const response = await authService.login(credentials);
       
-      console.log('Login response:', response); // Debug log
+      // Backend response: { accessToken, refreshToken, tokenType, expiresIn, user: { userId, username, email, role, isActive } }
+      const userRole = response.user?.role;
+      const userName = response.user?.username;
       
-      // Response có thể có format: { accessToken, refreshToken, user: { role, username }, expiresIn }
-      const userRole = response.user?.role || response.role;
-      const userName = response.user?.username || response.username;
-      
-      // Calculate expiresAt from expiresIn
-      let expiresAt = response.expiresAt;
-      if (!expiresAt && response.expiresIn) {
-        expiresAt = Date.now() + response.expiresIn * 1000;
+      if (!userRole || !userName) {
+        throw new Error('Invalid server response: missing user data');
       }
+      
+      // Calculate expiresAt from expiresIn (backend returns milliseconds)
+      const expiresAt = Date.now() + (response.expiresIn || 3600000); // Default 1h if not provided
       
       // Save auth data to localStorage
       const authData = {
@@ -81,17 +97,14 @@ export function AuthProvider({ children }) {
 
       // Set user state
       const userData = {
-        userId: response.user?.userId || response.userId,
+        userId: response.user.userId,
         username: userName,
-        email: response.user?.email || response.email,
+        email: response.user.email,
         role: userRole,
       };
       
       setUser(userData);
       setIsAuthenticated(true);
-
-      console.log('User logged in:', userData); // Debug log
-      console.log('Redirect to:', ROLE_ROUTES[userRole]); // Debug log
 
       return { 
         success: true, 
@@ -99,10 +112,9 @@ export function AuthProvider({ children }) {
         redirectTo: ROLE_ROUTES[userRole] || '/'
       };
     } catch (error) {
-      console.error('Login error:', error);
       return { 
         success: false, 
-        error: error.response?.data?.message || 'Đăng nhập thất bại' 
+        error: error.response?.data?.message || error.message || 'Đăng nhập thất bại' 
       };
     }
   }, []);

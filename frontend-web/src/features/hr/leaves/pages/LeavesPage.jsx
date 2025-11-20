@@ -12,6 +12,7 @@ export default function LeavesPage() {
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [approvalNote, setApprovalNote] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState({ nhanvienId: '', loaiPhep: 'PHEP_NAM', ngayBatDau: '', ngayKetThuc: '', lyDo: '' });
 
   // Fetch leaves data
   useEffect(() => {
@@ -303,12 +304,83 @@ export default function LeavesPage() {
               <button style={s.closeBtn} onClick={() => setShowCreateModal(false)}>×</button>
             </div>
             <div style={s.modalBody}>
-              <p style={{color: '#7b809a', textAlign: 'center', padding: 20}}>
-                Form tạo đơn sẽ được tích hợp sau.
-              </p>
+              <div style={{display:'grid', gap:12}}>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Mã nhân viên</label>
+                  <input 
+                    style={s.input} 
+                    placeholder="Nhập mã nhân viên" 
+                    value={createForm.nhanvienId}
+                    onChange={(e)=>setCreateForm({...createForm, nhanvienId:e.target.value})}
+                  />
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Loại phép</label>
+                  <select 
+                    style={s.select}
+                    value={createForm.loaiPhep}
+                    onChange={(e)=>setCreateForm({...createForm, loaiPhep:e.target.value})}
+                  >
+                    <option value="PHEP_NAM">Phép năm</option>
+                    <option value="OM">Nghỉ ốm</option>
+                    <option value="KO_LUONG">Không lương</option>
+                    <option value="KHAC">Khác</option>
+                  </select>
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Từ ngày</label>
+                  <input 
+                    style={s.input} 
+                    type="date"
+                    value={createForm.ngayBatDau}
+                    onChange={(e)=>setCreateForm({...createForm, ngayBatDau:e.target.value})}
+                  />
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Đến ngày</label>
+                  <input 
+                    style={s.input} 
+                    type="date"
+                    value={createForm.ngayKetThuc}
+                    onChange={(e)=>setCreateForm({...createForm, ngayKetThuc:e.target.value})}
+                  />
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Lý do</label>
+                  <textarea 
+                    style={{...s.input, minHeight: 80}} 
+                    placeholder="Nhập lý do nghỉ"
+                    value={createForm.lyDo}
+                    onChange={(e)=>setCreateForm({...createForm, lyDo:e.target.value})}
+                  />
+                </div>
+              </div>
             </div>
-            <div style={{padding: 20, display: 'flex', justifyContent: 'flex-end'}}>
-               <button style={s.btnApprove} onClick={() => setShowCreateModal(false)}>Đóng</button>
+            <div style={{padding: 20, display: 'flex', justifyContent: 'flex-end', gap:12}}>
+               <button style={s.btnCancel} onClick={() => setShowCreateModal(false)}>Hủy</button>
+               <button 
+                 style={s.btnApprove} 
+                 onClick={async ()=>{
+                   if (!createForm.nhanvienId || !createForm.loaiPhep || !createForm.ngayBatDau || !createForm.ngayKetThuc) {
+                     return alert('Vui lòng nhập đủ thông tin');
+                   }
+                   try {
+                     await leavesService.create({
+                       nhanvienId: Number(createForm.nhanvienId),
+                       loaiPhep: createForm.loaiPhep,
+                       ngayBatDau: createForm.ngayBatDau,
+                       ngayKetThuc: createForm.ngayKetThuc,
+                       lyDo: createForm.lyDo || ''
+                     });
+                     setShowCreateModal(false);
+                     setCreateForm({ nhanvienId:'', loaiPhep:'PHEP_NAM', ngayBatDau:'', ngayKetThuc:'', lyDo:'' });
+                     fetchLeavesData();
+                     alert('Đã tạo đơn nghỉ phép');
+                   } catch (err) {
+                     alert('Lỗi tạo đơn: ' + (err.response?.data?.message || err.message));
+                   }
+                 }}
+               >Tạo đơn</button>
             </div>
           </div>
         </div>

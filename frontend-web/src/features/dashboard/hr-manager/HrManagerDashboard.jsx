@@ -14,7 +14,7 @@ import {
   PositionsPage, 
   EvaluationsPage, 
   HRDashboardPage 
-} from '@/features/hr'
+} from '@modules/hr'
 
 // --- THƯ VIỆN BIỂU ĐỒ ---
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';

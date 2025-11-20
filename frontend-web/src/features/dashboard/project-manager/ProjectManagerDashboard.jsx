@@ -14,7 +14,7 @@ import {
   DocumentsPage,
   ProjectsPage,
   ChatPage
-} from '@/features/project'
+} from '@modules/project'
 
 export default function ProjectManagerDashboard() {
   const [active, setActive] = useState('dashboard')

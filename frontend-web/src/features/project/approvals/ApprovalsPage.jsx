@@ -1,23 +1,59 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { styles } from './ApprovalsPage.styles'
-import { pendingApprovals } from './data/approvals.constants'
 import { ApprovalStatusBadge } from './components/ApprovalsComponents'
+import { leavesService } from '@/features/hr/shared/services/leaves.service'
 
 export default function ApprovalsPage() {
-  const [approvals, setApprovals] = useState(pendingApprovals)
+  const [approvals, setApprovals] = useState([])
 
-  const handleApprove = (id) => {
-    setApprovals(prev => prev.map(item => 
-      item.id === id ? { ...item, status: 'approved' } : item
-    ))
-    alert('Đã duyệt đơn thành công!')
+  const mapStatus = (s) => {
+    const m = { CHO_DUYET: 'pending', DA_DUYET: 'approved', BI_TU_CHOI: 'rejected' }
+    return m[s] || s || 'pending'
   }
 
-  const handleReject = (id) => {
-    setApprovals(prev => prev.map(item => 
-      item.id === id ? { ...item, status: 'rejected' } : item
-    ))
-    alert('Đã từ chối đơn!')
+  const loadApprovals = async () => {
+    try {
+      const data = await leavesService.getPending()
+      const mapped = (data || []).map((item) => ({
+        id: item.nghiphepId || item.id,
+        employeeName: item.hoTenNhanVien || item.employeeName || item.tenNhanVien || 'N/A',
+        type: item.loaiPhepLabel || item.type || 'Nghỉ phép',
+        fromDate: item.ngayBatDau || item.fromDate,
+        toDate: item.ngayKetThuc || item.toDate,
+        days: item.soNgay ?? item.days ?? 0,
+        reason: item.lyDo || item.reason || '',
+        submitDate: item.ngayTao || item.submitDate || '',
+        status: mapStatus(item.trangThai || item.status)
+      }))
+      setApprovals(mapped)
+    } catch (err) {
+      console.warn('Failed to load approvals:', err)
+      // Don't show alert on initial load
+    }
+  }
+
+  useEffect(() => {
+    loadApprovals()
+  }, [])
+
+  const handleApprove = async (id) => {
+    try {
+      await leavesService.approve(id, '')
+      setApprovals((prev) => prev.map((item) => (item.id === id ? { ...item, status: 'approved' } : item)))
+      alert('Đã duyệt đơn thành công!')
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message))
+    }
+  }
+
+  const handleReject = async (id) => {
+    try {
+      await leavesService.reject(id, 'Từ chối')
+      setApprovals((prev) => prev.map((item) => (item.id === id ? { ...item, status: 'rejected' } : item)))
+      alert('Đã từ chối đơn!')
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message))
+    }
   }
 
   return (

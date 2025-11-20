@@ -8,6 +8,7 @@ import DashboardLayout from '@/layouts/DashboardLayout';
 
 // Auth pages
 import LoginPage from '@/pages/auth/LoginPage';
+import UnauthorizedPage from '@/pages/Unauthorized';
 
 // Dashboard pages (feature-based)
 import { AdminDashboard } from '@/features/dashboard/admin';
@@ -44,6 +45,7 @@ function AppRouter() {
         {/* Public routes */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
         </Route>
 
         {/* Protected routes */}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/features/auth/hooks/useAuth'
-import bgImage from '../picture/v882batch2-kul-13.jpg'
+// import bgImage from '../picture/v882batch2-kul-13.jpg'
 
 export default function LoginPage() {
   const [username, setUsername] = useState('')
@@ -36,11 +36,11 @@ export default function LoginPage() {
 
   return (
     <div style={styles.page}>
-      <img
+      {/* <img
         alt="background"
         style={styles.bg}
         src={bgImage}
-      />
+      /> */}
       <div style={styles.overlay} />
       <div style={styles.card}>
         <div style={styles.header}>Sign in</div>
