@@ -6,6 +6,19 @@ export const styles = {
     padding: '0',
   },
   
+  // HR Notice
+  hrNotice: {
+    background: '#eff6ff', 
+    padding: 16, 
+    borderRadius: 12, 
+    border: '1px solid #bfdbfe',
+    display: 'flex', 
+    gap: 12, 
+    alignItems: 'flex-start', 
+    margin: '16px',
+    marginBottom: 0
+  },
+  
   // Main Tab Navigation
   mainTabContainer: {
     display: 'flex',

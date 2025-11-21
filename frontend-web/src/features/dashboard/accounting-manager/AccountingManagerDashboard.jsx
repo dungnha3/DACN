@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { usePermissions, useErrorHandler } from '@/shared/hooks'
-import { styles } from './AccountingManagerDashboard.styles'
+import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
 import { NavItem, RoleBadge, KPICard, ApprovalStatusBadge } from './components/AccountingManagerDashboard.components'
 import { kpiData, notifications, sectionsConfig, chatContacts, chatMessages } from './components/AccountingManagerDashboard.constants'
 import { leavesService } from '@/features/hr/shared/services/leaves.service'
-import { PayrollManagementPage, AttendanceManagementPage, LeaveApprovalsPage } from '@/modules/accounting'
+import { PayrollManagementPage, AttendanceManagementPage } from '@/modules/accounting'
+import { SharedProfilePage } from '@/shared/components/profile'
+import { SharedPayrollPage } from '@/shared/components/payroll'
 
 export default function AccountingManagerDashboard() {
   const [active, setActive] = useState('dashboard')
@@ -17,7 +19,7 @@ export default function AccountingManagerDashboard() {
   const user = useMemo(() => ({ name: username || 'Nguyễn Thị F', role: 'Quản lý kế toán' }), [username])
 
   const sections = useMemo(() => sectionsConfig, [])
-  const meta = sections[active]
+  const meta = sections[active] || { title: 'Dashboard', subtitle: 'Quản lý tài chính' }
   const pendingApprovals = useMemo(() => approvals.filter(a => a.status === 'pending'), [approvals])
 
   const handleLogout = async () => {
@@ -87,6 +89,16 @@ export default function AccountingManagerDashboard() {
           <NavItem active={active === 'dashboard'} onClick={() => setActive('dashboard')} icon="🏠">
             Dashboard
           </NavItem>
+          <NavItem active={active === 'profile'} onClick={() => setActive('profile')} icon="👤">
+            Hồ sơ cá nhân
+          </NavItem>
+        </div>
+
+        <div style={styles.navGroup}>
+          <div style={styles.navGroupLabel}>Cá nhân</div>
+          <NavItem active={active === 'my-payroll'} onClick={() => setActive('my-payroll')} icon="💰">
+            Phiếu lương cá nhân
+          </NavItem>
         </div>
 
         <div style={styles.navGroup}>
@@ -96,9 +108,6 @@ export default function AccountingManagerDashboard() {
           </NavItem>
           <NavItem active={active === 'timesheet'} onClick={() => setActive('timesheet')} icon="🕐">
             Quản lý chấm công
-          </NavItem>
-          <NavItem active={active === 'approvals'} onClick={() => setActive('approvals')} icon="✓">
-            Duyệt nghỉ phép (Step 2)
           </NavItem>
         </div>
 
@@ -115,16 +124,19 @@ export default function AccountingManagerDashboard() {
       </aside>
 
       <main style={styles.content}>
-        <header style={styles.header}>
-          <div>
-            <div style={styles.pageHeading}>{meta.title}</div>
-            {active !== 'chat' && <div style={styles.subHeading}>Xin chào, {user.name}</div>}
-          </div>
+        {/* Hide header for shared component pages */}
+        {!['profile', 'my-payroll'].includes(active) && (
+          <header style={styles.header}>
+            <div>
+              <div style={styles.pageHeading}>{meta.title}</div>
+              {active !== 'chat' && <div style={styles.subHeading}>Xin chào, {user.name}</div>}
+            </div>
 
-          <div style={styles.rightCluster}>
-            <RoleBadge role={user.role} />
-          </div>
-        </header>
+            <div style={styles.rightCluster}>
+              <RoleBadge role={user.role} />
+            </div>
+          </header>
+        )}
 
         {/* Dashboard Main */}
         {active === 'dashboard' && (
@@ -193,9 +205,6 @@ export default function AccountingManagerDashboard() {
 
         {/* ❌ Removed: Leave Page (cá nhân) - Accounting không cần */}
 
-        {/* Approvals Page - Step 2 */}
-        {/* Leave Approvals - Step 2 */}
-        {active === 'approvals' && <LeaveApprovalsPage />}
 
         {/* Chat Page */}
         {active === 'chat' && (
@@ -401,16 +410,33 @@ export default function AccountingManagerDashboard() {
         {/* Payroll Management */}
         {active === 'payroll' && <PayrollManagementPage />}
 
-        {/* Other Pages Placeholder */}
-        {(active === 'profile' || active === 'documents') && (
+        {/* Personal Payroll */}
+        {active === 'my-payroll' && (
+          <SharedPayrollPage 
+            title="Phiếu lương cá nhân"
+            breadcrumb="Cá nhân / Phiếu lương"
+            viewMode="personal"
+          />
+        )}
+
+        {/* Profile Page */}
+        {active === 'profile' && (
+          <SharedProfilePage 
+            title="Hồ sơ cá nhân"
+            breadcrumb="Cá nhân / Hồ sơ cá nhân"
+            allowEdit={true}
+            userRole="Accounting Manager"
+          />
+        )}
+
+        {/* Documents Placeholder */}
+        {active === 'documents' && (
           <div style={styles.pageContent}>
             <div style={styles.placeholderCard}>
-              <div style={styles.placeholderIcon}>
-                {active === 'profile' ? '👤' : '📄'}
-              </div>
+              <div style={styles.placeholderIcon}>📄</div>
               <h3 style={styles.placeholderTitle}>{meta.pageTitle}</h3>
               <p style={styles.placeholderText}>
-                Chức năng đang được phát triển. Bạn sẽ có thể {meta.subtitle.toLowerCase()} tại đây.
+                Tính năng đang được phát triển
               </p>
             </div>
           </div>

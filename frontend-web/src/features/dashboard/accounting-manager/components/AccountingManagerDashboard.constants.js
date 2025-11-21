@@ -325,6 +325,16 @@ export const sectionsConfig = {
     pageTitle: 'Hồ sơ cá nhân',
     subtitle: 'Xem và cập nhật thông tin cá nhân',
   },
+  'my-payroll': {
+    title: 'Phiếu lương cá nhân',
+    pageTitle: 'Phiếu lương cá nhân',
+    subtitle: 'Xem phiếu lương và thu nhập cá nhân',
+  },
+  payroll: {
+    title: 'Bảng lương',
+    pageTitle: 'Quản lý bảng lương',
+    subtitle: 'Quản lý lương và tính toán cho tất cả nhân viên',
+  },
   timesheet: {
     title: 'Chấm công',
     pageTitle: 'Lịch sử chấm công',

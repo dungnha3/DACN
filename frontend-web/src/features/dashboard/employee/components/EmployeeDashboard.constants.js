@@ -150,6 +150,11 @@ export const sectionsConfig = {
     pageTitle: 'Hợp đồng & Tài liệu',
     subtitle: 'Quản lý hợp đồng và tài liệu cá nhân',
   },
+  projects: {
+    title: 'Dự án của tôi',
+    pageTitle: 'Dự án của tôi',
+    subtitle: 'Xem dự án và tasks được phân công',
+  },
   chat: {
     title: 'Trò chuyện',
     pageTitle: 'Trò chuyện',

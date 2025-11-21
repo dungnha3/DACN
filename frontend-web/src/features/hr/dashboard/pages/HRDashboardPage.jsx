@@ -1,10 +1,25 @@
 import { useState, useEffect } from 'react';
 import { dashboardService } from '@/features/hr/shared/services';
+import { usePermissions, useErrorHandler } from '@/shared/hooks';
 
 export default function HRDashboardPage() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
+  
+  const { isHRManager } = usePermissions();
+  const { handleError } = useErrorHandler();
+  
+  // Permission guard
+  if (!isHRManager) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
+        <div style={{ fontSize: '20px', fontWeight: '600', color: '#ef4444' }}>Không có quyền truy cập</div>
+        <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px' }}>Chỉ HR Manager mới có quyền xem dashboard HR</div>
+      </div>
+    );
+  }
   
   useEffect(() => {
     loadDashboardData();
@@ -16,8 +31,8 @@ export default function HRDashboardPage() {
       const data = await dashboardService.getStats();
       setStats(data);
     } catch (err) {
-      console.error('Error loading dashboard:', err);
-      alert('Không thể tải dữ liệu dashboard: ' + (err.response?.data?.message || err.message));
+      const errorMessage = handleError(err, { context: 'load_hr_dashboard' });
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }

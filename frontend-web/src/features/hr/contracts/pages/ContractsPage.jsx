@@ -21,7 +21,10 @@ export default function ContractsPage() {
     noiDung: ''
   });
 
-  const { isHRManager } = usePermissions();
+  const { isHRManager, isProjectManager } = usePermissions();
+  
+  // PM self-view mode: only show own contracts
+  const isSelfViewMode = isProjectManager && !isHRManager;
   const { handleError } = useErrorHandler();
 
   useEffect(() => {

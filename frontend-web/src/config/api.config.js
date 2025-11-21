@@ -106,11 +106,33 @@ export const API_ENDPOINTS = {
   
   // Projects
   PROJECTS: {
-    BASE: '/api/projects',
+    LIST: '/api/projects',
     BY_ID: (id) => `/api/projects/${id}`,
-    ISSUES: '/api/projects/issues',
-    SPRINTS: '/api/projects/sprints',
-    DASHBOARD: '/api/projects/dashboard',
+    PAGE: '/api/projects/page',
+    BY_USER: (userId) => `/api/projects/user/${userId}`,
+    BY_STATUS: (status) => `/api/projects/status/${status}`,
+    BY_DEPARTMENT: (deptId) => `/api/projects/department/${deptId}`,
+    SEARCH: '/api/projects/search',
+  },
+  
+  // Issues
+  ISSUES: {
+    LIST: '/api/issues',
+    BY_ID: (id) => `/api/issues/${id}`,
+    BY_PROJECT: (projectId) => `/api/issues/project/${projectId}`,
+    BY_SPRINT: (sprintId) => `/api/issues/sprint/${sprintId}`,
+    BY_ASSIGNEE: (userId) => `/api/issues/assignee/${userId}`,
+    BY_STATUS: (statusId) => `/api/issues/status/${statusId}`,
+    BY_PRIORITY: (priority) => `/api/issues/priority/${priority}`,
+    SEARCH: '/api/issues/search',
+  },
+  
+  // Sprints
+  SPRINTS: {
+    LIST: '/api/sprints',
+    BY_ID: (id) => `/api/sprints/${id}`,
+    BY_PROJECT: (projectId) => `/api/sprints/project/${projectId}`,
+    BY_STATUS: (status) => `/api/sprints/status/${status}`,
   },
   
   // Notifications

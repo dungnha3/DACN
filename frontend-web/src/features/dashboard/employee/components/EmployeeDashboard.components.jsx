@@ -1,4 +1,4 @@
-import { styles } from '../EmployeeDashboard.styles'
+import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
 
 // Navigation Item Component
 export function NavItem({ active, onClick, children, icon }) {

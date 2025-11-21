@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { usePermissions, useErrorHandler } from '@/shared/hooks'
-import { styles } from './EmployeeDashboard.styles'
+import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
 import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar } from './components/EmployeeDashboard.components'
 import { kpiData, attendanceHistory, leaveRequests, notifications, sectionsConfig, chatContacts, chatMessages } from './components/EmployeeDashboard.constants'
-import { ProfilePage, MyPayrollPage, MyAttendancePage, MyLeavePage, MyDocumentsPage } from '@/modules/employee'
+import { ProfilePage, MyPayrollPage, MyAttendancePage, MyLeavePage, MyDocumentsPage, MyProjectsPage } from '@/modules/employee'
 
 export default function EmployeeDashboard() {
   const [active, setActive] = useState('dashboard')
@@ -15,7 +15,7 @@ export default function EmployeeDashboard() {
   const user = useMemo(() => ({ name: username || 'Nguyễn Văn A', role: 'Nhân viên' }), [username])
 
   const sections = useMemo(() => sectionsConfig, [])
-  const meta = sections[active]
+  const meta = sections[active] || { title: 'Dashboard', subtitle: 'Employee Portal' }
 
   const handleLogout = async () => {
     await logout()
@@ -64,6 +64,9 @@ export default function EmployeeDashboard() {
           <NavItem active={active === 'documents'} onClick={() => setActive('documents')} icon="📄">
             {sections.documents.title}
           </NavItem>
+          <NavItem active={active === 'projects'} onClick={() => setActive('projects')} icon="🏭">
+            Dự án của tôi
+          </NavItem>
           <NavItem active={active === 'chat'} onClick={() => setActive('chat')} icon="💬">
             {sections.chat.title}
           </NavItem>
@@ -75,16 +78,19 @@ export default function EmployeeDashboard() {
       </aside>
 
       <main style={styles.content}>
-        <header style={styles.header}>
-          <div>
-            <div style={styles.pageHeading}>{meta.title}</div>
-            {active !== 'chat' && <div style={styles.subHeading}>Xin chào, {user.name}</div>}
-          </div>
+        {/* Hide header for pages with their own headers */}
+        {!['profile', 'projects'].includes(active) && (
+          <header style={styles.header}>
+            <div>
+              <div style={styles.pageHeading}>{meta.title}</div>
+              {active !== 'chat' && <div style={styles.subHeading}>Xin chào, {user.name}</div>}
+            </div>
 
-          <div style={styles.rightCluster}>
-            <RoleBadge role={user.role} />
-          </div>
-        </header>
+            <div style={styles.rightCluster}>
+              <RoleBadge role={user.role} />
+            </div>
+          </header>
+        )}
 
         {/* Dashboard Main */}
         {active === 'dashboard' && (
@@ -455,6 +461,9 @@ export default function EmployeeDashboard() {
 
         {/* Documents Page */}
         {active === 'documents' && <MyDocumentsPage />}
+
+        {/* Projects Page */}
+        {active === 'projects' && <MyProjectsPage />}
       </main>
     </div>
   )

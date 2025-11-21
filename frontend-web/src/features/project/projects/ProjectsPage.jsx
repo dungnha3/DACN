@@ -1,18 +1,33 @@
-import { useState, useEffect } from 'react'
-import { styles } from './ProjectsPage.styles'
-import { mockTasks } from './data/projects.constants'
-import CreateProjectModal from './components/CreateProjectModal'
-import CreateIssueModal from './components/CreateIssueModal'
-import { projectApi } from './api/projectApi'
-import { issueApi } from './api/issueApi'
-import { dashboardApi } from './api/dashboardApi'
-import ProjectDetailPage from './pages/ProjectDetailPage'
-import IssueDetailPage from './pages/IssueDetailPage'
+import { useState, useEffect } from 'react';
+import { styles } from './ProjectsPage.styles';
+import { mockTasks } from './data/projects.constants';
+import CreateProjectModal from './components/CreateProjectModal';
+import CreateIssueModal from './components/CreateIssueModal';
+import { projectApi } from './api/projectApi';
+import { issueApi } from './api/issueApi';
+import { dashboardApi } from './api/dashboardApi';
+import ProjectDetailPage from './pages/ProjectDetailPage';
+import IssueDetailPage from './pages/IssueDetailPage';
+import { usePermissions, useErrorHandler } from '@/shared/hooks';
 
 export default function ProjectsPage() {
-  const [mainTab, setMainTab] = useState('tasks') // tasks | projects | performance
-  const [projects, setProjects] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [mainTab, setMainTab] = useState('tasks'); // tasks | projects | performance
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(false);
+  
+  const { isProjectManager, isHRManager } = usePermissions();
+  const { handleError } = useErrorHandler();
+  
+  // Permission guard
+  if (!isProjectManager && !isHRManager) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
+        <div style={{ fontSize: '20px', fontWeight: '600', color: '#ef4444' }}>Không có quyền truy cập</div>
+        <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px' }}>Chỉ Project Manager hoặc HR Manager mới có quyền quản lý dự án</div>
+      </div>
+    );
+  }
 
   // Load projects khi component mount
   useEffect(() => {
@@ -20,16 +35,17 @@ export default function ProjectsPage() {
   }, [])
 
   const loadProjects = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const data = await projectApi.getAllProjects()
-      setProjects(data)
+      const data = await projectApi.getAllProjects();
+      setProjects(data);
     } catch (error) {
-      console.error('Error loading projects:', error)
+      const errorMessage = handleError(error, { context: 'load_projects' });
+      console.error('Error loading projects:', errorMessage);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleProjectCreated = (newProject) => {
     // Reload projects sau khi tạo mới
@@ -38,6 +54,19 @@ export default function ProjectsPage() {
 
   return (
     <div style={styles.container}>
+      {/* HR READ-ONLY NOTICE */}
+      {isHRManager && !isProjectManager && (
+        <div style={styles.hrNotice}>
+          <span style={{fontSize: 18}}>ℹ️</span>
+          <div>
+            <div style={{fontWeight: 600, color: '#3b82f6'}}>Chế độ chỉ xem</div>
+            <div style={{fontSize: 13, color: '#6b7280', marginTop: 4}}>
+              HR Manager chỉ có quyền xem thông tin dự án. Để tạo/chỉnh sửa, liên hệ Project Manager.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Tab Navigation */}
       <div style={styles.mainTabContainer}>
         <button
@@ -71,12 +100,13 @@ export default function ProjectsPage() {
 
       {/* Content Area */}
       {mainTab === 'tasks' ? (
-        <TasksTab key="tasks-tab" />
+        <TasksTab key="tasks-tab" isProjectManager={isProjectManager} />
       ) : mainTab === 'projects' ? (
         <ProjectsTab 
           projects={projects} 
           loading={loading}
           onProjectCreated={handleProjectCreated}
+          isProjectManager={isProjectManager}
         />
       ) : (
         <PerformanceTab key="performance-tab" />
@@ -86,30 +116,33 @@ export default function ProjectsPage() {
 }
 
 // Tab "Tác vụ của tôi"
-function TasksTab() {
-  const [viewMode, setViewMode] = useState('list') // list | deadline | calendar | gantt
-  const [issues, setIssues] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedIssueId, setSelectedIssueId] = useState(null)
-  const [hoveredRow, setHoveredRow] = useState(null)
+function TasksTab({ isProjectManager }) {
+  const [viewMode, setViewMode] = useState('list'); // list | deadline | calendar | gantt
+  const [issues, setIssues] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedIssueId, setSelectedIssueId] = useState(null);
+  const [hoveredRow, setHoveredRow] = useState(null);
+  
+  const { handleError } = useErrorHandler();
   
   // Load issues khi component mount
   useEffect(() => {
-    loadIssues()
-  }, [])
+    loadIssues();
+  }, []);
 
   const loadIssues = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const data = await issueApi.getMyIssues()
-      setIssues(data)
+      const data = await issueApi.getMyIssues();
+      setIssues(data);
     } catch (error) {
-      console.error('Error loading issues:', error)
+      const errorMessage = handleError(error, { context: 'load_my_issues' });
+      console.error('Error loading issues:', errorMessage);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleOpenModal = () => {
     setIsModalOpen(true)
@@ -139,7 +172,9 @@ function TasksTab() {
       {/* Toolbar */}
       <div style={styles.toolbar}>
         <div style={styles.toolbarLeft}>
-          <button style={styles.createBtn} onClick={handleOpenModal}>+ Tạo</button>
+          {isProjectManager && (
+            <button style={styles.createBtn} onClick={handleOpenModal}>+ Tạo</button>
+          )}
           <select style={styles.filterSelect}>
             <option>Tất cả các vai trò</option>
             <option>Người tạo</option>
@@ -335,7 +370,7 @@ const getStatusText = (status) => {
 }
 
 // Tab "Dự án"
-function ProjectsTab({ projects, loading, onProjectCreated }) {
+function ProjectsTab({ projects, loading, onProjectCreated, isProjectManager }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedProjectId, setSelectedProjectId] = useState(null)
   const [hoveredRow, setHoveredRow] = useState(null)
@@ -367,7 +402,9 @@ function ProjectsTab({ projects, loading, onProjectCreated }) {
       {/* Toolbar */}
       <div style={styles.toolbar}>
         <div style={styles.toolbarLeft}>
-          <button style={styles.createBtn} onClick={handleOpenModal}>+ Tạo</button>
+          {isProjectManager && (
+            <button style={styles.createBtn} onClick={handleOpenModal}>+ Tạo</button>
+          )}
           <select style={styles.filterSelect}>
             <option>Của tôi</option>
             <option>Tất cả</option>

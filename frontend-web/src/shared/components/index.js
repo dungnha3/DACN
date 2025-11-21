@@ -12,6 +12,13 @@ export { default as ApprovalCard } from './display/ApprovalCard'
 export { default as PageLayout } from './layout/PageLayout'
 export { default as FilterBar } from './layout/FilterBar'
 
+// Attendance components
+export * from './contracts'
+export * from './payroll'
+export * from './profile'
+export * from './leave-request'
+export * from './attendance'
+
 // Form components
 export { default as FormModal } from './form/FormModal'
 export { default as FormField } from './form/FormField'

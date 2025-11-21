@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { usePermissions } from '@/shared/hooks'
-import { styles } from './AdminDashboard.styles'
+import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
 import { NavItem, RoleBadge, QuickActionBtn } from './components/AdminDashboard.components'
 import { UsersManagementPage, RoleRequestsPage, AuditLogsPage } from '@/modules/admin'
 

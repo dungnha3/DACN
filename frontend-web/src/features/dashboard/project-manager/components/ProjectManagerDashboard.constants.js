@@ -138,6 +138,11 @@ export const sectionsConfig = {
     pageTitle: 'Duyệt nghỉ phép',
     subtitle: 'Duyệt đơn nghỉ phép của nhân viên trong dự án',
   },
+  'team-leaves': {
+    title: 'Duyệt nghỉ phép',
+    pageTitle: 'Duyệt nghỉ phép team',
+    subtitle: 'Duyệt đơn nghỉ phép của thành viên trong team',
+  },
   payroll: {
     title: 'Phiếu lương',
     pageTitle: 'Phiếu lương',

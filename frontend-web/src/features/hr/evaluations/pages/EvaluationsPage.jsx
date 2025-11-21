@@ -1,11 +1,27 @@
 import { useState, useMemo, useEffect } from 'react';
 import { evaluationsService, employeesService } from '@/features/hr/shared/services';
+import { usePermissions, useErrorHandler } from '@/shared/hooks';
+import { validateRequired } from '@/shared/utils/validation';
 
 
 export default function EvaluationsPage() {
   const [evaluations, setEvaluations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  const { isHRManager } = usePermissions();
+  const { handleError } = useErrorHandler();
+  
+  // Permission guard
+  if (!isHRManager) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
+        <div style={{ fontSize: '20px', fontWeight: '600', color: '#ef4444' }}>Không có quyền truy cập</div>
+        <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px' }}>Chỉ HR Manager mới có quyền quản lý đánh giá nhân viên</div>
+      </div>
+    );
+  }
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEval, setSelectedEval] = useState(null);
@@ -44,8 +60,8 @@ export default function EvaluationsPage() {
       const data = await evaluationsService.getAll();
       setEvaluations(data || []);
     } catch (err) {
-      console.error('Error fetching evaluations:', err);
-      setError('Không thể tải dữ liệu đánh giá');
+      const errorMessage = handleError(err, { context: 'load_evaluations' });
+      setError(errorMessage);
       setEvaluations([]);
     } finally {
       setLoading(false);
@@ -57,7 +73,8 @@ export default function EvaluationsPage() {
       const data = await employeesService.getAll();
       setEmployees(data || []);
     } catch (err) {
-      console.error('Error fetching employees:', err);
+      const errorMessage = handleError(err, { context: 'load_employees' });
+      console.error('Error fetching employees:', errorMessage);
     }
   };
 
@@ -91,15 +108,20 @@ export default function EvaluationsPage() {
   const handleApprovalSubmit = async () => {
     if (!selectedEval) return;
     
+    // Validation for reject
+    if (approvalAction === 'REJECT') {
+      const noteError = validateRequired(approvalNote, 'Lý do từ chối');
+      if (noteError) {
+        alert(noteError);
+        return;
+      }
+    }
+    
     try {
       if (approvalAction === 'APPROVE') {
-        await evaluationsService.approve(selectedEval.danhGiaId, approvalNote);
+        await evaluationsService.approve(selectedEval.danhGiaId, approvalNote || 'Approved');
         alert('✅ Đã phê duyệt đánh giá thành công!');
       } else {
-        if (!approvalNote.trim()) {
-          alert('❌ Vui lòng nhập lý do từ chối');
-          return;
-        }
         await evaluationsService.reject(selectedEval.danhGiaId, approvalNote);
         alert('✅ Đã từ chối đánh giá!');
       }
@@ -110,27 +132,42 @@ export default function EvaluationsPage() {
       setSelectedEval(null);
       setApprovalNote('');
     } catch (err) {
-      console.error('Error processing evaluation:', err);
-      alert('❌ Xử lý đánh giá thất bại: ' + (err.response?.data?.message || err.message));
+      const errorMessage = handleError(err, { context: approvalAction === 'APPROVE' ? 'approve_evaluation' : 'reject_evaluation' });
+      alert(errorMessage);
     }
   };
 
   const handleCreateSubmit = async () => {
     // Validation
-    if (!formData.nhanvienId) {
-      return alert('❌ Vui lòng chọn nhân viên!');
+    const errors = [];
+    
+    const empError = validateRequired(formData.nhanvienId, 'Nhân viên');
+    if (empError) errors.push(empError);
+    
+    const periodError = validateRequired(formData.kyDanhGia, 'Kỳ đánh giá');
+    if (periodError) errors.push(periodError);
+    
+    const scoreErrors = [
+      validateRequired(formData.diemChuyenMon, 'Điểm chuyên môn'),
+      validateRequired(formData.diemThaiDo, 'Điểm thái độ'),
+      validateRequired(formData.diemKyNangMem, 'Điểm kỹ năng mềm'),
+      validateRequired(formData.diemDongDoi, 'Điểm đồng đội')
+    ].filter(Boolean);
+    errors.push(...scoreErrors);
+    
+    const startDateError = validateRequired(formData.ngayBatDau, 'Ngày bắt đầu');
+    if (startDateError) errors.push(startDateError);
+    
+    const endDateError = validateRequired(formData.ngayKetThuc, 'Ngày kết thúc');
+    if (endDateError) errors.push(endDateError);
+    
+    if (formData.ngayBatDau && formData.ngayKetThuc && new Date(formData.ngayKetThuc) < new Date(formData.ngayBatDau)) {
+      errors.push('Ngày kết thúc phải sau ngày bắt đầu');
     }
-    if (!formData.kyDanhGia.trim()) {
-      return alert('❌ Vui lòng nhập kỳ đánh giá!');
-    }
-    if (!formData.diemChuyenMon || !formData.diemThaiDo || !formData.diemKyNangMem || !formData.diemDongDoi) {
-      return alert('❌ Vui lòng nhập đầy đủ điểm số!');
-    }
-    if (!formData.ngayBatDau || !formData.ngayKetThuc) {
-      return alert('❌ Vui lòng chọn ngày bắt đầu và kết thúc!');
-    }
-    if (new Date(formData.ngayKetThuc) < new Date(formData.ngayBatDau)) {
-      return alert('❌ Ngày kết thúc phải sau ngày bắt đầu!');
+    
+    if (errors.length > 0) {
+      alert(errors.join('\n'));
+      return;
     }
 
     try {
@@ -166,8 +203,8 @@ export default function EvaluationsPage() {
       fetchEvaluationsData();
       setShowCreateModal(false);
     } catch (err) {
-      console.error('Error creating evaluation:', err);
-      alert('❌ Tạo đánh giá thất bại: ' + (err.response?.data?.message || err.message));
+      const errorMessage = handleError(err, { context: 'create_evaluation' });
+      alert(errorMessage);
     }
   };
 

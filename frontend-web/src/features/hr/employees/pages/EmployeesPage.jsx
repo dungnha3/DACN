@@ -3,6 +3,35 @@ import { employeesService, departmentsService, positionsService } from '@/featur
 import { apiService } from '@/shared/services/api.service';
 import { usePermissions, useErrorHandler } from '@/shared/hooks';
 import { validateEmployee } from '@/shared/utils/validation';
+import {
+  PageContainer,
+  PageHeader,
+  PageTitle,
+  Breadcrumb,
+  FilterBar,
+  SearchInput,
+  Button,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  Modal,
+  ModalHeader,
+  ModalTitle,
+  ModalBody,
+  ModalFooter,
+  FormGroup,
+  FormLabel,
+  FormInput,
+  FormSelect,
+  LoadingState,
+  ErrorState,
+  EmptyState,
+  PermissionDenied,
+  IconButton
+} from '@/shared/components/ui';
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState([]);
@@ -15,8 +44,11 @@ export default function EmployeesPage() {
   const [error, setError] = useState(null);
   const [formErrors, setFormErrors] = useState({});
 
-  const { isHRManager } = usePermissions();
+  const { isHRManager, isProjectManager, currentUser } = usePermissions();
   const { handleError } = useErrorHandler();
+  
+  // PM self-view mode: only show own profile
+  const isSelfViewMode = isProjectManager && !isHRManager;
 
   const [newEmp, setNewEmp] = useState({
     userId: '',
@@ -41,12 +73,14 @@ export default function EmployeesPage() {
     try {
       setLoading(true);
       setError(null);
+      
       // Load employees, departments, positions
       const [empData, deptData, posData] = await Promise.all([
         employeesService.getAll(),
         departmentsService.getAll(),
         positionsService.getAll()
       ]);
+      
       setEmployees(empData);
       setDepartments(deptData);
       setPositions(posData);
@@ -142,7 +176,7 @@ export default function EmployeesPage() {
         setLoading(false);
       }
     }
-  }
+  };
 
   // Filter employees by search term
   const filteredEmployees = employees.filter(emp => 
@@ -174,254 +208,339 @@ export default function EmployeesPage() {
     );
   };
 
-  // Permission guard
-  if (!isHRManager) {
+  // Permission guard - Allow HR full access, PM self-view only
+  if (!isHRManager && !isProjectManager) {
     return (
-      <div style={{ padding: '40px', textAlign: 'center' }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
-        <div style={{ fontSize: '20px', fontWeight: '600', color: '#ef4444' }}>Không có quyền truy cập</div>
-        <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px' }}>Chỉ HR Manager mới có quyền quản lý nhân viên</div>
-      </div>
+      <PageContainer>
+        <PermissionDenied 
+          message="Không có quyền truy cập"
+          description="Chỉ HR Manager hoặc Project Manager mới có quyền xem thông tin nhân viên"
+        />
+      </PageContainer>
+    );
+  }
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <LoadingState message="Đang tải dữ liệu nhân viên..." />
+      </PageContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageContainer>
+        <ErrorState message={error} onRetry={loadData} />
+      </PageContainer>
     );
   }
 
   return (
-    <div style={s.container}>
+    <PageContainer>
       {/* Header */}
-      <div style={s.headerWrapper}>
+      <PageHeader>
         <div>
-          <div style={s.breadcrumb}>Quản lý nhân sự / Nhân viên</div>
-          <h1 style={s.pageTitle}>Danh sách Nhân viên</h1>
-          <div style={s.totalBadge}>Tổng số: {employees.length} nhân viên</div>
+          <Breadcrumb>Quản lý nhân sự / Nhân viên</Breadcrumb>
+          <PageTitle>Danh sách Nhân viên</PageTitle>
+          <div style={{ fontSize: 14, color: '#7b809a', marginTop: 4 }}>
+            Tổng số: {employees.length} nhân viên
+          </div>
         </div>
-        <div style={s.headerActions}>
-          <button style={s.btnExport}>📥 Xuất Excel</button>
-          <button style={s.btnAdd} onClick={() => setShowModal(true)}>+ Thêm mới</button>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <Button variant="secondary">📥 Xuất Excel</Button>
+          {isHRManager && (
+            <Button variant="warning" onClick={() => setShowModal(true)}>
+              + Thêm mới
+            </Button>
+          )}
         </div>
-      </div>
+      </PageHeader>
 
-      {/* Filter Bar */}
-      <div style={s.filterBar}>
-        <div style={s.searchWrapper}>
-          <span style={s.searchIcon}>🔍</span>
-          <input 
-            style={s.searchInput} 
-            placeholder="Tìm kiếm..." 
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <select style={s.filterSelect}><option>Tất cả trạng thái</option></select>
-        <select style={s.filterSelect}><option>Tất cả phòng ban</option></select>
-      </div>
-
-      {/* Table Container - Đã fix lỗi scroll ngang */}
-      <div style={s.tableCard}>
-        <div style={s.tableResponsive}>
-          <table style={s.table}>
-            <thead>
-              <tr>
-                {/* Sử dụng width % thay vì px để fix layout */}
-                <th style={{...s.th, width: '25%'}}>Nhân viên</th>
-                <th style={{...s.th, width: '20%'}}>Liên hệ</th>
-                <th style={{...s.th, width: '15%'}}>Vị trí</th>
-                <th style={{...s.th, width: '15%'}}>Lương CB</th>
-                <th style={{...s.th, width: '10%'}}>Ngày vào</th>
-                <th style={{...s.th, width: '10%'}}>Trạng thái</th>
-                <th style={{...s.thRight, width: '5%'}}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredEmployees.map(emp => (
-                <tr key={emp.nhanvienId} style={s.tr}>
-                  <td style={s.td}>
-                    <div style={s.profileCell}>
-                      <div style={s.avatarBox}>{emp.avatar}</div>
-                      <div style={{minWidth: 0}}>
-                        <div style={s.empName}>{emp.hoTen}</div>
-                        <div style={s.empCode}>{emp.maNhanVien || `NV${emp.nhanvienId}`}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={s.td}>
-                    <div style={s.contactCell}>
-                      <span title={emp.email} style={s.contactItem}>📧 {emp.email}</span>
-                      <span style={s.contactItem}>📞 {emp.sdt}</span>
-                    </div>
-                  </td>
-                  <td style={s.td}>
-                    <div style={{fontWeight: 600, color: '#344767'}}>{emp.phongban?.tenPhongBan || 'N/A'}</div>
-                    <div style={{fontSize: 12, color: '#7b809a'}}>{emp.chucvu?.tenChucVu || 'N/A'}</div>
-                  </td>
-                  <td style={{...s.td, fontWeight: 700, color: '#344767'}}>{formatCurrency(emp.luongCoBan)}</td>
-                  <td style={s.td}>{emp.ngayVaoLam}</td>
-                  <td style={s.td}>{getStatusBadge(emp.trangThai)}</td>
-                  <td style={s.tdRight}>
-                     <div style={s.actions}>
-                        <button style={s.iconBtn} title="Sửa">✏️</button>
-                        <button style={{...s.iconBtn, color: '#ef4444', background: '#fef2f2'}} onClick={() => handleDelete(emp.nhanvienId)} title="Xóa">🗑️</button>
-                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Modal giữ nguyên logic */}
-      {showModal && (
-        <div style={s.modalOverlay}>
-          <div style={s.modalContent}>
-            <div style={s.modalHeader}>
-              <h2 style={s.modalTitle}>Thêm nhân viên mới</h2>
-              <button style={s.closeBtn} onClick={() => setShowModal(false)}>×</button>
-            </div>
-            <div style={s.modalBody}>
-              <div style={s.formGrid}>
-                <div style={s.formGroup}>
-                  <label style={s.label}>Tài khoản <span style={{color:'red'}}>*</span></label>
-                  <select style={s.select} name="userId" value={newEmp.userId} onChange={handleInputChange}>
-                    <option value="">-- Chọn tài khoản --</option>
-                    {users.map(user => (
-                      <option key={user.userId} value={user.userId}>{user.username} ({user.email})</option>
-                    ))}
-                  </select>
-                </div>
-                <div style={s.formGroup}>
-                  <label style={s.label}>Họ và tên <span style={{color:'red'}}>*</span></label>
-                  <input style={s.input} name="hoTen" value={newEmp.hoTen} onChange={handleInputChange} placeholder="Nguyễn Văn A" />
-                </div>
-                <div style={s.formGroup}>
-                  <label style={s.label}>CCCD</label>
-                  <input style={s.input} name="cccd" value={newEmp.cccd} onChange={handleInputChange} placeholder="001234567890" />
-                </div>
-                <div style={s.formGroup}>
-                  <label style={s.label}>Ngày sinh <span style={{color:'red'}}>*</span></label>
-                  <input style={s.input} type="date" name="ngaySinh" value={newEmp.ngaySinh} onChange={handleInputChange} />
-                </div>
-                <div style={s.formGroup}>
-                  <label style={s.label}>Giới tính <span style={{color:'red'}}>*</span></label>
-                  <select style={s.select} name="gioiTinh" value={newEmp.gioiTinh} onChange={handleInputChange}>
-                    <option value="Nam">Nam</option>
-                    <option value="Nữ">Nữ</option>
-                    <option value="Khác">Khác</option>
-                  </select>
-                </div>
-                <div style={s.formGroup}>
-                  <label style={s.label}>Địa chỉ</label>
-                  <input style={s.input} name="diaChi" value={newEmp.diaChi} onChange={handleInputChange} placeholder="123 Nguyễn Trãi, Q1" />
-                </div>
-                <div style={s.formGroup}>
-                  <label style={s.label}>Ngày vào làm <span style={{color:'red'}}>*</span></label>
-                  <input style={s.input} type="date" name="ngayVaoLam" value={newEmp.ngayVaoLam} onChange={handleInputChange} />
-                </div>
-                <div style={s.formGroup}>
-                  <label style={s.label}>Phòng ban</label>
-                  <select style={s.select} name="phongbanId" value={newEmp.phongbanId} onChange={handleInputChange}>
-                    <option value="">-- Chọn phòng ban --</option>
-                    {departments.map(dept => (
-                      <option key={dept.phongbanId} value={dept.phongbanId}>{dept.tenPhongBan}</option>
-                    ))}
-                  </select>
-                </div>
-                <div style={s.formGroup}>
-                  <label style={s.label}>Chức vụ</label>
-                  <select style={s.select} name="chucvuId" value={newEmp.chucvuId} onChange={handleInputChange}>
-                    <option value="">-- Chọn chức vụ --</option>
-                    {positions.map(pos => (
-                      <option key={pos.chucvuId} value={pos.chucvuId}>{pos.tenChucVu}</option>
-                    ))}
-                  </select>
-                </div>
-                <div style={s.formGroup}>
-                  <label style={s.label}>Lương cơ bản</label>
-                  <input style={s.input} type="number" name="luongCoBan" value={newEmp.luongCoBan} onChange={handleInputChange} placeholder="VD: 10000000" />
-                </div>
-                <div style={s.formGroup}>
-                  <label style={s.label}>Phụ cấp</label>
-                  <input style={s.input} type="number" name="phuCap" value={newEmp.phuCap} onChange={handleInputChange} placeholder="VD: 2000000" />
-                </div>
-              </div>
-            </div>
-            <div style={s.modalFooter}>
-              <button style={s.btnCancel} onClick={() => setShowModal(false)}>Hủy bỏ</button>
-              <button style={s.btnSave} onClick={handleSave}>Lưu nhân viên</button>
+      {/* PM Self-view Notice */}
+      {isSelfViewMode && (
+        <div style={{
+          background: '#eff6ff', 
+          padding: 16, 
+          borderRadius: 12, 
+          border: '1px solid #bfdbfe',
+          display: 'flex', 
+          gap: 12, 
+          alignItems: 'flex-start', 
+          marginBottom: 24
+        }}>
+          <span style={{fontSize: 18}}>ℹ️</span>
+          <div>
+            <div style={{fontWeight: 600, color: '#3b82f6'}}>Chế độ xem cá nhân</div>
+            <div style={{fontSize: 13, color: '#6b7280', marginTop: 4}}>
+              Project Manager chỉ có thể xem thông tin nhân viên. Để quản lý, liên hệ HR Manager.
             </div>
           </div>
         </div>
       )}
-    </div>
+
+      {/* Filter Bar */}
+      <FilterBar>
+        <SearchInput 
+          placeholder="Tìm kiếm..." 
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+        />
+        <FormSelect style={{ minWidth: 150 }}>
+          <option>Tất cả trạng thái</option>
+        </FormSelect>
+        <FormSelect style={{ minWidth: 150 }}>
+          <option>Tất cả phòng ban</option>
+        </FormSelect>
+      </FilterBar>
+
+      {/* Table */}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead width="25%">Nhân viên</TableHead>
+            <TableHead width="20%">Liên hệ</TableHead>
+            <TableHead width="15%">Vị trí</TableHead>
+            <TableHead width="15%">Lương CB</TableHead>
+            <TableHead width="10%">Ngày vào</TableHead>
+            <TableHead width="10%">Trạng thái</TableHead>
+            {isHRManager && <TableHead width="5%" align="right">Thao tác</TableHead>}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredEmployees.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={isHRManager ? 7 : 6} align="center">
+                <EmptyState 
+                  icon="👥" 
+                  title="Không có nhân viên"
+                  message="Chưa có nhân viên nào được thêm vào hệ thống"
+                />
+              </TableCell>
+            </TableRow>
+          ) : (
+            filteredEmployees.map(emp => (
+              <TableRow key={emp.nhanvienId}>
+                <TableCell>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{
+                      width: 40, height: 40, borderRadius: 10, 
+                      background: 'linear-gradient(195deg, #42424a, #191919)',
+                      color: '#fff', display: 'grid', placeItems: 'center', 
+                      fontSize: 18, boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                    }}>
+                      {emp.avatar || '👤'}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{emp.hoTen}</div>
+                      <div style={{ fontSize: 12, color: '#7b809a' }}>
+                        {emp.maNhanVien || `NV${emp.nhanvienId}`}
+                      </div>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontSize: 13, color: '#344767' }} title={emp.email}>
+                      📧 {emp.email || 'Chưa cập nhật'}
+                    </span>
+                    <span style={{ fontSize: 13, color: '#7b809a' }}>
+                      📞 {emp.sdt || 'Chưa cập nhật'}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div style={{ fontWeight: 600, color: '#344767' }}>
+                    {emp.phongban?.tenPhongBan || 'N/A'}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#7b809a' }}>
+                    {emp.chucvu?.tenChucVu || 'N/A'}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div style={{ fontWeight: 700, color: '#344767' }}>
+                    {formatCurrency(emp.luongCoBan)}
+                  </div>
+                </TableCell>
+                <TableCell>{emp.ngayVaoLam}</TableCell>
+                <TableCell>{getStatusBadge(emp.trangThai)}</TableCell>
+                {isHRManager && (
+                  <TableCell align="right">
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <IconButton title="Sửa">✏️</IconButton>
+                      <IconButton 
+                        title="Xóa"
+                        style={{ color: '#ef4444', background: '#fef2f2' }}
+                        onClick={() => handleDelete(emp.nhanvienId)}
+                      >
+                        🗑️
+                      </IconButton>
+                    </div>
+                  </TableCell>
+                )}
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+
+      {/* Modal thêm nhân viên */}
+      {showModal && (
+        <Modal isOpen={true} onClose={() => setShowModal(false)}>
+          <ModalHeader onClose={() => setShowModal(false)}>
+            <ModalTitle>Thêm nhân viên mới</ModalTitle>
+          </ModalHeader>
+          
+          <ModalBody>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <FormGroup>
+                <FormLabel required>Tài khoản</FormLabel>
+                <FormSelect 
+                  name="userId" 
+                  value={newEmp.userId} 
+                  onChange={handleInputChange}
+                  error={formErrors.userId}
+                >
+                  <option value="">-- Chọn tài khoản --</option>
+                  {users.map(user => (
+                    <option key={user.userId} value={user.userId}>
+                      {user.username} ({user.email})
+                    </option>
+                  ))}
+                </FormSelect>
+              </FormGroup>
+              
+              <FormGroup>
+                <FormLabel required>Họ và tên</FormLabel>
+                <FormInput 
+                  name="hoTen" 
+                  value={newEmp.hoTen} 
+                  onChange={handleInputChange} 
+                  placeholder="Nguyễn Văn A"
+                  error={formErrors.hoTen}
+                />
+              </FormGroup>
+              
+              <FormGroup>
+                <FormLabel>CCCD</FormLabel>
+                <FormInput 
+                  name="cccd" 
+                  value={newEmp.cccd} 
+                  onChange={handleInputChange} 
+                  placeholder="001234567890"
+                />
+              </FormGroup>
+              
+              <FormGroup>
+                <FormLabel required>Ngày sinh</FormLabel>
+                <FormInput 
+                  type="date" 
+                  name="ngaySinh" 
+                  value={newEmp.ngaySinh} 
+                  onChange={handleInputChange}
+                  error={formErrors.ngaySinh}
+                />
+              </FormGroup>
+              
+              <FormGroup>
+                <FormLabel required>Giới tính</FormLabel>
+                <FormSelect 
+                  name="gioiTinh" 
+                  value={newEmp.gioiTinh} 
+                  onChange={handleInputChange}
+                >
+                  <option value="Nam">Nam</option>
+                  <option value="Nữ">Nữ</option>
+                  <option value="Khác">Khác</option>
+                </FormSelect>
+              </FormGroup>
+              
+              <FormGroup>
+                <FormLabel>Địa chỉ</FormLabel>
+                <FormInput 
+                  name="diaChi" 
+                  value={newEmp.diaChi} 
+                  onChange={handleInputChange} 
+                  placeholder="123 Nguyễn Trãi, Q1"
+                />
+              </FormGroup>
+              
+              <FormGroup>
+                <FormLabel required>Ngày vào làm</FormLabel>
+                <FormInput 
+                  type="date" 
+                  name="ngayVaoLam" 
+                  value={newEmp.ngayVaoLam} 
+                  onChange={handleInputChange}
+                />
+              </FormGroup>
+              
+              <FormGroup>
+                <FormLabel>Phòng ban</FormLabel>
+                <FormSelect 
+                  name="phongbanId" 
+                  value={newEmp.phongbanId} 
+                  onChange={handleInputChange}
+                >
+                  <option value="">-- Chọn phòng ban --</option>
+                  {departments.map(dept => (
+                    <option key={dept.phongbanId} value={dept.phongbanId}>
+                      {dept.tenPhongBan}
+                    </option>
+                  ))}
+                </FormSelect>
+              </FormGroup>
+              
+              <FormGroup>
+                <FormLabel>Chức vụ</FormLabel>
+                <FormSelect 
+                  name="chucvuId" 
+                  value={newEmp.chucvuId} 
+                  onChange={handleInputChange}
+                >
+                  <option value="">-- Chọn chức vụ --</option>
+                  {positions.map(pos => (
+                    <option key={pos.chucvuId} value={pos.chucvuId}>
+                      {pos.tenChucVu}
+                    </option>
+                  ))}
+                </FormSelect>
+              </FormGroup>
+              
+              <FormGroup>
+                <FormLabel>Lương cơ bản</FormLabel>
+                <FormInput 
+                  type="number" 
+                  name="luongCoBan" 
+                  value={newEmp.luongCoBan} 
+                  onChange={handleInputChange} 
+                  placeholder="VD: 10000000"
+                />
+              </FormGroup>
+              
+              <FormGroup>
+                <FormLabel>Phụ cấp</FormLabel>
+                <FormInput 
+                  type="number" 
+                  name="phuCap" 
+                  value={newEmp.phuCap} 
+                  onChange={handleInputChange} 
+                  placeholder="VD: 2000000"
+                />
+              </FormGroup>
+            </div>
+          </ModalBody>
+          
+          <ModalFooter>
+            <Button variant="secondary" onClick={() => setShowModal(false)}>
+              Hủy bỏ
+            </Button>
+            <Button variant="success" onClick={handleSave}>
+              Lưu nhân viên
+            </Button>
+          </ModalFooter>
+        </Modal>
+      )}
+    </PageContainer>
   );
 }
-
-// Styles - Đã fix lỗi tràn màn hình
-const s = {
-  container: { padding: '24px 32px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', color: '#344767', boxSizing: 'border-box' },
-  
-  headerWrapper: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 },
-  breadcrumb: { fontSize: 13, color: '#7b809a', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' },
-  pageTitle: { fontSize: 28, fontWeight: 700, margin: 0, color: '#344767' },
-  totalBadge: { fontSize: 14, color: '#7b809a', marginTop: 4 },
-  headerActions: { display: 'flex', gap: 12 },
-  
-  btnAdd: { background: 'linear-gradient(195deg, #f59e0b 0%, #d97706 100%)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 6px rgba(251, 140, 0, 0.2)', textTransform: 'uppercase', transition: 'all 0.2s' },
-  btnExport: { background: '#fff', color: '#344767', border: '1px solid #d2d6da', borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' },
-
-  filterBar: { display: 'flex', gap: 16, marginBottom: 24, background: '#fff', padding: 16, borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.03)', alignItems: 'center' },
-  searchWrapper: { flex: 1, position: 'relative', display: 'flex', alignItems: 'center' },
-  searchIcon: { position: 'absolute', left: 12, color: '#7b809a' },
-  searchInput: { width: '100%', padding: '12px 12px 12px 40px', border: '1px solid #d2d6da', borderRadius: 8, outline: 'none', fontSize: 14, boxSizing: 'border-box', transition: 'all 0.2s', background: '#fff', color: '#344767' },
-  filterSelect: { padding: '12px 16px', border: '1px solid #d2d6da', borderRadius: 8, outline: 'none', fontSize: 14, minWidth: 150, cursor: 'pointer', background: '#fff', color: '#344767' },
-
-  // Table Styles Fixes
-  tableCard: { background: '#fff', borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.02)' },
-  tableResponsive: { width: '100%' }, // Bỏ overflowX auto để tránh scroll
-  table: { 
-    width: '100%', 
-    borderCollapse: 'collapse', 
-    tableLayout: 'fixed' // Quan trọng: Giữ cột không bị vỡ layout
-  }, 
-  
-  th: { padding: '16px 12px', textAlign: 'left', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', color: '#7b809a', borderBottom: '1px solid #f0f2f5', background: '#fff' },
-  thRight: { padding: '16px 12px', textAlign: 'right', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', color: '#7b809a', borderBottom: '1px solid #f0f2f5', background: '#fff' },
-  tr: { borderBottom: '1px solid #f0f2f5', transition: 'background 0.2s' },
-  
-  // Cell Fixes: allow wrap, break word
-  td: { 
-    padding: '16px 12px', 
-    fontSize: 14, 
-    color: '#344767', 
-    verticalAlign: 'middle',
-    whiteSpace: 'normal', // Cho phép xuống dòng
-    wordBreak: 'break-word' // Ngắt từ nếu quá dài
-  },
-  tdRight: { padding: '16px 12px', textAlign: 'right', verticalAlign: 'middle' },
-
-  profileCell: { display: 'flex', alignItems: 'center', gap: 12 },
-  avatarBox: { width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(195deg, #42424a, #191919)', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 16, boxShadow: '0 4px 6px rgba(0,0,0,0.12)', flexShrink: 0 },
-  empName: { fontWeight: 700, fontSize: 14, color: '#344767', marginBottom: 2 },
-  empCode: { fontSize: 11, color: '#7b809a', fontWeight: 500 },
-  contactCell: { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 13, color: '#7b809a' },
-  contactItem: { display: 'block', wordBreak: 'break-all' }, // Fix email dài quá
-  actions: { display: 'flex', justifyContent: 'flex-end', gap: 8 },
-  iconBtn: { width: 30, height: 30, border: 'none', background: '#f8f9fa', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', fontSize: 14, color: '#7b809a' },
-
-  // Modal
-  modalOverlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
-  modalContent: { background: '#fff', borderRadius: 16, width: 700, maxWidth: '95%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', maxHeight: '90vh', animation: 'fadeIn 0.3s ease-out' },
-  modalHeader: { padding: '24px', borderBottom: '1px solid #f0f2f5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  modalTitle: { margin: 0, fontSize: 20, fontWeight: 700, color: '#344767' },
-  closeBtn: { border: 'none', background: 'none', fontSize: 24, cursor: 'pointer', color: '#7b809a' },
-  modalBody: { padding: 24, overflowY: 'auto' },
-  
-  formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 },
-  formGroup: { marginBottom: 0 },
-  label: { display: 'block', marginBottom: 8, fontSize: 13, fontWeight: 600, color: '#344767' },
-  input: { width: '100%', padding: '10px 12px', border: '1px solid #d2d6da', borderRadius: 8, outline: 'none', fontSize: 14, boxSizing: 'border-box', transition: 'all 0.2s', color: '#344767', background: '#fff' },
-  select: { width: '100%', padding: '10px 12px', border: '1px solid #d2d6da', borderRadius: 8, outline: 'none', fontSize: 14, boxSizing: 'border-box', background: '#fff', color: '#344767', cursor: 'pointer' },
-  
-  modalFooter: { padding: '20px 24px', borderTop: '1px solid #f0f2f5', display: 'flex', justifyContent: 'flex-end', gap: 12 },
-  btnCancel: { padding: '10px 20px', border: 'none', background: '#f0f2f5', borderRadius: 8, fontWeight: 600, cursor: 'pointer', color: '#7b809a', transition: 'all 0.2s' },
-  btnSave: { padding: '10px 24px', border: 'none', background: 'linear-gradient(195deg, #f59e0b 0%, #d97706 100%)', color: '#fff', borderRadius: 8, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 6px rgba(251, 140, 0, 0.2)', transition: 'all 0.2s' }
-};

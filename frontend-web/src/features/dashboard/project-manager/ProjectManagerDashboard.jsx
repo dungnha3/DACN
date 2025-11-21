@@ -1,20 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { usePermissions, useErrorHandler } from '@/shared/hooks'
-import { styles } from './ProjectManagerDashboard.styles'
+import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
 import { NavItem, RoleBadge, KPICard } from './components/ProjectManagerDashboard.components'
 import { kpiData, notifications, sectionsConfig } from './components/ProjectManagerDashboard.constants'
 
 // Import các module tính năng đã tách riêng
-import {
-  ProfilePage,
-  TimesheetPage,
-  LeavePage,
-  ApprovalsPage,
-  DocumentsPage,
-  ProjectsPage,
-  ChatPage
-} from '@modules/project'
+import { ProfilePage, LeavePage, ApprovalsPage, ChatPage, ProjectsPage } from '@modules/project';
 import { LeavesPage } from '@modules/hr'
 
 export default function ProjectManagerDashboard() {
@@ -38,16 +30,12 @@ export default function ProjectManagerDashboard() {
         return <DashboardOverview user={user} setActive={setActive} />
       case 'profile':
         return <ProfilePage />
-      case 'timesheet':
-        return <TimesheetPage />
       case 'leave':
         return <LeavePage />
       case 'approvals':
         return <ApprovalsPage />
       case 'team-leaves':
         return <LeavesPage />
-      case 'documents':
-        return <DocumentsPage />
       case 'projects':
         return <ProjectsPage />
       case 'chat':
@@ -95,22 +83,13 @@ export default function ProjectManagerDashboard() {
           <NavItem active={active === 'projects'} onClick={() => setActive('projects')} icon="🏭️">
             {sections.projects.title}
           </NavItem>
-          <NavItem active={active === 'approvals'} onClick={() => setActive('approvals')} icon="✓">
-            {sections.approvals.title}
-          </NavItem>
-          <NavItem active={active === 'team-leaves'} onClick={() => setActive('team-leaves')} icon="📋">
-            Duyệt nghỉ phép
-          </NavItem>
-          <NavItem active={active === 'documents'} onClick={() => setActive('documents')} icon="📄">
-            {sections.documents.title}
+          <NavItem active={active === 'team-leaves'} onClick={() => setActive('team-leaves')} icon="✅">
+            Duyệt nghỉ phép (Final)
           </NavItem>
         </div>
 
         <div style={styles.navGroup}>
           <div style={styles.navGroupLabel}>Cá nhân</div>
-          <NavItem active={active === 'timesheet'} onClick={() => setActive('timesheet')} icon="🕐">
-            {sections.timesheet.title}
-          </NavItem>
           <NavItem active={active === 'leave'} onClick={() => setActive('leave')} icon="📋">
             {sections.leave.title}
           </NavItem>
