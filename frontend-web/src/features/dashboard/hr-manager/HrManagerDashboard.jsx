@@ -6,8 +6,6 @@ import { sectionsConfig, chatContacts, chatMessages, notifications } from './com
 import { dashboardService, attendanceService, leavesService, contractsService } from '@/features/hr/shared/services'
 import { 
   EmployeesPage, 
-  AttendancePage, 
-  PayrollPage, 
   LeavesPage, 
   DepartmentsPage, 
   ContractsPage, 
@@ -146,15 +144,9 @@ export default function HrManagerDashboard() {
         </div>
 
         <div style={styles.navGroup}>
-          <div style={styles.navGroupLabel}>Chấm công & Lương</div>
-          <NavItem active={active === 'attendance'} onClick={() => setActive('attendance')} icon="🕐">
-            Chấm công
-          </NavItem>
-          <NavItem active={active === 'payroll'} onClick={() => setActive('payroll')} icon="💰">
-            Bảng lương
-          </NavItem>
+          <div style={styles.navGroupLabel}>Nghỉ phép</div>
           <NavItem active={active === 'leaves'} onClick={() => setActive('leaves')} icon="📋">
-            Nghỉ phép
+            Quản lý nghỉ phép
           </NavItem>
         </div>
 
@@ -177,7 +169,7 @@ export default function HrManagerDashboard() {
       <main style={styles.content}>
         
         {/* Dynamic Header (Ẩn trên các trang chi tiết để giữ không gian) */}
-        {!['employees', 'attendance', 'payroll', 'leaves', 'departments', 'contracts', 'positions', 'evaluations'].includes(active) && (
+        {!['employees', 'departments', 'positions', 'contracts', 'leaves', 'evaluations'].includes(active) && (
           <header style={styles.header}>
             <div>
               <div style={styles.pageHeading}>{meta?.title || 'HR Dashboard'}</div>
@@ -294,47 +286,6 @@ export default function HrManagerDashboard() {
         )}
 
         {/* --- CÁC TRANG CHỨC NĂNG KHÁC --- */}
-
-        {active === 'timesheet' && (
-          <div style={styles.pageContent}>
-            <div style={styles.tableCard}>
-              <div style={styles.tableHeader}>
-                <h4 style={styles.tableTitle}>Lịch sử chấm công</h4>
-              </div>
-              <div style={styles.tableWrap}>
-                <table style={styles.table}>
-                  <thead>
-                    <tr>
-                      <th style={styles.th}>Ngày</th>
-                      <th style={styles.th}>Giờ vào</th>
-                      <th style={styles.th}>Giờ ra</th>
-                      <th style={styles.th}>Tổng giờ</th>
-                      <th style={styles.th}>Trạng thái</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {attendanceHistory.map((record, idx) => (
-                      <tr key={idx} style={styles.tr}>
-                        <td style={styles.td}>{record.date}</td>
-                        <td style={styles.td}>{record.timeIn}</td>
-                        <td style={styles.td}>{record.timeOut}</td>
-                        <td style={styles.td}>
-                          <div style={styles.hoursCell}>
-                            <div style={styles.hoursBar(record.hours)} />
-                            <span style={styles.hoursText}>{record.hours}h</span>
-                          </div>
-                        </td>
-                        <td style={styles.td}>
-                          <StatusBadge status={record.status} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
 
         {active === 'leave' && (
           <div style={styles.pageContent}>
@@ -595,7 +546,7 @@ export default function HrManagerDashboard() {
                 <div style={styles.chatInputToolbar}>
                   <button style={styles.chatToolButton} title="Đính kèm file">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                      <path d="M22 19a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h5a2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h-1l-4 5v4a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-6Z"/>
                     </svg>
                   </button>
                   <button style={styles.chatToolButton} title="Hình ảnh">
@@ -648,15 +599,15 @@ export default function HrManagerDashboard() {
           </div>
         )}
 
-        {/* HR Management Modules - Import từ components con */}
+        {/* HR Management Modules - Chỉ những gì được phép */}
         {active === 'employees' && <EmployeesPage />}
         {active === 'departments' && <DepartmentsPage />}
         {active === 'positions' && <PositionsPage />}
         {active === 'contracts' && <ContractsPage />}
-        {active === 'attendance' && <AttendancePage />}
-        {active === 'payroll' && <PayrollPage />}
         {active === 'leaves' && <LeavesPage />}
         {active === 'evaluations' && <EvaluationsPage />}
+        
+        {/* ❌ KHÔNG có quyền: Payroll, Attendance Management (thuộc Accounting) */}
 
       </main>
     </div>

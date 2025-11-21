@@ -10,7 +10,6 @@ import {
   TimesheetPage,
   LeavePage,
   ApprovalsPage,
-  PayrollPage,
   DocumentsPage,
   ProjectsPage,
   ChatPage
@@ -43,8 +42,6 @@ export default function ProjectManagerDashboard() {
         return <LeavePage />
       case 'approvals':
         return <ApprovalsPage />
-      case 'payroll':
-        return <PayrollPage />
       case 'documents':
         return <DocumentsPage />
       case 'projects':
@@ -80,31 +77,40 @@ export default function ProjectManagerDashboard() {
         <div style={styles.divider} />
 
         <div style={styles.navGroup}>
-          <div style={styles.navGroupLabel}>Menu chính</div>
+          <div style={styles.navGroupLabel}>Tổng quan</div>
           <NavItem active={active === 'dashboard'} onClick={() => setActive('dashboard')} icon="🏠">
             {sections.dashboard.title}
           </NavItem>
           <NavItem active={active === 'profile'} onClick={() => setActive('profile')} icon="👤">
             {sections.profile.title}
           </NavItem>
+        </div>
+
+        <div style={styles.navGroup}>
+          <div style={styles.navGroupLabel}>Quản lý dự án</div>
+          <NavItem active={active === 'projects'} onClick={() => setActive('projects')} icon="🏭️">
+            {sections.projects.title}
+          </NavItem>
+          <NavItem active={active === 'approvals'} onClick={() => setActive('approvals')} icon="✓">
+            {sections.approvals.title}
+          </NavItem>
+          <NavItem active={active === 'documents'} onClick={() => setActive('documents')} icon="📄">
+            {sections.documents.title}
+          </NavItem>
+        </div>
+
+        <div style={styles.navGroup}>
+          <div style={styles.navGroupLabel}>Cá nhân</div>
           <NavItem active={active === 'timesheet'} onClick={() => setActive('timesheet')} icon="🕐">
             {sections.timesheet.title}
           </NavItem>
           <NavItem active={active === 'leave'} onClick={() => setActive('leave')} icon="📋">
             {sections.leave.title}
           </NavItem>
-          <NavItem active={active === 'approvals'} onClick={() => setActive('approvals')} icon="✓">
-            {sections.approvals.title}
-          </NavItem>
-          <NavItem active={active === 'payroll'} onClick={() => setActive('payroll')} icon="💰">
-            {sections.payroll.title}
-          </NavItem>
-          <NavItem active={active === 'documents'} onClick={() => setActive('documents')} icon="📄">
-            {sections.documents.title}
-          </NavItem>
-          <NavItem active={active === 'projects'} onClick={() => setActive('projects')} icon="🏗️">
-            {sections.projects.title}
-          </NavItem>
+        </div>
+
+        <div style={styles.navGroup}>
+          <div style={styles.navGroupLabel}>Giao tiếp</div>
           <NavItem active={active === 'chat'} onClick={() => setActive('chat')} icon="💬">
             {sections.chat.title}
           </NavItem>

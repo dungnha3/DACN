@@ -108,10 +108,11 @@ public class DataSeed {
     private void seedHRModule() {
         log.info("📋 ========== SEEDING HR MODULE ==========");
 
-        // Lấy users để link với nhân viên
-        List<User> employees = userRepository.findByRole(User.Role.EMPLOYEE);
-        if (employees.isEmpty()) {
-            log.warn("⚠️  No EMPLOYEE users found! Creating minimal HR data...");
+        // Lấy TẤT CẢ users để tạo employee (User = Employee trong hệ thống này)
+        List<User> allUsers = userRepository.findAll();
+        if (allUsers.isEmpty()) {
+            log.warn("⚠️  No users found! Skipping HR data...");
+            return;
         }
         
         User hrManager = userRepository.findByUsername("hr").orElse(null);
@@ -158,9 +159,10 @@ public class DataSeed {
         }
         log.info("   ✅ Created {} positions", positions.size());
 
-        // 3. NHÂN VIÊN (Employees) - 20 nhân viên
-        log.info("👥 Creating Employees...");
-        List<NhanVien> nhanViens = new ArrayList<>();
+        // 3. NHÂN VIÊN (Employees) - UPDATE thông tin cho employees đã được auto-created
+        log.info("👥 Updating Employees info...");
+        List<NhanVien> nhanViens = nhanVienRepository.findAll();
+        
         String[] hoTenList = {
             "Nguyễn Văn An", "Trần Thị Bình", "Lê Văn Cường",
             "Phạm Thị Dung", "Hoàng Văn Em", "Vũ Thị Phượng",
@@ -168,12 +170,19 @@ public class DataSeed {
             "Dương Thị Khánh", "Ngô Văn Long", "Lý Thị Mai",
             "Trương Văn Nam", "Phan Thị Oanh", "Võ Văn Phú",
             "Huỳnh Thị Quỳnh", "Tô Văn Sơn", "Mai Thị Tâm",
-            "Hồ Văn Ứng", "Lâm Thị Vân"
+            "Hồ Văn Ứng", "Lâm Thị Vân", "Đinh Thị Xuân", 
+            "Trần Văn Yên", "Lê Thị Zara", "Nguyễn Văn Alpha",
+            "Phạm Thị Beta", "Hoàng Văn Gamma", "Vũ Thị Delta",
+            "Đặng Văn Epsilon", "Bùi Thị Zeta", "Đinh Văn Eta",
+            "Dương Thị Theta"
         };
 
-        for (int i = 0; i < Math.min(20, employees.size()); i++) {
-            NhanVien nv = new NhanVien();
-            nv.setHoTen(hoTenList[i]);
+        for (int i = 0; i < nhanViens.size(); i++) {
+            NhanVien nv = nhanViens.get(i);
+            User user = nv.getUser();
+            
+            // UPDATE thông tin chi tiết
+            nv.setHoTen(i < hoTenList.length ? hoTenList[i] : "Nhân viên " + (i + 1));
             nv.setNgaySinh(LocalDate.of(1985 + (i % 15), (i % 12) + 1, (i % 28) + 1));
             nv.setGioiTinh(i % 2 == 0 ? NhanVien.GioiTinh.Nam : NhanVien.GioiTinh.Nữ);
             
@@ -181,20 +190,33 @@ public class DataSeed {
             nv.setDiaChi("Số " + (i + 1) + " Phố Láng Hạ, " + cities[i % cities.length]);
             
             nv.setCccd("0" + String.format("%011d", 12345678900L + i));
-            nv.setNgayVaoLam(LocalDate.now().minusMonths(i * 3L));
+            nv.setNgayVaoLam(LocalDate.now().minusMonths(i * 2L));
             nv.setPhongBan(departments.get(i % departments.size()));
-            nv.setChucVu(positions.get(i % positions.size()));
+            
+            // Gán chức vụ theo role
+            ChucVu chucVu;
+            switch (user.getRole()) {
+                case ADMIN:
+                    chucVu = positions.get(0); // Giám đốc
+                    break;
+                case MANAGER_HR:
+                case MANAGER_ACCOUNTING:
+                case MANAGER_PROJECT:
+                    chucVu = positions.get(2); // Trưởng phòng
+                    break;
+                default:
+                    chucVu = positions.get(6 + (i % 3)); // Nhân viên, Nhân viên chính, Nhân viên mới
+            }
+            nv.setChucVu(chucVu);
             
             // Lương theo chức vụ level
-            int level = positions.get(i % positions.size()).getLevel();
+            int level = chucVu.getLevel();
             nv.setLuongCoBan(new BigDecimal((10 - level + 5) * 1000000));
             nv.setPhuCap(new BigDecimal((10 - level) * 300000));
             
-            nv.setTrangThai(NhanVien.TrangThaiNhanVien.DANG_LAM_VIEC);
-            nv.setUser(employees.get(i));
-            nhanViens.add(nhanVienRepository.save(nv));
+            nhanVienRepository.save(nv);
         }
-        log.info("   ✅ Created {} employees", nhanViens.size());
+        log.info("   ✅ Updated {} employees with full info", nhanViens.size());
 
         // Update trưởng phòng cho các phòng ban
         // Fetch lại từ DB để tránh detached entity
@@ -208,7 +230,7 @@ public class DataSeed {
             log.info("   ✅ Assigned department heads");
         }
 
-        // 4. HỢP ĐỒNG (Contracts) - 20 hợp đồng
+        // 4. HỢP ĐỒNG (Contracts) - 30 hợp đồng
         log.info("📄 Creating Contracts...");
         for (int i = 0; i < nhanViens.size(); i++) {
             HopDong contract = new HopDong();
@@ -234,19 +256,19 @@ public class DataSeed {
             contract.setTrangThai(HopDong.TrangThaiHopDong.HIEU_LUC);
             hopDongRepository.save(contract);
         }
-        log.info("   ✅ Created 20 contracts");
+        log.info("   ✅ Created {} contracts", nhanViens.size());
 
-        // 5. CHẤM CÔNG (Attendance) - 100 records (5 ngày x 20 nhân viên)
+        // 5. CHẤM CÔNG (Attendance) - 300 records (10 ngày x 30 nhân viên)
         log.info("⏰ Creating Attendance records...");
         int attendanceCount = 0;
-        for (int day = 0; day < 5; day++) {
+        for (int day = 0; day < 10; day++) {
             LocalDate date = LocalDate.now().minusDays(day);
             for (NhanVien nv : nhanViens) {
                 ChamCong cc = new ChamCong();
                 cc.setNhanVien(nv);
                 cc.setNgayCham(date);
                 
-                // Giờ vào/ra
+                // Giờ vào/ra với variation
                 cc.setGioVao(java.time.LocalTime.of(8, attendanceCount % 30, 0));
                 cc.setGioRa(java.time.LocalTime.of(17, 30 + (attendanceCount % 30), 0));
                 
@@ -256,25 +278,33 @@ public class DataSeed {
         }
         log.info("   ✅ Created {} attendance records", attendanceCount);
 
-        // 6. BẢNG LƯƠNG (Payroll) - 20 bảng lương tháng hiện tại
+        // 6. BẢNG LƯƠNG (Payroll) - 90 bảng lương (3 tháng x 30 nhân viên)
         log.info("💰 Creating Payroll records...");
         LocalDate now = LocalDate.now();
-        for (NhanVien nv : nhanViens) {
-            BangLuong bl = new BangLuong();
-            bl.setNhanVien(nv);
-            bl.setThang(now.getMonthValue());
-            bl.setNam(now.getYear());
-            bl.setLuongCoBan(nv.getLuongCoBan());
-            bl.setNgayCong(22);
-            bl.setPhuCap(nv.getPhuCap());
-            bl.setThuong(new BigDecimal((nv.getChucVu().getLevel() < 5 ? 2000000 : 1000000)));
-            bangLuongRepository.save(bl);
+        int payrollCount = 0;
+        for (int monthOffset = 0; monthOffset < 3; monthOffset++) {
+            LocalDate targetDate = now.minusMonths(monthOffset);
+            int targetMonth = targetDate.getMonthValue();
+            int targetYear = targetDate.getYear();
+            
+            for (NhanVien nv : nhanViens) {
+                BangLuong bl = new BangLuong();
+                bl.setNhanVien(nv);
+                bl.setThang(targetMonth);
+                bl.setNam(targetYear);
+                bl.setLuongCoBan(nv.getLuongCoBan());
+                bl.setNgayCong(22);
+                bl.setPhuCap(nv.getPhuCap());
+                bl.setThuong(new BigDecimal((nv.getChucVu().getLevel() < 5 ? 2000000 : 1000000)));
+                bangLuongRepository.save(bl);
+                payrollCount++;
+            }
         }
-        log.info("   ✅ Created 20 payroll records");
+        log.info("   ✅ Created {} payroll records", payrollCount);
 
-        // 7. NGHỈ PHÉP (Leave Requests) - 15 đơn nghỉ phép
+        // 7. NGHỈ PHÉP (Leave Requests) - 30 đơn nghỉ phép
         log.info("🏖️ Creating Leave Requests...");
-        for (int i = 0; i < Math.min(15, nhanViens.size()); i++) {
+        for (int i = 0; i < nhanViens.size(); i++) {
             NghiPhep np = new NghiPhep();
             np.setNhanVien(nhanViens.get(i));
             
@@ -306,7 +336,7 @@ public class DataSeed {
             
             nghiPhepRepository.save(np);
         }
-        log.info("   ✅ Created 15 leave requests");
+        log.info("   ✅ Created {} leave requests", nhanViens.size());
 
         // 8. ĐÁNH GIÁ (Performance Reviews) - 15 đánh giá
         log.info("⭐ Creating Performance Reviews...");
@@ -388,14 +418,22 @@ public class DataSeed {
             projectMemberRepository.save(owner);
             memberCount++;
 
-            // Add 2 more members
-            for (int j = 0; j < 2 && (i * 2 + j) < allUsers.size(); j++) {
-                ProjectMember member = new ProjectMember();
-                member.setProject(projects.get(i));
-                member.setUser(allUsers.get(i * 2 + j));
-                member.setRole(j == 0 ? ProjectMember.ProjectRole.MANAGER : ProjectMember.ProjectRole.MEMBER);
-                projectMemberRepository.save(member);
-                memberCount++;
+            // Add 2 more members (skip if same as pmUser)
+            int addedMembers = 0;
+            int userIndex = i * 3; // Start from different offset to avoid pmUser
+            while (addedMembers < 2 && userIndex < allUsers.size()) {
+                User memberUser = allUsers.get(userIndex);
+                // Skip if this user is pmUser
+                if (!memberUser.getUserId().equals(pmUser.getUserId())) {
+                    ProjectMember member = new ProjectMember();
+                    member.setProject(projects.get(i));
+                    member.setUser(memberUser);
+                    member.setRole(addedMembers == 0 ? ProjectMember.ProjectRole.MANAGER : ProjectMember.ProjectRole.MEMBER);
+                    projectMemberRepository.save(member);
+                    memberCount++;
+                    addedMembers++;
+                }
+                userIndex++;
             }
         }
         log.info("   ✅ Created {} project members", memberCount);
@@ -436,14 +474,14 @@ public class DataSeed {
         }
         log.info("   ✅ Created {} sprints", sprints.size());
 
-        // 5. Issues - 50 issues
+        // 5. Issues - 100 issues (10 issues per project)
         log.info("📝 Creating Issues...");
         String[] issueTitles = {
             "Implement login", "Fix bug dashboard", "Add API endpoint", "Update docs",
             "Refactor code", "Design UI", "Write tests", "Deploy prod", "Security audit",
             "Performance optimization"
         };
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 100; i++) {
             Issue issue = new Issue();
             issue.setProject(projects.get(i % projects.size()));
             if (i % 3 == 0 && !sprints.isEmpty()) {
@@ -462,7 +500,7 @@ public class DataSeed {
             issue.setDueDate(LocalDate.now().plusDays(i % 30));
             issueRepository.save(issue);
         }
-        log.info("   ✅ Created 50 issues");
+        log.info("   ✅ Created 100 issues");
 
         // 6. Issue Comments - 80 comments
         log.info("💬 Creating Issue Comments...");

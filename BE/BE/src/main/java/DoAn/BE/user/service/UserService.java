@@ -72,11 +72,61 @@ public class UserService {
         user.setPhoneNumber(request.getPhoneNumber());
         user = userRepository.save(user);
         
+        // AUTO-CREATE EMPLOYEE: Mỗi user đều là một nhân viên
+        try {
+            NhanVien employee = new NhanVien();
+            employee.setUser(user);
+            employee.setHoTen(extractFullNameFromUsername(user.getUsername()));
+            employee.setNgaySinh(java.time.LocalDate.of(1990, 1, 1)); // Default birthdate
+            employee.setGioiTinh(NhanVien.GioiTinh.Khác); // Default gender
+            employee.setNgayVaoLam(java.time.LocalDate.now());
+            employee.setTrangThai(NhanVien.TrangThaiNhanVien.DANG_LAM_VIEC);
+            // PhongBan và ChucVu sẽ được update bởi DataSeed sau
+            nhanVienRepository.save(employee);
+            log.info("✅ Auto-created employee for user: {}", user.getUsername());
+        } catch (Exception e) {
+            log.error("❌ Failed to auto-create employee for user {}: {}", user.getUsername(), e.getMessage(), e);
+            // Không throw exception để không block việc tạo user
+        }
+        
         // Gửi welcome notification
         authNotificationService.createWelcomeNotification(user.getUserId(), user.getUsername());
         log.info("Created new user: {}", user.getUsername());
         
         return user;
+    }
+    
+    /**
+     * Extract full name from username (helper method)
+     */
+    private String extractFullNameFromUsername(String username) {
+        // Convert username to readable name
+        // Examples: "admin" -> "Admin", "hr_nguyen_van_a" -> "Nguyễn Văn A"
+        if (username == null || username.isEmpty()) {
+            return "Unknown";
+        }
+        
+        // Remove common prefixes
+        String cleanName = username
+            .replaceFirst("^(admin|hr|acc|pm|emp)_?", "")
+            .replace("_", " ");
+        
+        if (cleanName.isEmpty()) {
+            // For simple usernames like "admin", "hr", capitalize first letter
+            return username.substring(0, 1).toUpperCase() + username.substring(1);
+        }
+        
+        // Capitalize each word
+        String[] words = cleanName.split("\\s+");
+        StringBuilder result = new StringBuilder();
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                result.append(Character.toUpperCase(word.charAt(0)))
+                      .append(word.substring(1).toLowerCase())
+                      .append(" ");
+            }
+        }
+        return result.toString().trim();
     }
 
     public User getUserById(Long id) {

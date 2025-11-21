@@ -244,30 +244,29 @@ export default function AccountingManagerDashboard() {
         <div style={styles.divider} />
 
         <div style={styles.navGroup}>
-          <div style={styles.navGroupLabel}>Menu chính</div>
+          <div style={styles.navGroupLabel}>Tổng quan</div>
           <NavItem active={active === 'dashboard'} onClick={() => setActive('dashboard')} icon="🏠">
-            {sections.dashboard.title}
+            Dashboard
           </NavItem>
-          <NavItem active={active === 'profile'} onClick={() => setActive('profile')} icon="👤">
-            {sections.profile.title}
+        </div>
+
+        <div style={styles.navGroup}>
+          <div style={styles.navGroupLabel}>Quản lý tài chính</div>
+          <NavItem active={active === 'payroll'} onClick={() => setActive('payroll')} icon="💰">
+            Bảng lương
           </NavItem>
           <NavItem active={active === 'timesheet'} onClick={() => setActive('timesheet')} icon="🕐">
-            {sections.timesheet.title}
-          </NavItem>
-          <NavItem active={active === 'leave'} onClick={() => setActive('leave')} icon="📋">
-            {sections.leave.title}
+            Quản lý chấm công
           </NavItem>
           <NavItem active={active === 'approvals'} onClick={() => setActive('approvals')} icon="✓">
-            {sections.approvals.title}
+            Duyệt nghỉ phép (Step 2)
           </NavItem>
-          <NavItem active={active === 'payroll'} onClick={() => setActive('payroll')} icon="💰">
-            {sections.payroll.title}
-          </NavItem>
-          <NavItem active={active === 'documents'} onClick={() => setActive('documents')} icon="📄">
-            {sections.documents.title}
-          </NavItem>
+        </div>
+
+        <div style={styles.navGroup}>
+          <div style={styles.navGroupLabel}>Giao tiếp</div>
           <NavItem active={active === 'chat'} onClick={() => setActive('chat')} icon="💬">
-            {sections.chat.title}
+            Chat
           </NavItem>
         </div>
 
@@ -407,62 +406,7 @@ export default function AccountingManagerDashboard() {
           </div>
         )}
 
-        {/* Leave Page */}
-        {active === 'leave' && (
-          <div style={styles.pageContent}>
-            <div style={styles.leaveLayout}>
-              <div style={styles.tableCard}>
-                <div style={styles.tableHeader}>
-                  <h4 style={styles.tableTitle}>Lịch sử đơn từ của tôi</h4>
-                  <button style={styles.addBtn}>+ Đăng ký nghỉ phép</button>
-                </div>
-                <div style={styles.tableWrap}>
-                  <table style={styles.table}>
-                    <thead>
-                      <tr>
-                        <th style={styles.th}>Loại đơn</th>
-                        <th style={styles.th}>Ngày gửi</th>
-                        <th style={styles.th}>Người duyệt</th>
-                        <th style={styles.th}>Trạng thái</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {leaveRequests.map((req) => (
-                        <tr key={req.id} style={styles.tr}>
-                          <td style={styles.td}>{req.type}</td>
-                          <td style={styles.td}>{req.date}</td>
-                          <td style={styles.td}>{req.approver}</td>
-                          <td style={styles.td}>
-                            <LeaveStatusBar status={req.status} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div style={styles.orderOverview}>
-                <h4 style={styles.cardTitle}>Thông báo của tôi</h4>
-                <div style={styles.orderList}>
-                  {leaveRequests.map((req) => (
-                    <div key={req.id} style={styles.orderItem}>
-                      <div style={styles.orderIcon(req.status)}>
-                        {req.status === 'approved' ? '✓' : req.status === 'pending' ? '⏳' : '✗'}
-                      </div>
-                      <div style={styles.orderContent}>
-                        <div style={styles.orderTitle}>{req.type} {req.date}</div>
-                        <div style={styles.orderStatus}>
-                          {req.status === 'approved' ? 'Đã duyệt' : req.status === 'pending' ? 'Chờ duyệt' : 'Từ chối'}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* ❌ Removed: Leave Page (cá nhân) - Accounting không cần */}
 
         {/* Approvals Page - Step 2 */}
         {active === 'approvals' && <LeaveApprovalsPage />}
