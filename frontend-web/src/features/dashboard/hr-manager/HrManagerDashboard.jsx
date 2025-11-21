@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { usePermissions, useErrorHandler } from '@/shared/hooks'
 import { styles } from './HrManagerDashboard.styles'
 import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar, ApprovalStatusBadge } from './components/HrManagerDashboard.components'
 import { sectionsConfig, chatContacts, chatMessages, notifications } from './components/HrManagerDashboard.constants'

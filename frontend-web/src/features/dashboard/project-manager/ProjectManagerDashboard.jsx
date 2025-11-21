@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { usePermissions, useErrorHandler } from '@/shared/hooks'
 import { styles } from './ProjectManagerDashboard.styles'
 import { NavItem, RoleBadge, KPICard } from './components/ProjectManagerDashboard.components'
 import { kpiData, notifications, sectionsConfig } from './components/ProjectManagerDashboard.constants'

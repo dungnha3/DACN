@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { usePermissions, useErrorHandler } from '@/shared/hooks'
 import { styles } from './AccountingManagerDashboard.styles'
-import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar, ApprovalStatusBadge } from './components/AccountingManagerDashboard.components'
-import { kpiData, leaveRequests, notifications, sectionsConfig, chatContacts, chatMessages, payrollSummary } from './components/AccountingManagerDashboard.constants'
+import { NavItem, RoleBadge, KPICard, ApprovalStatusBadge } from './components/AccountingManagerDashboard.components'
+import { kpiData, notifications, sectionsConfig, chatContacts, chatMessages } from './components/AccountingManagerDashboard.constants'
 import { leavesService } from '@/features/hr/shared/services/leaves.service'
-import { attendanceService } from '@/features/hr/shared/services/attendance.service'
-import { employeesService } from '@/features/hr/shared/services/employees.service'
-import { payrollService } from '@/features/hr/shared/services/payroll.service'
 import { PayrollManagementPage, AttendanceManagementPage, LeaveApprovalsPage } from '@/modules/accounting'
 
 export default function AccountingManagerDashboard() {
@@ -14,12 +12,6 @@ export default function AccountingManagerDashboard() {
   const [approvals, setApprovals] = useState([])
   const [selectedContact, setSelectedContact] = useState(chatContacts[0])
   const [messageInput, setMessageInput] = useState('')
-  const [isCheckedIn, setIsCheckedIn] = useState(false)
-  const [payroll, setPayroll] = useState([])
-  const [attendanceRecords, setAttendanceRecords] = useState([])
-  const [employeeId, setEmployeeId] = useState(null)
-  const [selectedMonth, setSelectedMonth] = useState('11/2025')
-  const [isCalculating, setIsCalculating] = useState(false)
   const { logout, user: authUser } = useAuth()
   const username = authUser?.username || localStorage.getItem('username') || 'Accounting Manager'
   const user = useMemo(() => ({ name: username || 'Nguyễn Thị F', role: 'Quản lý kế toán' }), [username])
@@ -58,167 +50,14 @@ export default function AccountingManagerDashboard() {
     }
   }
 
-  const loadAttendance = async (eid) => {
-    try {
-      const now = new Date()
-      const year = now.getFullYear()
-      const month = now.getMonth() + 1
-      const list = await attendanceService.getByMonth(eid, year, month)
-      const mapped = (list || []).map((item) => ({
-        date: item.ngayCham || item.date || '',
-        timeIn: item.gioVao || item.timeIn || '-',
-        timeOut: item.gioRa || item.timeOut || '-',
-        hours: typeof item.tongGio === 'number' ? Number(item.tongGio.toFixed(1)) : item.hours ?? 0,
-        status: item.trangThai || item.status || 'normal'
-      }))
-      setAttendanceRecords(mapped)
-      const statusRes = await attendanceService.getStatus(eid)
-      const checkedIn = statusRes?.dangCheckin ?? statusRes?.checkedIn ?? statusRes?.isCheckedIn ?? false
-      setIsCheckedIn(Boolean(checkedIn))
-    } catch (err) {
-      console.warn('Failed to load attendance:', err)
-      // Don't show alert on initial load
-    }
-  }
-
-  const loadPayroll = async (mStr) => {
-    try {
-      const parts = String(mStr).split('/')
-      const thang = Number(parts[0])
-      const nam = Number(parts[1])
-      const data = await payrollService.getByMonth(thang, nam)
-      const mapped = (data || []).map((item) => ({
-        id: item.id || item.bangluongId || item.payrollId,
-        employeeId: item.maNhanVien || item.employeeId || '-',
-        employeeName: item.tenNhanVien || item.employeeName || '-',
-        department: item.tenPhongBan || item.department || '-',
-        position: item.chucVu || item.position || '-',
-        baseSalary: item.luongCoBan ?? item.baseSalary ?? 0,
-        allowances: item.phuCap ?? item.allowances ?? 0,
-        overtime: item.tangCa ?? item.overtime ?? 0,
-        deductions: item.khauTru ?? item.deductions ?? 0,
-        totalSalary: item.tongLuong ?? item.totalSalary ?? 0,
-        status: item.trangThai || item.status || 'calculated',
-        month: `${String(thang).padStart(2, '0')}/${nam}`,
-        calculatedDate: item.ngayTinhLuong || item.calculatedDate || null
-      }))
-      setPayroll(mapped)
-    } catch (err) {
-      console.warn('Failed to load payroll:', err)
-      // Don't show alert on initial load
-    }
-  }
+  // ❌ Removed: loadAttendance, loadPayroll - Không cần nữa
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        await loadApprovals()
-      } catch (err) {
-        console.warn('Failed to load approvals:', err)
-      }
-      
-      try {
-        const uid = authUser?.userId
-        if (uid && typeof uid === 'number') {
-          const emp = await employeesService.getByUserId(uid)
-          const eid = emp?.nhanvienId || emp?.id || emp?.employeeId
-          if (eid && typeof eid === 'number') {
-            setEmployeeId(eid)
-            await loadAttendance(eid)
-          }
-        }
-      } catch (err) {
-        console.warn('Failed to load employee data:', err)
-      }
-      
-      try {
-        await loadPayroll(selectedMonth)
-      } catch (err) {
-        console.warn('Failed to load payroll:', err)
-      }
-    }
-    init()
+    loadApprovals()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  useEffect(() => {
-    loadPayroll(selectedMonth)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMonth])
-
-  const handleCheckInOut = async () => {
-    try {
-      if (!employeeId) return alert('Không tìm thấy mã nhân viên')
-      const statusRes = await attendanceService.getStatus(employeeId)
-      const checkedIn = statusRes?.dangCheckin ?? statusRes?.checkedIn ?? statusRes?.isCheckedIn ?? false
-      const now = new Date()
-      const year = now.getFullYear()
-      const month = now.getMonth() + 1
-      const day = String(now.getDate()).padStart(2, '0')
-      const todayStr = `${year}-${String(month).padStart(2, '0')}-${day}`
-      if (!checkedIn) {
-        await attendanceService.checkIn(employeeId, todayStr)
-        setIsCheckedIn(true)
-        await loadAttendance(employeeId)
-        alert('Đã chấm công vào')
-      } else {
-        const recId = statusRes?.chamcongId || statusRes?.id || null
-        if (!recId) return alert('Không tìm thấy bản ghi chấm công hôm nay')
-        await attendanceService.checkOut(recId)
-        setIsCheckedIn(false)
-        await loadAttendance(employeeId)
-        alert('Đã chấm công ra')
-      }
-    } catch (err) {
-      alert('Lỗi chấm công: ' + (err.response?.data?.message || err.message))
-    }
-  }
-
-  const handleAutoCalculateSalary = async () => {
-    try {
-      setIsCalculating(true)
-      await payrollService.calculate({ thang: Number(selectedMonth.split('/')[0]), nam: Number(selectedMonth.split('/')[1]) })
-      await loadPayroll(selectedMonth)
-      setIsCalculating(false)
-      alert('Đã tính lương tự động thành công!')
-    } catch (err) {
-      setIsCalculating(false)
-      alert('Lỗi tính lương: ' + (err.response?.data?.message || err.message))
-    }
-  }
-
-  const handleExportPayrollReport = () => {
-    // Simulate export functionality
-    const csvContent = [
-      ['Mã NV', 'Tên nhân viên', 'Phòng ban', 'Lương cơ bản', 'Phụ cấp', 'Tăng ca', 'Khấu trừ', 'Tổng lương', 'Trạng thái'],
-      ...payroll.map(emp => [
-        emp.employeeId,
-        emp.employeeName,
-        emp.department,
-        emp.baseSalary.toLocaleString('vi-VN'),
-        emp.allowances.toLocaleString('vi-VN'),
-        emp.overtime.toLocaleString('vi-VN'),
-        emp.deductions.toLocaleString('vi-VN'),
-        emp.totalSalary.toLocaleString('vi-VN'),
-        emp.status === 'paid' ? 'Đã trả' : emp.status === 'calculated' ? 'Đã tính' : 'Chưa tính'
-      ])
-    ].map(row => row.join(',')).join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `BangLuong_${selectedMonth.replace('/', '_')}.csv`
-    link.click()
-    
-    alert('Đã xuất báo cáo bảng lương thành công!')
-  }
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount)
-  }
+  // ❌ Removed: handleCheckInOut, handleAutoCalculateSalary, handleExportPayrollReport, formatCurrency
 
   return (
     <div style={styles.appShell}>
@@ -349,122 +188,14 @@ export default function AccountingManagerDashboard() {
           </div>
         )}
 
-        {/* Timesheet Page */}
+        {/* Attendance Management - Quản lý tất cả nhân viên */}
         {active === 'timesheet' && <AttendanceManagementPage />}
-        {active === 'timesheet_OLD' && (
-          <div style={styles.pageContent}>
-            <div style={styles.tableCard}>
-              <div style={styles.tableHeader}>
-                <h4 style={styles.tableTitle}>Lịch sử chấm công</h4>
-                <button 
-                  style={{
-                    ...styles.checkInBtn,
-                    background: isCheckedIn 
-                      ? 'linear-gradient(195deg, #dc2626 0%, #991b1b 100%)' 
-                      : 'linear-gradient(195deg, #059669 0%, #047857 100%)',
-                    boxShadow: isCheckedIn 
-                      ? '0 2px 10px rgba(220, 38, 38, 0.3)' 
-                      : '0 2px 10px rgba(5, 150, 105, 0.3)'
-                  }}
-                  onClick={handleCheckInOut}
-                >
-                  {isCheckedIn ? '🚪 Chấm công ra' : '🕐 Chấm công vào'}
-                </button>
-              </div>
-              <div style={styles.tableWrap}>
-                <table style={styles.table}>
-                  <thead>
-                    <tr>
-                      <th style={styles.th}>Ngày</th>
-                      <th style={styles.th}>Giờ vào</th>
-                      <th style={styles.th}>Giờ ra</th>
-                      <th style={styles.th}>Tổng giờ</th>
-                      <th style={styles.th}>Trạng thái</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {attendanceRecords.map((record, idx) => (
-                      <tr key={idx} style={styles.tr}>
-                        <td style={styles.td}>{record.date}</td>
-                        <td style={styles.td}>{record.timeIn}</td>
-                        <td style={styles.td}>{record.timeOut}</td>
-                        <td style={styles.td}>
-                          <div style={styles.hoursCell}>
-                            <div style={styles.hoursBar(record.hours)} />
-                            <span style={styles.hoursText}>{record.hours}h</span>
-                          </div>
-                        </td>
-                        <td style={styles.td}>
-                          <StatusBadge status={record.status} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* ❌ Removed: Leave Page (cá nhân) - Accounting không cần */}
 
         {/* Approvals Page - Step 2 */}
+        {/* Leave Approvals - Step 2 */}
         {active === 'approvals' && <LeaveApprovalsPage />}
-        {active === 'approvals_OLD' && (
-          <div style={styles.pageContent}>
-            <div style={styles.tableCard}>
-              <div style={styles.tableHeader}>
-                <h4 style={styles.tableTitle}>Duyệt đơn từ nhân viên</h4>
-              </div>
-              
-              {approvals.map((approval) => (
-                <div key={approval.id} style={styles.approvalCard}>
-                  <div style={styles.approvalHeader}>
-                    <div>
-                      <div style={styles.approvalEmployee}>{approval.employee}</div>
-                      <div style={styles.approvalType}>{approval.type}</div>
-                    </div>
-                    <ApprovalStatusBadge status={approval.status} />
-                  </div>
-
-                  <div style={styles.approvalBody}>
-                    <div style={styles.approvalField}>
-                      <div style={styles.approvalLabel}>Từ ngày</div>
-                      <div style={styles.approvalValue}>{approval.fromDate}</div>
-                    </div>
-                    <div style={styles.approvalField}>
-                      <div style={styles.approvalLabel}>Đến ngày</div>
-                      <div style={styles.approvalValue}>{approval.toDate}</div>
-                    </div>
-                    <div style={styles.approvalField}>
-                      <div style={styles.approvalLabel}>Số ngày</div>
-                      <div style={styles.approvalValue}>{approval.days} ngày</div>
-                    </div>
-                    <div style={styles.approvalField}>
-                      <div style={styles.approvalLabel}>Ngày gửi</div>
-                      <div style={styles.approvalValue}>{approval.submitDate}</div>
-                    </div>
-                    <div style={styles.approvalReason}>
-                      <div style={styles.approvalReasonLabel}>Lý do</div>
-                      <div style={styles.approvalReasonText}>{approval.reason}</div>
-                    </div>
-                  </div>
-
-                  {approval.status === 'pending' && (
-                    <div style={styles.approvalActions}>
-                      <button style={styles.rejectBtn} onClick={() => handleReject(approval.id)}>
-                        ✗ Từ chối
-                      </button>
-                      <button style={styles.approveBtn} onClick={() => handleApprove(approval.id)}>
-                        ✓ Phê duyệt
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Chat Page */}
         {active === 'chat' && (
@@ -667,134 +398,8 @@ export default function AccountingManagerDashboard() {
           </div>
         )}
 
-        {/* Payroll Page */}
+        {/* Payroll Management */}
         {active === 'payroll' && <PayrollManagementPage />}
-        {active === 'payroll_OLD' && (
-          <div style={styles.pageContent}>
-            {/* Summary Cards */}
-            <div style={styles.kpiGrid}>
-              <KPICard 
-                title="Tổng nhân viên" 
-                value={payrollSummary.totalEmployees} 
-                icon="👥" 
-                color="info" 
-                change={`${payrollSummary.calculatedEmployees} đã tính`} 
-              />
-              <KPICard 
-                title="Tổng lương tháng" 
-                value={formatCurrency(payrollSummary.totalPayroll)} 
-                icon="💰" 
-                color="success" 
-                change={`${payrollSummary.paidEmployees} đã trả`} 
-              />
-              <KPICard 
-                title="Chờ xử lý" 
-                value={payrollSummary.pendingEmployees} 
-                icon="⏳" 
-                color="warning" 
-                change="cần tính lương" 
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div style={styles.payrollActions}>
-              <div style={styles.monthSelector}>
-                <label style={styles.monthLabel}>Tháng:</label>
-                <select 
-                  value={selectedMonth} 
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  style={styles.monthSelect}
-                >
-                  <option value="11/2025">Tháng 11/2025</option>
-                  <option value="10/2025">Tháng 10/2025</option>
-                  <option value="09/2025">Tháng 9/2025</option>
-                </select>
-              </div>
-              
-              <div style={styles.actionButtons}>
-                <button 
-                  style={{
-                    ...styles.autoCalculateBtn,
-                    opacity: isCalculating ? 0.7 : 1,
-                    cursor: isCalculating ? 'not-allowed' : 'pointer'
-                  }}
-                  onClick={handleAutoCalculateSalary}
-                  disabled={isCalculating}
-                >
-                  {isCalculating ? '⏳ Đang tính...' : '🧮 Tính lương tự động'}
-                </button>
-                
-                <button 
-                  style={styles.exportBtn}
-                  onClick={handleExportPayrollReport}
-                >
-                  📊 Xuất báo cáo lương
-                </button>
-              </div>
-            </div>
-
-            {/* Payroll Table */}
-            <div style={styles.tableCard}>
-              <div style={styles.tableHeader}>
-                <h4 style={styles.tableTitle}>Bảng lương tháng {selectedMonth}</h4>
-              </div>
-              <div style={styles.tableWrap}>
-                <table style={styles.table}>
-                  <thead>
-                    <tr>
-                      <th style={styles.th}>Mã NV</th>
-                      <th style={styles.th}>Tên nhân viên</th>
-                      <th style={styles.th}>Phòng ban</th>
-                      <th style={styles.th}>Lương cơ bản</th>
-                      <th style={styles.th}>Phụ cấp</th>
-                      <th style={styles.th}>Tăng ca</th>
-                      <th style={styles.th}>Khấu trừ</th>
-                      <th style={styles.th}>Tổng lương</th>
-                      <th style={styles.th}>Trạng thái</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {payroll.map((employee) => (
-                      <tr key={employee.id} style={styles.tr}>
-                        <td style={styles.td}>{employee.employeeId}</td>
-                        <td style={styles.td}>
-                          <div style={styles.employeeCell}>
-                            <div style={styles.employeeName}>{employee.employeeName}</div>
-                            <div style={styles.employeePosition}>{employee.position}</div>
-                          </div>
-                        </td>
-                        <td style={styles.td}>{employee.department}</td>
-                        <td style={styles.td}>{formatCurrency(employee.baseSalary)}</td>
-                        <td style={styles.td}>{formatCurrency(employee.allowances)}</td>
-                        <td style={styles.td}>{formatCurrency(employee.overtime)}</td>
-                        <td style={styles.td}>{formatCurrency(employee.deductions)}</td>
-                        <td style={styles.td}>
-                          <div style={styles.totalSalaryCell}>
-                            {formatCurrency(employee.totalSalary)}
-                          </div>
-                        </td>
-                        <td style={styles.td}>
-                          <span style={{
-                            ...styles.payrollStatusBadge,
-                            background: employee.status === 'paid' 
-                              ? 'linear-gradient(145deg, #10b981, #059669)' 
-                              : employee.status === 'calculated'
-                              ? 'linear-gradient(145deg, #3b82f6, #2563eb)'
-                              : 'linear-gradient(145deg, #f59e0b, #d97706)',
-                            color: '#ffffff'
-                          }}>
-                            {employee.status === 'paid' ? '✓ Đã trả' : 
-                             employee.status === 'calculated' ? '📊 Đã tính' : '⏳ Chưa tính'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Other Pages Placeholder */}
         {(active === 'profile' || active === 'documents') && (

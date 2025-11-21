@@ -4,6 +4,8 @@ const STORAGE_KEYS = {
   TOKEN_TYPE: 'tokenType',
   USER_ROLE: 'userRole',
   USERNAME: 'username',
+  USER_ID: 'userId',
+  EMAIL: 'email',
   EXPIRES_AT: 'expiresAt',
 };
 
@@ -39,6 +41,22 @@ export const setUsername = (username) => {
   localStorage.setItem(STORAGE_KEYS.USERNAME, username);
 };
 
+export const getUserId = () => {
+  return localStorage.getItem(STORAGE_KEYS.USER_ID);
+};
+
+export const setUserId = (userId) => {
+  localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
+};
+
+export const getEmail = () => {
+  return localStorage.getItem(STORAGE_KEYS.EMAIL);
+};
+
+export const setEmail = (email) => {
+  localStorage.setItem(STORAGE_KEYS.EMAIL, email);
+};
+
 export const getExpiresAt = () => {
   return localStorage.getItem(STORAGE_KEYS.EXPIRES_AT);
 };
@@ -53,15 +71,19 @@ export const removeToken = () => {
   localStorage.removeItem(STORAGE_KEYS.TOKEN_TYPE);
   localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
   localStorage.removeItem(STORAGE_KEYS.USERNAME);
+  localStorage.removeItem(STORAGE_KEYS.USER_ID);
+  localStorage.removeItem(STORAGE_KEYS.EMAIL);
   localStorage.removeItem(STORAGE_KEYS.EXPIRES_AT);
 };
 
-export const setAuthData = ({ accessToken, refreshToken, tokenType, role, username, expiresAt }) => {
+export const setAuthData = ({ accessToken, refreshToken, tokenType, role, username, userId, email, expiresAt }) => {
   if (accessToken) setToken(accessToken);
   if (refreshToken) setRefreshToken(refreshToken);
   if (tokenType) localStorage.setItem(STORAGE_KEYS.TOKEN_TYPE, tokenType);
   if (role) setUserRole(role);
   if (username) setUsername(username);
+  if (userId) setUserId(userId);
+  if (email) setEmail(email);
   if (expiresAt) setExpiresAt(expiresAt);
 };
 

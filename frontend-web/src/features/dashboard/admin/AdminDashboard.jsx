@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { usePermissions } from '@/shared/hooks'
 import { styles } from './AdminDashboard.styles'
 import { NavItem, RoleBadge, QuickActionBtn } from './components/AdminDashboard.components'
 import { UsersManagementPage, RoleRequestsPage, AuditLogsPage } from '@/modules/admin'
@@ -7,6 +8,7 @@ import { UsersManagementPage, RoleRequestsPage, AuditLogsPage } from '@/modules/
 export default function AdminDashboard() {
   const [active, setActive] = useState('dashboard')
   const { logout, user: authUser } = useAuth()
+  const { isAdmin } = usePermissions()
   const username = authUser?.username || localStorage.getItem('username') || 'Admin'
   const user = useMemo(() => ({ name: username || 'Quản trị viên', role: 'Quản trị viên' }), [username])
 

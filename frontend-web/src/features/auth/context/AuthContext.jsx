@@ -1,5 +1,12 @@
+/**
+ * Auth Context
+ * Global authentication state management
+ * Handle login, logout, session management with error handling
+ */
+
 import { createContext, useState, useEffect, useCallback } from 'react';
 import { authService } from '../services/auth.service';
+import { useErrorHandler } from '@/shared/hooks';
 import { 
   getToken, 
   setAuthData, 
@@ -16,6 +23,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { handleError } = useErrorHandler();
 
   // Initialize auth state from localStorage
   useEffect(() => {
@@ -67,61 +75,95 @@ export function AuthProvider({ children }) {
         expiresAt = Date.now() + response.expiresIn;
       }
       
-      // Save auth data to localStorage
+      // Extract user info
+      const userData = {
+        userId: response.user?.userId || response.userId,
+        username: userName,
+        email: response.user?.email || response.email,
+        role: userRole,
+        isActive: response.user?.isActive !== false,
+      };
+      
+      // Save auth data to localStorage (include userId and email)
       const authData = {
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
         tokenType: response.tokenType || 'Bearer',
         role: userRole,
         username: userName,
+        userId: String(userData.userId),
+        email: userData.email,
         expiresAt: String(expiresAt),
       };
       
       setAuthData(authData);
-
-      // Set user state
-      const userData = {
-        userId: response.user?.userId || response.userId,
-        username: userName,
-        email: response.user?.email || response.email,
-        role: userRole,
-      };
       
       setUser(userData);
       setIsAuthenticated(true);
 
-      console.log('User logged in:', userData); // Debug log
-      console.log('Redirect to:', ROLE_ROUTES[userRole]); // Debug log
+      console.log('✅ User logged in:', userData);
 
       return { 
         success: true, 
+        user: userData,
         role: userRole,
         redirectTo: ROLE_ROUTES[userRole] || '/'
       };
     } catch (error) {
-      console.error('Login error:', error);
+      const errorMessage = handleError(error, { context: 'login' });
+      console.error('❌ Login error:', errorMessage);
+      
       return { 
         success: false, 
-        error: error.response?.data?.message || 'Đăng nhập thất bại' 
+        error: errorMessage
       };
     }
-  }, []);
+  }, [handleError]);
 
   /**
-   * Logout handler
+   * Logout handler - Current session only
    */
   const logout = useCallback(async () => {
     try {
       await authService.logout();
+      console.log('✅ Logged out successfully');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('⚠️ Logout API error (continuing):', error.message);
     } finally {
+      // Always clear local state
       removeToken();
       setUser(null);
       setIsAuthenticated(false);
       window.location.href = '/login';
     }
   }, []);
+
+  /**
+   * Logout from all devices
+   */
+  const logoutAllDevices = useCallback(async () => {
+    try {
+      if (!user?.userId) {
+        throw new Error('No user logged in');
+      }
+      
+      await authService.logoutAllDevices(user.userId);
+      console.log('✅ Logged out from all devices');
+      
+      // Clear local state
+      removeToken();
+      setUser(null);
+      setIsAuthenticated(false);
+      window.location.href = '/login';
+      
+      return { success: true };
+    } catch (error) {
+      const errorMessage = handleError(error, { context: 'logout_all_devices' });
+      console.error('❌ Logout all devices error:', errorMessage);
+      
+      return { success: false, error: errorMessage };
+    }
+  }, [user, handleError]);
 
   /**
    * Get current user from localStorage (for quick access)
@@ -139,6 +181,7 @@ export function AuthProvider({ children }) {
     isAuthenticated,
     login,
     logout,
+    logoutAllDevices,
     getCurrentUserFromStorage,
   };
 

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { usePermissions, useErrorHandler } from '@/shared/hooks'
 import { styles } from './EmployeeDashboard.styles'
 import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar } from './components/EmployeeDashboard.components'
 import { kpiData, attendanceHistory, leaveRequests, notifications, sectionsConfig, chatContacts, chatMessages } from './components/EmployeeDashboard.constants'
@@ -148,7 +149,7 @@ export default function EmployeeDashboard() {
 
         {/* Timesheet Page */}
         {active === 'timesheet' && <MyAttendancePage />}
-        {active === 'timesheet_OLD' && (
+        {false && (
           <div style={styles.pageContent}>
             <div style={styles.tableCard}>
               <div style={styles.tableHeader}>
@@ -191,7 +192,7 @@ export default function EmployeeDashboard() {
 
         {/* Leave Page */}
         {active === 'leave' && <MyLeavePage />}
-        {active === 'leave_OLD' && (
+        {false && (
           <div style={styles.pageContent}>
             <div style={styles.leaveLayout}>
               <div style={styles.tableCard}>
