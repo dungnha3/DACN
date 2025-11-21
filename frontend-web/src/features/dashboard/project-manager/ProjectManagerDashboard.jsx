@@ -6,8 +6,9 @@ import { NavItem, RoleBadge, KPICard } from './components/ProjectManagerDashboar
 import { kpiData, notifications, sectionsConfig } from './components/ProjectManagerDashboard.constants'
 
 // Import các module tính năng đã tách riêng
-import { ProfilePage, LeavePage, ApprovalsPage, ChatPage, ProjectsPage } from '@modules/project';
+import { ProfilePage, LeavePage, ApprovalsPage, ChatPage, ProjectsPage, PMStoragePage } from '@modules/project';
 import { LeavesPage } from '@modules/hr'
+import NotificationBell from '@/shared/components/notification/NotificationBell'
 
 export default function ProjectManagerDashboard() {
   const [active, setActive] = useState('dashboard')
@@ -32,6 +33,8 @@ export default function ProjectManagerDashboard() {
         return <ProfilePage />
       case 'leave':
         return <LeavePage />
+      case 'storage':
+        return <PMStoragePage />
       case 'approvals':
         return <ApprovalsPage />
       case 'team-leaves':
@@ -93,6 +96,9 @@ export default function ProjectManagerDashboard() {
           <NavItem active={active === 'leave'} onClick={() => setActive('leave')} icon="📋">
             {sections.leave.title}
           </NavItem>
+          <NavItem active={active === 'storage'} onClick={() => setActive('storage')} icon="💾">
+            File của tôi
+          </NavItem>
         </div>
 
         <div style={styles.navGroup}>
@@ -115,6 +121,7 @@ export default function ProjectManagerDashboard() {
           </div>
 
           <div style={styles.rightCluster}>
+            <NotificationBell />
             <RoleBadge role={user.role} />
           </div>
         </header>

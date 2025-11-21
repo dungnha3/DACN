@@ -32,7 +32,6 @@ export default function SharedProfilePage({
     isEmployee = isEmp;
   } catch (err) {
     // Permissions hook might fail, continue with basic access
-    console.warn('Permissions hook failed:', err);
   }
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -77,7 +76,7 @@ export default function SharedProfilePage({
         setLoading(false);
       }, 1000);
     } catch (err) {
-      console.error('Error loading profile:', err);
+      // Handle error silently
       setLoading(false);
     }
   };

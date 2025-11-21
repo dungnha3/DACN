@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { formatCurrency } from '@/shared/utils'
+import { PayrollCalculationModal } from '@/shared/components/payroll'
 
 export default function PayrollManagementPage() {
   const [payrolls, setPayrolls] = useState([])
@@ -8,8 +9,24 @@ export default function PayrollManagementPage() {
   const [error, setError] = useState(null)
   const [month, setMonth] = useState(new Date().getMonth() + 1)
   const [year, setYear] = useState(new Date().getFullYear())
+  const [showCalculationModal, setShowCalculationModal] = useState(false)
   
   const { user: authUser } = useAuth()
+
+  // Mock employees data - in real app, fetch from API
+  const mockEmployees = [
+    { nhanvien_id: 1, hoTen: 'Nguyễn Văn A', email: 'nva@company.com', luongCoBan: 15000000, phuCap: 2000000, chucVu: 'Developer', phongBan: 'IT' },
+    { nhanvien_id: 2, hoTen: 'Trần Thị B', email: 'ttb@company.com', luongCoBan: 18000000, phuCap: 2500000, chucVu: 'Senior Developer', phongBan: 'IT' },
+    { nhanvien_id: 3, hoTen: 'Lê Văn C', email: 'lvc@company.com', luongCoBan: 12000000, phuCap: 1500000, chucVu: 'Tester', phongBan: 'QA' },
+  ]
+
+  // Mock attendance data - in real app, fetch from API
+  const mockAttendance = [
+    { nhanvien_id: 1, thang: month, nam: year, tongGio: 176 },
+    { nhanvien_id: 1, thang: month, nam: year, tongGio: 8 },
+    { nhanvien_id: 2, thang: month, nam: year, tongGio: 180 },
+    { nhanvien_id: 3, thang: month, nam: year, tongGio: 170 },
+  ]
 
   useEffect(() => {
     loadPayrolls()
@@ -67,6 +84,18 @@ export default function PayrollManagementPage() {
     }
   }
 
+  const handleConfirmCalculation = async (payrollData) => {
+    try {
+      // Simulate API call to create payroll
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      alert('✅ Đã tạo bảng lương thành công!')
+      loadPayrolls()
+    } catch (err) {
+      throw new Error('Lỗi tạo bảng lương: ' + err.message)
+    }
+  }
+
   const handleCalculateAll = async () => {
     if (!confirm(`Tính lương tất cả nhân viên tháng ${month}/${year}?`)) return
     
@@ -121,17 +150,30 @@ export default function PayrollManagementPage() {
           <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: '#344767' }}>
             Bảng lương
           </h1>
-          <button 
-            style={{
-              background: 'linear-gradient(195deg, #66bb6a, #43a047)',
-              color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px',
-              fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              boxShadow: '0 4px 6px rgba(67, 160, 71, 0.2)'
-            }}
-            onClick={handleCalculateAll}
-          >
-            🧮 Tính lương tự động
-          </button>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button 
+              style={{
+                background: 'linear-gradient(195deg, #42a5f5, #1976d2)',
+                color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px',
+                fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                boxShadow: '0 4px 6px rgba(25, 118, 210, 0.2)'
+              }}
+              onClick={() => setShowCalculationModal(true)}
+            >
+              ⚡ Tính lương tự động
+            </button>
+            <button 
+              style={{
+                background: 'linear-gradient(195deg, #66bb6a, #43a047)',
+                color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px',
+                fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                boxShadow: '0 4px 6px rgba(67, 160, 71, 0.2)'
+              }}
+              onClick={handleCalculateAll}
+            >
+              📊 Tính lương tất cả
+            </button>
+          </div>
         </div>
       </div>
 
@@ -257,6 +299,15 @@ export default function PayrollManagementPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Payroll Calculation Modal */}
+      <PayrollCalculationModal
+        isOpen={showCalculationModal}
+        onClose={() => setShowCalculationModal(false)}
+        onConfirm={handleConfirmCalculation}
+        employees={mockEmployees}
+        attendanceData={mockAttendance}
+      />
     </div>
   );
 }

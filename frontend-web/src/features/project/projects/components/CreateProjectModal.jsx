@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { styles } from './CreateProjectModal.styles'
-import { projectApi, userApi } from '../api/projectApi'
+import { projectApi } from '../api/projectApi'
+import { userApi } from '../api/userApi'
+import { useErrorHandler } from '@/shared/hooks'
 
 export default function CreateProjectModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -71,8 +72,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }) {
         alert('Không tìm thấy user với email: ' + email)
       }
     } catch (err) {
-      console.error('Error searching user:', err)
-      alert('Lỗi khi tìm kiếm user')
+      alert('Lỗi khi tìm kiếm user: ' + (err.response?.data?.message || err.message))
     }
   }
 
@@ -115,11 +115,9 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }) {
           } catch (memberError) {
             // Skip nếu member đã tồn tại (409 Conflict) - creator đã được thêm tự động
             if (memberError.response?.status === 409) {
-              console.log('Member already exists, skipping:', member.username)
               skippedCount++
               continue
             }
-            console.error('Error adding member:', memberError)
             // Tiếp tục thêm members khác nếu có lỗi
           }
         }
@@ -137,7 +135,6 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }) {
       onSuccess && onSuccess(createdProject)
       handleClose()
     } catch (err) {
-      console.error('Error creating project:', err)
       setError(err.response?.data?.message || err.message || 'Có lỗi xảy ra khi tạo dự án')
     } finally {
       setLoading(false)

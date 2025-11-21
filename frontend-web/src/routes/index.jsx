@@ -24,9 +24,6 @@ import RoleRoute from './RoleRoute';
 function AppRouter() {
   const { user, loading } = useAuth();
 
-  console.log('AppRouter - user:', user); // Debug
-  console.log('AppRouter - loading:', loading); // Debug
-
   if (loading) {
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>Loading...</div>;
   }

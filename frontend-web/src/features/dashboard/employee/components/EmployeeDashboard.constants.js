@@ -150,6 +150,11 @@ export const sectionsConfig = {
     pageTitle: 'Hợp đồng & Tài liệu',
     subtitle: 'Quản lý hợp đồng và tài liệu cá nhân',
   },
+  storage: {
+    title: 'File của tôi',
+    pageTitle: 'File của tôi',
+    subtitle: 'Quản lý file và tài liệu cá nhân',
+  },
   projects: {
     title: 'Dự án của tôi',
     pageTitle: 'Dự án của tôi',

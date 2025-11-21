@@ -27,7 +27,6 @@ export default function ApprovalsPage() {
       }))
       setApprovals(mapped)
     } catch (err) {
-      console.warn('Failed to load approvals:', err)
       // Don't show alert on initial load
     }
   }

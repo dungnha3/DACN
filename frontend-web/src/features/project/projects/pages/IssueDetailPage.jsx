@@ -27,7 +27,7 @@ export default function IssueDetailPage({ issueId, onBack }) {
       const data = await issueApi.getIssueById(issueId)
       setIssue(data)
     } catch (error) {
-      console.error('Error loading issue:', error)
+      // Handle error silently
     } finally {
       setLoading(false)
     }
@@ -39,7 +39,7 @@ export default function IssueDetailPage({ issueId, onBack }) {
       const data = await commentApi.getIssueComments(issueId)
       setComments(data)
     } catch (error) {
-      console.error('Error loading comments:', error)
+      // Handle error silently
     } finally {
       setLoadingComments(false)
     }
@@ -57,7 +57,6 @@ export default function IssueDetailPage({ issueId, onBack }) {
       setNewComment('')
       loadComments()
     } catch (error) {
-      console.error('Error creating comment:', error)
       alert('Không thể tạo bình luận')
     }
   }
@@ -68,7 +67,6 @@ export default function IssueDetailPage({ issueId, onBack }) {
       setEditingComment(null)
       loadComments()
     } catch (error) {
-      console.error('Error updating comment:', error)
       alert('Không thể cập nhật bình luận')
     }
   }
@@ -80,7 +78,6 @@ export default function IssueDetailPage({ issueId, onBack }) {
       await commentApi.deleteComment(commentId)
       loadComments()
     } catch (error) {
-      console.error('Error deleting comment:', error)
       alert('Không thể xóa bình luận')
     }
   }
@@ -91,7 +88,7 @@ export default function IssueDetailPage({ issueId, onBack }) {
       const data = await activityApi.getIssueActivities(issueId)
       setActivities(data)
     } catch (error) {
-      console.error('Error loading activities:', error)
+      // Handle error silently
     } finally {
       setLoadingActivities(false)
     }

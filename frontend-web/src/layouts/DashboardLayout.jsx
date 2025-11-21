@@ -1,8 +1,6 @@
 import { Outlet } from 'react-router-dom';
 
 export default function DashboardLayout() {
-  console.log('DashboardLayout rendering'); // Debug
-  
   return (
     <div style={styles.container}>
       <Outlet />

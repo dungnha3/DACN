@@ -90,12 +90,10 @@ export default function EmployeesPage() {
         const usersData = await apiService.get('/users');
         setUsers(usersData || []);
       } catch (err) {
-        console.log('Could not load users from /users, trying /api/users:', err.message);
         try {
           const usersData = await apiService.get('/api/users');
           setUsers(usersData || []);
         } catch (err2) {
-          console.error('Could not load users from both endpoints:', err2);
           setUsers([]);
         }
       }

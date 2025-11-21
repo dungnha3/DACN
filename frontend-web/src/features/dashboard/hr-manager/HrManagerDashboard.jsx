@@ -4,23 +4,54 @@ import { usePermissions, useErrorHandler } from '@/shared/hooks'
 import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
 import { NavItem, RoleBadge, KPICard } from './components/HrManagerDashboard.components'
 import { sectionsConfig } from './components/HrManagerDashboard.constants'
-import { 
-  EmployeesPage, 
+import {
+  EmployeesPage,
+  EmployeeDetailPage,
   LeavesPage, 
-  DepartmentsPage, 
+  DepartmentsPage,
+  DepartmentDetailPage,
   ContractsPage, 
   PositionsPage, 
-  EvaluationsPage 
+  EvaluationsPage,
+  HRStoragePage
 } from '@modules/hr'
 import { SharedProfilePage } from '@/shared/components/profile'
 import { SharedLeaveRequestPage } from '@/shared/components/leave-request'
+import { ChatPage } from '@/modules/project'
+import NotificationBell from '@/shared/components/notification/NotificationBell'
 
 export default function HrManagerDashboard() {
   const [active, setActive] = useState('dashboard')
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState(null)
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState(null)
   
   const { logout, user: authUser } = useAuth()
   const username = authUser?.username || localStorage.getItem('username') || 'HR Manager'
   const user = useMemo(() => ({ name: username || 'Nguyễn Thị C', role: 'Quản lý nhân sự' }), [username])
+
+  // Handler to view employee detail
+  const handleViewEmployeeDetail = (employeeId) => {
+    setSelectedEmployeeId(employeeId)
+    setActive('employee-detail')
+  }
+
+  // Handler to back from employee detail
+  const handleBackFromEmployeeDetail = () => {
+    setSelectedEmployeeId(null)
+    setActive('employees')
+  }
+
+  // Handler to view department detail
+  const handleViewDepartmentDetail = (departmentId) => {
+    setSelectedDepartmentId(departmentId)
+    setActive('department-detail')
+  }
+
+  // Handler to back from department detail
+  const handleBackFromDepartmentDetail = () => {
+    setSelectedDepartmentId(null)
+    setActive('departments')
+  }
 
   const sections = useMemo(() => sectionsConfig, [])
   const meta = sections[active]
@@ -94,6 +125,12 @@ export default function HrManagerDashboard() {
           <NavItem active={active === 'evaluations'} onClick={() => setActive('evaluations')} icon="⭐">
             Đánh giá
           </NavItem>
+          <NavItem active={active === 'storage'} onClick={() => setActive('storage')} icon="💾">
+            Tài liệu công ty
+          </NavItem>
+          <NavItem active={active === 'chat'} onClick={() => setActive('chat')} icon="💬">
+            Trò chuyện
+          </NavItem>
         </div>
 
         <button style={styles.logoutBtn} onClick={handleLogout}>
@@ -105,13 +142,14 @@ export default function HrManagerDashboard() {
       <main style={styles.content}>
         
         {/* Dynamic Header */}
-        {!['employees', 'departments', 'positions', 'contracts', 'leaves', 'evaluations', 'profile', 'my-leave'].includes(active) && (
+        {!['employees', 'employee-detail', 'departments', 'department-detail', 'positions', 'contracts', 'leaves', 'evaluations', 'storage', 'profile', 'my-leave'].includes(active) && (
           <header style={styles.header}>
             <div>
               <div style={styles.pageHeading}>{meta?.title || 'HR Dashboard'}</div>
               <div style={styles.subHeading}>Xin chào, {user.name}</div>
             </div>
             <div style={styles.rightCluster}>
+              <NotificationBell />
               <RoleBadge role={user.role} />
             </div>
           </header>
@@ -191,12 +229,26 @@ export default function HrManagerDashboard() {
         )}
 
         {/* HR Management Modules */}
-        {active === 'employees' && <EmployeesPage />}
-        {active === 'departments' && <DepartmentsPage />}
+        {active === 'employees' && <EmployeesPage onViewDetail={handleViewEmployeeDetail} />}
+        {active === 'employee-detail' && selectedEmployeeId && (
+          <EmployeeDetailPage 
+            employeeId={selectedEmployeeId}
+            onBack={handleBackFromEmployeeDetail}
+          />
+        )}
+        {active === 'departments' && <DepartmentsPage onViewDetail={handleViewDepartmentDetail} />}
+        {active === 'department-detail' && selectedDepartmentId && (
+          <DepartmentDetailPage 
+            departmentId={selectedDepartmentId}
+            onBack={handleBackFromDepartmentDetail}
+          />
+        )}
         {active === 'positions' && <PositionsPage />}
         {active === 'contracts' && <ContractsPage />}
         {active === 'leaves' && <LeavesPage />}
         {active === 'evaluations' && <EvaluationsPage />}
+        {active === 'storage' && <HRStoragePage />}
+        {active === 'chat' && <ChatPage />}
 
       </main>
     </div>

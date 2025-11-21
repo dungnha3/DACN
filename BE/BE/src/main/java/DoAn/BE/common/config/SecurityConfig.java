@@ -38,6 +38,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 
+                // ===== WEBSOCKET ENDPOINTS =====
+                // Allow WebSocket handshake (SockJS /info, /websocket)
+                // Auth will be checked at STOMP CONNECT level in AuthChannelInterceptor
+                .requestMatchers("/ws/**").permitAll()
+                
                 // ===== ADMIN ENDPOINTS =====
                 // Admin chỉ quản lý user và thông báo, KHÔNG truy cập dữ liệu công ty
                 .requestMatchers("/api/admin/users/**").hasRole("ADMIN")

@@ -1,15 +1,24 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { usePermissions, useErrorHandler } from '@/shared/hooks'
 import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
 import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar } from './components/EmployeeDashboard.components'
-import { kpiData, attendanceHistory, leaveRequests, notifications, sectionsConfig, chatContacts, chatMessages } from './components/EmployeeDashboard.constants'
-import { ProfilePage, MyPayrollPage, MyAttendancePage, MyLeavePage, MyDocumentsPage, MyProjectsPage } from '@/modules/employee'
+import { kpiData, attendanceHistory, leaveRequests, notifications, sectionsConfig } from './components/EmployeeDashboard.constants'
+import { ProfilePage, MyPayrollPage, MyAttendancePage, MyLeavePage, MyDocumentsPage, MyProjectsPage, MyStoragePage } from '@/modules/employee'
+import NotificationBell from '@/shared/components/notification/NotificationBell'
+// Real Chat APIs
+import { chatRoomApi } from '@/features/project/chat/api/chatRoomApi'
+import { messageApi } from '@/features/project/chat/api/messageApi'
+import websocketService from '@/features/project/chat/services/websocketService'
 
 export default function EmployeeDashboard() {
   const [active, setActive] = useState('dashboard')
-  const [selectedContact, setSelectedContact] = useState(chatContacts[0])
+  // Chat state - load from real API
+  const [chatRooms, setChatRooms] = useState([])
+  const [selectedContact, setSelectedContact] = useState(null)
+  const [messages, setMessages] = useState([])
   const [messageInput, setMessageInput] = useState('')
+  const [wsConnected, setWsConnected] = useState(false)
   const { logout, user: authUser } = useAuth()
   const username = authUser?.username || localStorage.getItem('username') || 'Employee'
   const user = useMemo(() => ({ name: username || 'Nguyễn Văn A', role: 'Nhân viên' }), [username])
@@ -19,6 +28,95 @@ export default function EmployeeDashboard() {
 
   const handleLogout = async () => {
     await logout()
+  }
+
+  // Load chat when switching to chat tab
+  useEffect(() => {
+    if (active === 'chat') {
+      loadChatRooms()
+      connectWebSocket()
+    }
+    return () => {
+      if (active !== 'chat') {
+        websocketService.disconnect()
+      }
+    }
+  }, [active])
+
+  // Load messages when selected room changes
+  useEffect(() => {
+    if (selectedContact?.roomId) {
+      loadMessages(selectedContact.roomId)
+      subscribeToRoom(selectedContact.roomId)
+    }
+  }, [selectedContact])
+
+  const loadChatRooms = async () => {
+    try {
+      const rooms = await chatRoomApi.getMyChatRooms()
+      setChatRooms(rooms || [])
+      if (rooms && rooms.length > 0) {
+        setSelectedContact(rooms[0])
+      }
+    } catch (error) {
+      setChatRooms([])
+    }
+  }
+
+  const connectWebSocket = () => {
+    websocketService.connect(
+      () => {
+        setWsConnected(true)
+      },
+      (error) => {
+        setWsConnected(false)
+      }
+    )
+  }
+
+  const loadMessages = async (roomId) => {
+    try {
+      const msgs = await messageApi.getMessages(roomId, 0, 50)
+      setMessages(msgs || [])
+    } catch (error) {
+      setMessages([])
+    }
+  }
+
+  const subscribeToRoom = (roomId) => {
+    if (!wsConnected) return
+    
+    websocketService.subscribeToRoom(roomId, (message) => {
+      if (message.type === 'CHAT_MESSAGE') {
+        setMessages(prev => [...prev, message.data])
+      }
+    })
+  }
+
+  const handleSendMessage = async () => {
+    if (!messageInput.trim() || !selectedContact) return
+    
+    try {
+      if (selectedContact.roomId) {
+        await messageApi.sendMessage(selectedContact.roomId, messageInput)
+        setMessageInput('')
+        // Message will be received via WebSocket
+      }
+    } catch (error) {
+      alert('Không thể gửi tin nhắn: ' + (error.message || 'Lỗi kết nối'))
+    }
+  }
+
+  // Helper to check if message is from current user
+  const isOwnMessage = (message) => {
+    return message.senderId === authUser?.userId || message.isOwn === true
+  }
+
+  // Helper to format message time
+  const formatMessageTime = (timestamp) => {
+    if (!timestamp) return ''
+    const date = new Date(timestamp)
+    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
   }
 
   return (
@@ -64,6 +162,9 @@ export default function EmployeeDashboard() {
           <NavItem active={active === 'documents'} onClick={() => setActive('documents')} icon="📄">
             {sections.documents.title}
           </NavItem>
+          <NavItem active={active === 'storage'} onClick={() => setActive('storage')} icon="💾">
+            File của tôi
+          </NavItem>
           <NavItem active={active === 'projects'} onClick={() => setActive('projects')} icon="🏭">
             Dự án của tôi
           </NavItem>
@@ -87,6 +188,7 @@ export default function EmployeeDashboard() {
             </div>
 
             <div style={styles.rightCluster}>
+              <NotificationBell />
               <RoleBadge role={user.role} />
             </div>
           </header>
@@ -256,197 +358,185 @@ export default function EmployeeDashboard() {
 
         {/* Chat Page */}
         {active === 'chat' && (
-          <div style={styles.chatContainer}>
-            {/* Left Column - Chat List */}
-            <div style={styles.chatSidebar}>
-              <div style={styles.chatSidebarHeader}>
-                <div style={{
-                  position: 'relative',
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}>
-                  <svg 
-                    style={{
-                      position: 'absolute',
-                      left: '14px',
-                      width: '18px',
-                      height: '18px',
-                      pointerEvents: 'none',
-                      zIndex: 1
-                    }}
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="#7b809a" 
-                    strokeWidth="2"
-                  >
-                    <circle cx="11" cy="11" r="8"/>
-                    <path d="m21 21-4.35-4.35"/>
-                  </svg>
-                  <input 
-                    type="text" 
-                    placeholder="Tìm kiếm cuộc trò chuyện..." 
-                    style={styles.chatSearchInput}
-                  />
-                </div>
-              </div>
-              
-              <div style={styles.chatContactList}>
-                {chatContacts.map((contact) => (
-                  <div 
-                    key={contact.id}
-                    style={{
-                      ...styles.chatContactItem,
-                      ...(selectedContact.id === contact.id ? styles.chatContactItemActive : {})
-                    }}
-                    onClick={() => setSelectedContact(contact)}
-                  >
-                    <div style={styles.chatContactAvatar}>
-                      <span style={styles.chatContactAvatarIcon}>{contact.avatar}</span>
-                      {contact.online && <div style={styles.chatOnlineBadge} />}
-                    </div>
-                    <div style={styles.chatContactInfo}>
-                      <div style={styles.chatContactHeader}>
-                        <div style={styles.chatContactName}>{contact.name}</div>
-                        <div style={styles.chatContactTime}>{contact.time}</div>
-                      </div>
-                      <div style={styles.chatContactMessage}>{contact.lastMessage}</div>
-                    </div>
-                    {contact.unread > 0 && (
-                      <div style={styles.chatUnreadBadge}>{contact.unread}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right Column - Chat Window */}
-            <div style={styles.chatWindow}>
-              {/* Chat Header */}
-              <div style={styles.chatWindowHeader}>
-                <div style={styles.chatWindowHeaderLeft}>
-                  <div style={styles.chatWindowAvatar}>{selectedContact.avatar}</div>
-                  <div>
-                    <div style={styles.chatWindowName}>{selectedContact.name}</div>
-                    <div style={styles.chatWindowStatus}>
-                      {selectedContact.online ? '🟢 Đang hoạt động' : '⚫ Không hoạt động'}
-                    </div>
-                  </div>
-                </div>
-                <div style={styles.chatWindowActions}>
-                  <button style={styles.chatActionButton} title="Tìm kiếm">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <div style={styles.pageContent}>
+            <div style={styles.chatContainer}>
+              {/* Left Column - Chat List */}
+              <div style={styles.chatSidebar}>
+                <div style={styles.chatSidebarHeader}>
+                  <div style={{
+                    position: 'relative',
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    <svg 
+                      style={{
+                        position: 'absolute',
+                        left: '14px',
+                        width: '18px',
+                        height: '18px',
+                        pointerEvents: 'none',
+                        zIndex: 1
+                      }}
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="#7b809a" 
+                      strokeWidth="2"
+                    >
                       <circle cx="11" cy="11" r="8"/>
                       <path d="m21 21-4.35-4.35"/>
                     </svg>
-                  </button>
-                  <button style={styles.chatActionButton} title="Gọi điện">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                    </svg>
-                  </button>
-                  <button style={styles.chatActionButton} title="Video call">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polygon points="23 7 16 12 23 17 23 7"/>
-                      <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-                    </svg>
-                  </button>
-                  <button style={styles.chatActionButton} title="Thêm">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="1"/>
-                      <circle cx="12" cy="5" r="1"/>
-                      <circle cx="12" cy="19" r="1"/>
-                    </svg>
-                  </button>
+                    <input 
+                      type="text" 
+                      placeholder="Tìm kiếm cuộc trò chuyện..." 
+                      style={styles.chatSearchInput}
+                    />
+                  </div>
+                </div>
+                
+                <div style={styles.chatContactList}>
+                  {chatRooms.map((contact) => (
+                    <div 
+                      key={contact.id || contact.roomId}
+                      style={{
+                        ...styles.chatContactItem,
+                        ...((selectedContact?.id === contact.id || selectedContact?.roomId === contact.roomId) ? styles.chatContactItemActive : {})
+                      }}
+                      onClick={() => setSelectedContact(contact)}
+                    >
+                      <div style={styles.chatContactAvatar}>
+                        <span style={styles.chatContactAvatarIcon}>{contact.avatar || '\ud83d\udc64'}</span>
+                        {(contact.online || wsConnected) && <div style={styles.chatOnlineBadge} />}
+                      </div>
+                      <div style={styles.chatContactInfo}>
+                        <div style={styles.chatContactHeader}>
+                          <div style={styles.chatContactName}>{contact.name}</div>
+                          <div style={styles.chatContactTime}>{contact.time || ''}</div>
+                        </div>
+                        <div style={styles.chatContactMessage}>{contact.lastMessage || 'Chưa có tin nhắn'}</div>
+                      </div>
+                      {(contact.unread || contact.unreadCount) > 0 && (
+                        <div style={styles.chatUnreadBadge}>{contact.unread || contact.unreadCount}</div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Messages Area */}
-              <div style={styles.chatMessagesArea}>
-                <div style={styles.chatDateDivider}>
-                  <span style={styles.chatDateText}>Hôm nay</span>
-                </div>
-                {chatMessages.map((message) => (
-                  <div 
-                    key={message.id}
-                    style={{
-                      ...styles.chatMessageRow,
-                      ...(message.isOwn ? styles.chatMessageRowOwn : {})
-                    }}
-                  >
-                    {!message.isOwn && (
-                      <div style={styles.chatMessageAvatar}>{selectedContact.avatar}</div>
-                    )}
-                    <div style={styles.chatMessageGroup}>
-                      <div style={{
-                        ...styles.chatMessageBubble,
-                        ...(message.isOwn ? styles.chatMessageBubbleOwn : {})
-                      }}>
-                        {message.content}
-                      </div>
-                      <div style={{
-                        ...styles.chatMessageTime,
-                        ...(message.isOwn ? styles.chatMessageTimeOwn : {})
-                      }}>
-                        {message.time}
+              {/* Right Column - Chat Window */}
+              <div style={styles.chatWindow}>
+                {/* Chat Header */}
+                <div style={styles.chatWindowHeader}>
+                  <div style={styles.chatWindowHeaderLeft}>
+                    <div style={styles.chatWindowAvatar}>{selectedContact?.avatar || 'Người dùng'}</div>
+                    <div>
+                      <div style={styles.chatWindowName}>{selectedContact?.name || 'Chọn cuộc trò chuyện'}</div>
+                      <div style={styles.chatWindowStatus}>
+                        {wsConnected ? 'Đang hoạt động' : 'Không hoạt động'}
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-
-              {/* Input Area */}
-              <div style={styles.chatInputArea}>
-                <div style={styles.chatInputToolbar}>
-                  <button style={styles.chatToolButton} title="Đính kèm file">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                    </svg>
-                  </button>
-                  <button style={styles.chatToolButton} title="Hình ảnh">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                      <circle cx="8.5" cy="8.5" r="1.5"/>
-                      <polyline points="21 15 16 10 5 21"/>
-                    </svg>
-                  </button>
-                  <button style={styles.chatToolButton} title="Emoji">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                      <line x1="9" y1="9" x2="9.01" y2="9"/>
-                      <line x1="15" y1="9" x2="15.01" y2="9"/>
-                    </svg>
-                  </button>
+                  <div style={styles.chatWindowActions}>
+                    <button style={styles.chatActionButton} title="Tìm kiếm">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
+                      </svg>
+                    </button>
+                    <button style={styles.chatActionButton} title="Gọi điện">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-                <div style={styles.chatInputWrapper}>
-                  <input 
-                    type="text"
-                    placeholder={`Nhắn tin tới ${selectedContact.name}...`}
-                    value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
-                    style={styles.chatMessageInput}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && messageInput.trim()) {
-                        // Handle send message
-                        setMessageInput('')
-                      }
-                    }}
-                  />
-                  <button 
-                    style={styles.chatSendButton}
-                    onClick={() => {
-                      if (messageInput.trim()) {
-                        // Handle send message
-                        setMessageInput('')
-                      }
-                    }}
-                  >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="22" y1="2" x2="11" y2="13"/>
-                      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                    </svg>
-                  </button>
+
+                {/* Messages Area */}
+                <div style={styles.chatMessagesArea}>
+                  <div style={styles.chatDateDivider}>
+                    <span style={styles.chatDateText}>Hôm nay</span>
+                  </div>
+                  {messages.map((message, idx) => {
+                    const isOwn = isOwnMessage(message)
+                    return (
+                      <div 
+                        key={message.messageId || message.id || idx}
+                        style={{
+                          ...styles.chatMessageRow,
+                          ...(isOwn ? styles.chatMessageRowOwn : {})
+                        }}
+                      >
+                        {!isOwn && (
+                          <div style={styles.chatMessageAvatar}>
+                            {message.senderName?.charAt(0) || '👤'}
+                          </div>
+                        )}
+                        <div style={styles.chatMessageGroup}>
+                          <div style={{
+                            ...styles.chatMessageBubble,
+                            ...(isOwn ? styles.chatMessageBubbleOwn : {})
+                          }}>
+                            {message.content}
+                          </div>
+                          <div style={{
+                            ...styles.chatMessageTime,
+                            ...(isOwn ? styles.chatMessageTimeOwn : {})
+                          }}>
+                            {formatMessageTime(message.sentAt || message.time)}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Input Area */}
+                <div style={styles.chatInputArea}>
+                  <div style={styles.chatInputToolbar}>
+                    <button style={styles.chatToolButton} title="Đính kèm file">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                      </svg>
+                    </button>
+                    <button style={styles.chatToolButton} title="Hình ảnh">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                      </svg>
+                    </button>
+                    <button style={styles.chatToolButton} title="Biểu tượng cảm xúc">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                        <line x1="9" y1="9" x2="9.01" y2="9"/>
+                        <line x1="15" y1="9" x2="15.01" y2="9"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div style={styles.chatInputWrapper}>
+                    <input 
+                      type="text"
+                      placeholder={`Nhắn tin tới ${selectedContact?.name || 'cuộc trò chuyện'}...`}
+                      value={messageInput}
+                      onChange={(e) => setMessageInput(e.target.value)}
+                      style={styles.chatMessageInput}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && messageInput.trim()) {
+                          handleSendMessage()
+                        }
+                      }}
+                    />
+                    <button 
+                      style={styles.chatSendButton}
+                      onClick={handleSendMessage}
+                    >
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"/>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -462,10 +552,14 @@ export default function EmployeeDashboard() {
         {/* Documents Page */}
         {active === 'documents' && <MyDocumentsPage />}
 
+        {/* Storage Page */}
+        {active === 'storage' && <MyStoragePage />}
+
         {/* Projects Page */}
         {active === 'projects' && <MyProjectsPage />}
       </main>
     </div>
   )
 }
+
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { usePermissions, useErrorHandler } from '@/shared/hooks';
-import { formatCurrency, commonStyles } from '@/shared/utils';
+import { commonStyles } from '@/shared/utils';
 import { colors, typography, spacing } from '@/shared/styles/theme';
 
 export default function SharedAttendancePage({ 
@@ -15,10 +15,20 @@ export default function SharedAttendancePage({
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [todayStatus, setTodayStatus] = useState(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsError, setGpsError] = useState(null);
   
   const { user: authUser } = useAuth();
   const { currentUser, isHRManager, isAccountingManager } = usePermissions();
   const { handleError } = useErrorHandler();
+
+  // Office coordinates (example: TP.HCM)
+  const OFFICE_LOCATION = {
+    latitude: 10.7756,
+    longitude: 106.7019,
+    address: '123 Nguyễn Huệ, Quận 1, TP.HCM'
+  };
+  const MAX_DISTANCE_METERS = 500; // 500m radius
 
   useEffect(() => {
     loadAttendanceData();
@@ -112,43 +122,152 @@ export default function SharedAttendancePage({
     }
   };
 
-  const handleCheckIn = async () => {
+  // Calculate distance between two GPS coordinates (Haversine formula)
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return Math.round(R * c); // Distance in meters
+  };
+
+  // Get user's GPS location
+  const getUserLocation = () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Trình duyệt không hỗ trợ GPS'));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          });
+        },
+        (error) => {
+          let message = 'Không thể lấy vị trí GPS';
+          if (error.code === error.PERMISSION_DENIED) {
+            message = 'Bạn đã từ chối quyền truy cập vị trí';
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            message = 'Vị trí không khả dụng';
+          } else if (error.code === error.TIMEOUT) {
+            message = 'Hết thời gian chờ GPS';
+          }
+          reject(new Error(message));
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    });
+  };
+
+  const handleGPSCheckIn = async () => {
     try {
+      setGpsLoading(true);
+      setGpsError(null);
+
+      // Get GPS location
+      const location = await getUserLocation();
+
+      // Calculate distance from office
+      const distance = calculateDistance(
+        location.latitude,
+        location.longitude,
+        OFFICE_LOCATION.latitude,
+        OFFICE_LOCATION.longitude
+      );
+
+      // Validate distance
+      if (distance > MAX_DISTANCE_METERS) {
+        setGpsError(`Bạn đang cách văn phòng ${distance}m. Vui lòng đến gần hơn (trong bán kính ${MAX_DISTANCE_METERS}m)`);
+        setGpsLoading(false);
+        return;
+      }
+
       const now = new Date();
       const timeString = now.toLocaleTimeString('vi-VN', { 
         hour: '2-digit', 
         minute: '2-digit' 
       });
-      
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       setTodayStatus(prev => ({
         ...prev,
         daCheckIn: true,
-        gioCheckIn: timeString
+        gioCheckIn: timeString,
+        viTriCheckIn: {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          distance: distance,
+          accuracy: location.accuracy
+        }
       }));
-      
-      alert(`✅ Check-in thành công lúc ${timeString}`);
+
+      alert(`✅ Check-in thành công!\n🕐 Thời gian: ${timeString}\n📍 Khoảng cách: ${distance}m từ văn phòng`);
+      setGpsLoading(false);
     } catch (err) {
-      alert('❌ Lỗi check-in');
+      setGpsError(err.message);
+      setGpsLoading(false);
     }
   };
 
-  const handleCheckOut = async () => {
+  const handleGPSCheckOut = async () => {
     try {
+      setGpsLoading(true);
+      setGpsError(null);
+
+      // Get GPS location
+      const location = await getUserLocation();
+
+      // Calculate distance from office
+      const distance = calculateDistance(
+        location.latitude,
+        location.longitude,
+        OFFICE_LOCATION.latitude,
+        OFFICE_LOCATION.longitude
+      );
+
       const now = new Date();
       const timeString = now.toLocaleTimeString('vi-VN', { 
         hour: '2-digit', 
         minute: '2-digit' 
       });
-      
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       setTodayStatus(prev => ({
         ...prev,
         daCheckOut: true,
-        gioCheckOut: timeString
+        gioCheckOut: timeString,
+        viTriCheckOut: {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          distance: distance,
+          accuracy: location.accuracy
+        }
       }));
-      
-      alert(`✅ Check-out thành công lúc ${timeString}`);
+
+      alert(`✅ Check-out thành công!\n🕐 Thời gian: ${timeString}\n📍 Khoảng cách: ${distance}m từ văn phòng`);
+      setGpsLoading(false);
     } catch (err) {
-      alert('❌ Lỗi check-out');
+      setGpsError(err.message);
+      setGpsLoading(false);
     }
   };
 
@@ -230,24 +349,28 @@ export default function SharedAttendancePage({
               {!todayStatus?.daCheckIn ? (
                 <button 
                   style={{
-                    background: colors.gradientSuccess,
+                    background: gpsLoading ? colors.textMuted : colors.gradientSuccess,
                     color: '#fff', border: 'none', borderRadius: spacing.lg, padding: `${spacing.md} ${spacing.xl}`,
-                    fontSize: typography.sm, fontWeight: typography.bold, cursor: 'pointer'
+                    fontSize: typography.sm, fontWeight: typography.bold, cursor: gpsLoading ? 'not-allowed' : 'pointer',
+                    opacity: gpsLoading ? 0.7 : 1
                   }}
-                  onClick={handleCheckIn}
+                  onClick={handleGPSCheckIn}
+                  disabled={gpsLoading}
                 >
-                  🕐 Check-in
+                  {gpsLoading ? '⏳ Đang lấy GPS...' : '� Check-in GPS'}
                 </button>
               ) : !todayStatus?.daCheckOut ? (
                 <button 
                   style={{
-                    background: colors.gradientWarning,
+                    background: gpsLoading ? colors.textMuted : colors.gradientWarning,
                     color: '#fff', border: 'none', borderRadius: spacing.lg, padding: `${spacing.md} ${spacing.xl}`,
-                    fontSize: typography.sm, fontWeight: typography.bold, cursor: 'pointer'
+                    fontSize: typography.sm, fontWeight: typography.bold, cursor: gpsLoading ? 'not-allowed' : 'pointer',
+                    opacity: gpsLoading ? 0.7 : 1
                   }}
-                  onClick={handleCheckOut}
+                  onClick={handleGPSCheckOut}
+                  disabled={gpsLoading}
                 >
-                  🕐 Check-out
+                  {gpsLoading ? '⏳ Đang lấy GPS...' : '� Check-out GPS'}
                 </button>
               ) : (
                 <div style={{
@@ -261,6 +384,43 @@ export default function SharedAttendancePage({
           )}
         </div>
       </div>
+
+      {/* GPS Error Message */}
+      {gpsError && (
+        <div style={{
+          ...commonStyles.cardBase,
+          background: '#fef2f2',
+          border: `2px solid ${colors.error}`,
+          marginBottom: spacing.xl,
+          padding: spacing.lg
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: spacing.md }}>
+            <span style={{ fontSize: typography['2xl'] }}>⚠️</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: typography.bold, color: colors.error, marginBottom: spacing.xs }}>
+                Lỗi GPS
+              </div>
+              <div style={{ fontSize: typography.sm, color: '#b91c1c' }}>
+                {gpsError}
+              </div>
+            </div>
+            <button
+              onClick={() => setGpsError(null)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: typography.xl,
+                color: colors.error,
+                cursor: 'pointer',
+                padding: 0,
+                lineHeight: 1
+              }}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Today Status (Personal View) */}
       {viewMode === "personal" && todayStatus && (
@@ -276,15 +436,37 @@ export default function SharedAttendancePage({
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing['2xl'] }}>
             <div>
               <div style={{ fontSize: typography.sm, opacity: 0.8, marginBottom: spacing.xs }}>Check-in</div>
-              <div style={{ fontSize: typography['2xl'], fontWeight: typography.bold }}>
+              <div style={{ fontSize: typography['2xl'], fontWeight: typography.bold, marginBottom: spacing.xs }}>
                 {todayStatus.gioCheckIn || '--:--'}
               </div>
+              {todayStatus.viTriCheckIn && (
+                <div style={{ fontSize: typography.xs, opacity: 0.9, display: 'flex', alignItems: 'center', gap: spacing.xs }}>
+                  <span>📍</span>
+                  <span>
+                    {todayStatus.viTriCheckIn.distance}m từ văn phòng
+                    {todayStatus.viTriCheckIn.distance <= 100 && ' 🟢'}
+                    {todayStatus.viTriCheckIn.distance > 100 && todayStatus.viTriCheckIn.distance <= 300 && ' 🟡'}
+                    {todayStatus.viTriCheckIn.distance > 300 && ' 🔴'}
+                  </span>
+                </div>
+              )}
             </div>
             <div>
               <div style={{ fontSize: typography.sm, opacity: 0.8, marginBottom: spacing.xs }}>Check-out</div>
-              <div style={{ fontSize: typography['2xl'], fontWeight: typography.bold }}>
+              <div style={{ fontSize: typography['2xl'], fontWeight: typography.bold, marginBottom: spacing.xs }}>
                 {todayStatus.gioCheckOut || '--:--'}
               </div>
+              {todayStatus.viTriCheckOut && (
+                <div style={{ fontSize: typography.xs, opacity: 0.9, display: 'flex', alignItems: 'center', gap: spacing.xs }}>
+                  <span>📍</span>
+                  <span>
+                    {todayStatus.viTriCheckOut.distance}m từ văn phòng
+                    {todayStatus.viTriCheckOut.distance <= 100 && ' 🟢'}
+                    {todayStatus.viTriCheckOut.distance > 100 && todayStatus.viTriCheckOut.distance <= 300 && ' 🟡'}
+                    {todayStatus.viTriCheckOut.distance > 300 && ' 🔴'}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>

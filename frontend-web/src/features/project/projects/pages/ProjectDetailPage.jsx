@@ -26,7 +26,7 @@ export default function ProjectDetailPage({ projectId, onBack }) {
       const issuesData = await issueApi.getProjectIssues(projectId)
       setIssues(issuesData)
     } catch (error) {
-      console.error('Error loading project data:', error)
+      // Handle error silently
     } finally {
       setLoading(false)
     }
@@ -44,7 +44,7 @@ export default function ProjectDetailPage({ projectId, onBack }) {
       const issuesData = await issueApi.getProjectIssues(projectId)
       setIssues(issuesData)
     } catch (error) {
-      console.error('Error reloading issues:', error)
+      // Handle error silently
     }
   }
 

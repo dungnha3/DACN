@@ -6,13 +6,6 @@ export default function KanbanView({ issues, projectId, onUpdate }) {
   const [draggedIssue, setDraggedIssue] = useState(null)
   const [dragOverColumn, setDragOverColumn] = useState(null)
 
-  // Debug: Log issues để xem structure
-  console.log('KanbanView - All issues:', issues)
-  if (issues.length > 0) {
-    console.log('KanbanView - First issue:', issues[0])
-    console.log('KanbanView - First issue statusId:', issues[0].statusId)
-  }
-
   // Group issues by status
   const columns = [
     { id: 1, name: 'To Do', title: 'Cần làm', color: '#94a3b8' },
@@ -23,7 +16,6 @@ export default function KanbanView({ issues, projectId, onUpdate }) {
   const getIssuesByStatus = (statusId) => {
     // Filter by statusId (backend trả về flat structure)
     const filtered = issues.filter(issue => issue.statusId === statusId)
-    console.log(`Issues for status ${statusId}:`, filtered.length, filtered)
     return filtered
   }
 
@@ -54,14 +46,12 @@ export default function KanbanView({ issues, projectId, onUpdate }) {
   }
 
   const handleDragStart = (e, issue) => {
-    console.log('Drag started:', issue.issueKey, 'Current status:', issue.statusId)
     setDraggedIssue(issue)
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/html', e.currentTarget)
   }
 
   const handleDragEnd = () => {
-    console.log('Drag ended')
     setDraggedIssue(null)
     setDragOverColumn(null)
   }
@@ -83,36 +73,25 @@ export default function KanbanView({ issues, projectId, onUpdate }) {
     setDragOverColumn(null)
     
     if (!draggedIssue) {
-      console.log('No dragged issue')
       return
     }
 
     const currentStatusId = draggedIssue.statusId
     
-    console.log('Drop:', {
-      issueKey: draggedIssue.issueKey,
-      from: currentStatusId,
-      to: targetStatusId
-    })
-    
     if (currentStatusId === targetStatusId) {
-      console.log('Same status, no change needed')
       setDraggedIssue(null)
       return
     }
 
     try {
-      console.log('Calling API to change status...')
       // Call API to change status
       await issueApi.changeIssueStatus(draggedIssue.issueId, targetStatusId)
       
-      console.log('Status changed successfully, reloading issues...')
       // Reload issues
       if (onUpdate) {
         onUpdate()
       }
     } catch (error) {
-      console.error('Error changing issue status:', error)
       alert('Không thể thay đổi trạng thái tác vụ: ' + (error.response?.data?.message || error.message))
     } finally {
       setDraggedIssue(null)

@@ -18,6 +18,7 @@ export * from './payroll'
 export * from './profile'
 export * from './leave-request'
 export * from './attendance'
+export * from './storage'
 
 // Form components
 export { default as FormModal } from './form/FormModal'

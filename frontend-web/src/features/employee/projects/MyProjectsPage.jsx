@@ -52,7 +52,6 @@ export default function MyProjectsPage() {
         setLoading(false);
       }, 1000);
     } catch (err) {
-      console.error('Error loading projects:', err);
       setLoading(false);
     }
   };

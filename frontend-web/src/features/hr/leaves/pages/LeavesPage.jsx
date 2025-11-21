@@ -187,8 +187,6 @@ export default function LeavesPage() {
     }
   };
 
-  console.log('LeavesPage render:', { loading, error, leavesCount: leaves.length, isProjectManager, isHRManager });
-
   if (loading) {
     return (
       <PageContainer>

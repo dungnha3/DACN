@@ -55,7 +55,7 @@ export default function CreateIssueModal({ isOpen, onClose, onSuccess }) {
       const data = await projectApi.getMyProjects()
       setProjects(data)
     } catch (err) {
-      console.error('Error loading projects:', err)
+      // Handle error silently
     }
   }
 
@@ -64,7 +64,6 @@ export default function CreateIssueModal({ isOpen, onClose, onSuccess }) {
       const members = await projectApi.getProjectMembers(projectId)
       setProjectMembers(members)
     } catch (err) {
-      console.error('Error loading project members:', err)
       setProjectMembers([])
     }
   }
@@ -99,9 +98,6 @@ export default function CreateIssueModal({ isOpen, onClose, onSuccess }) {
         estimatedHours: formData.estimatedHours ? parseFloat(formData.estimatedHours) : null,
         dueDate: formData.dueDate || null
       }
-
-      // Log request data
-      console.log('Creating issue with data:', issueData)
       
       // Tạo issue
       const createdIssue = await issueApi.createIssue(issueData)
@@ -110,9 +106,6 @@ export default function CreateIssueModal({ isOpen, onClose, onSuccess }) {
       onSuccess && onSuccess(createdIssue)
       handleClose()
     } catch (err) {
-      console.error('Error creating issue:', err)
-      console.error('Error response:', err.response?.data)
-      console.error('Error status:', err.response?.status)
       setError(err.response?.data?.message || err.message || 'Có lỗi xảy ra khi tạo tác vụ')
     } finally {
       setLoading(false)

@@ -162,6 +162,11 @@ export const sectionsConfig = {
     title: 'Trò chuyện',
     pageTitle: 'Trò chuyện',
     subtitle: 'Nhắn tin với đồng nghiệp và nhóm dự án',
+  },
+  storage: {
+    title: 'File của tôi',
+    pageTitle: 'File của tôi',
+    subtitle: 'Quản lý file và tài liệu cá nhân',
   }
 }
 

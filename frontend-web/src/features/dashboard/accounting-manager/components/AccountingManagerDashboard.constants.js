@@ -327,8 +327,11 @@ export const sectionsConfig = {
   },
   'my-payroll': {
     title: 'Phiếu lương cá nhân',
-    pageTitle: 'Phiếu lương cá nhân',
-    subtitle: 'Xem phiếu lương và thu nhập cá nhân',
+    subtitle: 'Xem phiếu lương của bạn'
+  },
+  'storage': {
+    title: 'File của tôi',
+    subtitle: 'Quản lý file và tài liệu cá nhân'
   },
   payroll: {
     title: 'Bảng lương',

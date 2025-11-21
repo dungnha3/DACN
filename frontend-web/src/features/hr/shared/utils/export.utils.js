@@ -5,7 +5,6 @@
 
 export const exportToExcel = (data, filename) => {
   // Simulate export - In production, this will call backend API
-  console.log('Exporting to Excel:', filename, data);
   alert(`Đang xuất file Excel: ${filename}.xlsx\n\nChức năng này sẽ gọi API:\nGET /api/export/excel/${filename}`);
   
   // TODO: Implement actual API call
@@ -18,7 +17,6 @@ export const exportToExcel = (data, filename) => {
 
 export const exportToPDF = (data, filename) => {
   // Simulate export - In production, this will call backend API
-  console.log('Exporting to PDF:', filename, data);
   alert(`Đang xuất file PDF: ${filename}.pdf\n\nChức năng này sẽ gọi API:\nGET /api/export/pdf/${filename}`);
   
   // TODO: Implement actual API call

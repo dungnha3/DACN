@@ -73,8 +73,7 @@ export default function EvaluationsPage() {
       const data = await employeesService.getAll();
       setEmployees(data || []);
     } catch (err) {
-      const errorMessage = handleError(err, { context: 'load_employees' });
-      console.error('Error fetching employees:', errorMessage);
+      handleError(err, { context: 'load_employees' });
     }
   };
 
@@ -218,7 +217,6 @@ export default function EvaluationsPage() {
       alert('✅ Đã gửi đánh giá để duyệt!');
       fetchEvaluationsData();
     } catch (err) {
-      console.error('Error submitting evaluation:', err);
       alert('❌ Gửi đánh giá thất bại: ' + (err.response?.data?.message || err.message));
     }
   };

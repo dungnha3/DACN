@@ -40,8 +40,7 @@ export default function ProjectsPage() {
       const data = await projectApi.getAllProjects();
       setProjects(data);
     } catch (error) {
-      const errorMessage = handleError(error, { context: 'load_projects' });
-      console.error('Error loading projects:', errorMessage);
+      handleError(error, { context: 'load_projects' });
     } finally {
       setLoading(false);
     }
@@ -137,8 +136,7 @@ function TasksTab({ isProjectManager }) {
       const data = await issueApi.getMyIssues();
       setIssues(data);
     } catch (error) {
-      const errorMessage = handleError(error, { context: 'load_my_issues' });
-      console.error('Error loading issues:', errorMessage);
+      handleError(error, { context: 'load_my_issues' });
     } finally {
       setLoading(false);
     }
@@ -578,7 +576,7 @@ function PerformanceTab() {
         totalOverdue
       })
     } catch (error) {
-      console.error('Error loading performance data:', error)
+      // Handle error silently
     } finally {
       setLoading(false)
     }
