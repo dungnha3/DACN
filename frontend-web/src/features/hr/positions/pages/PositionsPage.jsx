@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { positionsService } from '@/features/hr/shared/services';
+import { usePermissions, useErrorHandler } from '@/shared/hooks';
+import { validateRequired } from '@/shared/utils/validation';
 
 // Danh sách icon có thể chọn
 const AVAILABLE_ICONS = ['💻', '🚀', '⚡', '👥', '📊', '📢', '💼', '🔧', '🛡️', '🎯', '🎓', '💎'];
@@ -7,6 +9,9 @@ const AVAILABLE_ICONS = ['💻', '🚀', '⚡', '👥', '📊', '📢', '💼', 
 export default function PositionsPage() {
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  const { isHRManager } = usePermissions();
+  const { handleError } = useErrorHandler();
   
   useEffect(() => {
     loadData();
@@ -18,8 +23,8 @@ export default function PositionsPage() {
       const data = await positionsService.getAll();
       setPositions(data);
     } catch (err) {
-      console.error('Error loading positions:', err);
-      alert('Không thể tải dữ liệu: ' + (err.response?.data?.message || err.message));
+      const errorMessage = handleError(err, { context: 'load_positions' });
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -47,8 +52,10 @@ export default function PositionsPage() {
   };
 
   const handleSave = async () => {
-    if (!formData.tenChucVu.trim()) {
-      alert("Vui lòng nhập tên chức vụ");
+    // Validation
+    const nameError = validateRequired(formData.tenChucVu, 'Tên chức vụ');
+    if (nameError) {
+      alert(nameError);
       return;
     }
 
@@ -61,9 +68,10 @@ export default function PositionsPage() {
       }
       await loadData();
       setShowModal(false);
-      alert(editingPosition ? 'Cập nhật chức vụ thành công!' : 'Thêm chức vụ thành công!');
+      alert(editingPosition ? '✅ Cập nhật chức vụ thành công!' : '✅ Thêm chức vụ thành công!');
     } catch (err) {
-      alert('Lỗi: ' + (err.response?.data?.message || err.message));
+      const errorMessage = handleError(err, { context: editingPosition ? 'update_position' : 'create_position' });
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -75,14 +83,26 @@ export default function PositionsPage() {
         setLoading(true);
         await positionsService.delete(id);
         await loadData();
-        alert('Xóa chức vụ thành công!');
+        alert('✅ Xóa chức vụ thành công!');
       } catch (err) {
-        alert('Lỗi: ' + (err.response?.data?.message || err.message));
+        const errorMessage = handleError(err, { context: 'delete_position' });
+        alert(errorMessage);
       } finally {
         setLoading(false);
       }
     }
   };
+
+  // Permission guard
+  if (!isHRManager) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
+        <div style={{ fontSize: '20px', fontWeight: '600', color: '#ef4444' }}>Không có quyền truy cập</div>
+        <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px' }}>Chỉ HR Manager mới có quyền quản lý chức vụ</div>
+      </div>
+    );
+  }
 
   return (
     <div style={s.container}>

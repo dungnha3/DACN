@@ -1,10 +1,15 @@
 import { useState, useMemo, useEffect } from 'react';
 import { departmentsService, employeesService } from '@/features/hr/shared/services';
+import { usePermissions, useErrorHandler } from '@/shared/hooks';
+import { validateRequired } from '@/shared/utils/validation';
 
 export default function DepartmentsPage() {
   const [departments, setDepartments] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  const { isHRManager } = usePermissions();
+  const { handleError } = useErrorHandler();
   
   useEffect(() => {
     loadData();
@@ -20,8 +25,8 @@ export default function DepartmentsPage() {
       setDepartments(depts);
       setEmployees(emps);
     } catch (err) {
-      console.error('Error loading data:', err);
-      alert('Không thể tải dữ liệu: ' + (err.response?.data?.message || err.message));
+      const errorMessage = handleError(err, { context: 'load_departments' });
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -73,9 +78,10 @@ export default function DepartmentsPage() {
         setLoading(true);
         await departmentsService.delete(id);
         await loadData();
-        alert('Xóa phòng ban thành công!');
+        alert('✅ Xóa phòng ban thành công!');
       } catch (err) {
-        alert('Lỗi: ' + (err.response?.data?.message || err.message));
+        const errorMessage = handleError(err, { context: 'delete_department' });
+        alert(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -83,7 +89,9 @@ export default function DepartmentsPage() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.tenPhongBan) return alert("Tên phòng ban là bắt buộc!");
+    // Validation
+    const nameError = validateRequired(formData.tenPhongBan, 'Tên phòng ban');
+    if (nameError) return alert(nameError);
 
     try {
       setLoading(true);
@@ -94,13 +102,25 @@ export default function DepartmentsPage() {
       }
       await loadData();
       setShowModal(false);
-      alert(isEditing ? 'Cập nhật phòng ban thành công!' : 'Thêm phòng ban thành công!');
+      alert(isEditing ? '✅ Cập nhật phòng ban thành công!' : '✅ Thêm phòng ban thành công!');
     } catch (err) {
-      alert('Lỗi: ' + (err.response?.data?.message || err.message));
+      const errorMessage = handleError(err, { context: isEditing ? 'update_department' : 'create_department' });
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
   };
+
+  // Permission guard
+  if (!isHRManager) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
+        <div style={{ fontSize: '20px', fontWeight: '600', color: '#ef4444' }}>Không có quyền truy cập</div>
+        <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px' }}>Chỉ HR Manager mới có quyền quản lý phòng ban</div>
+      </div>
+    );
+  }
 
   return (
     <div style={s.container}>

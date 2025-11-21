@@ -100,4 +100,13 @@ export const employeesService = {
   delete: async (id) => {
     return await apiService.delete(API_ENDPOINTS.HR.EMPLOYEE_BY_ID(id));
   },
+
+  /**
+   * Kiểm tra User đã có nhân viên chưa
+   * @param {number} userId - User ID
+   * @returns {Promise<{ hasNhanVien: boolean }>}
+   */
+  hasNhanVien: async (userId) => {
+    return await apiService.get(`${API_ENDPOINTS.HR.EMPLOYEE_BY_USER(userId)}/exists`);
+  },
 };

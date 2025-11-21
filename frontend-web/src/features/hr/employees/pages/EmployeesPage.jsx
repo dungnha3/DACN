@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { employeesService, departmentsService, positionsService } from '@/features/hr/shared/services';
 import { apiService } from '@/shared/services/api.service';
+import { usePermissions, useErrorHandler } from '@/shared/hooks';
+import { validateEmployee } from '@/shared/utils/validation';
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState([]);
@@ -11,6 +13,10 @@ export default function EmployeesPage() {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
+
+  const { isHRManager } = usePermissions();
+  const { handleError } = useErrorHandler();
 
   const [newEmp, setNewEmp] = useState({
     userId: '',
@@ -44,7 +50,7 @@ export default function EmployeesPage() {
       setEmployees(empData);
       setDepartments(deptData);
       setPositions(posData);
-      
+
       // Load users (for dropdown) - Try both /users and /api/users
       try {
         const usersData = await apiService.get('/users');
@@ -60,10 +66,8 @@ export default function EmployeesPage() {
         }
       }
     } catch (err) {
-      setError(err.message || 'Không thể tải dữ liệu');
-      console.error('Error loading data:', err);
-      console.error('Error response:', err.response?.data);
-      console.error('Error status:', err.response?.status);
+      const errorMessage = handleError(err, { context: 'load_employees_data' });
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -75,20 +79,16 @@ export default function EmployeesPage() {
   };
 
   const handleSave = async () => {
-    // Validation
-    if (!newEmp.hoTen) {
-      return alert("Vui lòng điền Họ tên!");
+    // Validation with validateEmployee
+    const validationErrors = validateEmployee(newEmp);
+    if (validationErrors) {
+      setFormErrors(validationErrors);
+      alert('Vui lòng kiểm tra lại thông tin!');
+      return;
     }
-    if (!newEmp.userId) {
-      return alert("Vui lòng chọn tài khoản!");
-    }
-    if (!newEmp.ngaySinh) {
-      return alert("Vui lòng chọn ngày sinh!");
-    }
-    if (!newEmp.ngayVaoLam) {
-      return alert("Vui lòng chọn ngày vào làm!");
-    }
-    
+
+    setFormErrors({});
+
     try {
       setLoading(true);
       await employeesService.create({
@@ -119,43 +119,47 @@ export default function EmployeesPage() {
         luongCoBan: '',
         phuCap: ''
       });
-      alert('Thêm nhân viên thành công!');
+      alert('✅ Thêm nhân viên thành công!');
     } catch (err) {
-      alert('Lỗi: ' + (err.response?.data?.message || err.message));
-      console.error('Create employee error:', err.response?.data);
+      const errorMessage = handleError(err, { context: 'create_employee' });
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if(confirm('Bạn chắc chắn muốn xóa nhân viên này?')) {
+    if (confirm('Bạn chắc chắn muốn xóa nhân viên này?')) {
       try {
         setLoading(true);
         await employeesService.delete(id);
         await loadData();
-        alert('Xóa nhân viên thành công!');
+        alert('✅ Xóa nhân viên thành công!');
       } catch (err) {
-        alert('Lỗi: ' + (err.response?.data?.message || err.message));
+        const errorMessage = handleError(err, { context: 'delete_employee' });
+        alert(errorMessage);
       } finally {
         setLoading(false);
       }
     }
   }
 
+  // Filter employees by search term
   const filteredEmployees = employees.filter(emp => 
     emp.hoTen?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     emp.maNhanVien?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Format currency
   const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 
+  // Get status badge
   const getStatusBadge = (status) => {
     const config = {
       DANG_LAM_VIEC: { color: '#16a34a', bg: '#dcfce7', text: 'Đang làm' },
       NGHI_VIEC: { color: '#dc2626', bg: '#fee2e2', text: 'Nghỉ việc' },
-      NGHI_THAI_SAN: { color: '#d97706', bg: '#fef3c7', text: 'Thai sản' }
+      TAM_NGHI: { color: '#d97706', bg: '#fef3c7', text: 'Tạm nghỉ' }
     };
     const style = config[status] || config.DANG_LAM_VIEC;
     return (
@@ -169,6 +173,17 @@ export default function EmployeesPage() {
       </span>
     );
   };
+
+  // Permission guard
+  if (!isHRManager) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
+        <div style={{ fontSize: '20px', fontWeight: '600', color: '#ef4444' }}>Không có quyền truy cập</div>
+        <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px' }}>Chỉ HR Manager mới có quyền quản lý nhân viên</div>
+      </div>
+    );
+  }
 
   return (
     <div style={s.container}>

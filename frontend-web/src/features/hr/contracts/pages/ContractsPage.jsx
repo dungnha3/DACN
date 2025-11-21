@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { contractsService, employeesService } from '@/features/hr/shared/services';
+import { usePermissions, useErrorHandler } from '@/shared/hooks';
+import { validateRequired, validateDateRange } from '@/shared/utils/validation';
 
 export default function ContractsPage() {
   const [contracts, setContracts] = useState([]);
@@ -19,6 +21,9 @@ export default function ContractsPage() {
     noiDung: ''
   });
 
+  const { isHRManager } = usePermissions();
+  const { handleError } = useErrorHandler();
+
   useEffect(() => {
     loadData();
   }, []);
@@ -33,8 +38,8 @@ export default function ContractsPage() {
       setContracts(contractsData);
       setEmployees(employeesData);
     } catch (err) {
-      console.error('Error loading contracts:', err);
-      alert('Không thể tải dữ liệu: ' + (err.response?.data?.message || err.message));
+      const errorMessage = handleError(err, { context: 'load_contracts' });
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -68,9 +73,10 @@ export default function ContractsPage() {
       await contractsService.renew(selectedContract.hopdongId, newEndDate);
       await loadData();
       setShowRenewModal(false);
-      alert(`Đã gia hạn hợp đồng thành công đến ${newEndDate}`);
+      alert(`✅ Đã gia hạn hợp đồng thành công đến ${newEndDate}`);
     } catch (err) {
-      alert('Lỗi: ' + (err.response?.data?.message || err.message));
+      const errorMessage = handleError(err, { context: 'renew_contract' });
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -82,9 +88,10 @@ export default function ContractsPage() {
         setLoading(true);
         await contractsService.cancel(id);
         await loadData();
-        alert('Hủy hợp đồng thành công!');
+        alert('✅ Hủy hợp đồng thành công!');
       } catch (err) {
-        alert('Lỗi: ' + (err.response?.data?.message || err.message));
+        const errorMessage = handleError(err, { context: 'cancel_contract' });
+        alert(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -93,17 +100,30 @@ export default function ContractsPage() {
 
   const handleCreateContract = async () => {
     // Validation
-    if (!formData.nhanvienId) {
-      return alert('Vui lòng chọn nhân viên!');
+    const errors = [];
+    
+    const empError = validateRequired(formData.nhanvienId, 'Nhân viên');
+    if (empError) errors.push(empError);
+    
+    const startDateError = validateRequired(formData.ngayBatDau, 'Ngày bắt đầu');
+    if (startDateError) errors.push(startDateError);
+    
+    if (formData.loaiHopDong !== 'VO_THOI_HAN') {
+      const endDateError = validateRequired(formData.ngayKetThuc, 'Ngày kết thúc');
+      if (endDateError) errors.push(endDateError);
+      
+      if (formData.ngayBatDau && formData.ngayKetThuc) {
+        const dateRangeError = validateDateRange(formData.ngayBatDau, formData.ngayKetThuc);
+        if (dateRangeError) errors.push(dateRangeError);
+      }
     }
-    if (!formData.ngayBatDau) {
-      return alert('Vui lòng chọn ngày bắt đầu!');
-    }
-    if (formData.loaiHopDong !== 'VO_THOI_HAN' && !formData.ngayKetThuc) {
-      return alert('Vui lòng chọn ngày kết thúc!');
-    }
-    if (!formData.luongCoBan || formData.luongCoBan <= 0) {
-      return alert('Vui lòng nhập lương cơ bản hợp lệ!');
+    
+    const salaryError = validateRequired(formData.luongCoBan, 'Lương cơ bản');
+    if (salaryError) errors.push(salaryError);
+    else if (Number(formData.luongCoBan) <= 0) errors.push('Lương cơ bản phải lớn hơn 0');
+    
+    if (errors.length > 0) {
+      return alert(errors.join('\n'));
     }
     
     try {
@@ -124,9 +144,10 @@ export default function ContractsPage() {
         luongCoBan: '',
         noiDung: ''
       });
-      alert('Tạo hợp đồng thành công!');
+      alert('✅ Tạo hợp đồng thành công!');
     } catch (err) {
-      alert('Lỗi: ' + (err.response?.data?.message || err.message));
+      const errorMessage = handleError(err, { context: 'create_contract' });
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -166,6 +187,17 @@ export default function ContractsPage() {
     const t = types[type] || types.THU_VIEC;
     return <span style={{ color: t.color, fontWeight: 600 }}>{t.icon} {t.label}</span>;
   };
+
+  // Permission guard
+  if (!isHRManager) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
+        <div style={{ fontSize: '20px', fontWeight: '600', color: '#ef4444' }}>Không có quyền truy cập</div>
+        <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px' }}>Chỉ HR Manager mới có quyền quản lý hợp đồng</div>
+      </div>
+    );
+  }
 
   return (
     <div style={s.container}>

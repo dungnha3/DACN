@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { leavesService } from '@/features/hr/shared/services';
+import { usePermissions, useErrorHandler } from '@/shared/hooks';
+import { validateRequired } from '@/shared/utils/validation';
 
 export default function LeavesPage() {
   const [leaves, setLeaves] = useState([]);
@@ -8,6 +10,13 @@ export default function LeavesPage() {
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   
+  const { isProjectManager, isHRManager } = usePermissions();
+  const { handleError } = useErrorHandler();
+  
+  // Determine mode: PM can approve, HR read-only
+  const canApprove = isProjectManager;
+  const isReadOnly = isHRManager && !isProjectManager;
+
   // State cho Modal
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [approvalNote, setApprovalNote] = useState('');
@@ -26,8 +35,8 @@ export default function LeavesPage() {
       const data = await leavesService.getAll();
       setLeaves(data || []);
     } catch (err) {
-      console.error('Error fetching leaves:', err);
-      setError('Không thể tải dữ liệu nghỉ phép');
+      const errorMessage = handleError(err, { context: 'load_leaves' });
+      setError(errorMessage);
       setLeaves([]);
     } finally {
       setLoading(false);
@@ -53,13 +62,22 @@ export default function LeavesPage() {
   const handleAction = async (action) => {
     if (!selectedLeave) return;
     
+    // Validation for reject
+    if (action === 'REJECT') {
+      const noteError = validateRequired(approvalNote, 'Lý do từ chối');
+      if (noteError) {
+        alert(noteError);
+        return;
+      }
+    }
+    
     try {
       if (action === 'APPROVE') {
-        await leavesService.approve(selectedLeave.nghiphepId, approvalNote);
-        alert('✅ Đã duyệt đơn thành công!');
+        await leavesService.approve(selectedLeave.nghiphepId, approvalNote || 'Approved');
+        alert('✅ Đã duyệt đơn nghỉ phép!');
       } else {
         await leavesService.reject(selectedLeave.nghiphepId, approvalNote);
-        alert('✅ Đã từ chối đơn thành công!');
+        alert('✅ Đã từ chối đơn!');
       }
       
       // Refresh data
@@ -67,8 +85,8 @@ export default function LeavesPage() {
       setSelectedLeave(null);
       setApprovalNote('');
     } catch (err) {
-      console.error('Error processing leave:', err);
-      alert('❌ Xử lý đơn thất bại: ' + (err.response?.data?.message || err.message));
+      const errorMessage = handleError(err, { context: action === 'APPROVE' ? 'approve_leave' : 'reject_leave' });
+      alert(errorMessage);
     }
   };
 
@@ -261,7 +279,7 @@ export default function LeavesPage() {
                 </div>
               </div>
 
-              {selectedLeave.trangThai === 'CHO_DUYET' ? (
+              {selectedLeave.trangThai === 'CHO_DUYET' && canApprove ? (
                 <div style={s.approvalSection}>
                   <label style={s.detailLabel}>Ghi chú duyệt / Lý do từ chối</label>
                   <textarea 
@@ -273,6 +291,16 @@ export default function LeavesPage() {
                   <div style={s.approvalActions}>
                     <button style={s.btnReject} onClick={() => handleAction('REJECT')}>✗ Từ chối</button>
                     <button style={s.btnApprove} onClick={() => handleAction('APPROVE')}>✓ Phê duyệt</button>
+                  </div>
+                </div>
+              ) : selectedLeave.trangThai === 'CHO_DUYET' && isReadOnly ? (
+                <div style={s.readOnlyNotice}>
+                  <span style={{fontSize: 18}}>ℹ️</span>
+                  <div>
+                    <div style={{fontWeight: 600, color: '#3b82f6'}}>Chỉ xem thông tin</div>
+                    <div style={{fontSize: 13, color: '#6b7280', marginTop: 4}}>
+                      HR Manager chỉ có quyền xem, không duyệt. Đơn này đang chờ PM duyệt.
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -552,5 +580,28 @@ const s = {
     background: '#f8f9fa', padding: 16, borderRadius: 8, border: '1px solid #e9ecef'
   },
   historyItem: { fontSize: 13, marginBottom: 6, color: '#344767' },
-  historyLabel: { fontWeight: 600, marginRight: 6, color: '#7b809a' }
+  historyLabel: { fontWeight: 600, marginRight: 6, color: '#7b809a' },
+  
+  // Read-only notice for HR
+  readOnlyNotice: {
+    background: '#eff6ff', padding: 16, borderRadius: 12, border: '1px solid #bfdbfe',
+    display: 'flex', gap: 12, alignItems: 'flex-start'
+  },
+  
+  // Form elements
+  formGroup: { marginBottom: 16 },
+  label: { fontSize: 13, fontWeight: 600, color: '#344767', marginBottom: 8, display: 'block' },
+  input: {
+    width: '100%', padding: 12, border: '1px solid #d2d6da', borderRadius: 8,
+    outline: 'none', fontSize: 14, boxSizing: 'border-box', color: '#344767', background: '#fff'
+  },
+  select: {
+    width: '100%', padding: 12, border: '1px solid #d2d6da', borderRadius: 8,
+    outline: 'none', fontSize: 14, boxSizing: 'border-box', color: '#344767', background: '#fff', cursor: 'pointer'
+  },
+  btnCancel: {
+    padding: '10px 20px', border: 'none', background: '#f0f2f5', color: '#7b809a',
+    borderRadius: 8, fontWeight: 600, cursor: 'pointer'
+  },
+  statusBig: {}
 };

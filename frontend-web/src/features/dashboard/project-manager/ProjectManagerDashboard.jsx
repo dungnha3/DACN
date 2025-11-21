@@ -15,6 +15,7 @@ import {
   ProjectsPage,
   ChatPage
 } from '@modules/project'
+import { LeavesPage } from '@modules/hr'
 
 export default function ProjectManagerDashboard() {
   const [active, setActive] = useState('dashboard')
@@ -43,6 +44,8 @@ export default function ProjectManagerDashboard() {
         return <LeavePage />
       case 'approvals':
         return <ApprovalsPage />
+      case 'team-leaves':
+        return <LeavesPage />
       case 'documents':
         return <DocumentsPage />
       case 'projects':
@@ -94,6 +97,9 @@ export default function ProjectManagerDashboard() {
           </NavItem>
           <NavItem active={active === 'approvals'} onClick={() => setActive('approvals')} icon="✓">
             {sections.approvals.title}
+          </NavItem>
+          <NavItem active={active === 'team-leaves'} onClick={() => setActive('team-leaves')} icon="📋">
+            Duyệt nghỉ phép
           </NavItem>
           <NavItem active={active === 'documents'} onClick={() => setActive('documents')} icon="📄">
             {sections.documents.title}

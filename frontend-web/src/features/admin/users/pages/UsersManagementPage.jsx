@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { PageLayout, DataTable, Loading, ErrorMessage, StatusBadge, FormModal, FormField } from '@/shared/components'
 import { usersService } from '@/shared/services'
+import { usePermissions, useErrorHandler } from '@/shared/hooks'
+import { validateEmail, validateRequired } from '@/shared/utils/validation'
 
 export default function UsersManagementPage() {
   const [users, setUsers] = useState([])
@@ -13,6 +15,10 @@ export default function UsersManagementPage() {
     password: '',
     role: 'EMPLOYEE'
   })
+  const [formErrors, setFormErrors] = useState({})
+  
+  const { isAdmin } = usePermissions()
+  const { handleError } = useErrorHandler()
 
   useEffect(() => {
     loadUsers()
@@ -25,15 +31,27 @@ export default function UsersManagementPage() {
       setUsers(data || [])
       setError(null)
     } catch (err) {
-      setError(err.response?.data?.message || 'Không thể tải danh sách users')
+      const errorMessage = handleError(err, { context: 'load_users' })
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
   }
 
   const handleCreate = async () => {
-    if (!formData.username || !formData.email || !formData.password) {
-      alert('Vui lòng điền đầy đủ thông tin!')
+    // Validate
+    const errors = {}
+    const usernameError = validateRequired(formData.username, 'Username')
+    if (usernameError) errors.username = usernameError
+    
+    const emailError = validateEmail(formData.email)
+    if (emailError) errors.email = emailError
+    
+    const passwordError = validateRequired(formData.password, 'Password')
+    if (passwordError) errors.password = passwordError
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors)
       return
     }
 
@@ -41,9 +59,12 @@ export default function UsersManagementPage() {
       await usersService.create(formData)
       setShowModal(false)
       setFormData({ username: '', email: '', password: '', role: 'EMPLOYEE' })
+      setFormErrors({})
       loadUsers()
+      alert('✅ Tạo user thành công!')
     } catch (err) {
-      alert('Lỗi: ' + (err.response?.data?.message || err.message))
+      const errorMessage = handleError(err, { context: 'create_user' })
+      alert(errorMessage)
     }
   }
 
@@ -55,8 +76,10 @@ export default function UsersManagementPage() {
         await usersService.activate(userId)
       }
       loadUsers()
+      alert(`✅ ${isActive ? 'Vô hiệu hóa' : 'Kích hoạt'} user thành công!`)
     } catch (err) {
-      alert('Lỗi: ' + (err.response?.data?.message || err.message))
+      const errorMessage = handleError(err, { context: 'toggle_active' })
+      alert(errorMessage)
     }
   }
 
@@ -66,8 +89,10 @@ export default function UsersManagementPage() {
     try {
       await usersService.delete(userId)
       loadUsers()
+      alert('✅ Xóa user thành công!')
     } catch (err) {
-      alert('Lỗi: ' + (err.response?.data?.message || err.message))
+      const errorMessage = handleError(err, { context: 'delete_user' })
+      alert(errorMessage)
     }
   }
 
@@ -147,6 +172,11 @@ export default function UsersManagementPage() {
     }
   ]
 
+  // Permission check
+  if (!isAdmin) {
+    return <ErrorMessage error="Bạn không có quyền truy cập trang này" />
+  }
+  
   if (loading) return <Loading />
   if (error) return <ErrorMessage error={error} onRetry={loadUsers} />
 
