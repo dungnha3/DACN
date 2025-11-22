@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { projectApi } from '../api/projectApi'
 import { userApi } from '../api/userApi'
 import { useErrorHandler } from '@/shared/hooks'
+import { styles } from './CreateProjectModal.styles'
 
 export default function CreateProjectModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
