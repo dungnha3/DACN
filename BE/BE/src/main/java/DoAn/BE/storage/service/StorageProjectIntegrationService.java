@@ -44,7 +44,7 @@ public class StorageProjectIntegrationService {
         
         // Tạo folder mới với type PROJECT
         Folder folder = new Folder();
-        folder.setName("💼 " + project.getName());
+        folder.setName(project.getName());
         folder.setOwner(creator);
         folder.setFolderType(Folder.FolderType.PROJECT);
         folder.setProject(project);

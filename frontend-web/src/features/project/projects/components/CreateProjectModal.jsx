@@ -98,7 +98,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }) {
         throw new Error('Vui lòng điền đầy đủ tên dự án và mã dự án')
       }
 
-      // Tạo dự án
+      // Tạo dự án (backend sẽ tự động tạo folder)
       const createdProject = await projectApi.createProject(formData)
       
       // Thêm members vào dự án nếu có
