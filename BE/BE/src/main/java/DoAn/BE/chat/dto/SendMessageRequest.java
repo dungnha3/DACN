@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SendMessageRequest {
     
-    @NotNull(message = "ID phòng chat không được để trống")
+    // roomId được set từ path variable trong controller, không cần trong request body
     private Long roomId;
     
     @Size(max = 4000, message = "Nội dung tin nhắn không được vượt quá 4000 ký tự")

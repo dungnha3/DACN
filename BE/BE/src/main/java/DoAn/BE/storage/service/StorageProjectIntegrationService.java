@@ -32,26 +32,30 @@ public class StorageProjectIntegrationService {
     private final ProjectRepository projectRepository;
     
     /**
-     * Lấy hoặc tạo folder cho project
+     * Lấy hoặc tạo folder SHARED cho project
+     * CHỈ có 1 folder cho 1 project, được share bởi tất cả members
      */
     @Transactional
     public Folder getOrCreateProjectFolder(Project project, User creator) {
-        // Tìm folder theo project
+        // Tìm folder theo project (CHỈ 1 folder cho project)
         List<Folder> existingFolders = folderRepository.findByProject(project);
         if (!existingFolders.isEmpty()) {
+            log.info("Found existing shared project folder {} for project {}", 
+                existingFolders.get(0).getFolderId(), project.getProjectId());
             return existingFolders.get(0);
         }
         
-        // Tạo folder mới với type PROJECT
+        // Tạo folder SHARED mới với type PROJECT
         Folder folder = new Folder();
         folder.setName(project.getName());
-        folder.setOwner(creator);
+        folder.setOwner(creator); // Creator is owner, but all members can access
         folder.setFolderType(Folder.FolderType.PROJECT);
         folder.setProject(project);
         folder.setCreatedAt(LocalDateTime.now());
         
         folder = folderRepository.save(folder);
-        log.info("Created project folder {} for project {}", folder.getFolderId(), project.getProjectId());
+        log.info("Created shared project folder {} for project {}", 
+            folder.getFolderId(), project.getProjectId());
         
         return folder;
     }
