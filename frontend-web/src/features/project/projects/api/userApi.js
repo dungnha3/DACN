@@ -5,21 +5,9 @@ export const userApi = {
   // Search users by email or username
   searchUsers: async (query) => {
     try {
-      // Try multiple endpoints for user search
-      // First try: /api/users/search
-      try {
-        const response = await apiService.get(`/api/users/search?q=${encodeURIComponent(query)}`)
-        return response
-      } catch (err) {
-        // Fallback: /users endpoint with filter
-        const users = await apiService.get('/users')
-        // Client-side filtering if backend doesn't support search
-        return users.filter(user => 
-          user.email?.toLowerCase().includes(query.toLowerCase()) ||
-          user.username?.toLowerCase().includes(query.toLowerCase()) ||
-          user.hoTen?.toLowerCase().includes(query.toLowerCase())
-        )
-      }
+      // Call /api/users/search with 'keyword' param (matching backend)
+      const response = await apiService.get(`/api/users/search?keyword=${encodeURIComponent(query)}`)
+      return response
     } catch (error) {
       throw error
     }
@@ -38,7 +26,7 @@ export const userApi = {
   // Get all users (for dropdown, etc.)
   getAllUsers: async () => {
     try {
-      const response = await apiService.get('/users')
+      const response = await apiService.get('/api/users')
       return response
     } catch (error) {
       throw error;

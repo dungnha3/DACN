@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { projectApi } from '../api/projectApi'
 import { userApi } from '../api/userApi'
 import { useErrorHandler } from '@/shared/hooks'
+import { styles } from './CreateProjectModal.styles'
 
 export default function CreateProjectModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -97,7 +98,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }) {
         throw new Error('Vui lòng điền đầy đủ tên dự án và mã dự án')
       }
 
-      // Tạo dự án
+      // Tạo dự án (backend sẽ tự động tạo folder)
       const createdProject = await projectApi.createProject(formData)
       
       // Thêm members vào dự án nếu có

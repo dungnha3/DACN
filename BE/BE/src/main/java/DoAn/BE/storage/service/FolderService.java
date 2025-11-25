@@ -3,6 +3,7 @@ package DoAn.BE.storage.service;
 import DoAn.BE.common.exception.*;
 import DoAn.BE.project.entity.Project;
 import DoAn.BE.project.repository.ProjectRepository;
+import DoAn.BE.project.repository.ProjectMemberRepository;
 import DoAn.BE.storage.dto.CreateFolderRequest;
 import DoAn.BE.storage.dto.FolderDTO;
 import DoAn.BE.storage.entity.Folder;
@@ -26,6 +27,7 @@ public class FolderService {
     private final FolderRepository folderRepository;
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
+    private final ProjectMemberRepository projectMemberRepository;
     
     @Transactional
     public FolderDTO createFolder(CreateFolderRequest request, Long userId) {
@@ -69,18 +71,63 @@ public class FolderService {
         Folder folder = folderRepository.findById(folderId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy thư mục"));
         
-        // Check if user owns the folder
-        if (!folder.getOwner().getUserId().equals(userId)) {
+        // Check permission: owner OR project member
+        if (!canAccessFolder(folder, userId)) {
             throw new ForbiddenException("Bạn không có quyền xem thư mục này");
         }
         
         return convertToDTO(folder);
     }
     
+    /**
+     * Check if user can access folder (owner or project member)
+     * Also checks parent folder recursively for subfolders in project folders
+     */
+    private boolean canAccessFolder(Folder folder, Long userId) {
+        // Owner can always access
+        if (folder.getOwner().getUserId().equals(userId)) {
+            return true;
+        }
+        
+        // If folder is PROJECT type, check if user is project member
+        if (folder.getFolderType() == Folder.FolderType.PROJECT && folder.getProject() != null) {
+            return projectMemberRepository.findByProject_ProjectIdAndUser_UserId(
+                folder.getProject().getProjectId(), userId
+            ).isPresent();
+        }
+        
+        // ✅ NEW: Check parent folder recursively
+        // If this is a subfolder inside a project folder, check parent permission
+        if (folder.getParentFolder() != null) {
+            return canAccessFolder(folder.getParentFolder(), userId);
+        }
+        
+        return false;
+    }
+    
     @Transactional(readOnly = true)
     public List<FolderDTO> getUserFolders(Long userId) {
-        List<Folder> folders = folderRepository.findByOwner_UserId(userId);
-        return folders.stream()
+        // Get folders owned by user
+        List<Folder> ownedFolders = folderRepository.findByOwner_UserId(userId);
+        
+        // Get project folders where user is a member
+        List<Long> userProjectIds = projectMemberRepository.findByUser_UserId(userId)
+            .stream()
+            .map(pm -> pm.getProject().getProjectId())
+            .toList();
+        
+        List<Folder> projectFolders = userProjectIds.isEmpty() 
+            ? List.of() 
+            : userProjectIds.stream()
+                .flatMap(projectId -> folderRepository.findByProject_ProjectId(projectId).stream())
+                .filter(f -> !ownedFolders.contains(f)) // Avoid duplicates
+                .toList();
+        
+        // Combine both lists
+        List<Folder> allFolders = new java.util.ArrayList<>(ownedFolders);
+        allFolders.addAll(projectFolders);
+        
+        return allFolders.stream()
             .map(this::convertToDTO)
             .collect(Collectors.toList());
     }
@@ -91,8 +138,8 @@ public class FolderService {
         Folder parentFolder = folderRepository.findById(parentFolderId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy thư mục cha"));
         
-        // Check if user owns the parent folder
-        if (!parentFolder.getOwner().getUserId().equals(userId)) {
+        // Check permission: owner OR project member
+        if (!canAccessFolder(parentFolder, userId)) {
             throw new ForbiddenException("Bạn không có quyền xem thư mục này");
         }
         
@@ -108,9 +155,13 @@ public class FolderService {
         projectRepository.findById(projectId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy dự án"));
         
+        // Check if user is project member
+        if (projectMemberRepository.findByProject_ProjectIdAndUser_UserId(projectId, userId).isEmpty()) {
+            throw new ForbiddenException("Bạn không phải thành viên của dự án này");
+        }
+        
         List<Folder> folders = folderRepository.findByProject_ProjectId(projectId);
         return folders.stream()
-            .filter(f -> f.getOwner().getUserId().equals(userId))
             .map(this::convertToDTO)
             .collect(Collectors.toList());
     }
@@ -120,8 +171,8 @@ public class FolderService {
         Folder folder = folderRepository.findById(folderId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy thư mục"));
         
-        // Check if user owns the folder
-        if (!folder.getOwner().getUserId().equals(userId)) {
+        // Check permission: owner OR project member
+        if (!canAccessFolder(folder, userId)) {
             throw new ForbiddenException("Bạn không có quyền sửa thư mục này");
         }
         
@@ -136,8 +187,8 @@ public class FolderService {
         Folder folder = folderRepository.findById(folderId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy thư mục"));
         
-        // Check if user owns the folder
-        if (!folder.getOwner().getUserId().equals(userId)) {
+        // Check permission: owner OR project member
+        if (!canAccessFolder(folder, userId)) {
             throw new ForbiddenException("Bạn không có quyền xóa thư mục này");
         }
         

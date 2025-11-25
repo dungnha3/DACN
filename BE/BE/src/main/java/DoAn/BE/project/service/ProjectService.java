@@ -332,6 +332,15 @@ public class ProjectService {
             }
         }
         
+        // Create project folder for new member
+        try {
+            storageProjectIntegrationService.getOrCreateProjectFolder(project, newMember);
+            log.info("Created project folder for new member {} in project {}", newMember.getUserId(), projectId);
+        } catch (Exception e) {
+            log.error("Failed to create project folder for member {}: {}", newMember.getUserId(), e.getMessage());
+            // Don't fail the whole operation if folder creation fails
+        }
+        
         // Post system message
         projectChatIntegrationService.notifyMemberAdded(project, newMember.getUsername(), request.getRole().toString());
         
