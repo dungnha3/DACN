@@ -36,6 +36,8 @@ public class ChucVuService {
         ChucVu chucVu = new ChucVu();
         chucVu.setTenChucVu(request.getTenChucVu());
         chucVu.setMoTa(request.getMoTa());
+        chucVu.setIcon(request.getIcon());
+        chucVu.setHeSoLuong(request.getHeSoLuong());
         chucVu.setLevel(request.getLevel() != null ? request.getLevel() : 1);
 
         return chucVuRepository.save(chucVu);
@@ -62,6 +64,14 @@ public class ChucVuService {
 
         if (request.getMoTa() != null) {
             chucVu.setMoTa(request.getMoTa());
+        }
+
+        if (request.getIcon() != null) {
+            chucVu.setIcon(request.getIcon());
+        }
+
+        if (request.getHeSoLuong() != null) {
+            chucVu.setHeSoLuong(request.getHeSoLuong());
         }
 
         if (request.getLevel() != null) {

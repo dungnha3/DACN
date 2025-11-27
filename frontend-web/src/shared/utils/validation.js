@@ -172,11 +172,11 @@ export const validateEmployee = (data) => {
   const phoneError = data.soDienThoai ? validatePhone(data.soDienThoai) : null;
   if (phoneError) errors.soDienThoai = phoneError;
   
-  const deptError = validateRequired(data.phongBanId, 'Phòng ban');
-  if (deptError) errors.phongBanId = deptError;
+  const deptError = validateRequired(data.phongbanId, 'Phòng ban');
+  if (deptError) errors.phongbanId = deptError;
   
-  const posError = validateRequired(data.chucVuId, 'Chức vụ');
-  if (posError) errors.chucVuId = posError;
+  const posError = validateRequired(data.chucvuId, 'Chức vụ');
+  if (posError) errors.chucvuId = posError;
   
   return Object.keys(errors).length > 0 ? errors : null;
 };

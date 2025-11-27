@@ -170,7 +170,7 @@ export const dashboardBaseStyles = {
   
   // Main Content Area
   content: {
-    minHeight: '100vh',
+    height: '100%',
     overflowY: 'auto',
     background: colors.background
   },

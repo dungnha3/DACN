@@ -21,7 +21,7 @@ public interface ThongBaoRepository extends JpaRepository<ThongBao, Long> {
     @Query("SELECT tb FROM ThongBao tb WHERE tb.nguoiNhan.userId = :userId AND tb.trangThai != 'DA_XOA' ORDER BY tb.ngayTao DESC")
     List<ThongBao> findByNguoiNhanUserId(@Param("userId") Long userId);
     
-    @Query("SELECT tb FROM ThongBao tb WHERE tb.nguoiNhan.userId = :userId AND tb.trangThai != 'DA_XOA' ORDER BY tb.ngayTao DESC")
+    @Query("SELECT tb FROM ThongBao tb WHERE tb.nguoiNhan.userId = :userId AND tb.trangThai != 'DA_XOA'")
     Page<ThongBao> findByNguoiNhanUserId(@Param("userId") Long userId, Pageable pageable);
     
     // Đếm thông báo chưa đọc

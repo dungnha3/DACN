@@ -17,6 +17,7 @@ public class HopDongDTO {
     private Long hopdongId;
     private Long nhanvienId;
     private String hoTenNhanVien;
+    private String tenChucVu; // Thêm chức vụ
     private LoaiHopDong loaiHopDong;
     private LocalDate ngayBatDau;
     private LocalDate ngayKetThuc;

@@ -47,6 +47,7 @@ public class DanhGiaMapper {
             
             if (danhGia.getNhanVien().getUser() != null) {
                 dto.setEmailNhanVien(danhGia.getNhanVien().getUser().getEmail());
+                dto.setAvatar(danhGia.getNhanVien().getUser().getAvatarUrl());
             }
             
             if (danhGia.getNhanVien().getPhongBan() != null) {

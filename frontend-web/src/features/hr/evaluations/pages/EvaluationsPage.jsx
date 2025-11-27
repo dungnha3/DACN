@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { evaluationsService, employeesService } from '@/features/hr/shared/services';
+import Pagination from '@/shared/components/table/Pagination';
 import { usePermissions, useErrorHandler } from '@/shared/hooks';
 import { validateRequired } from '@/shared/utils/validation';
 
@@ -28,6 +29,10 @@ export default function EvaluationsPage() {
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [approvalNote, setApprovalNote] = useState('');
   const [approvalAction, setApprovalAction] = useState(null); // 'APPROVE' or 'REJECT'
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   
   // Create Modal States
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -85,6 +90,18 @@ export default function EvaluationsPage() {
       return matchStatus && matchSearch;
     });
   }, [evaluations, filterStatus, searchTerm]);
+
+  // --- PAGINATION LOGIC ---
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, searchTerm]);
+
+  const paginatedEvals = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredEvals.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredEvals, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredEvals.length / itemsPerPage);
 
   const stats = {
     total: evaluations.length,
@@ -337,7 +354,7 @@ export default function EvaluationsPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredEvals.map(e => (
+            {paginatedEvals.map(e => (
               <tr key={e.danhGiaId} style={s.tr}>
                 <td style={s.td}>
                   <div style={s.profileCell}>
@@ -403,6 +420,16 @@ export default function EvaluationsPage() {
         </table>
         {filteredEvals.length === 0 && (
           <div style={s.emptyState}>Không tìm thấy đánh giá nào.</div>
+        )}
+
+        {filteredEvals.length > 0 && (
+          <div style={{ padding: '16px 0', borderTop: '1px solid #f0f2f5' }}>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         )}
       </div>
 

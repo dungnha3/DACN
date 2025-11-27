@@ -1,14 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { positionsService } from '@/features/hr/shared/services';
 import { usePermissions, useErrorHandler } from '@/shared/hooks';
 import { validateRequired } from '@/shared/utils/validation';
+import Pagination from '@/shared/components/table/Pagination';
 
 // Danh sách icon có thể chọn
 const AVAILABLE_ICONS = ['💻', '🚀', '⚡', '👥', '📊', '📢', '💼', '🔧', '🛡️', '🎯', '🎓', '💎'];
+const ITEMS_PER_PAGE = 9;
 
 export default function PositionsPage() {
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   
   const { isHRManager } = usePermissions();
   const { handleError } = useErrorHandler();
@@ -29,6 +32,13 @@ export default function PositionsPage() {
       setLoading(false);
     }
   };
+
+  // Pagination logic
+  const totalPages = Math.ceil(positions.length / ITEMS_PER_PAGE);
+  const paginatedPositions = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return positions.slice(start, start + ITEMS_PER_PAGE);
+  }, [positions, currentPage]);
 
   const [showModal, setShowModal] = useState(false);
   const [editingPosition, setEditingPosition] = useState(null);
@@ -119,11 +129,11 @@ export default function PositionsPage() {
 
       {/* Grid System */}
       <div style={s.grid}>
-        {positions.map(pos => (
+        {paginatedPositions.map(pos => (
           <div key={pos.chucvuId} style={s.card}>
             <div style={s.cardTop}>
               <div style={s.iconBox}>
-                {pos.icon}
+                {pos.icon || '💼'}
               </div>
               <div style={s.actionButtons}>
                 <button style={s.iconBtn} onClick={() => handleEdit(pos)} title="Chỉnh sửa">
@@ -170,6 +180,17 @@ export default function PositionsPage() {
           </div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
+          <Pagination 
+            currentPage={currentPage} 
+            totalPages={totalPages} 
+            onPageChange={setCurrentPage} 
+          />
+        </div>
+      )}
 
       {/* Modal */}
       {showModal && (

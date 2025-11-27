@@ -17,6 +17,8 @@ public class NhanVienDTO {
     private Long nhanvienId;
     private Long userId;
     private String username;
+    private String email;
+    private String sdt;
     private String hoTen;
     private String cccd;
     private LocalDate ngaySinh;

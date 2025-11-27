@@ -16,6 +16,10 @@ public class ChucVuRequest {
     
     private String moTa;
     
+    private String icon;
+    
+    private Double heSoLuong;
+    
     @Min(value = 1, message = "Level phải >= 1")
     private Integer level;
 }
