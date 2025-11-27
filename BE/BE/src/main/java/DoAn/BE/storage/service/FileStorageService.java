@@ -1,6 +1,7 @@
 package DoAn.BE.storage.service;
 
 import DoAn.BE.common.exception.*;
+import DoAn.BE.project.repository.ProjectMemberRepository;
 import DoAn.BE.storage.dto.FileDTO;
 import DoAn.BE.storage.dto.FileUploadResponse;
 import DoAn.BE.storage.dto.StorageStatsDTO;
@@ -43,6 +44,7 @@ public class FileStorageService {
     private final FileRepository fileRepository;
     private final FolderRepository folderRepository;
     private final UserRepository userRepository;
+    private final ProjectMemberRepository projectMemberRepository;
     private final StorageNotificationService storageNotificationService;
     private final StorageProjectFileUploadListener projectFileUploadListener;
     private final FileValidator fileValidator;
@@ -79,8 +81,8 @@ public class FileStorageService {
             folder = folderRepository.findById(folderId)
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy thư mục"));
             
-            // Check if user owns the folder
-            if (!folder.getOwner().getUserId().equals(userId)) {
+            // Check permission: owner OR project member
+            if (!canAccessFolder(folder, userId)) {
                 throw new ForbiddenException("Bạn không có quyền upload vào thư mục này");
             }
         }
@@ -152,8 +154,8 @@ public class FileStorageService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
         
-        // Check if user owns the file
-        if (!file.getOwner().getUserId().equals(userId)) {
+        // Check permission: owner OR project member
+        if (!canAccessFile(file, userId)) {
             // Audit failed download attempt
             auditLogService.logFailedAction(
                 user,
@@ -207,8 +209,8 @@ public class FileStorageService {
         File file = fileRepository.findById(fileId)
             .orElseThrow(() -> new StorageFileNotFoundException("Không tìm thấy file"));
         
-        // Check if user owns the file
-        if (!file.getOwner().getUserId().equals(userId)) {
+        // Check permission: owner OR project member
+        if (!canAccessFile(file, userId)) {
             throw new ForbiddenException("Bạn không có quyền xem file này");
         }
         
@@ -230,8 +232,8 @@ public class FileStorageService {
         Folder folder = folderRepository.findById(folderId)
             .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy thư mục"));
         
-        // Check if user owns the folder
-        if (!folder.getOwner().getUserId().equals(userId)) {
+        // Check permission: owner OR project member
+        if (!canAccessFolder(folder, userId)) {
             throw new ForbiddenException("Bạn không có quyền xem thư mục này");
         }
         
@@ -247,12 +249,11 @@ public class FileStorageService {
         File file = fileRepository.findById(fileId)
             .orElseThrow(() -> new StorageFileNotFoundException("Không tìm thấy file"));
         
-        // Check if user owns the file
-        if (!file.getOwner().getUserId().equals(userId)) {
+        // Check permission: owner OR project member
+        if (!canAccessFile(file, userId)) {
             throw new ForbiddenException("Bạn không có quyền xóa file này");
         }
         
-        // Soft delete
         file.setIsDeleted(true);
         fileRepository.save(file);
     }
@@ -262,8 +263,8 @@ public class FileStorageService {
         File file = fileRepository.findById(fileId)
             .orElseThrow(() -> new StorageFileNotFoundException("Không tìm thấy file"));
         
-        // Check if user owns the file
-        if (!file.getOwner().getUserId().equals(userId)) {
+        // Check permission: owner OR project member
+        if (!canAccessFile(file, userId)) {
             throw new ForbiddenException("Bạn không có quyền xóa file này");
         }
         
@@ -377,6 +378,49 @@ public class FileStorageService {
         }
         
         return String.format("%.2f %s", size, units[unitIndex]);
+    }
+    
+    /**
+     * Check if user can access folder (owner or project member)
+     * Also checks parent folder recursively for subfolders in project folders
+     */
+    private boolean canAccessFolder(Folder folder, Long userId) {
+        // Owner can always access
+        if (folder.getOwner().getUserId().equals(userId)) {
+            return true;
+        }
+        
+        // If folder is PROJECT type, check if user is project member
+        if (folder.getFolderType() == Folder.FolderType.PROJECT && folder.getProject() != null) {
+            return projectMemberRepository.findByProject_ProjectIdAndUser_UserId(
+                folder.getProject().getProjectId(), userId
+            ).isPresent();
+        }
+        
+        // ✅ NEW: Check parent folder recursively
+        // If this is a subfolder inside a project folder, check parent permission
+        if (folder.getParentFolder() != null) {
+            return canAccessFolder(folder.getParentFolder(), userId);
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Check if user can access file (owner or project member if file in project folder)
+     */
+    private boolean canAccessFile(File file, Long userId) {
+        // Owner can always access
+        if (file.getOwner().getUserId().equals(userId)) {
+            return true;
+        }
+        
+        // If file is in a PROJECT folder, check if user is project member
+        if (file.getFolder() != null) {
+            return canAccessFolder(file.getFolder(), userId);
+        }
+        
+        return false;
     }
     
     private FileDTO convertToDTO(File file) {

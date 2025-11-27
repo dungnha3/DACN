@@ -44,8 +44,15 @@ export default function ChatRoom({ roomId, wsConnected }) {
         messageApi.getMessages(roomId)
       ])
       
+      // Transform messages to include senderName and senderId for compatibility
+      const transformedMessages = messagesData.map(msg => ({
+        ...msg,
+        senderName: msg.sender?.username,
+        senderId: msg.sender?.userId
+      }))
+      
       setRoomInfo(roomData)
-      setMessages(messagesData)
+      setMessages(transformedMessages)
       setLoading(false)
     } catch (error) {
       setLoading(false)
@@ -55,7 +62,22 @@ export default function ChatRoom({ roomId, wsConnected }) {
   const subscribeToRoom = () => {
     websocketService.subscribeToRoom(roomId, (wsMessage) => {
       if (wsMessage.type === 'CHAT_MESSAGE') {
-        setMessages(prev => [...prev, wsMessage.data])
+        // wsMessage.data contains full MessDTO from backend
+        const messageData = wsMessage.data
+        
+        if (!messageData) {
+          console.error('Message data is missing from WebSocket message')
+          return
+        }
+        
+        // Transform message to include senderName and senderId for compatibility
+        const message = {
+          ...messageData,
+          senderName: messageData.sender?.username || wsMessage.username,
+          senderId: messageData.sender?.userId || wsMessage.userId
+        }
+        
+        setMessages(prev => [...prev, message])
         scrollToBottom()
       }
     })
@@ -143,7 +165,7 @@ export default function ChatRoom({ roomId, wsConnected }) {
             <MessageBubble
               key={message.messageId || index}
               message={message}
-              isOwn={message.senderId === user?.userId}
+              isOwn={message.sender?.userId === user?.userId || message.senderId === user?.userId}
             />
           ))
         ) : (

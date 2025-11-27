@@ -3,6 +3,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { usePermissions, useErrorHandler } from '@/shared/hooks';
 import { commonStyles } from '@/shared/utils';
 import { colors, typography, spacing } from '@/shared/styles/theme';
+import { storageApi } from '@/features/project/storage/api/storageApi';
 
 export default function SharedStoragePage({ 
   title = "Quản lý file",
@@ -13,13 +14,16 @@ export default function SharedStoragePage({
   const [files, setFiles] = useState([]);
   const [folders, setFolders] = useState([]);
   const [currentFolderId, setCurrentFolderId] = useState(null);
+  const [currentFolderName, setCurrentFolderName] = useState('');
+  const [folderPath, setFolderPath] = useState([]); // [{id, name}]
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewType, setViewType] = useState('grid'); // 'grid' | 'list'
+  const [viewType, setViewType] = useState('list'); // 'grid' | 'list'
+  const [selectedItems, setSelectedItems] = useState([]); // Selected file/folder IDs
   
   const { user: authUser } = useAuth();
   const { currentUser, isProjectManager, isHRManager } = usePermissions();
@@ -27,97 +31,96 @@ export default function SharedStoragePage({
 
   useEffect(() => {
     loadStorageData();
+    setSelectedItems([]); // Clear selection khi navigate
   }, [currentFolderId, viewMode, projectId]);
+
+  // Helper function to navigate to folder
+  const navigateToFolder = (folderId, folderName) => {
+    setCurrentFolderId(folderId);
+    setCurrentFolderName(folderName);
+    setFolderPath(prev => [...prev, { id: folderId, name: folderName }]);
+  };
+
+  // Helper function to navigate back
+  const navigateToPath = (index) => {
+    if (index === -1) {
+      // Go to root
+      setCurrentFolderId(null);
+      setCurrentFolderName('');
+      setFolderPath([]);
+    } else {
+      // Go to specific folder in path
+      const targetFolder = folderPath[index];
+      setCurrentFolderId(targetFolder.id);
+      setCurrentFolderName(targetFolder.name);
+      setFolderPath(folderPath.slice(0, index + 1));
+    }
+  };
 
   const loadStorageData = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Simulate loading files and folders
-      setTimeout(() => {
-        if (viewMode === "personal") {
-          // Personal files
-          setFiles([
-            {
-              fileId: 1,
-              filename: 'CV_2024.pdf',
-              originalFilename: 'CV_Nguyen_Van_A.pdf',
-              fileSize: 2457600,
-              mimeType: 'application/pdf',
-              uploadDate: '2024-11-20T10:30:00',
-              folderId: null
-            },
-            {
-              fileId: 2,
-              filename: 'presentation.pptx',
-              originalFilename: 'Company_Presentation.pptx',
-              fileSize: 5242880,
-              mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-              uploadDate: '2024-11-19T14:20:00',
-              folderId: null
-            },
-            {
-              fileId: 3,
-              filename: 'avatar.jpg',
-              originalFilename: 'profile_photo.jpg',
-              fileSize: 524288,
-              mimeType: 'image/jpeg',
-              uploadDate: '2024-11-18T09:15:00',
-              folderId: null
-            }
-          ]);
-          
-          setFolders([
-            { folderId: 1, folderName: 'Tài liệu cá nhân', fileCount: 5, createdDate: '2024-11-01' },
-            { folderId: 2, folderName: 'Ảnh', fileCount: 12, createdDate: '2024-10-15' },
-            { folderId: 3, folderName: 'Dự án', fileCount: 8, createdDate: '2024-09-20' }
-          ]);
-        } else if (viewMode === "project" && projectId) {
-          // Project-related files
-          setFiles([
-            {
-              fileId: 4,
-              filename: 'requirements.docx',
-              originalFilename: 'Project_Requirements_v2.docx',
-              fileSize: 1048576,
-              mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-              uploadDate: '2024-11-20T16:45:00',
-              uploadedBy: 'Nguyễn Văn A',
-              folderId: null
-            },
-            {
-              fileId: 5,
-              filename: 'design_mockup.fig',
-              originalFilename: 'UI_Design_Mockup.fig',
-              fileSize: 3145728,
-              mimeType: 'application/octet-stream',
-              uploadDate: '2024-11-19T11:30:00',
-              uploadedBy: 'Trần Thị B',
-              folderId: null
-            },
-            {
-              fileId: 6,
-              filename: 'database_schema.sql',
-              originalFilename: 'DB_Schema_Final.sql',
-              fileSize: 204800,
-              mimeType: 'application/sql',
-              uploadDate: '2024-11-18T13:20:00',
-              uploadedBy: 'Lê Văn C',
-              folderId: null
-            }
-          ]);
-          
-          setFolders([
-            { folderId: 4, folderName: 'Documents', fileCount: 15, createdDate: '2024-11-01' },
-            { folderId: 5, folderName: 'Design', fileCount: 8, createdDate: '2024-10-25' },
-            { folderId: 6, folderName: 'Source Code', fileCount: 23, createdDate: '2024-10-10' }
-          ]);
-        }
+      // Load folders and files from API
+      let loadedFolders = [];
+      let loadedFiles = [];
+      
+      if (currentFolderId) {
+        // Load subfolders and files of current folder
+        const [subfoldersRes, filesRes] = await Promise.all([
+          storageApi.getSubFolders(currentFolderId),
+          storageApi.getFolderFiles(currentFolderId)
+        ]);
         
-        setLoading(false);
-      }, 1000);
+        loadedFolders = subfoldersRes.map(f => ({
+          folderId: f.folderId,
+          folderName: f.name,
+          fileCount: f.fileCount || 0,
+          createdDate: f.createdAt
+        }));
+        
+        loadedFiles = filesRes;
+      } else {
+        // Load root level folders and files
+        if (viewMode === "project" && projectId) {
+          // Load project folders
+          const [foldersRes, filesRes] = await Promise.all([
+            storageApi.getProjectFolders(projectId),
+            storageApi.getMyFiles()
+          ]);
+          
+          loadedFolders = foldersRes.map(f => ({
+            folderId: f.folderId,
+            folderName: f.name,
+            fileCount: f.fileCount || 0,
+            createdDate: f.createdAt
+          }));
+          
+          loadedFiles = filesRes.filter(file => !file.folderId && file.projectId === projectId);
+        } else {
+          // Load personal folders and files
+          const [foldersRes, filesRes] = await Promise.all([
+            storageApi.getMyFolders(),
+            storageApi.getMyFiles()
+          ]);
+          
+          loadedFolders = foldersRes.map(f => ({
+            folderId: f.folderId,
+            folderName: f.name,
+            fileCount: f.fileCount || 0,
+            createdDate: f.createdAt
+          }));
+          
+          loadedFiles = filesRes.filter(file => !file.folderId);
+        }
+      }
+      
+      setFolders(loadedFolders);
+      setFiles(loadedFiles);
+      setLoading(false);
     } catch (err) {
+      console.error('Error loading storage data:', err);
       const errorMessage = handleError(err, { context: 'load_storage' });
       setError(errorMessage);
       setLoading(false);
@@ -132,13 +135,16 @@ export default function SharedStoragePage({
     try {
       setUploading(true);
       
-      // Simulate upload
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Upload each file
+      for (const file of uploadedFiles) {
+        await storageApi.uploadFile(file, currentFolderId);
+      }
       
       alert(`✅ Đã upload ${uploadedFiles.length} file thành công!`);
       loadStorageData();
     } catch (err) {
-      alert('❌ Lỗi upload file');
+      console.error('Error uploading files:', err);
+      alert('❌ Lỗi upload file: ' + (err.response?.data?.message || err.message));
     } finally {
       setUploading(false);
       event.target.value = ''; // Reset input
@@ -152,39 +158,56 @@ export default function SharedStoragePage({
     }
     
     try {
-      // Simulate folder creation
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await storageApi.createFolder({
+        name: newFolderName,
+        parentFolderId: currentFolderId,
+        folderType: viewMode === 'project' ? 'PROJECT' : 'PERSONAL',
+        projectId: viewMode === 'project' ? projectId : null
+      });
       
       alert(`✅ Đã tạo thư mục "${newFolderName}" thành công!`);
       setNewFolderName('');
       setShowCreateFolderModal(false);
       loadStorageData();
     } catch (err) {
-      alert('❌ Lỗi tạo thư mục');
+      console.error('Error creating folder:', err);
+      alert('❌ Lỗi tạo thư mục: ' + (err.response?.data?.message || err.message));
     }
   };
 
   const handleDownload = async (fileId, filename) => {
     try {
-      alert(`⬇️ Đang tải file: ${filename}`);
-      // Simulate download
-      // In real app: window.open(`/api/storage/files/${fileId}/download`)
+      const blob = await storageApi.downloadFile(fileId);
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      alert(`✅ Đã tải file: ${filename}`);
     } catch (err) {
-      alert('❌ Lỗi tải file');
+      console.error('Error downloading file:', err);
+      alert('❌ Lỗi tải file: ' + (err.response?.data?.message || err.message));
     }
   };
 
   const handleDelete = async (fileId, filename) => {
-    if (!confirm(`Bạn có chắc muốn xóa file "${filename}"?`)) return;
+    if (!window.confirm(`Bạn có chắc muốn xóa file "${filename}"?`)) {
+      return;
+    }
     
     try {
-      // Simulate delete
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      alert(`✅ Đã xóa file "${filename}" thành công!`);
+      await storageApi.deleteFile(fileId, false); // soft delete
+      alert(`✅ Đã xóa file "${filename}"`);
       loadStorageData();
     } catch (err) {
-      alert('❌ Lỗi xóa file');
+      console.error('Error deleting file:', err);
+      alert('❌ Lỗi xóa file: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -209,9 +232,126 @@ export default function SharedStoragePage({
     return '📎';
   };
 
+  const getFileExtension = (filename) => {
+    const ext = filename.split('.').pop().toUpperCase();
+    return ext.length > 4 ? ext.substring(0, 4) : ext;
+  };
+
+  const getFileIconBackground = (mimeType) => {
+    if (mimeType.includes('pdf')) return '#EA4335';
+    if (mimeType.includes('word') || mimeType.includes('document')) return '#4285F4';
+    if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return '#0F9D58';
+    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return '#F4B400';
+    if (mimeType.includes('image')) return '#9C27B0';
+    if (mimeType.includes('video')) return '#FF5722';
+    if (mimeType.includes('audio')) return '#FF9800';
+    if (mimeType.includes('zip') || mimeType.includes('compressed')) return '#607D8B';
+    return '#757575';
+  };
+
   const filteredFiles = files.filter(file => 
     file.originalFilename.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Handlers for checkbox selection
+  const handleToggleItem = (type, id) => {
+    const itemKey = `${type}-${id}`;
+    setSelectedItems(prev => 
+      prev.includes(itemKey) 
+        ? prev.filter(item => item !== itemKey)
+        : [...prev, itemKey]
+    );
+  };
+
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      const allItems = [
+        ...folders.map(f => `folder-${f.folderId}`),
+        ...filteredFiles.map(f => `file-${f.fileId}`)
+      ];
+      setSelectedItems(allItems);
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedItems([]);
+  };
+
+  const handleBulkDownload = async () => {
+    const fileIds = selectedItems
+      .filter(item => item.startsWith('file-'))
+      .map(item => parseInt(item.replace('file-', '')));
+    
+    if (fileIds.length === 0) {
+      alert('⚠️ Chưa chọn file nào để tải xuống');
+      return;
+    }
+
+    for (const fileId of fileIds) {
+      const file = files.find(f => f.fileId === fileId);
+      if (file) {
+        await handleDownload(fileId, file.originalFilename);
+      }
+    }
+    alert(`✅ Đã tải ${fileIds.length} file`);
+  };
+
+  const handleBulkMoveToTrash = async () => {
+    const fileIds = selectedItems
+      .filter(item => item.startsWith('file-'))
+      .map(item => parseInt(item.replace('file-', '')));
+    
+    if (fileIds.length === 0) {
+      alert('⚠️ Chưa chọn item nào');
+      return;
+    }
+
+    if (!window.confirm(`Di chuyển ${fileIds.length} item vào thùng rác?`)) {
+      return;
+    }
+
+    try {
+      for (const fileId of fileIds) {
+        await storageApi.deleteFile(fileId, false); // soft delete
+      }
+      alert(`✅ Đã di chuyển ${fileIds.length} item vào thùng rác`);
+      setSelectedItems([]);
+      loadStorageData();
+    } catch (err) {
+      alert('❌ Lỗi: ' + err.message);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const fileIds = selectedItems
+      .filter(item => item.startsWith('file-'))
+      .map(item => parseInt(item.replace('file-', '')));
+    
+    if (fileIds.length === 0) {
+      alert('⚠️ Chưa chọn item nào');
+      return;
+    }
+
+    if (!window.confirm(`XÓA VĨNH VIỄN ${fileIds.length} item? Hành động này không thể hoàn tác!`)) {
+      return;
+    }
+
+    try {
+      for (const fileId of fileIds) {
+        await storageApi.deleteFile(fileId, true); // permanent delete
+      }
+      alert(`✅ Đã xóa vĩnh viễn ${fileIds.length} item`);
+      setSelectedItems([]);
+      loadStorageData();
+    } catch (err) {
+      alert('❌ Lỗi: ' + err.message);
+    }
+  };
+
+  const isAllSelected = selectedItems.length > 0 && 
+    selectedItems.length === (folders.length + filteredFiles.length);
 
   // Calculate storage stats
   const totalSize = files.reduce((sum, file) => sum + file.fileSize, 0);
@@ -368,179 +508,370 @@ export default function SharedStoragePage({
         </div>
       </div>
 
-      {/* Folders Section */}
-      {folders.length > 0 && (
-        <div style={{ marginBottom: spacing['2xl'] }}>
-          <h3 style={{ ...commonStyles.heading3, marginBottom: spacing.lg }}>
-            📁 Thư mục
-          </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: spacing.lg }}>
-            {folders.map(folder => (
-              <div 
-                key={folder.folderId}
+      {/* Breadcrumb Navigation */}
+      {folderPath.length > 0 && (
+        <div style={{ marginBottom: spacing.lg, display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+          <button
+            onClick={() => navigateToPath(-1)}
+            style={{
+              padding: `${spacing.xs} ${spacing.md}`,
+              background: 'transparent',
+              color: colors.primary,
+              border: `1px solid ${colors.primary}`,
+              borderRadius: spacing.md,
+              fontSize: typography.sm,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: spacing.xs
+            }}
+          >
+            🏠 Thư mục gốc
+          </button>
+          {folderPath.map((folder, index) => (
+            <div key={folder.id} style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+              <span style={{ color: colors.textSecondary }}>→</span>
+              <button
+                onClick={() => navigateToPath(index)}
                 style={{
-                  ...commonStyles.cardBase,
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s',
-                  ':hover': { transform: 'translateY(-2px)' }
+                  padding: `${spacing.xs} ${spacing.md}`,
+                  background: index === folderPath.length - 1 ? colors.primary : 'transparent',
+                  color: index === folderPath.length - 1 ? '#fff' : colors.primary,
+                  border: `1px solid ${colors.primary}`,
+                  borderRadius: spacing.md,
+                  fontSize: typography.sm,
+                  cursor: 'pointer'
                 }}
-                onClick={() => setCurrentFolderId(folder.folderId)}
               >
-                <div style={{ fontSize: typography['4xl'], marginBottom: spacing.md }}>📁</div>
-                <div style={{ fontSize: typography.base, fontWeight: typography.semibold, color: colors.textPrimary, marginBottom: spacing.xs }}>
-                  {folder.folderName}
-                </div>
-                <div style={{ fontSize: typography.sm, color: colors.textSecondary }}>
-                  {folder.fileCount} file
-                </div>
-              </div>
-            ))}
+                📁 {folder.name}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Bulk Action Toolbar */}
+      {selectedItems.length > 0 && (
+        <div style={{
+          background: '#A855F7',
+          color: '#fff',
+          padding: spacing.md,
+          borderRadius: spacing.lg,
+          marginBottom: spacing.md,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          boxShadow: '0 2px 8px rgba(168, 85, 247, 0.3)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.lg }}>
+            <span style={{ fontSize: typography.sm, fontWeight: typography.semibold }}>
+              Đã chọn: {selectedItems.length}
+            </span>
+            <button
+              onClick={handleClearSelection}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#fff',
+                cursor: 'pointer',
+                fontSize: typography.lg,
+                padding: spacing.xs
+              }}
+              title="Hủy chọn"
+            >
+              ×
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: spacing.md }}>
+            <button
+              onClick={handleBulkDownload}
+              style={{
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                color: '#fff',
+                padding: `${spacing.sm} ${spacing.lg}`,
+                borderRadius: spacing.md,
+                fontSize: typography.sm,
+                fontWeight: typography.semibold,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: spacing.sm,
+                ':hover': { background: 'rgba(255,255,255,0.3)' }
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+            >
+              ⬇️ TảI VỀ
+            </button>
+            <button
+              onClick={handleBulkMoveToTrash}
+              style={{
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                color: '#fff',
+                padding: `${spacing.sm} ${spacing.lg}`,
+                borderRadius: spacing.md,
+                fontSize: typography.sm,
+                fontWeight: typography.semibold,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: spacing.sm
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+            >
+              🗑️ DI CHUYỂN ĐẾN THÙNG RÁC
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              style={{
+                background: '#DC2626',
+                border: 'none',
+                color: '#fff',
+                padding: `${spacing.sm} ${spacing.lg}`,
+                borderRadius: spacing.md,
+                fontSize: typography.sm,
+                fontWeight: typography.semibold,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: spacing.sm
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#B91C1C'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#DC2626'}
+            >
+              ⚠️ XÓa Bỏ
+            </button>
           </div>
         </div>
       )}
 
-      {/* Files Section */}
-      <div>
-        <h3 style={{ ...commonStyles.heading3, marginBottom: spacing.lg }}>
-          📎 File ({filteredFiles.length})
-        </h3>
-        
-        {filteredFiles.length > 0 ? (
-          viewType === 'grid' ? (
-            // Grid View
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: spacing.lg }}>
-              {filteredFiles.map(file => (
-                <div key={file.fileId} style={commonStyles.cardBase}>
-                  <div style={{ textAlign: 'center', marginBottom: spacing.md }}>
-                    <div style={{ fontSize: typography['5xl'], marginBottom: spacing.md }}>
-                      {getFileIcon(file.mimeType)}
-                    </div>
-                    <div style={{ fontSize: typography.sm, fontWeight: typography.semibold, color: colors.textPrimary, marginBottom: spacing.xs, wordBreak: 'break-word' }}>
-                      {file.originalFilename}
-                    </div>
-                    <div style={{ fontSize: typography.xs, color: colors.textSecondary }}>
-                      {formatFileSize(file.fileSize)}
-                    </div>
-                    {viewMode === "project" && file.uploadedBy && (
-                      <div style={{ fontSize: typography.xs, color: colors.textMuted, marginTop: spacing.xs }}>
-                        Bởi: {file.uploadedBy}
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', gap: spacing.sm, justifyContent: 'center' }}>
-                    <button 
-                      onClick={() => handleDownload(file.fileId, file.originalFilename)}
-                      style={{
-                        padding: `${spacing.xs} ${spacing.md}`,
-                        background: colors.info,
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: spacing.md,
-                        fontSize: typography.xs,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ⬇️
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(file.fileId, file.originalFilename)}
-                      style={{
-                        padding: `${spacing.xs} ${spacing.md}`,
-                        background: colors.error,
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: spacing.md,
-                        fontSize: typography.xs,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-              ))}
+      {/* Files and Folders List View */}
+      <div style={{
+        background: '#fff',
+        borderRadius: spacing.lg,
+        overflow: 'hidden',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+      }}>
+        {/* Table Header */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '40px 40px 1fr 200px 120px',
+          padding: spacing.md,
+          background: colors.background,
+          borderBottom: `1px solid ${colors.border}`,
+          fontSize: typography.sm,
+          fontWeight: typography.semibold,
+          color: colors.textSecondary
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <input 
+              type="checkbox" 
+              style={{ cursor: 'pointer' }}
+              checked={isAllSelected}
+              onChange={(e) => handleSelectAll(e.target.checked)}
+            />
+          </div>
+          <div></div>
+          <div>Tên</div>
+          <div>Sửa đổi</div>
+          <div>Kích thước</div>
+        </div>
+
+        {/* Folders */}
+        {folders.map(folder => (
+          <div
+            key={`folder-${folder.folderId}`}
+            onClick={() => navigateToFolder(folder.folderId, folder.folderName)}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '40px 40px 1fr 200px 120px',
+              padding: spacing.md,
+              borderBottom: `1px solid ${colors.border}`,
+              cursor: 'pointer',
+              transition: 'background 0.2s',
+              ':hover': { background: colors.background }
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = colors.background}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <input
+                type="checkbox"
+                checked={selectedItems.includes(`folder-${folder.folderId}`)}
+                onChange={() => handleToggleItem('folder', folder.folderId)}
+                onClick={(e) => e.stopPropagation()}
+                style={{ cursor: 'pointer' }}
+              />
             </div>
-          ) : (
-            // List View
-            <div style={commonStyles.cardBase}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: `2px solid ${colors.borderLight}` }}>
-                    <th style={{ padding: spacing.lg, textAlign: 'left', fontSize: typography.sm, fontWeight: typography.bold, color: colors.textSecondary }}>Tên file</th>
-                    <th style={{ padding: spacing.lg, textAlign: 'left', fontSize: typography.sm, fontWeight: typography.bold, color: colors.textSecondary }}>Kích thước</th>
-                    <th style={{ padding: spacing.lg, textAlign: 'left', fontSize: typography.sm, fontWeight: typography.bold, color: colors.textSecondary }}>Ngày upload</th>
-                    {viewMode === "project" && (
-                      <th style={{ padding: spacing.lg, textAlign: 'left', fontSize: typography.sm, fontWeight: typography.bold, color: colors.textSecondary }}>Người upload</th>
-                    )}
-                    <th style={{ padding: spacing.lg, textAlign: 'center', fontSize: typography.sm, fontWeight: typography.bold, color: colors.textSecondary }}>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredFiles.map(file => (
-                    <tr key={file.fileId} style={{ borderBottom: `1px solid ${colors.borderLight}` }}>
-                      <td style={{ padding: spacing.lg }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.md }}>
-                          <span style={{ fontSize: typography['2xl'] }}>{getFileIcon(file.mimeType)}</span>
-                          <span style={{ fontSize: typography.sm, fontWeight: typography.medium }}>{file.originalFilename}</span>
-                        </div>
-                      </td>
-                      <td style={{ padding: spacing.lg, fontSize: typography.sm, color: colors.textSecondary }}>
-                        {formatFileSize(file.fileSize)}
-                      </td>
-                      <td style={{ padding: spacing.lg, fontSize: typography.sm, color: colors.textSecondary }}>
-                        {new Date(file.uploadDate).toLocaleDateString('vi-VN')}
-                      </td>
-                      {viewMode === "project" && (
-                        <td style={{ padding: spacing.lg, fontSize: typography.sm, color: colors.textSecondary }}>
-                          {file.uploadedBy || '-'}
-                        </td>
-                      )}
-                      <td style={{ padding: spacing.lg }}>
-                        <div style={{ display: 'flex', gap: spacing.sm, justifyContent: 'center' }}>
-                          <button 
-                            onClick={() => handleDownload(file.fileId, file.originalFilename)}
-                            style={{
-                              padding: `${spacing.xs} ${spacing.md}`,
-                              background: colors.info,
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: spacing.md,
-                              fontSize: typography.xs,
-                              cursor: 'pointer'
-                            }}
-                          >
-                            ⬇️ Tải
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(file.fileId, file.originalFilename)}
-                            style={{
-                              padding: `${spacing.xs} ${spacing.md}`,
-                              background: colors.error,
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: spacing.md,
-                              fontSize: typography.xs,
-                              cursor: 'pointer'
-                            }}
-                          >
-                            🗑️ Xóa
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                background: '#4285F4',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: typography.lg
+              }}>
+                📁
+              </div>
             </div>
-          )
-        ) : (
-          <div style={{ ...commonStyles.cardBase, textAlign: 'center', padding: spacing['6xl'] }}>
-            <div style={{ fontSize: typography['5xl'], marginBottom: spacing.xl }}>📁</div>
-            <div style={{ fontSize: typography.xl, fontWeight: typography.semibold, color: colors.textPrimary, marginBottom: spacing.md }}>
-              Chưa có file nào
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: typography.sm,
+              color: colors.textPrimary,
+              fontWeight: typography.medium
+            }}>
+              {folder.folderName}
             </div>
-            <div style={{ fontSize: typography.base, color: colors.textSecondary }}>
-              {searchTerm ? 'Không tìm thấy file nào khớp với tìm kiếm' : 'Upload file đầu tiên của bạn'}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: typography.sm,
+              color: colors.textSecondary
+            }}>
+              {folder.createdDate ? new Date(folder.createdDate).toLocaleDateString('vi-VN') : '-'}
+            </div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: typography.sm,
+              color: colors.textSecondary
+            }}>
+              {folder.fileCount} file
+            </div>
+          </div>
+        ))}
+
+        {/* Files */}
+        {filteredFiles.map(file => (
+          <div
+            key={`file-${file.fileId}`}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '40px 40px 1fr 200px 120px',
+              padding: spacing.md,
+              borderBottom: `1px solid ${colors.border}`,
+              cursor: 'pointer',
+              transition: 'background 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = colors.background}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <input
+                type="checkbox"
+                checked={selectedItems.includes(`file-${file.fileId}`)}
+                onChange={() => handleToggleItem('file', file.fileId)}
+                onClick={(e) => e.stopPropagation()}
+                style={{ cursor: 'pointer' }}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                background: getFileIconBackground(file.mimeType),
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: typography.base,
+                color: '#fff',
+                fontWeight: typography.bold
+              }}>
+                {getFileExtension(file.originalFilename)}
+              </div>
+            </div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: typography.sm,
+              color: colors.textPrimary,
+              gap: spacing.md
+            }}>
+              <span>{file.originalFilename}</span>
+              <div style={{ display: 'flex', gap: spacing.xs }}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(file.fileId, file.originalFilename);
+                  }}
+                  style={{
+                    padding: spacing.xs,
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: typography.sm,
+                    color: colors.textSecondary,
+                    ':hover': { color: colors.primary }
+                  }}
+                  title="Tải xuống"
+                >
+                  ⬇️
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(file.fileId, file.originalFilename);
+                  }}
+                  style={{
+                    padding: spacing.xs,
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: typography.sm,
+                    color: colors.textSecondary,
+                    ':hover': { color: colors.error }
+                  }}
+                  title="Xóa"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: typography.sm,
+              color: colors.textSecondary
+            }}>
+              {file.uploadDate ? new Date(file.uploadDate).toLocaleDateString('vi-VN', { 
+                day: '2-digit', 
+                month: 'short', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              }) : '-'}
+            </div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: typography.sm,
+              color: colors.textSecondary
+            }}>
+              {formatFileSize(file.fileSize)}
+            </div>
+          </div>
+        ))}
+
+        {/* Empty State */}
+        {folders.length === 0 && filteredFiles.length === 0 && (
+          <div style={{ 
+            textAlign: 'center', 
+            padding: spacing['6xl'],
+            color: colors.textSecondary 
+          }}>
+            <div style={{ fontSize: typography['5xl'], marginBottom: spacing.lg }}>📁</div>
+            <div style={{ fontSize: typography.lg, marginBottom: spacing.sm }}>
+              {searchTerm ? 'Không tìm thấy kết quả' : 'Chưa có file hoặc thư mục nào'}
+            </div>
+            <div style={{ fontSize: typography.sm }}>
+              {searchTerm ? 'Thử tìm kiếm với từ khóa khác' : 'Upload file đầu tiên của bạn'}
             </div>
           </div>
         )}

@@ -9,6 +9,7 @@ import { kpiData, notifications, sectionsConfig } from './components/ProjectMana
 import { ProfilePage, LeavePage, ApprovalsPage, ChatPage, ProjectsPage, PMStoragePage } from '@modules/project';
 import { LeavesPage } from '@modules/hr'
 import NotificationBell from '@/shared/components/notification/NotificationBell'
+import { AIChatBot } from '@/shared/components/ai-chatbot'
 
 export default function ProjectManagerDashboard() {
   const [active, setActive] = useState('dashboard')
@@ -129,6 +130,9 @@ export default function ProjectManagerDashboard() {
         {/* Render nội dung động dựa trên tab được chọn */}
         {renderContent()}
       </main>
+
+      {/* AI ChatBot - Floating button góc dưới phải */}
+      <AIChatBot />
     </div>
   )
 }

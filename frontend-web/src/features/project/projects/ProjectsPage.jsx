@@ -311,8 +311,7 @@ function TasksTab({ isProjectManager }) {
       {/* Footer */}
       <div style={styles.tableFooter}>
         <div style={styles.footerLeft}>
-          <span>ĐÃ CHỌN: 0 / {issues.length}</span>
-          <span style={{marginLeft: '20px'}}>TỔNG: {issues.length}</span>
+          <span>TỔNG: {issues.length}</span>
         </div>
         <div style={styles.footerCenter}>
           <span>TRANG: 1</span>
@@ -439,10 +438,6 @@ function ProjectsTab({ projects, loading, onProjectCreated, isProjectManager }) 
           <table style={styles.table}>
             <thead>
               <tr>
-                <th style={styles.th}>
-                  <input type="checkbox" />
-                </th>
-                <th style={styles.th}>⭐</th>
                 <th style={styles.th}>ID</th>
                 <th style={styles.th}>Mã dự án</th>
                 <th style={styles.th}>Tên</th>
@@ -456,7 +451,7 @@ function ProjectsTab({ projects, loading, onProjectCreated, isProjectManager }) 
             <tbody>
               {projects.length === 0 ? (
                 <tr>
-                  <td colSpan="10" style={{...styles.td, textAlign: 'center', padding: '32px'}}>
+                  <td colSpan="8" style={{...styles.td, textAlign: 'center', padding: '32px'}}>
                     Chưa có dự án nào. Nhấn nút "Tạo" để tạo dự án mới.
                   </td>
                 </tr>
@@ -473,12 +468,6 @@ function ProjectsTab({ projects, loading, onProjectCreated, isProjectManager }) 
                     onMouseEnter={() => setHoveredRow(project.projectId)}
                     onMouseLeave={() => setHoveredRow(null)}
                   >
-                    <td style={styles.td}>
-                      <input type="checkbox" />
-                    </td>
-                    <td style={styles.td}>
-                      <button style={styles.starBtn}>☆</button>
-                    </td>
                     <td style={styles.td}>{project.projectId}</td>
                     <td style={styles.td}>
                       <span style={styles.keyBadge}>{project.keyProject}</span>
@@ -524,8 +513,7 @@ function ProjectsTab({ projects, loading, onProjectCreated, isProjectManager }) 
       {/* Footer */}
       <div style={styles.tableFooter}>
         <div style={styles.footerLeft}>
-          <span>ĐÃ CHỌN: 0 / {projects.length}</span>
-          <span style={{marginLeft: '20px'}}>TỔNG: {projects.length}</span>
+          <span>TỔNG: {projects.length}</span>
         </div>
         <div style={styles.footerCenter}>
           <button style={styles.paginationBtn}>← TRƯỚC</button>

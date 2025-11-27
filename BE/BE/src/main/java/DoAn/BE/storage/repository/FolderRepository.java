@@ -12,6 +12,7 @@ public interface FolderRepository extends JpaRepository<Folder, Long> {
     List<Folder> findByParentFolder_FolderId(Long parentFolderId);
     List<Folder> findByProject_ProjectId(Long projectId);
     List<Folder> findByProject(Project project);
+    List<Folder> findByProjectAndOwner(Project project, DoAn.BE.user.entity.User owner);
 }
 
 

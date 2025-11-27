@@ -33,6 +33,7 @@ public class WebSocketNotificationService {
         );
         wsMessage.setMessageId(message.getMessageId());
         wsMessage.setTimestamp(message.getSentAt().toString());
+        wsMessage.setData(message); // Set full message object for frontend
 
         messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
         List<ChatRoomMember> members = chatRoomMemberRepository.findByChatRoom_RoomId(roomId);
