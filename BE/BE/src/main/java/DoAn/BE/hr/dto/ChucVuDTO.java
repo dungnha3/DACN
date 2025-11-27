@@ -13,6 +13,8 @@ public class ChucVuDTO {
     private Long chucvuId;
     private String tenChucVu;
     private String moTa;
+    private String icon;
+    private Double heSoLuong;
     private Integer level;
     private LocalDateTime createdAt;
     private Integer soLuongNhanVien;

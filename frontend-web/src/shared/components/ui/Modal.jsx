@@ -3,8 +3,18 @@
  * Consistent modal styling across all modules
  */
 
-export function Modal({ isOpen, onClose, children, ...props }) {
+export function Modal({ isOpen, onClose, children, size = 'medium', ...props }) {
   if (!isOpen) return null;
+
+  const sizeMap = {
+    small: 500,
+    medium: 600,
+    'medium-large': 700,
+    large: 800,
+    xlarge: 1000
+  };
+
+  const width = sizeMap[size] || sizeMap.medium;
 
   return (
     <div 
@@ -20,13 +30,12 @@ export function Modal({ isOpen, onClose, children, ...props }) {
         ...props.style
       }}
       onClick={onClose}
-      {...props}
     >
       <div 
         style={{
           background: '#fff',
           borderRadius: 16,
-          width: 600,
+          width: width,
           maxWidth: '95%',
           boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
           animation: 'fadeIn 0.3s'

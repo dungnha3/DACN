@@ -28,6 +28,9 @@ public class HopDongMapper {
         if (hopDong.getNhanVien() != null) {
             dto.setNhanvienId(hopDong.getNhanVien().getNhanvienId());
             dto.setHoTenNhanVien(hopDong.getNhanVien().getHoTen());
+            if (hopDong.getNhanVien().getChucVu() != null) {
+                dto.setTenChucVu(hopDong.getNhanVien().getChucVu().getTenChucVu());
+            }
         }
         
         // Thông tin hợp đồng

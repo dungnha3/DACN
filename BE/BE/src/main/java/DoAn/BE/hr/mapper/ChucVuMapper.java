@@ -19,6 +19,8 @@ public class ChucVuMapper {
         dto.setChucvuId(chucVu.getChucvuId());
         dto.setTenChucVu(chucVu.getTenChucVu());
         dto.setMoTa(chucVu.getMoTa());
+        dto.setIcon(chucVu.getIcon());
+        dto.setHeSoLuong(chucVu.getHeSoLuong());
         dto.setLevel(chucVu.getLevel());
         dto.setCreatedAt(chucVu.getCreatedAt());
         

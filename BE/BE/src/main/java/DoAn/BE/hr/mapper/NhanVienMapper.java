@@ -26,6 +26,8 @@ public class NhanVienMapper {
         if (nhanVien.getUser() != null) {
             dto.setUserId(nhanVien.getUser().getUserId());
             dto.setUsername(nhanVien.getUser().getUsername());
+            dto.setEmail(nhanVien.getUser().getEmail());
+            dto.setSdt(nhanVien.getUser().getPhoneNumber());
         }
         
         dto.setHoTen(nhanVien.getHoTen());

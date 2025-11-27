@@ -2,11 +2,34 @@ import { useState, useMemo, useEffect } from 'react';
 import { departmentsService, employeesService } from '@/features/hr/shared/services';
 import { usePermissions, useErrorHandler } from '@/shared/hooks';
 import { validateRequired } from '@/shared/utils/validation';
+import Pagination from '@/shared/components/table/Pagination';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  EmptyState
+} from '@/shared/components/ui';
+import EmployeeDetailModal from '../components/EmployeeDetailModal';
+
+const ITEMS_PER_PAGE = 9;
 
 export default function DepartmentsPage() {
   const [departments, setDepartments] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  // State cho modal xem nhân viên
+  const [showEmployeeModal, setShowEmployeeModal] = useState(false);
+  const [selectedDepartmentEmployees, setSelectedDepartmentEmployees] = useState([]);
+  const [selectedDepartmentName, setSelectedDepartmentName] = useState('');
+  
+  // State cho modal chi tiết nhân viên
+  const [showEmployeeDetailModal, setShowEmployeeDetailModal] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   
   const { isHRManager } = usePermissions();
   const { handleError } = useErrorHandler();
@@ -49,6 +72,17 @@ export default function DepartmentsPage() {
     );
   }, [departments, searchTerm]);
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredDepartments.length / ITEMS_PER_PAGE);
+  const paginatedDepartments = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredDepartments.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredDepartments, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   const stats = {
     totalDepts: departments.length,
     totalEmps: departments.reduce((acc, cur) => acc + (cur.soLuongNhanVien || 0), 0),
@@ -86,6 +120,43 @@ export default function DepartmentsPage() {
         setLoading(false);
       }
     }
+  };
+
+  // Xử lý xem danh sách nhân viên
+  const handleViewEmployees = (dept) => {
+    const deptEmployees = employees.filter(emp => 
+      emp.phongbanId === dept.phongbanId || 
+      (emp.phongban && emp.phongban.phongbanId === dept.phongbanId)
+    );
+    setSelectedDepartmentEmployees(deptEmployees);
+    setSelectedDepartmentName(dept.tenPhongBan);
+    setShowEmployeeModal(true);
+  };
+
+  // Xử lý xem chi tiết nhân viên
+  const handleViewEmployeeDetail = (emp) => {
+    setSelectedEmployee(emp);
+    setShowEmployeeDetailModal(true);
+  };
+
+  // Helper để hiển thị badge trạng thái
+  const getStatusBadge = (status) => {
+    const config = {
+      DANG_LAM_VIEC: { color: '#16a34a', bg: '#dcfce7', text: 'Đang làm' },
+      NGHI_VIEC: { color: '#dc2626', bg: '#fee2e2', text: 'Nghỉ việc' },
+      TAM_NGHI: { color: '#d97706', bg: '#fef3c7', text: 'Tạm nghỉ' }
+    };
+    const style = config[status] || config.DANG_LAM_VIEC;
+    return (
+      <span style={{
+        background: style.bg, color: style.color,
+        padding: '4px 8px', borderRadius: '6px',
+        fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', 
+        display: 'inline-block', whiteSpace: 'nowrap'
+      }}>
+        {style.text}
+      </span>
+    );
   };
 
   const handleSubmit = async () => {
@@ -153,11 +224,15 @@ export default function DepartmentsPage() {
       </div>
 
       <div style={s.grid}>
-        {filteredDepartments.map(dept => (
-          <div key={dept.phongbanId} style={s.card}>
+        {paginatedDepartments.map(dept => (
+          <div 
+            key={dept.phongbanId} 
+            style={{...s.card, cursor: 'pointer'}} 
+            onClick={() => handleViewEmployees(dept)}
+          >
             <div style={s.cardHeader}>
               <div style={s.iconBox}>🏢</div>
-              <div style={s.actionMenu}>
+              <div style={s.actionMenu} onClick={e => e.stopPropagation()}>
                 <button style={s.iconBtn} onClick={() => handleEdit(dept)}>✏️</button>
                 <button style={{...s.iconBtn, color: '#ef4444'}} onClick={() => handleDelete(dept.phongbanId)}>🗑️</button>
               </div>
@@ -192,7 +267,104 @@ export default function DepartmentsPage() {
         ))}
       </div>
 
-      {/* MODAL FORM */}
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
+          <Pagination 
+            currentPage={currentPage} 
+            totalPages={totalPages} 
+            onPageChange={setCurrentPage} 
+          />
+        </div>
+      )}
+
+      {/* MODAL XEM NHÂN VIÊN */}
+      {showEmployeeModal && (
+        <div style={s.modalOverlay} onClick={() => setShowEmployeeModal(false)}>
+          <div style={{...s.modal, width: '900px', maxWidth: '95vw'}} onClick={e => e.stopPropagation()}>
+            <div style={s.modalHeader}>
+              <h3 style={s.modalTitle}>
+                Danh sách nhân viên - {selectedDepartmentName}
+                <span style={{fontSize: 14, fontWeight: 400, color: '#7b809a', marginLeft: 10}}>
+                  ({selectedDepartmentEmployees.length} nhân sự)
+                </span>
+              </h3>
+              <button style={s.closeBtn} onClick={() => setShowEmployeeModal(false)}>×</button>
+            </div>
+            
+            <div style={{...s.modalBody, maxHeight: '70vh', overflowY: 'auto', padding: 0}}>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead width="35%">Nhân viên</TableHead>
+                    <TableHead width="25%">Liên hệ</TableHead>
+                    <TableHead width="20%">Vị trí</TableHead>
+                    <TableHead width="20%">Trạng thái</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {selectedDepartmentEmployees.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center">
+                        <EmptyState 
+                          icon="👥" 
+                          title="Chưa có nhân viên"
+                          message="Phòng ban này chưa có nhân viên nào"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    selectedDepartmentEmployees.map(emp => (
+                      <TableRow key={emp.nhanvienId} style={{cursor: 'pointer'}} onClick={() => handleViewEmployeeDetail(emp)}>
+                        <TableCell>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{
+                              width: 36, height: 36, borderRadius: 10, 
+                              background: 'linear-gradient(195deg, #42424a, #191919)',
+                              color: '#fff', display: 'grid', placeItems: 'center', 
+                              fontSize: 16, boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                            }}>
+                              {emp.avatar || '👤'}
+                            </div>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontWeight: 600, fontSize: 14, color: '#1e40af' }}>{emp.hoTen}</div>
+                              <div style={{ fontSize: 12, color: '#7b809a' }}>
+                                {emp.maNhanVien || `NV${emp.nhanvienId}`}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <span style={{ fontSize: 13, color: '#344767' }}>
+                              📧 {emp.email || '---'}
+                            </span>
+                            <span style={{ fontSize: 13, color: '#7b809a' }}>
+                              📞 {emp.sdt || '---'}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div style={{ fontSize: 13, color: '#344767' }}>
+                            {emp.tenChucVu || emp.chucvu?.tenChucVu || 'N/A'}
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(emp.trangThai)}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            
+            <div style={s.modalFooter}>
+              <button style={s.btnCancel} onClick={() => setShowEmployeeModal(false)}>Đóng</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL FORM ADD/EDIT */}
       {showModal && (
         <div style={s.modalOverlay}>
           <div style={s.modal}>
@@ -239,6 +411,17 @@ export default function DepartmentsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* MODAL CHI TIẾT NHÂN VIÊN */}
+      {showEmployeeDetailModal && selectedEmployee && (
+        <EmployeeDetailModal 
+          employee={selectedEmployee}
+          onClose={() => {
+            setShowEmployeeDetailModal(false);
+            setSelectedEmployee(null);
+          }}
+        />
       )}
     </div>
   );
