@@ -10,6 +10,7 @@ export default function ContractsPage() {
   const [activeTab, setActiveTab] = useState('HIEU_LUC');
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false); // New state
   const [selectedContract, setSelectedContract] = useState(null);
   const [newEndDate, setNewEndDate] = useState('');
   const [formData, setFormData] = useState({
@@ -21,15 +22,11 @@ export default function ContractsPage() {
     noiDung: ''
   });
 
-  const { isHRManager, isProjectManager } = usePermissions();
+  const { isHRManager, isProjectManager, isAccountingManager } = usePermissions();
   
   // PM self-view mode: only show own contracts
   const isSelfViewMode = isProjectManager && !isHRManager;
   const { handleError } = useErrorHandler();
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   const loadData = async () => {
     try {
@@ -48,7 +45,14 @@ export default function ContractsPage() {
     }
   };
 
-  const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const formatCurrency = (amount) => {
+    if (amount === null || amount === undefined) return '---'; 
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  };
 
   const filteredContracts = useMemo(() => {
     if (activeTab === 'TAT_CA') return contracts;
@@ -62,6 +66,11 @@ export default function ContractsPage() {
   };
 
   // --- HANDLERS ---
+  const handleViewDetail = (contract) => {
+    setSelectedContract(contract);
+    setShowDetailModal(true);
+  };
+
   const handleRenew = (contract) => {
     setSelectedContract(contract);
     setNewEndDate(contract.ngayKetThuc || ''); // Set ngày kết thúc cũ làm mặc định
@@ -254,8 +263,8 @@ export default function ContractsPage() {
                     <div style={s.profileCell}>
                       <div style={s.avatarBox}>{c.avatar || '👤'}</div>
                       <div>
-                        <div style={s.empName}>{c.nhanVien}</div>
-                        <div style={s.empRole}>{c.chucVu}</div>
+                        <div style={s.empName}>{c.hoTenNhanVien || 'N/A'}</div>
+                        <div style={s.empRole}>{c.tenChucVu || 'Chưa có chức vụ'}</div>
                       </div>
                     </div>
                   </td>
@@ -297,7 +306,13 @@ export default function ContractsPage() {
                         </button>
                       )}
                        {/* Nút xem chi tiết (luôn có) */}
-                      <button style={s.viewBtn} title="Xem chi tiết">👁️</button>
+                      <button 
+                        style={s.viewBtn} 
+                        onClick={() => handleViewDetail(c)}
+                        title="Xem chi tiết"
+                      >
+                        👁️
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -309,6 +324,71 @@ export default function ContractsPage() {
           <div style={s.emptyState}>Không tìm thấy hợp đồng nào trong trạng thái này.</div>
         )}
       </div>
+
+      {/* MODAL CHI TIẾT HỢP ĐỒNG */}
+      {showDetailModal && selectedContract && (
+        <div style={s.modalOverlay} onClick={() => setShowDetailModal(false)}>
+          <div style={s.modal} onClick={e => e.stopPropagation()}>
+            <div style={s.modalHeader}>
+              <h3 style={s.modalTitle}>Chi tiết Hợp đồng #{selectedContract.hopdongId}</h3>
+              <button style={s.closeBtn} onClick={() => setShowDetailModal(false)}>×</button>
+            </div>
+            <div style={s.modalBody}>
+              <div style={s.profileCell}>
+                <div style={{...s.avatarBox, width: 48, height: 48, fontSize: 24}}>
+                  {selectedContract.avatar || '👤'}
+                </div>
+                <div>
+                  <div style={{fontSize: 16, fontWeight: 600}}>{selectedContract.hoTenNhanVien}</div>
+                  <div style={s.empRole}>{selectedContract.tenChucVu}</div>
+                </div>
+              </div>
+              
+              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 8}}>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Loại hợp đồng</label>
+                  <div>{getContractTypeBadge(selectedContract.loaiHopDong)}</div>
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Trạng thái</label>
+                  <div>{getContractStatusBadge(selectedContract.trangThai, selectedContract.soNgayConLai)}</div>
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Ngày bắt đầu</label>
+                  <div style={{fontWeight: 500}}>{selectedContract.ngayBatDau}</div>
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Ngày kết thúc</label>
+                  <div style={{fontWeight: 500}}>{selectedContract.ngayKetThuc || 'Vô thời hạn'}</div>
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Lương cơ bản</label>
+                  <div style={{fontWeight: 700, color: '#059669', fontSize: 16}}>
+                    {formatCurrency(selectedContract.luongCoBan)}
+                  </div>
+                </div>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Ngày ký</label>
+                  <div>{selectedContract.createdAt ? new Date(selectedContract.createdAt).toLocaleDateString('vi-VN') : '---'}</div>
+                </div>
+              </div>
+
+              <div style={s.formGroup}>
+                <label style={s.label}>Nội dung / Ghi chú</label>
+                <div style={{
+                  background: '#f8f9fa', padding: 12, borderRadius: 8, 
+                  fontSize: 14, lineHeight: 1.5, border: '1px solid #e9ecef'
+                }}>
+                  {selectedContract.noiDung || 'Không có nội dung chi tiết'}
+                </div>
+              </div>
+            </div>
+            <div style={s.modalFooter}>
+              <button style={s.btnCancel} onClick={() => setShowDetailModal(false)}>Đóng</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL TẠO HỢP ĐỒNG MỚI */}
       {showCreateModal && (

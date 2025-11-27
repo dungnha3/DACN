@@ -19,6 +19,7 @@ public class DanhGiaDTO {
     private Long danhGiaId;
     private Long nhanvienId;
     private String tenNhanVien;
+    private String avatar; // Avatar nhân viên
     private String emailNhanVien;
     private String phongBan;
     private String chucVu;

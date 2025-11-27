@@ -402,7 +402,7 @@ public class DashboardService {
         List<Object[]> hopDongTheoLoai = hopDongRepository.getStatsByLoaiHopDong();
         Map<String, Long> loaiStats = hopDongTheoLoai.stream()
             .collect(Collectors.toMap(
-                row -> (String) row[0],
+                row -> row[0].toString(),
                 row -> (Long) row[1]
             ));
         stats.setHopDongTheoLoai(loaiStats);

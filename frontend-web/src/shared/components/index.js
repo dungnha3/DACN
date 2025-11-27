@@ -31,3 +31,6 @@ export { default as Pagination } from './table/Pagination'
 
 // Upload components
 export { default as FileUpload } from './upload/FileUpload'
+
+// AI ChatBot component
+export * from './ai-chatbot'

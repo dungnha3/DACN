@@ -1,0 +1,464 @@
+package DoAn.BE.ai.service;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import DoAn.BE.ai.dto.AIActionDTO;
+import DoAn.BE.ai.dto.AIActionDTO.ActionStatus;
+import DoAn.BE.ai.dto.AIActionDTO.ActionType;
+import DoAn.BE.project.entity.Issue;
+import DoAn.BE.project.entity.IssueStatus;
+import DoAn.BE.project.entity.Project;
+import DoAn.BE.project.entity.ProjectMember;
+import DoAn.BE.project.entity.Sprint;
+import DoAn.BE.project.repository.IssueRepository;
+import DoAn.BE.project.repository.IssueStatusRepository;
+import DoAn.BE.project.repository.ProjectMemberRepository;
+import DoAn.BE.project.repository.ProjectRepository;
+import DoAn.BE.project.repository.SprintRepository;
+import DoAn.BE.user.entity.User;
+import DoAn.BE.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Service thực thi các action từ AI
+ * Xử lý tạo Project, Issue, Sprint tự động
+ */
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional
+public class AIActionExecutor {
+    
+    private final ProjectRepository projectRepository;
+    private final IssueRepository issueRepository;
+    private final SprintRepository sprintRepository;
+    private final ProjectMemberRepository memberRepository;
+    private final IssueStatusRepository issueStatusRepository;
+    private final UserRepository userRepository;
+    
+    /**
+     * Thực thi action từ AI
+     */
+    public AIActionDTO executeAction(AIActionDTO action, Long userId) {
+        log.info("Executing AI action: {} for user: {}", action.getActionType(), userId);
+        
+        try {
+            return switch (action.getActionType()) {
+                case CREATE_PROJECT -> createProject(action, userId);
+                case CREATE_ISSUE -> createIssue(action, userId);
+                case CREATE_MULTIPLE_ISSUES -> createMultipleIssues(action, userId);
+                case CREATE_SPRINT -> createSprint(action, userId);
+                case ASSIGN_ISSUE -> assignIssue(action, userId);
+                case CHANGE_ISSUE_STATUS -> changeIssueStatus(action, userId);
+                case START_SPRINT -> startSprint(action, userId);
+                case COMPLETE_SPRINT -> completeSprint(action, userId);
+                default -> {
+                    action.setStatus(ActionStatus.FAILED);
+                    action.setMessage("Action không được hỗ trợ: " + action.getActionType());
+                    yield action;
+                }
+            };
+        } catch (Exception e) {
+            log.error("Error executing action: {}", e.getMessage());
+            action.setStatus(ActionStatus.FAILED);
+            action.setMessage("Lỗi: " + e.getMessage());
+            return action;
+        }
+    }
+    
+    /**
+     * Tạo project mới
+     */
+    private AIActionDTO createProject(AIActionDTO action, Long userId) {
+        Map<String, Object> data = action.getData();
+        
+        String name = getStringValue(data, "name", "Dự án mới");
+        String description = getStringValue(data, "description", "");
+        String key = getStringValue(data, "key", generateProjectKey(name));
+        
+        User creator = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        // Check if project key exists
+        if (projectRepository.findByKeyProject(key).isPresent()) {
+            key = key + "_" + System.currentTimeMillis() % 1000;
+        }
+        
+        Project project = new Project();
+        project.setName(name);
+        project.setDescription(description);
+        project.setKeyProject(key);
+        project.setStatus(Project.ProjectStatus.ACTIVE);
+        project.setCreatedBy(creator);
+        project.setStartDate(LocalDate.now());
+        
+        project = projectRepository.save(project);
+        
+        // Add creator as project owner
+        ProjectMember member = new ProjectMember();
+        member.setProject(project);
+        member.setUser(creator);
+        member.setRole(ProjectMember.ProjectRole.OWNER);
+        memberRepository.save(member);
+        
+        log.info("Created project: {} with key: {}", name, project.getKeyProject());
+        
+        action.setStatus(ActionStatus.EXECUTED);
+        action.setEntityId(project.getProjectId());
+        action.setEntityName(project.getName());
+        action.setMessage(String.format("✅ Đã tạo dự án \"%s\" thành công!", name));
+        
+        // Add created project info to data
+        Map<String, Object> resultData = new HashMap<>(data);
+        resultData.put("projectId", project.getProjectId());
+        resultData.put("projectKey", project.getKeyProject());
+        action.setData(resultData);
+        
+        return action;
+    }
+    
+    /**
+     * Tạo issue/task mới
+     */
+    private AIActionDTO createIssue(AIActionDTO action, Long userId) {
+        Map<String, Object> data = action.getData();
+        
+        Long projectId = getLongValue(data, "projectId");
+        String title = getStringValue(data, "title", "Task mới");
+        String description = getStringValue(data, "description", "");
+        String priority = getStringValue(data, "priority", "MEDIUM");
+        BigDecimal estimatedHours = getBigDecimalValue(data, "estimatedHours", null);
+        
+        if (projectId == null) {
+            action.setStatus(ActionStatus.FAILED);
+            action.setMessage("Vui lòng chỉ định dự án để tạo task");
+            return action;
+        }
+        
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+        
+        User reporter = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        // Get default status (To Do)
+        IssueStatus defaultStatus = issueStatusRepository.findAll().stream()
+                .filter(s -> s.getName().equalsIgnoreCase("To Do") || s.getOrderIndex() == 0)
+                .findFirst()
+                .orElse(null);
+        
+        Issue issue = new Issue();
+        issue.setProject(project);
+        issue.setTitle(title);
+        issue.setDescription(description);
+        issue.setIssueKey(generateIssueKey(project));
+        issue.setPriority(Issue.Priority.valueOf(priority.toUpperCase()));
+        issue.setReporter(reporter);
+        issue.setIssueStatus(defaultStatus);
+        issue.setEstimatedHours(estimatedHours);
+        
+        issue = issueRepository.save(issue);
+        
+        log.info("Created issue: {} in project: {}", issue.getIssueKey(), project.getKeyProject());
+        
+        action.setStatus(ActionStatus.EXECUTED);
+        action.setEntityId(issue.getIssueId());
+        action.setEntityName(issue.getTitle());
+        action.setMessage(String.format("✅ Đã tạo task \"%s\" (%s) thành công!", title, issue.getIssueKey()));
+        
+        Map<String, Object> resultData = new HashMap<>(data);
+        resultData.put("issueId", issue.getIssueId());
+        resultData.put("issueKey", issue.getIssueKey());
+        action.setData(resultData);
+        
+        return action;
+    }
+    
+    /**
+     * Tạo nhiều issues cùng lúc
+     */
+    @SuppressWarnings("unchecked")
+    private AIActionDTO createMultipleIssues(AIActionDTO action, Long userId) {
+        Map<String, Object> data = action.getData();
+        Long projectId = getLongValue(data, "projectId");
+        List<Map<String, Object>> issues = (List<Map<String, Object>>) data.get("issues");
+        
+        if (projectId == null || issues == null || issues.isEmpty()) {
+            action.setStatus(ActionStatus.FAILED);
+            action.setMessage("Thiếu thông tin dự án hoặc danh sách tasks");
+            return action;
+        }
+        
+        List<String> createdIssues = new ArrayList<>();
+        
+        for (Map<String, Object> issueData : issues) {
+            Map<String, Object> issueActionData = new HashMap<>(issueData);
+            issueActionData.put("projectId", projectId);
+            
+            AIActionDTO issueAction = AIActionDTO.builder()
+                    .actionType(ActionType.CREATE_ISSUE)
+                    .data(issueActionData)
+                    .build();
+            
+            AIActionDTO result = createIssue(issueAction, userId);
+            if (result.getStatus() == ActionStatus.EXECUTED) {
+                createdIssues.add(result.getEntityName());
+            }
+        }
+        
+        action.setStatus(ActionStatus.EXECUTED);
+        action.setMessage(String.format("✅ Đã tạo %d tasks thành công: %s", 
+                createdIssues.size(), String.join(", ", createdIssues)));
+        
+        return action;
+    }
+    
+    /**
+     * Tạo sprint mới
+     */
+    private AIActionDTO createSprint(AIActionDTO action, Long userId) {
+        Map<String, Object> data = action.getData();
+        
+        Long projectId = getLongValue(data, "projectId");
+        String name = getStringValue(data, "name", "Sprint mới");
+        String goal = getStringValue(data, "goal", "");
+        Integer durationDays = getIntValue(data, "durationDays", 14);
+        
+        if (projectId == null) {
+            action.setStatus(ActionStatus.FAILED);
+            action.setMessage("Vui lòng chỉ định dự án để tạo sprint");
+            return action;
+        }
+        
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+        
+        User creator = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        Sprint sprint = new Sprint();
+        sprint.setProject(project);
+        sprint.setName(name);
+        sprint.setGoal(goal);
+        sprint.setStatus(Sprint.SprintStatus.PLANNING);
+        sprint.setCreatedBy(creator);
+        sprint.setStartDate(LocalDate.now());
+        sprint.setEndDate(LocalDate.now().plusDays(durationDays));
+        
+        sprint = sprintRepository.save(sprint);
+        
+        log.info("Created sprint: {} in project: {}", name, project.getKeyProject());
+        
+        action.setStatus(ActionStatus.EXECUTED);
+        action.setEntityId(sprint.getSprintId());
+        action.setEntityName(sprint.getName());
+        action.setMessage(String.format("✅ Đã tạo sprint \"%s\" thành công! (Từ %s đến %s)", 
+                name, sprint.getStartDate(), sprint.getEndDate()));
+        
+        return action;
+    }
+    
+    /**
+     * Gán issue cho user
+     */
+    private AIActionDTO assignIssue(AIActionDTO action, Long userId) {
+        Map<String, Object> data = action.getData();
+        
+        Long issueId = getLongValue(data, "issueId");
+        String assigneeUsername = getStringValue(data, "assigneeUsername", null);
+        
+        if (issueId == null) {
+            action.setStatus(ActionStatus.FAILED);
+            action.setMessage("Thiếu thông tin issue");
+            return action;
+        }
+        
+        Issue issue = issueRepository.findById(issueId)
+                .orElseThrow(() -> new RuntimeException("Issue not found"));
+        
+        User assignee = null;
+        if (assigneeUsername != null) {
+            assignee = userRepository.findByUsername(assigneeUsername).orElse(null);
+        }
+        
+        issue.setAssignee(assignee);
+        issueRepository.save(issue);
+        
+        String assigneeName = assignee != null ? assignee.getUsername() : "không ai";
+        action.setStatus(ActionStatus.EXECUTED);
+        action.setMessage(String.format("✅ Đã gán task \"%s\" cho %s", issue.getTitle(), assigneeName));
+        
+        return action;
+    }
+    
+    /**
+     * Thay đổi trạng thái issue
+     */
+    private AIActionDTO changeIssueStatus(AIActionDTO action, Long userId) {
+        Map<String, Object> data = action.getData();
+        
+        Long issueId = getLongValue(data, "issueId");
+        String statusName = getStringValue(data, "status", null);
+        
+        if (issueId == null || statusName == null) {
+            action.setStatus(ActionStatus.FAILED);
+            action.setMessage("Thiếu thông tin issue hoặc trạng thái");
+            return action;
+        }
+        
+        Issue issue = issueRepository.findById(issueId)
+                .orElseThrow(() -> new RuntimeException("Issue not found"));
+        
+        IssueStatus newStatus = issueStatusRepository.findAll().stream()
+                .filter(s -> s.getName().equalsIgnoreCase(statusName))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Status not found: " + statusName));
+        
+        issue.setIssueStatus(newStatus);
+        issueRepository.save(issue);
+        
+        action.setStatus(ActionStatus.EXECUTED);
+        action.setMessage(String.format("✅ Đã chuyển task \"%s\" sang trạng thái \"%s\"", 
+                issue.getTitle(), newStatus.getName()));
+        
+        return action;
+    }
+    
+    /**
+     * Bắt đầu sprint
+     */
+    private AIActionDTO startSprint(AIActionDTO action, Long userId) {
+        Map<String, Object> data = action.getData();
+        Long sprintId = getLongValue(data, "sprintId");
+        
+        if (sprintId == null) {
+            action.setStatus(ActionStatus.FAILED);
+            action.setMessage("Thiếu thông tin sprint");
+            return action;
+        }
+        
+        Sprint sprint = sprintRepository.findById(sprintId)
+                .orElseThrow(() -> new RuntimeException("Sprint not found"));
+        
+        sprint.setStatus(Sprint.SprintStatus.ACTIVE);
+        sprint.setStartDate(LocalDate.now());
+        sprintRepository.save(sprint);
+        
+        action.setStatus(ActionStatus.EXECUTED);
+        action.setMessage(String.format("✅ Đã bắt đầu sprint \"%s\"", sprint.getName()));
+        
+        return action;
+    }
+    
+    /**
+     * Hoàn thành sprint
+     */
+    private AIActionDTO completeSprint(AIActionDTO action, Long userId) {
+        Map<String, Object> data = action.getData();
+        Long sprintId = getLongValue(data, "sprintId");
+        
+        if (sprintId == null) {
+            action.setStatus(ActionStatus.FAILED);
+            action.setMessage("Thiếu thông tin sprint");
+            return action;
+        }
+        
+        Sprint sprint = sprintRepository.findById(sprintId)
+                .orElseThrow(() -> new RuntimeException("Sprint not found"));
+        
+        sprint.setStatus(Sprint.SprintStatus.COMPLETED);
+        sprint.setEndDate(LocalDate.now());
+        sprintRepository.save(sprint);
+        
+        action.setStatus(ActionStatus.EXECUTED);
+        action.setMessage(String.format("✅ Đã hoàn thành sprint \"%s\"", sprint.getName()));
+        
+        return action;
+    }
+    
+    // ==================== Helper Methods ====================
+    
+    private String generateProjectKey(String name) {
+        // Generate key from first letters of words
+        String[] words = name.split("\\s+");
+        StringBuilder key = new StringBuilder();
+        for (String word : words) {
+            if (!word.isEmpty() && key.length() < 5) {
+                key.append(Character.toUpperCase(word.charAt(0)));
+            }
+        }
+        if (key.length() < 2) {
+            key.append("PRJ");
+        }
+        return key.toString();
+    }
+    
+    private String generateIssueKey(Project project) {
+        long issueCount = issueRepository.findByProject_ProjectId(project.getProjectId()).size() + 1;
+        return project.getKeyProject() + "-" + issueCount;
+    }
+    
+    private String getStringValue(Map<String, Object> data, String key, String defaultValue) {
+        if (data == null || !data.containsKey(key)) return defaultValue;
+        Object value = data.get(key);
+        return value != null ? value.toString() : defaultValue;
+    }
+    
+    private Long getLongValue(Map<String, Object> data, String key) {
+        if (data == null || !data.containsKey(key)) return null;
+        Object value = data.get(key);
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Long.parseLong((String) value);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
+    }
+    
+    private Integer getIntValue(Map<String, Object> data, String key, Integer defaultValue) {
+        if (data == null || !data.containsKey(key)) return defaultValue;
+        Object value = data.get(key);
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Integer.parseInt((String) value);
+            } catch (NumberFormatException e) {
+                return defaultValue;
+            }
+        }
+        return defaultValue;
+    }
+    
+    private BigDecimal getBigDecimalValue(Map<String, Object> data, String key, BigDecimal defaultValue) {
+        if (data == null || !data.containsKey(key)) return defaultValue;
+        Object value = data.get(key);
+        if (value instanceof Number) {
+            return BigDecimal.valueOf(((Number) value).doubleValue());
+        }
+        if (value instanceof String) {
+            try {
+                return new BigDecimal((String) value);
+            } catch (NumberFormatException e) {
+                return defaultValue;
+            }
+        }
+        return defaultValue;
+    }
+}

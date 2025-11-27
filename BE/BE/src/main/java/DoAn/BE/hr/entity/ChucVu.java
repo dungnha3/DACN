@@ -26,6 +26,12 @@ public class ChucVu {
     @Column(name = "mo_ta", length = 500, columnDefinition = "NVARCHAR(500)")
     private String moTa;
 
+    @Column(name = "icon", length = 50, columnDefinition = "NVARCHAR(50)")
+    private String icon;
+
+    @Column(name = "he_so_luong")
+    private Double heSoLuong;
+
     @Column(name = "level", nullable = false)
     private Integer level = 1;
 
