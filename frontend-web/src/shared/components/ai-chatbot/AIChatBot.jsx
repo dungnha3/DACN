@@ -13,21 +13,26 @@ export default function AIChatBot({ projectId = null }) {
   const [conversationId, setConversationId] = useState(null);
   const [aiStatus, setAiStatus] = useState({ available: false, message: '' });
   const [pendingActions, setPendingActions] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [showProjectSelector, setShowProjectSelector] = useState(false);
+  const [suggestedTasks, setSuggestedTasks] = useState(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
   // Quick actions cho AI
   const quickActions = [
-    { icon: '📊', label: 'Tóm tắt dự án', action: 'SUMMARIZE_PROJECT', isNew: false },
-    { icon: '🏃', label: 'Tiến độ Sprint', action: 'SUMMARIZE_SPRINT', isNew: false },
-    { icon: '💡', label: 'Gợi ý công việc', action: 'SUGGEST_TASKS', isNew: true },
-    { icon: '📈', label: 'Phân tích tiến độ', action: 'ANALYZE_PROGRESS', isNew: false },
-    { icon: '📝', label: 'Tạo báo cáo', action: 'GENERATE_REPORT', isNew: true },
+    { icon: '📊', label: 'Tóm tắt dự án', action: 'SUMMARIZE_PROJECT', isNew: false, needProject: true },
+    { icon: '🏃', label: 'Tiến độ Sprint', action: 'SUMMARIZE_SPRINT', isNew: false, needProject: true },
+    { icon: '💡', label: 'Gợi ý công việc', action: 'SUGGEST_TASKS', isNew: true, needProject: true },
+    { icon: '📈', label: 'Phân tích tiến độ', action: 'ANALYZE_PROGRESS', isNew: false, needProject: true },
+    { icon: '📝', label: 'Tạo báo cáo', action: 'GENERATE_REPORT', isNew: true, needProject: true },
   ];
 
-  // Check AI status on mount
+  // Check AI status and fetch projects on mount
   useEffect(() => {
     checkAiStatus();
+    fetchProjects();
   }, []);
 
   // Scroll to bottom when messages change
@@ -52,6 +57,21 @@ export default function AIChatBot({ projectId = null }) {
     }
   };
 
+  const fetchProjects = async () => {
+    try {
+      const response = await aiApi.getMyProjects();
+      setProjects(response || []);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      setProjects([]);
+    }
+  };
+
+  const handleSelectProject = (project) => {
+    setSelectedProject(project);
+    setShowProjectSelector(false);
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -67,10 +87,13 @@ export default function AIChatBot({ projectId = null }) {
     setIsLoading(true);
 
     try {
+      // Use selected project or prop projectId
+      const currentProjectId = selectedProject?.projectId || projectId;
+      
       const response = await aiApi.chat({
         message: userMessage,
         conversationId,
-        projectId,
+        projectId: currentProjectId,
         actionType,
       });
 
@@ -112,11 +135,32 @@ export default function AIChatBot({ projectId = null }) {
     }
   };
 
-  const handleQuickAction = (action) => {
+  const handleQuickAction = (actionConfig) => {
+    const action = typeof actionConfig === 'string' ? actionConfig : actionConfig.action;
+    const needProject = typeof actionConfig === 'object' ? actionConfig.needProject : true;
+    
+    // Check if project is needed but not selected
+    if (needProject && !selectedProject && !projectId) {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: '⚠️ Vui lòng chọn một dự án trước khi sử dụng tính năng này.\n\nClick vào "@ Add context" bên dưới để chọn dự án.',
+        isError: true
+      }]);
+      return;
+    }
+    
     const actionMessages = {
       SUMMARIZE_PROJECT: 'Hãy tóm tắt tình trạng dự án này',
       SUMMARIZE_SPRINT: 'Hãy tóm tắt tiến độ sprint hiện tại',
-      SUGGEST_TASKS: 'Hãy gợi ý các công việc ưu tiên tiếp theo',
+      SUGGEST_TASKS: `Hãy gợi ý các công việc cần làm để hoàn thành dự án "${selectedProject?.name || 'này'}". 
+        Với mỗi công việc, hãy đề xuất:
+        - Tên công việc
+        - Thời gian ước tính (giờ)
+        - Mức độ ưu tiên (LOW/MEDIUM/HIGH/CRITICAL)
+        - Hạn chót (số ngày từ hôm nay)
+        - Mô tả ngắn
+        
+        Liệt kê dưới dạng danh sách.`,
       ANALYZE_PROGRESS: 'Hãy phân tích tiến độ dự án',
       GENERATE_REPORT: 'Hãy tạo báo cáo status update',
     };
@@ -176,10 +220,66 @@ export default function AIChatBot({ projectId = null }) {
     return names[actionType] || actionType;
   };
 
+  // Approve all suggested tasks and create them
+  const handleApproveAllTasks = async (actions) => {
+    if (!actions || actions.length === 0) return;
+    
+    setIsLoading(true);
+    try {
+      const results = await aiApi.executeBatchActions(actions);
+      
+      // Count successes
+      const successCount = results.filter(r => r.status === 'EXECUTED').length;
+      const failCount = results.length - successCount;
+      
+      let resultMessage = `✅ Đã tạo thành công ${successCount} công việc`;
+      if (failCount > 0) {
+        resultMessage += `\n⚠️ ${failCount} công việc không thể tạo`;
+      }
+      
+      // Show individual results
+      results.forEach(r => {
+        if (r.message) {
+          resultMessage += `\n${r.message}`;
+        }
+      });
+      
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: resultMessage,
+        isActionResult: true
+      }]);
+      
+      // Clear pending actions
+      setPendingActions([]);
+      
+    } catch (error) {
+      console.error('Error creating tasks:', error);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `❌ Lỗi khi tạo công việc: ${error.response?.data?.message || error.message}`,
+        isError: true
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Reject suggested tasks
+  const handleRejectTasks = () => {
+    setPendingActions([]);
+    setMessages(prev => [...prev, {
+      role: 'assistant',
+      content: '👍 Đã hủy. Bạn có thể yêu cầu AI gợi ý lại hoặc tiếp tục chat.',
+      isActionResult: true
+    }]);
+  };
+
   const handleNewChat = () => {
     setMessages([]);
     setConversationId(null);
     setInputValue('');
+    setPendingActions([]);
   };
 
   const handleKeyDown = (e) => {
@@ -234,18 +334,28 @@ export default function AIChatBot({ projectId = null }) {
                 </div>
                 <h3 style={styles.welcomeTitle}>Tôi có thể giúp gì cho bạn?</h3>
                 
+                {/* Selected Project Badge */}
+                {selectedProject && (
+                  <div style={styles.selectedProjectBadge}>
+                    📊 {selectedProject.name}
+                  </div>
+                )}
+                
                 {/* Quick Actions */}
                 <div style={styles.quickActions}>
-                  {quickActions.map((action, idx) => (
+                  {quickActions.map((actionConfig, idx) => (
                     <button
                       key={idx}
-                      style={styles.quickActionBtn}
-                      onClick={() => handleQuickAction(action.action)}
+                      style={{
+                        ...styles.quickActionBtn,
+                        ...(actionConfig.needProject && !selectedProject && !projectId && styles.quickActionBtnDisabled)
+                      }}
+                      onClick={() => handleQuickAction(actionConfig)}
                       disabled={!aiStatus.available}
                     >
-                      <span style={styles.actionIcon}>{action.icon}</span>
-                      <span style={styles.actionLabel}>{action.label}</span>
-                      {action.isNew && <span style={styles.newBadge}>New</span>}
+                      <span style={styles.actionIcon}>{actionConfig.icon}</span>
+                      <span style={styles.actionLabel}>{actionConfig.label}</span>
+                      {actionConfig.isNew && <span style={styles.newBadge}>New</span>}
                     </button>
                   ))}
                 </div>
@@ -321,16 +431,109 @@ export default function AIChatBot({ projectId = null }) {
             )}
           </div>
 
+          {/* Approve/Reject buttons for pending actions */}
+          {pendingActions.length > 0 && (
+            <div style={styles.pendingActionsBar}>
+              <span style={styles.pendingActionsText}>
+                📋 {pendingActions.length} công việc được gợi ý
+              </span>
+              <div style={styles.pendingActionsButtons}>
+                <button
+                  style={styles.rejectBtn}
+                  onClick={handleRejectTasks}
+                  disabled={isLoading}
+                >
+                  ✕ Từ chối
+                </button>
+                <button
+                  style={styles.approveBtn}
+                  onClick={() => handleApproveAllTasks(pendingActions)}
+                  disabled={isLoading}
+                >
+                  ✓ Đồng ý tạo tất cả
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Input Area */}
           <div style={styles.inputArea}>
+            {/* Project selector dropdown */}
+            {showProjectSelector && (
+              <div style={styles.projectSelector}>
+                <div style={styles.projectSelectorHeader}>
+                  <span>📁 Chọn dự án</span>
+                  <button 
+                    style={styles.closeSelectorBtn}
+                    onClick={() => setShowProjectSelector(false)}
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div style={styles.projectList}>
+                  {projects.length === 0 ? (
+                    <div style={styles.noProjects}>Không có dự án nào</div>
+                  ) : (
+                    projects.map((project) => (
+                      <button
+                        key={project.projectId}
+                        style={{
+                          ...styles.projectItem,
+                          ...(selectedProject?.projectId === project.projectId && styles.projectItemSelected)
+                        }}
+                        onClick={() => handleSelectProject(project)}
+                      >
+                        <span style={styles.projectIcon}>📊</span>
+                        <div style={styles.projectInfo}>
+                          <span style={styles.projectName}>{project.name}</span>
+                          <span style={styles.projectKey}>{project.keyProject}</span>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
             <div style={styles.inputContainer}>
-              <button style={styles.contextBtn}>
-                <span>@</span> Add context
+              <button 
+                type="button"
+                className="context-btn"
+                style={{
+                  ...styles.contextBtn,
+                  ...(selectedProject && styles.contextBtnSelected),
+                  ...(showProjectSelector && { backgroundColor: '#e5e7eb' })
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Context button clicked');
+                  setShowProjectSelector(!showProjectSelector);
+                }}
+              >
+                {selectedProject ? (
+                  <>
+                    <span>📊</span> {selectedProject.name}
+                    <span 
+                      style={styles.clearProjectBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedProject(null);
+                      }}
+                    >
+                      ✕
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span>@</span> Add context
+                  </>
+                )}
               </button>
               <textarea
                 ref={inputRef}
                 style={styles.input}
-                placeholder="Hỏi bất cứ điều gì..."
+                placeholder={selectedProject ? `Hỏi về dự án ${selectedProject.name}...` : "Hỏi bất cứ điều gì..."}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -378,6 +581,10 @@ export default function AIChatBot({ projectId = null }) {
             opacity: 1;
             transform: translateY(0);
           }
+        }
+        .context-btn:hover {
+          background-color: #e5e7eb !important;
+          border-color: #d1d5db !important;
         }
       `}</style>
     </>
@@ -640,6 +847,7 @@ const styles = {
   inputArea: {
     padding: '12px 16px',
     borderTop: '1px solid #f0f0f0',
+    position: 'relative',
   },
   inputContainer: {
     border: '2px solid #e5e7eb',
@@ -648,17 +856,20 @@ const styles = {
     transition: 'border-color 0.2s',
   },
   contextBtn: {
-    display: 'flex',
+    display: 'inline-flex',
     alignItems: 'center',
     gap: '4px',
-    padding: '4px 8px',
+    padding: '6px 10px',
     background: '#f5f5f5',
-    border: 'none',
+    border: '1px solid #e5e7eb',
     borderRadius: '6px',
     fontSize: '12px',
     color: '#666',
     cursor: 'pointer',
     marginBottom: '8px',
+    zIndex: 10,
+    position: 'relative',
+    transition: 'all 0.2s ease',
   },
   input: {
     width: '100%',
@@ -703,5 +914,146 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'opacity 0.2s',
+  },
+  // Project selector styles
+  projectSelector: {
+    position: 'absolute',
+    bottom: '100%',
+    left: '16px',
+    right: '16px',
+    marginBottom: '8px',
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+    maxHeight: '300px',
+    overflow: 'hidden',
+    zIndex: 100,
+  },
+  projectSelectorHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '12px 16px',
+    borderBottom: '1px solid #f0f0f0',
+    fontWeight: '600',
+    fontSize: '14px',
+  },
+  closeSelectorBtn: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '16px',
+    color: '#666',
+    padding: '4px',
+  },
+  projectList: {
+    maxHeight: '240px',
+    overflowY: 'auto',
+  },
+  noProjects: {
+    padding: '20px',
+    textAlign: 'center',
+    color: '#666',
+    fontSize: '14px',
+  },
+  projectItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '12px 16px',
+    width: '100%',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'background 0.2s',
+    textAlign: 'left',
+  },
+  projectItemSelected: {
+    backgroundColor: '#eff6ff',
+  },
+  projectIcon: {
+    fontSize: '20px',
+  },
+  projectInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+  },
+  projectName: {
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#1a1a1a',
+  },
+  projectKey: {
+    fontSize: '12px',
+    color: '#666',
+  },
+  contextBtnSelected: {
+    backgroundColor: '#eff6ff',
+    color: '#3b82f6',
+    borderColor: '#3b82f6',
+  },
+  clearProjectBtn: {
+    marginLeft: '8px',
+    padding: '2px 6px',
+    fontSize: '12px',
+    color: '#666',
+    cursor: 'pointer',
+  },
+  selectedProjectBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 12px',
+    backgroundColor: '#eff6ff',
+    color: '#3b82f6',
+    borderRadius: '16px',
+    fontSize: '13px',
+    fontWeight: '500',
+    marginBottom: '16px',
+  },
+  quickActionBtnDisabled: {
+    opacity: 0.5,
+  },
+  // Pending actions bar styles
+  pendingActionsBar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '12px 16px',
+    backgroundColor: '#fef3c7',
+    borderTop: '1px solid #fcd34d',
+    gap: '12px',
+  },
+  pendingActionsText: {
+    fontSize: '13px',
+    fontWeight: '500',
+    color: '#92400e',
+  },
+  pendingActionsButtons: {
+    display: 'flex',
+    gap: '8px',
+  },
+  rejectBtn: {
+    padding: '8px 16px',
+    backgroundColor: 'white',
+    border: '1px solid #d1d5db',
+    borderRadius: '8px',
+    fontSize: '13px',
+    fontWeight: '500',
+    color: '#374151',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
+  approveBtn: {
+    padding: '8px 16px',
+    backgroundColor: '#10b981',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '13px',
+    fontWeight: '500',
+    color: 'white',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
   },
 };

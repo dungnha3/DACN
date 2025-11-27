@@ -138,6 +138,7 @@ public class AIActionExecutor {
         String description = getStringValue(data, "description", "");
         String priority = getStringValue(data, "priority", "MEDIUM");
         BigDecimal estimatedHours = getBigDecimalValue(data, "estimatedHours", null);
+        Integer deadlineDays = getIntValue(data, "deadlineDays", null);
         
         if (projectId == null) {
             action.setStatus(ActionStatus.FAILED);
@@ -166,6 +167,11 @@ public class AIActionExecutor {
         issue.setReporter(reporter);
         issue.setIssueStatus(defaultStatus);
         issue.setEstimatedHours(estimatedHours);
+        
+        // Set due date from deadline days
+        if (deadlineDays != null && deadlineDays > 0) {
+            issue.setDueDate(java.time.LocalDate.now().plusDays(deadlineDays));
+        }
         
         issue = issueRepository.save(issue);
         
