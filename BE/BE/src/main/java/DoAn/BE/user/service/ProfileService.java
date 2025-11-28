@@ -24,7 +24,7 @@ public class ProfileService {
     private final AuthNotificationService authNotificationService;
 
     public ProfileService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                         AuthNotificationService authNotificationService) {
+            AuthNotificationService authNotificationService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authNotificationService = authNotificationService;
@@ -32,7 +32,7 @@ public class ProfileService {
 
     public User getCurrentUserProfile(Long userId) {
         return userRepository.findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
     }
 
     public User updateProfile(Long userId, UpdateUserRequest request) {
@@ -61,7 +61,7 @@ public class ProfileService {
         // Set new password
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
-        
+
         // Gửi notification
         authNotificationService.createPasswordChangedNotification(userId);
         log.info("User {} changed password successfully", user.getUsername());
@@ -76,6 +76,12 @@ public class ProfileService {
     public void setUserOffline(Long userId) {
         User user = getCurrentUserProfile(userId);
         user.setOffline();
+        userRepository.save(user);
+    }
+
+    public void updateFcmToken(Long userId, String fcmToken) {
+        User user = getCurrentUserProfile(userId);
+        user.setFcmToken(fcmToken);
         userRepository.save(user);
     }
 }

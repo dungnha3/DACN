@@ -24,7 +24,7 @@ public class NotificationController {
 
     @Autowired
     private NotificationService notificationService;
-    
+
     @Autowired
     private UserRepository userRepository;
 
@@ -36,19 +36,21 @@ public class NotificationController {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new UnauthorizedException("User chưa đăng nhập");
         }
-        
+
         String username = authentication.getName();
         return userRepository.findByUsername(username)
-            .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
     }
 
     /**
      * Lấy danh sách notification của user hiện tại
      */
     @GetMapping
-    public ResponseEntity<List<Notification>> getMyNotifications() {
+    public ResponseEntity<org.springframework.data.domain.Page<Notification>> getMyNotifications(
+            org.springframework.data.domain.Pageable pageable) {
         User currentUser = getCurrentUser();
-        List<Notification> notifications = notificationService.getUserNotifications(currentUser.getUserId());
+        org.springframework.data.domain.Page<Notification> notifications = notificationService
+                .getUserNotifications(currentUser.getUserId(), pageable);
         return ResponseEntity.ok(notifications);
     }
 
@@ -59,7 +61,7 @@ public class NotificationController {
     public ResponseEntity<Map<String, Long>> getUnreadCount() {
         User currentUser = getCurrentUser();
         long unreadCount = notificationService.getUnreadCount(currentUser.getUserId());
-        
+
         Map<String, Long> response = new HashMap<>();
         response.put("unreadCount", unreadCount);
         return ResponseEntity.ok(response);
@@ -72,7 +74,7 @@ public class NotificationController {
     public ResponseEntity<Map<String, String>> markAsRead(@PathVariable Long notificationId) {
         User currentUser = getCurrentUser();
         notificationService.markAsRead(notificationId, currentUser.getUserId());
-        
+
         Map<String, String> response = new HashMap<>();
         response.put("message", "Notification đã được đánh dấu đã đọc");
         return ResponseEntity.ok(response);
@@ -85,7 +87,7 @@ public class NotificationController {
     public ResponseEntity<Map<String, String>> markAllAsRead() {
         User currentUser = getCurrentUser();
         notificationService.markAllAsRead(currentUser.getUserId());
-        
+
         Map<String, String> response = new HashMap<>();
         response.put("message", "Tất cả notification đã được đánh dấu đã đọc");
         return ResponseEntity.ok(response);
@@ -98,7 +100,7 @@ public class NotificationController {
     public ResponseEntity<Map<String, String>> deleteNotification(@PathVariable Long notificationId) {
         User currentUser = getCurrentUser();
         notificationService.deleteNotification(notificationId, currentUser.getUserId());
-        
+
         Map<String, String> response = new HashMap<>();
         response.put("message", "Notification đã được xóa");
         return ResponseEntity.ok(response);

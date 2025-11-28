@@ -1,0 +1,5637 @@
+2025-11-25 19:39:34 [background-preinit] INFO  o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.3.Final
+2025-11-25 19:39:34 [main] INFO  DoAn.BE.BeApplication - Starting BeApplication using Java 21.0.9 with PID 24632 (C:\DACN\BE\BE\target\classes started by ACER in C:\DACN)
+2025-11-25 19:39:34 [main] DEBUG DoAn.BE.BeApplication - Running with Spring Boot v3.5.6, Spring v6.2.11
+2025-11-25 19:39:34 [main] INFO  DoAn.BE.BeApplication - No active profile set, falling back to 1 default profile: "default"
+2025-11-25 19:39:35 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-11-25 19:39:35 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 142 ms. Found 29 JPA repository interfaces.
+2025-11-25 19:39:36 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-11-25 19:39:36 [main] INFO  o.a.coyote.http11.Http11NioProtocol - The ["http-nio-8080"] connector has been configured to support HTTP upgrade to [h2c]
+2025-11-25 19:39:36 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-11-25 19:39:36 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-11-25 19:39:36 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.46]
+2025-11-25 19:39:36 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-11-25 19:39:36 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1757 ms
+2025-11-25 19:39:36 [main] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-11-25 19:39:37 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.29.Final
+2025-11-25 19:39:37 [main] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2025-11-25 19:39:37 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-11-25 19:39:37 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-11-25 19:39:37 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection ConnectionID:1 ClientConnectionId: b9a00aac-e997-4e44-b269-824dffbeb44b
+2025-11-25 19:39:37 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-11-25 19:39:37 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: SQLServerDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-11-25 19:39:37 [main] INFO  o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 16.0
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-11-25 19:39:39 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table audit_logs 
+       alter column reason NVARCHAR(1000)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table danh_gia 
+       alter column ke_hoach_phat_trien NVARCHAR(MAX)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table danh_gia 
+       alter column muc_tieu_tiep_theo NVARCHAR(MAX)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table danh_gia 
+       alter column nhan_xet NVARCHAR(MAX)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table hop_dong 
+       alter column noi_dung NVARCHAR(MAX)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table issue_activities 
+       alter column description NVARCHAR(MAX)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table issue_activities 
+       alter column new_value NVARCHAR(MAX)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table issue_activities 
+       alter column old_value NVARCHAR(MAX)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table issue_comments 
+       alter column content NVARCHAR(MAX)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table issues 
+       alter column description NVARCHAR(MAX)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table messages 
+       alter column content NVARCHAR(MAX)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table projects 
+       alter column description NVARCHAR(MAX)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table sprints 
+       alter column goal NVARCHAR(MAX)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table thong_bao 
+       alter column loai NVARCHAR(50)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table thong_bao 
+       alter column metadata NVARCHAR(MAX)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table thong_bao 
+       alter column noi_dung NVARCHAR(MAX)
+2025-11-25 19:39:39 [main] DEBUG org.hibernate.SQL - 
+    alter table thong_bao 
+       alter column url_lien_ket NVARCHAR(500)
+2025-11-25 19:39:39 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-11-25 19:39:39 [main] INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-11-25 19:39:41 [main] DEBUG D.B.a.filter.JwtAuthenticationFilter - Filter 'jwtAuthenticationFilter' configured for use
+2025-11-25 19:39:42 [main] WARN  o.s.aop.framework.CglibAopProxy - Unable to proxy interface-implementing method [public final void org.springframework.web.filter.GenericFilterBean.init(jakarta.servlet.FilterConfig) throws jakarta.servlet.ServletException] because it is marked as final, consider using interface-based JDK proxies instead.
+2025-11-25 19:39:42 [main] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-11-25 19:39:42 [main] DEBUG o.s.s.c.a.a.c.AuthenticationConfiguration$DefaultPasswordEncoderAuthenticationManagerBuilder - No authenticationProviders and no parentAuthenticationManager defined. Returning null.
+2025-11-25 19:39:42 [main] DEBUG o.s.s.web.DefaultSecurityFilterChain - Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, CorsFilter, LogoutFilter, JwtAuthenticationFilter$$SpringCGLIB$$0, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, SessionManagementFilter, ExceptionTranslationFilter, AuthorizationFilter
+2025-11-25 19:39:43 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Starting...
+2025-11-25 19:39:43 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@24c7f52b]]
+2025-11-25 19:39:43 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Started.
+2025-11-25 19:39:43 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-11-25 19:39:43 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-11-25 19:39:43 [main] INFO  DoAn.BE.BeApplication - Started BeApplication in 8.747 seconds (process running for 9.039)
+2025-11-25 19:39:43 [main] DEBUG org.hibernate.SQL - 
+    select
+        count_big(*) 
+    from
+        users u1_0
+2025-11-25 19:39:43 [main] INFO  D.B.u.config.DefaultUsersInitializer - ⏭️  Users already exist, skipping initialization
+2025-11-25 19:39:43 [main] DEBUG org.hibernate.SQL - 
+    select
+        count_big(*) 
+    from
+        phong_ban pb1_0
+2025-11-25 19:39:43 [main] INFO  DoAn.BE.common.config.DataSeed - ⏭️  Data already exists, skipping seed
+2025-11-25 19:40:03 [http-nio-8080-exec-1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-25 19:40:03 [http-nio-8080-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-11-25 19:40:03 [http-nio-8080-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 0 ms
+2025-11-25 19:40:03 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Securing POST /api/auth/login
+2025-11-25 19:40:03 [http-nio-8080-exec-1] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-11-25 19:40:03 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Secured POST /api/auth/login
+2025-11-25 19:40:03 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        count_big(la1_0.id) 
+    from
+        login_attempts la1_0 
+    where
+        (
+            la1_0.username=? 
+            or la1_0.ip_address=?
+        ) 
+        and la1_0.attempted_at>? 
+        and la1_0.success=0
+2025-11-25 19:40:03 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-25 19:40:03 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        la1_0.id,
+        la1_0.attempted_at,
+        la1_0.failure_reason,
+        la1_0.ip_address,
+        la1_0.success,
+        la1_0.username 
+    from
+        login_attempts la1_0 
+    where
+        la1_0.username=? 
+        and la1_0.ip_address=?
+2025-11-25 19:40:03 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        us1_0.id,
+        us1_0.created_at,
+        us1_0.ip_address,
+        us1_0.is_active,
+        us1_0.last_activity,
+        us1_0.session_id,
+        us1_0.user_id,
+        us1_0.user_agent 
+    from
+        user_sessions us1_0 
+    where
+        us1_0.user_id=? 
+        and us1_0.is_active=1
+2025-11-25 19:40:03 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        us1_0.id,
+        us1_0.created_at,
+        us1_0.ip_address,
+        us1_0.is_active,
+        us1_0.last_activity,
+        us1_0.session_id,
+        us1_0.user_id,
+        us1_0.user_agent 
+    from
+        user_sessions us1_0 
+    where
+        us1_0.session_id=?
+2025-11-25 19:40:03 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        user_sessions
+        (created_at, ip_address, is_active, last_activity, session_id, user_id, user_agent) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 19:40:03 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        rt1_0.id,
+        rt1_0.created_at,
+        rt1_0.expires_at,
+        rt1_0.is_revoked,
+        rt1_0.token,
+        rt1_0.user_id 
+    from
+        refresh_tokens rt1_0 
+    where
+        rt1_0.user_id=? 
+        and rt1_0.is_revoked=0 
+        and rt1_0.expires_at>?
+2025-11-25 19:40:03 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        refresh_tokens
+        (created_at, expires_at, is_revoked, token, user_id) 
+    values
+        (?, ?, ?, ?, ?)
+2025-11-25 19:40:03 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 19:40:03 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-25 19:40:03 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    update
+        user_sessions 
+    set
+        created_at=?,
+        ip_address=?,
+        is_active=?,
+        last_activity=?,
+        session_id=?,
+        user_id=?,
+        user_agent=? 
+    where
+        id=?
+2025-11-25 19:40:03 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    delete 
+    from
+        refresh_tokens 
+    where
+        id=?
+2025-11-25 19:40:39 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/profile/me
+2025-11-25 19:40:39 [http-nio-8080-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-25 19:40:39 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/profile/me
+2025-11-25 19:40:39 [http-nio-8080-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 19:40:39 [http-nio-8080-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:40:39 [http-nio-8080-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu 
+    from
+        chuc_vu cv1_0 
+    where
+        cv1_0.chucvu_id=?
+2025-11-25 19:40:39 [http-nio-8080-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:40:43 [MessageBroker-1] INFO  o.s.w.s.c.WebSocketMessageBrokerStats - WebSocketSession[0 current WS(0)-HttpStream(0)-HttpPoll(0), 0 total, 0 closed abnormally (0 connect failure, 0 send limit, 0 transport error)], stompSubProtocol[processed CONNECT(0)-CONNECTED(0)-DISCONNECT(0)], stompBrokerRelay[null], inboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], outboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], sockJsScheduler[pool size = 9, active threads = 1, queued tasks = 8, completed tasks = 0]
+2025-11-25 19:42:15 [SpringApplicationShutdownHook] INFO  o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-25 19:42:15 [tomcat-shutdown] INFO  o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-11-25 19:42:15 [SpringApplicationShutdownHook] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Stopping...
+2025-11-25 19:42:15 [SpringApplicationShutdownHook] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - BrokerAvailabilityEvent[available=false, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@24c7f52b]]
+2025-11-25 19:42:15 [SpringApplicationShutdownHook] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Stopped.
+2025-11-25 19:42:15 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-11-25 19:42:15 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2025-11-25 19:42:15 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2025-11-25 19:42:28 [background-preinit] INFO  o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.3.Final
+2025-11-25 19:42:28 [main] INFO  DoAn.BE.BeApplication - Starting BeApplication using Java 21.0.9 with PID 38716 (C:\DACN\BE\BE\target\classes started by ACER in C:\DACN)
+2025-11-25 19:42:28 [main] DEBUG DoAn.BE.BeApplication - Running with Spring Boot v3.5.6, Spring v6.2.11
+2025-11-25 19:42:28 [main] INFO  DoAn.BE.BeApplication - No active profile set, falling back to 1 default profile: "default"
+2025-11-25 19:42:29 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-11-25 19:42:29 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 154 ms. Found 29 JPA repository interfaces.
+2025-11-25 19:42:30 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-11-25 19:42:30 [main] INFO  o.a.coyote.http11.Http11NioProtocol - The ["http-nio-8080"] connector has been configured to support HTTP upgrade to [h2c]
+2025-11-25 19:42:30 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-11-25 19:42:30 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-11-25 19:42:30 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.46]
+2025-11-25 19:42:30 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-11-25 19:42:30 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1826 ms
+2025-11-25 19:42:30 [main] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-11-25 19:42:30 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.29.Final
+2025-11-25 19:42:30 [main] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2025-11-25 19:42:31 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-11-25 19:42:31 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-11-25 19:42:31 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection ConnectionID:1 ClientConnectionId: 3cb9b470-c15b-4d25-8be3-5124b0e7e762
+2025-11-25 19:42:31 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-11-25 19:42:31 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: SQLServerDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-11-25 19:42:31 [main] INFO  o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 16.0
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-11-25 19:42:32 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table audit_logs 
+       alter column reason NVARCHAR(1000)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table danh_gia 
+       alter column ke_hoach_phat_trien NVARCHAR(MAX)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table danh_gia 
+       alter column muc_tieu_tiep_theo NVARCHAR(MAX)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table danh_gia 
+       alter column nhan_xet NVARCHAR(MAX)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table hop_dong 
+       alter column noi_dung NVARCHAR(MAX)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table issue_activities 
+       alter column description NVARCHAR(MAX)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table issue_activities 
+       alter column new_value NVARCHAR(MAX)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table issue_activities 
+       alter column old_value NVARCHAR(MAX)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table issue_comments 
+       alter column content NVARCHAR(MAX)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table issues 
+       alter column description NVARCHAR(MAX)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table messages 
+       alter column content NVARCHAR(MAX)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table projects 
+       alter column description NVARCHAR(MAX)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table sprints 
+       alter column goal NVARCHAR(MAX)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table thong_bao 
+       alter column loai NVARCHAR(50)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table thong_bao 
+       alter column metadata NVARCHAR(MAX)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table thong_bao 
+       alter column noi_dung NVARCHAR(MAX)
+2025-11-25 19:42:33 [main] DEBUG org.hibernate.SQL - 
+    alter table thong_bao 
+       alter column url_lien_ket NVARCHAR(500)
+2025-11-25 19:42:33 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-11-25 19:42:33 [main] INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-11-25 19:42:35 [main] DEBUG D.B.a.filter.JwtAuthenticationFilter - Filter 'jwtAuthenticationFilter' configured for use
+2025-11-25 19:42:36 [main] WARN  o.s.aop.framework.CglibAopProxy - Unable to proxy interface-implementing method [public final void org.springframework.web.filter.GenericFilterBean.init(jakarta.servlet.FilterConfig) throws jakarta.servlet.ServletException] because it is marked as final, consider using interface-based JDK proxies instead.
+2025-11-25 19:42:37 [main] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-11-25 19:42:37 [main] DEBUG o.s.s.c.a.a.c.AuthenticationConfiguration$DefaultPasswordEncoderAuthenticationManagerBuilder - No authenticationProviders and no parentAuthenticationManager defined. Returning null.
+2025-11-25 19:42:37 [main] DEBUG o.s.s.web.DefaultSecurityFilterChain - Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, CorsFilter, LogoutFilter, JwtAuthenticationFilter$$SpringCGLIB$$0, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, SessionManagementFilter, ExceptionTranslationFilter, AuthorizationFilter
+2025-11-25 19:42:38 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Starting...
+2025-11-25 19:42:38 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@1ba9111b]]
+2025-11-25 19:42:38 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Started.
+2025-11-25 19:42:38 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-11-25 19:42:38 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-11-25 19:42:38 [main] INFO  DoAn.BE.BeApplication - Started BeApplication in 10.175 seconds (process running for 10.458)
+2025-11-25 19:42:38 [main] DEBUG org.hibernate.SQL - 
+    select
+        count_big(*) 
+    from
+        users u1_0
+2025-11-25 19:42:38 [main] INFO  D.B.u.config.DefaultUsersInitializer - ⏭️  Users already exist, skipping initialization
+2025-11-25 19:42:38 [main] DEBUG org.hibernate.SQL - 
+    select
+        count_big(*) 
+    from
+        phong_ban pb1_0
+2025-11-25 19:42:38 [main] INFO  DoAn.BE.common.config.DataSeed - ⏭️  Data already exists, skipping seed
+2025-11-25 19:43:38 [MessageBroker-1] INFO  o.s.w.s.c.WebSocketMessageBrokerStats - WebSocketSession[0 current WS(0)-HttpStream(0)-HttpPoll(0), 0 total, 0 closed abnormally (0 connect failure, 0 send limit, 0 transport error)], stompSubProtocol[processed CONNECT(0)-CONNECTED(0)-DISCONNECT(0)], stompBrokerRelay[null], inboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], outboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], sockJsScheduler[pool size = 9, active threads = 1, queued tasks = 8, completed tasks = 0]
+2025-11-25 19:43:48 [http-nio-8080-exec-1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-25 19:43:48 [http-nio-8080-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-11-25 19:43:48 [http-nio-8080-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2025-11-25 19:43:48 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Securing POST /api/auth/login
+2025-11-25 19:43:48 [http-nio-8080-exec-1] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-11-25 19:43:48 [http-nio-8080-exec-1] DEBUG o.s.security.web.FilterChainProxy - Secured POST /api/auth/login
+2025-11-25 19:43:48 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        count_big(la1_0.id) 
+    from
+        login_attempts la1_0 
+    where
+        (
+            la1_0.username=? 
+            or la1_0.ip_address=?
+        ) 
+        and la1_0.attempted_at>? 
+        and la1_0.success=0
+2025-11-25 19:43:48 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-25 19:43:48 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        la1_0.id,
+        la1_0.attempted_at,
+        la1_0.failure_reason,
+        la1_0.ip_address,
+        la1_0.success,
+        la1_0.username 
+    from
+        login_attempts la1_0 
+    where
+        la1_0.username=? 
+        and la1_0.ip_address=?
+2025-11-25 19:43:48 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        us1_0.id,
+        us1_0.created_at,
+        us1_0.ip_address,
+        us1_0.is_active,
+        us1_0.last_activity,
+        us1_0.session_id,
+        us1_0.user_id,
+        us1_0.user_agent 
+    from
+        user_sessions us1_0 
+    where
+        us1_0.user_id=? 
+        and us1_0.is_active=1
+2025-11-25 19:43:48 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        us1_0.id,
+        us1_0.created_at,
+        us1_0.ip_address,
+        us1_0.is_active,
+        us1_0.last_activity,
+        us1_0.session_id,
+        us1_0.user_id,
+        us1_0.user_agent 
+    from
+        user_sessions us1_0 
+    where
+        us1_0.session_id=?
+2025-11-25 19:43:48 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        user_sessions
+        (created_at, ip_address, is_active, last_activity, session_id, user_id, user_agent) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 19:43:48 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        rt1_0.id,
+        rt1_0.created_at,
+        rt1_0.expires_at,
+        rt1_0.is_revoked,
+        rt1_0.token,
+        rt1_0.user_id 
+    from
+        refresh_tokens rt1_0 
+    where
+        rt1_0.user_id=? 
+        and rt1_0.is_revoked=0 
+        and rt1_0.expires_at>?
+2025-11-25 19:43:49 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        refresh_tokens
+        (created_at, expires_at, is_revoked, token, user_id) 
+    values
+        (?, ?, ?, ?, ?)
+2025-11-25 19:43:49 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 19:43:49 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-25 19:43:49 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    update
+        user_sessions 
+    set
+        created_at=?,
+        ip_address=?,
+        is_active=?,
+        last_activity=?,
+        session_id=?,
+        user_id=?,
+        user_agent=? 
+    where
+        id=?
+2025-11-25 19:43:49 [http-nio-8080-exec-1] DEBUG org.hibernate.SQL - 
+    delete 
+    from
+        refresh_tokens 
+    where
+        id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/accounts?size=100
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/accounts?size=100
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    order by
+        u1_0.user_id desc 
+    offset
+        ? rows 
+    fetch
+        first ? rows only
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu 
+    from
+        chuc_vu cv1_0 
+    where
+        cv1_0.chucvu_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu 
+    from
+        chuc_vu cv1_0 
+    where
+        cv1_0.chucvu_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu 
+    from
+        chuc_vu cv1_0 
+    where
+        cv1_0.chucvu_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu 
+    from
+        chuc_vu cv1_0 
+    where
+        cv1_0.chucvu_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:43:51 [http-nio-8080-exec-2] WARN  o.s.d.w.c.SpringDataJacksonConfiguration$PageModule$WarningLoggingModifier - Serializing PageImpl instances as-is is not supported, meaning that there is no guarantee about the stability of the resulting JSON structure!
+	For a stable JSON structure, please use Spring Data's PagedModel (globally via @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO))
+	or Spring HATEOAS and Spring Data's PagedResourcesAssembler as documented in https://docs.spring.io/spring-data/commons/reference/repositories/core-extensions.html#core.web.pageables.
+
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/accounts?size=100
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/accounts?size=100
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    order by
+        u1_0.user_id desc 
+    offset
+        ? rows 
+    fetch
+        first ? rows only
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu 
+    from
+        chuc_vu cv1_0 
+    where
+        cv1_0.chucvu_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu 
+    from
+        chuc_vu cv1_0 
+    where
+        cv1_0.chucvu_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu 
+    from
+        chuc_vu cv1_0 
+    where
+        cv1_0.chucvu_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu 
+    from
+        chuc_vu cv1_0 
+    where
+        cv1_0.chucvu_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:44:04 [http-nio-8080-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=nv1_0.user_id 
+    where
+        u1_0.user_id=?
+2025-11-25 19:57:49 [http-nio-8080-exec-7] DEBUG o.s.security.web.FilterChainProxy - Securing POST /api/auth/login
+2025-11-25 19:57:49 [http-nio-8080-exec-7] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-11-25 19:57:49 [http-nio-8080-exec-7] DEBUG o.s.security.web.FilterChainProxy - Secured POST /api/auth/login
+2025-11-25 19:57:49 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        count_big(la1_0.id) 
+    from
+        login_attempts la1_0 
+    where
+        (
+            la1_0.username=? 
+            or la1_0.ip_address=?
+        ) 
+        and la1_0.attempted_at>? 
+        and la1_0.success=0
+2025-11-25 19:57:49 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-25 19:57:49 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        la1_0.id,
+        la1_0.attempted_at,
+        la1_0.failure_reason,
+        la1_0.ip_address,
+        la1_0.success,
+        la1_0.username 
+    from
+        login_attempts la1_0 
+    where
+        la1_0.username=? 
+        and la1_0.ip_address=?
+2025-11-25 19:57:49 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        us1_0.id,
+        us1_0.created_at,
+        us1_0.ip_address,
+        us1_0.is_active,
+        us1_0.last_activity,
+        us1_0.session_id,
+        us1_0.user_id,
+        us1_0.user_agent 
+    from
+        user_sessions us1_0 
+    where
+        us1_0.user_id=? 
+        and us1_0.is_active=1
+2025-11-25 19:57:49 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        us1_0.id,
+        us1_0.created_at,
+        us1_0.ip_address,
+        us1_0.is_active,
+        us1_0.last_activity,
+        us1_0.session_id,
+        us1_0.user_id,
+        us1_0.user_agent 
+    from
+        user_sessions us1_0 
+    where
+        us1_0.session_id=?
+2025-11-25 19:57:49 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        user_sessions
+        (created_at, ip_address, is_active, last_activity, session_id, user_id, user_agent) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 19:57:49 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        rt1_0.id,
+        rt1_0.created_at,
+        rt1_0.expires_at,
+        rt1_0.is_revoked,
+        rt1_0.token,
+        rt1_0.user_id 
+    from
+        refresh_tokens rt1_0 
+    where
+        rt1_0.user_id=? 
+        and rt1_0.is_revoked=0 
+        and rt1_0.expires_at>?
+2025-11-25 19:57:49 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        refresh_tokens
+        (created_at, expires_at, is_revoked, token, user_id) 
+    values
+        (?, ?, ?, ?, ?)
+2025-11-25 19:57:49 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 19:57:49 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    update
+        users 
+    set
+        avatar_url=?,
+        created_at=?,
+        email=?,
+        is_active=?,
+        is_online=?,
+        last_login=?,
+        last_seen=?,
+        password_hash=?,
+        phone_number=?,
+        role=?,
+        updated_at=?,
+        username=? 
+    where
+        user_id=?
+2025-11-25 19:57:49 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    update
+        user_sessions 
+    set
+        created_at=?,
+        ip_address=?,
+        is_active=?,
+        last_activity=?,
+        session_id=?,
+        user_id=?,
+        user_agent=? 
+    where
+        id=?
+2025-11-25 19:57:49 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    delete 
+    from
+        refresh_tokens 
+    where
+        id=?
+2025-11-25 19:57:52 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/chat/rooms
+2025-11-25 19:57:52 [http-nio-8080-exec-9] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-11-25 19:57:52 [http-nio-8080-exec-9] DEBUG o.s.s.w.a.AccessDeniedHandlerImpl - Responding with 403 status code
+2025-11-25 19:57:52 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Securing GET /error
+2025-11-25 19:57:52 [http-nio-8080-exec-9] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-11-25 19:57:52 [http-nio-8080-exec-9] DEBUG o.s.s.w.a.Http403ForbiddenEntryPoint - Pre-authenticated entry point called. Rejecting access
+2025-11-25 20:00:00 [MessageBroker-2] INFO  D.B.h.s.AttendanceScheduledService - 🔍 Bắt đầu kiểm tra missing attendance...
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        nv1_0.nhanvien_id,
+        nv1_0.cccd,
+        nv1_0.chucvu_id,
+        nv1_0.created_at,
+        nv1_0.dia_chi,
+        nv1_0.gioi_tinh,
+        nv1_0.ho_ten,
+        nv1_0.luong_co_ban,
+        nv1_0.ngay_sinh,
+        nv1_0.ngay_vao_lam,
+        nv1_0.phongban_id,
+        nv1_0.phu_cap,
+        nv1_0.trang_thai,
+        nv1_0.user_id 
+    from
+        nhan_vien nv1_0
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu 
+    from
+        chuc_vu cv1_0 
+    where
+        cv1_0.chucvu_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu 
+    from
+        chuc_vu cv1_0 
+    where
+        cv1_0.chucvu_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu 
+    from
+        chuc_vu cv1_0 
+    where
+        cv1_0.chucvu_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        pb1_0.phongban_id,
+        pb1_0.created_at,
+        pb1_0.mo_ta,
+        pb1_0.ten_phong_ban,
+        tp1_0.nhanvien_id,
+        tp1_0.cccd,
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu,
+        tp1_0.created_at,
+        tp1_0.dia_chi,
+        tp1_0.gioi_tinh,
+        tp1_0.ho_ten,
+        tp1_0.luong_co_ban,
+        tp1_0.ngay_sinh,
+        tp1_0.ngay_vao_lam,
+        pb2_0.phongban_id,
+        pb2_0.created_at,
+        pb2_0.mo_ta,
+        pb2_0.ten_phong_ban,
+        pb2_0.truong_phong_id,
+        tp1_0.phu_cap,
+        tp1_0.trang_thai,
+        tp1_0.user_id,
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        phong_ban pb1_0 
+    left join
+        nhan_vien tp1_0 
+            on tp1_0.nhanvien_id=pb1_0.truong_phong_id 
+    left join
+        chuc_vu cv1_0 
+            on cv1_0.chucvu_id=tp1_0.chucvu_id 
+    left join
+        phong_ban pb2_0 
+            on pb2_0.phongban_id=tp1_0.phongban_id 
+    left join
+        users u1_0 
+            on u1_0.user_id=tp1_0.user_id 
+    where
+        pb1_0.phongban_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu 
+    from
+        chuc_vu cv1_0 
+    where
+        cv1_0.chucvu_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cv1_0.chucvu_id,
+        cv1_0.created_at,
+        cv1_0.level,
+        cv1_0.mo_ta,
+        cv1_0.ten_chuc_vu 
+    from
+        chuc_vu cv1_0 
+    where
+        cv1_0.chucvu_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.is_active,
+        u1_0.is_online,
+        u1_0.last_login,
+        u1_0.last_seen,
+        u1_0.password_hash,
+        u1_0.phone_number,
+        u1_0.role,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.user_id=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Nguyễn Văn An
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Trần Thị Bình
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Lê Văn Cường
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Phạm Thị Dung
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Hoàng Văn Em
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Vũ Thị Phượng
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Đặng Văn Giang
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Bùi Thị Hoa
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Đinh Văn Ích
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Dương Thị Khánh
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Ngô Văn Long
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Lý Thị Mai
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Trương Văn Nam
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Phan Thị Oanh
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Võ Văn Phú
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Huỳnh Thị Quỳnh
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Tô Văn Sơn
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Mai Thị Tâm
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Hồ Văn Ứng
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Lâm Thị Vân
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Đinh Thị Xuân
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Trần Văn Yên
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Lê Thị Zara
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Nguyễn Văn Alpha
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Phạm Thị Beta
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Hoàng Văn Gamma
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Vũ Thị Delta
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Đặng Văn Epsilon
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Bùi Thị Zeta
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        cc1_0.chamcong_id,
+        cc1_0.created_at,
+        cc1_0.dia_chi_checkin,
+        cc1_0.ghi_chu,
+        cc1_0.gio_ra,
+        cc1_0.gio_vao,
+        cc1_0.khoang_cach,
+        cc1_0.latitude,
+        cc1_0.loai_ca,
+        cc1_0.longitude,
+        cc1_0.ngay_cham,
+        cc1_0.nhanvien_id,
+        cc1_0.phuong_thuc,
+        cc1_0.so_gio_lam,
+        cc1_0.trang_thai 
+    from
+        cham_cong cc1_0 
+    left join
+        nhan_vien nv1_0 
+            on nv1_0.nhanvien_id=cc1_0.nhanvien_id 
+    where
+        nv1_0.nhanvien_id=? 
+        and cc1_0.ngay_cham=?
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        notifications
+        (content, created_at, is_read, link, title, type, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2025-11-25 20:00:00 [MessageBroker-2] DEBUG D.B.h.s.AttendanceScheduledService - ⚠️ Sent missing attendance notification for: Đinh Văn Eta
+2025-11-25 20:00:00 [MessageBroker-2] INFO  D.B.h.s.AttendanceScheduledService - ✅ Hoàn tất kiểm tra missing attendance. Đã gửi 30 notifications
