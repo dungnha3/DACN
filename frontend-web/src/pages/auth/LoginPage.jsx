@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/features/auth/hooks/useAuth'
-// import bgImage from '../picture/v882batch2-kul-13.jpg'
+import bgImage from '@/Image/Login Background.jpg'
 
 export default function LoginPage() {
   const [username, setUsername] = useState('')
@@ -36,12 +36,13 @@ export default function LoginPage() {
 
   return (
     <div style={styles.page}>
-      {/* <img
+      <img
         alt="background"
         style={styles.bg}
         src={bgImage}
-      /> */}
+      />
       <div style={styles.overlay} />
+      <div style={styles.brandLogo}>DTV TEAM</div>
       <div style={styles.card}>
         <div style={styles.header}>Sign in</div>
 
@@ -109,12 +110,23 @@ const styles = {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
-    filter: 'brightness(0.7)'
+    filter: 'brightness(0.9)'
   },
   overlay: {
     position: 'absolute',
     inset: 0,
     background: 'linear-gradient(120deg, rgba(11,16,32,0.45), rgba(11,16,32,0.2))'
+  },
+  brandLogo: {
+    position: 'absolute',
+    top: 24,
+    left: 32,
+    fontSize: 24,
+    fontWeight: 800,
+    color: '#ffffff',
+    letterSpacing: 2,
+    textShadow: '0 2px 8px rgba(0,0,0,0.3)',
+    zIndex: 10
   },
   card: {
     position: 'relative',
