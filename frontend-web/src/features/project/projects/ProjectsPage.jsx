@@ -338,12 +338,13 @@ const getStatusBadgeStyle = (status) => {
     fontWeight: '500',
   }
   
+  // Backend uses: ACTIVE, ON_HOLD, OVERDUE, COMPLETED, CANCELLED
   switch(status) {
-    case 'PLANNING':
-      return { ...baseStyle, backgroundColor: '#fef3c7', color: '#92400e' }
-    case 'IN_PROGRESS':
+    case 'ACTIVE':
       return { ...baseStyle, backgroundColor: '#dbeafe', color: '#1e40af' }
     case 'ON_HOLD':
+      return { ...baseStyle, backgroundColor: '#fef3c7', color: '#92400e' }
+    case 'OVERDUE':
       return { ...baseStyle, backgroundColor: '#fee2e2', color: '#991b1b' }
     case 'COMPLETED':
       return { ...baseStyle, backgroundColor: '#dcfce7', color: '#166534' }
@@ -357,9 +358,9 @@ const getStatusBadgeStyle = (status) => {
 // Helper function để lấy text cho status
 const getStatusText = (status) => {
   switch(status) {
-    case 'PLANNING': return 'Đang lập kế hoạch'
-    case 'IN_PROGRESS': return 'Đang thực hiện'
+    case 'ACTIVE': return 'Đang hoạt động'
     case 'ON_HOLD': return 'Tạm dừng'
+    case 'OVERDUE': return 'Quá hạn'
     case 'COMPLETED': return 'Hoàn thành'
     case 'CANCELLED': return 'Đã hủy'
     default: return status

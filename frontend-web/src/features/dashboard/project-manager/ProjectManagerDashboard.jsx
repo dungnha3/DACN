@@ -1,72 +1,45 @@
-import { useMemo, useState, useRef } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
-import { usePermissions, useErrorHandler } from '@/shared/hooks'
 import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
-import { NavItem, RoleBadge, KPICard } from './components/ProjectManagerDashboard.components'
-import { kpiData, notifications, sectionsConfig } from './components/ProjectManagerDashboard.constants'
+import { NavItem, RoleBadge } from './components/ProjectManagerDashboard.components'
+import { sectionsConfig } from './components/ProjectManagerDashboard.constants'
 
-// Import các module tính năng đã tách riêng
+// Import feature modules
 import { ProfilePage, LeavePage, ApprovalsPage, ChatPage, ProjectsPage, PMStoragePage } from '@modules/project';
-import { LeavesPage } from '@modules/hr'
+import { LeavesPage } from '@modules/hr' // Team leaves management
 import NotificationBell from '@/shared/components/notification/NotificationBell'
 import { AIChatBot } from '@/shared/components/ai-chatbot'
 
+// Services
+import { dashboardApi } from '@/features/project/projects/api/dashboardApi'
+import { issueApi } from '@/features/project/projects/api/issueApi'
+import { leavesService } from '@/features/hr/shared/services/leaves.service'
+
 export default function ProjectManagerDashboard() {
   const [active, setActive] = useState('dashboard')
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+  const hoverTimeoutRef = useRef(null);
 
   const { logout, user: authUser } = useAuth()
   const username = authUser?.username || localStorage.getItem('username') || 'Project Manager'
   const user = useMemo(() => ({ name: username || 'Trần Thị B', role: 'Quản lý dự án' }), [username])
 
   const sections = useMemo(() => sectionsConfig, [])
-  const meta = sections[active]
+  const meta = sections[active] || { title: 'Dashboard', subtitle: 'Tổng quan hệ thống' }
 
-  // State for sidebar hover
-  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
-  const hoverTimeoutRef = useRef(null);
-
+  // --- Handlers ---
   const handleMouseEnter = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     setIsSidebarHovered(true);
   };
 
   const handleMouseLeave = () => {
-    hoverTimeoutRef.current = setTimeout(() => {
-      setIsSidebarHovered(false);
-    }, 100);
+    hoverTimeoutRef.current = setTimeout(() => setIsSidebarHovered(false), 100);
   };
 
-  const handleLogout = async () => {
-    await logout()
-  }
+  const handleLogout = async () => await logout();
 
-  // Function để render nội dung dựa trên tab được chọn
-  const renderContent = () => {
-    switch(active) {
-      case 'dashboard':
-        return <DashboardOverview user={user} setActive={setActive} />
-      case 'profile':
-        return <ProfilePage />
-      case 'leave':
-        return <LeavePage />
-      case 'storage':
-        return <PMStoragePage />
-      case 'approvals':
-        return <ApprovalsPage />
-      case 'team-leaves':
-        return <LeavesPage />
-      case 'projects':
-        return <ProjectsPage />
-      case 'chat':
-        return <ChatPage />
-      default:
-        return <DashboardOverview user={user} setActive={setActive} />
-    }
-  }
-
-  // Custom Styles for Light/Collapsed Theme (same as HR Manager)
+  // --- Custom Styles (Matching HR Dashboard) ---
   const customStyles = {
     ...styles,
     appShell: {
@@ -143,9 +116,7 @@ export default function ProjectManagerDashboard() {
       background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
       boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)',
     },
-    navGroup: {
-      marginBottom: 24,
-    },
+    navGroup: { marginBottom: 24 },
     navGroupLabel: {
       ...styles.navGroupLabel,
       color: '#94a3b8',
@@ -202,37 +173,33 @@ export default function ProjectManagerDashboard() {
         <div style={customStyles.navGroup}>
           <div style={customStyles.navGroupLabel}>Tổng quan</div>
           <NavItem active={active === 'dashboard'} onClick={() => setActive('dashboard')} icon="🏠" collapsed={!isSidebarHovered}>
-            {sections.dashboard.title}
+            Dashboard
           </NavItem>
           <NavItem active={active === 'profile'} onClick={() => setActive('profile')} icon="👤" collapsed={!isSidebarHovered}>
-            {sections.profile.title}
+            Hồ sơ cá nhân
           </NavItem>
         </div>
 
         <div style={customStyles.navGroup}>
           <div style={customStyles.navGroupLabel}>Quản lý dự án</div>
           <NavItem active={active === 'projects'} onClick={() => setActive('projects')} icon="🏗️" collapsed={!isSidebarHovered}>
-            {sections.projects.title}
+            Dự án & Tác vụ
           </NavItem>
-          <NavItem active={active === 'team-leaves'} onClick={() => setActive('team-leaves')} icon="✅" collapsed={!isSidebarHovered}>
+          <NavItem active={active === 'approvals'} onClick={() => setActive('approvals')} icon="✅" collapsed={!isSidebarHovered}>
             Duyệt nghỉ phép
           </NavItem>
         </div>
 
         <div style={customStyles.navGroup}>
           <div style={customStyles.navGroupLabel}>Cá nhân</div>
-          <NavItem active={active === 'leave'} onClick={() => setActive('leave')} icon="📋" collapsed={!isSidebarHovered}>
-            {sections.leave.title}
+          <NavItem active={active === 'my-leave'} onClick={() => setActive('my-leave')} icon="📋" collapsed={!isSidebarHovered}>
+            Nghỉ phép của tôi
           </NavItem>
           <NavItem active={active === 'storage'} onClick={() => setActive('storage')} icon="💾" collapsed={!isSidebarHovered}>
             File của tôi
           </NavItem>
-        </div>
-
-        <div style={customStyles.navGroup}>
-          <div style={customStyles.navGroupLabel}>Giao tiếp</div>
           <NavItem active={active === 'chat'} onClick={() => setActive('chat')} icon="💬" collapsed={!isSidebarHovered}>
-            {sections.chat.title}
+            Giao tiếp
           </NavItem>
         </div>
 
@@ -256,112 +223,296 @@ export default function ProjectManagerDashboard() {
 
       {/* --- MAIN CONTENT --- */}
       <main style={customStyles.content}>
-        <header style={styles.header}>
-          <div>
-            <div style={styles.pageHeading}>{meta.pageTitle || meta.title}</div>
-            {active !== 'chat' && <div style={styles.subHeading}>{meta.subtitle}</div>}
-          </div>
+        {!['projects', 'profile', 'my-leave', 'storage', 'chat'].includes(active) && (
+          <header style={styles.header}>
+            <div>
+              <div style={styles.pageHeading}>{meta.pageTitle || meta.title}</div>
+              <div style={styles.subHeading}>{active === 'dashboard' ? `Chào mừng trở lại, ${user.name}` : meta.subtitle}</div>
+            </div>
+            <div style={styles.rightCluster}>
+              <NotificationBell />
+              <RoleBadge role={user.role} />
+            </div>
+          </header>
+        )}
 
-          <div style={styles.rightCluster}>
-            <NotificationBell />
-            <RoleBadge role={user.role} />
-          </div>
-        </header>
-
-        {/* Render nội dung động dựa trên tab được chọn */}
-        {renderContent()}
+        {active === 'dashboard' && <DashboardOverview setActive={setActive} />}
+        {active === 'profile' && <ProfilePage />}
+        {active === 'projects' && <ProjectsPage />}
+        {active === 'approvals' && <ApprovalsPage />}
+        {active === 'my-leave' && <LeavePage />}
+        {active === 'storage' && <PMStoragePage />}
+        {active === 'chat' && <ChatPage />}
       </main>
 
-      {/* AI ChatBot - Floating button góc dưới phải */}
       <AIChatBot />
     </div>
   )
 }
 
-// Component Dashboard Overview - Chỉ hiển thị tổng quan, KPIs, charts
-function DashboardOverview({ user, setActive }) {
+// --- Dashboard Overview Component ---
+
+function DashboardOverview({ setActive }) {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        // Run independent requests in parallel
+        const [projectsStats, myIssues, pendingLeaves] = await Promise.all([
+          dashboardApi.getMyProjectsStats().catch((e) => { console.error('getMyProjectsStats error:', e); return []; }),
+          issueApi.getMyIssues().catch((e) => { console.error('getMyIssues error:', e); return []; }),
+          leavesService.getPending().catch((e) => { console.error('getPending error:', e); return []; })
+        ]);
+
+        // Debug logs
+        console.log('📊 Dashboard Data Loaded:');
+        console.log('- projectsStats:', projectsStats);
+        console.log('- myIssues:', myIssues);
+        console.log('- pendingLeaves:', pendingLeaves);
+
+        // Aggregate Stats
+        const totalProjects = projectsStats.length;
+        // Backend uses: ACTIVE, ON_HOLD, OVERDUE, COMPLETED, CANCELLED
+        const activeProjects = projectsStats.filter(p => p.status === 'ACTIVE').length;
+        const totalTasks = myIssues.length;
+        // Count tasks that are not completed (check multiple possible status names)
+        const pendingTasks = myIssues.filter(i => {
+          const statusName = i.statusName || i.issueStatus?.name || '';
+          return statusName.toLowerCase() !== 'done' && statusName.toLowerCase() !== 'completed';
+        }).length;
+        const pendingLeavesCount = pendingLeaves.length;
+        
+        // Calculate avg completion rate
+        const avgCompletion = totalProjects > 0 
+          ? projectsStats.reduce((sum, p) => sum + (p.completionRate || 0), 0) / totalProjects 
+          : 0;
+
+        setStats({
+          projectsStats,
+          totalProjects,
+          activeProjects,
+          totalTasks,
+          pendingTasks,
+          pendingLeavesCount,
+          avgCompletion,
+          pendingLeaves: pendingLeaves.slice(0, 5) // Latest 5
+        });
+
+      } catch (error) {
+        console.error("Failed to load dashboard data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={localStyles.loadingContainer}>
+        <div className="spinner" style={localStyles.spinner}>⏳</div> 
+        <div style={{color: '#64748b', marginTop: 16}}>Đang tải dữ liệu dự án...</div>
+      </div>
+    );
+  }
+
   return (
     <div style={styles.dashboardContent}>
-      {/* KPI Cards Row */}
-      <div style={styles.kpiGrid}>
-        <KPICard 
-          title="Số nhân viên" 
-          value={`${kpiData.teamSize} người`} 
-          icon="👥" 
-          color="success" 
-          change="+2 người" 
+      {/* KPI Grid */}
+      <div style={localStyles.statsGrid}>
+        <StatCard 
+          title="Dự án hoạt động"
+          value={stats?.activeProjects || 0}
+          subtext={`Trên tổng số ${stats?.totalProjects || 0} dự án`}
+          icon="🏗️"
+          accentColor="#3b82f6"
+          onClick={() => setActive('projects')}
         />
-        <KPICard 
-          title="Đơn chờ duyệt" 
-          value={`${kpiData.pendingLeaves} đơn`} 
-          icon="⏳" 
-          color="warning" 
-          change="Cần xử lý" 
+        <StatCard 
+          title="Tác vụ của tôi"
+          value={stats?.pendingTasks || 0}
+          subtext={`${stats?.totalTasks || 0} tác vụ được giao`}
+          icon="📋"
+          accentColor="#f59e0b"
+          onClick={() => setActive('projects')}
+          highlight={(stats?.pendingTasks || 0) > 0}
         />
-        <KPICard 
-          title="Đã duyệt hôm nay" 
-          value={`${kpiData.approvedToday} đơn`} 
-          icon="✓" 
-          color="info" 
-          change="+2 đơn" 
+        <StatCard 
+          title="Đơn chờ duyệt"
+          value={stats?.pendingLeavesCount || 0}
+          subtext="Đơn nghỉ phép cần xử lý"
+          icon="✍️"
+          accentColor="#ef4444"
+          onClick={() => setActive('approvals')}
+          highlight={(stats?.pendingLeavesCount || 0) > 0}
         />
-        <KPICard 
-          title="Tổng đơn tháng" 
-          value={`${kpiData.totalRequests} đơn`} 
-          icon="📊" 
-          color="primary" 
-          change="+5 đơn" 
+        <StatCard 
+          title="Tiến độ trung bình"
+          value={`${stats?.avgCompletion.toFixed(1)}%`}
+          subtext="Tất cả dự án"
+          icon="📈"
+          accentColor="#10b981"
         />
       </div>
 
-      {/* Welcome & Notifications Row */}
-      <div style={styles.cardsRow}>
-        <div style={styles.welcomeCard}>
-          <div style={styles.welcomeContent}>
-            <h3 style={styles.welcomeTitle}>Chào mừng, {user.name}!</h3>
-            <p style={styles.welcomeText}>
-              Bạn có {kpiData.pendingLeaves} đơn nghỉ phép đang chờ duyệt. 
-              Hãy xem xét và phê duyệt để nhân viên có thể sắp xếp công việc.
-            </p>
-            <button style={styles.checkInBtn} onClick={() => setActive('approvals')}>
-              ✓ Xem đơn chờ duyệt
-            </button>
+      {/* Charts / Tables Grid */}
+      <div style={localStyles.mainGrid}>
+        {/* Project Progress */}
+        <div style={localStyles.card}>
+          <div style={localStyles.cardHeader}>
+            <div style={localStyles.cardIconBg}>📊</div>
+            <h3 style={localStyles.cardTitle}>Tiến độ dự án</h3>
           </div>
-        </div>
-
-        <div style={styles.notificationCard}>
-          <h4 style={styles.cardTitle}>Thông báo & Sự kiện</h4>
-          <div style={styles.notificationList}>
-            {notifications.map((notif, idx) => (
-              <div key={idx} style={styles.notificationItem}>
-                <div style={styles.notifIcon}>📢</div>
-                <div style={styles.notifContent}>
-                  <div style={styles.notifTitle}>{notif.title}</div>
-                  <div style={styles.notifDesc}>{notif.desc}</div>
-                  <div style={styles.notifDate}>{notif.date}</div>
-                </div>
+          <div style={localStyles.chartBody}>
+            {stats?.projectsStats?.length > 0 ? (
+              <div style={localStyles.barChartContainer}>
+                {stats.projectsStats.slice(0, 5).map((proj, idx) => (
+                  <div key={idx} style={localStyles.barGroup}>
+                    <div style={localStyles.barLabel} title={proj.projectName}>{proj.projectName}</div>
+                    <div style={localStyles.barTrack}>
+                      <div 
+                        style={{
+                          ...localStyles.barFill, 
+                          width: `${proj.completionRate || 0}%`,
+                          background: getProgressColor(proj.completionRate)
+                        }} 
+                      />
+                    </div>
+                    <div style={localStyles.barValue}>{Math.round(proj.completionRate || 0)}%</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Charts Row */}
-      <div style={styles.chartsRow}>
-        <div style={styles.chartCard}>
-          <h4 style={styles.cardTitle}>Biểu đồ chấm công nhóm</h4>
-          <div style={styles.chartPlaceholder}>
-            <div style={styles.chartInfo}>📊 Biểu đồ đang được phát triển</div>
+            ) : (
+              <EmptyState message="Chưa có dữ liệu dự án" icon="📂" />
+            )}
           </div>
         </div>
 
-        <div style={styles.chartCard}>
-          <h4 style={styles.cardTitle}>Thống kê nghỉ phép</h4>
-          <div style={styles.chartPlaceholder}>
-            <div style={styles.chartInfo}>📈 Biểu đồ đang được phát triển</div>
+        {/* Pending Approvals Mini List */}
+        <div style={localStyles.card}>
+          <div style={localStyles.cardHeader}>
+            <div style={localStyles.cardIconBg}>⏳</div>
+            <h3 style={localStyles.cardTitle}>Cần duyệt gấp</h3>
+          </div>
+          <div style={{...localStyles.chartBody, padding: 0}}>
+            {stats?.pendingLeaves?.length > 0 ? (
+              <div style={localStyles.listContainer}>
+                {stats.pendingLeaves.map((item, idx) => (
+                  <div key={idx} style={localStyles.listItem}>
+                    <div style={localStyles.listItemAvatar}>
+                      {(item.hoTenNhanVien || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    <div style={localStyles.listItemContent}>
+                      <div style={localStyles.listItemTitle}>{item.hoTenNhanVien}</div>
+                      <div style={localStyles.listItemSub}>{item.loaiPhepLabel || 'Nghỉ phép'} • {item.soNgay} ngày</div>
+                    </div>
+                    <button 
+                      style={localStyles.miniActionBtn}
+                      onClick={() => setActive('approvals')}
+                    >
+                      Xem
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState message="Không có đơn chờ duyệt" icon="✅" />
+            )}
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
+
+// --- Helpers ---
+const getProgressColor = (rate) => {
+  if (rate >= 80) return '#10b981';
+  if (rate >= 50) return '#f59e0b';
+  return '#ef4444';
+};
+
+// --- Sub-components (Reused from HR Dashboard style) ---
+
+const StatCard = ({ title, value, subtext, icon, accentColor, onClick, highlight }) => (
+  <div 
+    style={{
+      ...localStyles.statCard, 
+      cursor: onClick ? 'pointer' : 'default',
+      borderLeft: highlight ? `4px solid ${accentColor}` : 'none'
+    }}
+    onClick={onClick}
+  >
+    <div style={localStyles.statHeader}>
+      <div style={{...localStyles.statIcon, background: `${accentColor}20`, color: accentColor}}>{icon}</div>
+      {highlight && <div style={localStyles.badge}>Cần xử lý</div>}
+    </div>
+    <div style={localStyles.statValue}>{value}</div>
+    <div style={localStyles.statLabel}>{title}</div>
+    <div style={{...localStyles.statSub, color: highlight ? accentColor : '#64748b'}}>
+      {subtext}
+    </div>
+  </div>
+);
+
+const EmptyState = ({ message, icon }) => (
+  <div style={localStyles.emptyState}>
+    <div style={localStyles.emptyIcon}>{icon}</div>
+    <div style={localStyles.emptyText}>{message}</div>
+  </div>
+);
+
+// --- Local Styles ---
+const localStyles = {
+  loadingContainer: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 400 },
+  spinner: { fontSize: 40, animation: 'spin 1s linear infinite' },
+  
+  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24, marginBottom: 24 },
+  statCard: { 
+    background: '#fff', padding: 24, borderRadius: 16, 
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+    transition: 'transform 0.2s',
+    display: 'flex', flexDirection: 'column'
+  },
+  statHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
+  statIcon: { width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 },
+  statValue: { fontSize: 32, fontWeight: 700, color: '#0f172a', lineHeight: 1 },
+  statLabel: { fontSize: 14, fontWeight: 600, color: '#64748b', marginTop: 8 },
+  statSub: { fontSize: 13, marginTop: 4 },
+  badge: { padding: '2px 8px', background: '#fee2e2', color: '#ef4444', borderRadius: 100, fontSize: 11, fontWeight: 600 },
+  
+  mainGrid: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24, alignItems: 'start' },
+  
+  card: { 
+    background: '#fff', borderRadius: 16, 
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+    overflow: 'hidden', display: 'flex', flexDirection: 'column'
+  },
+  cardHeader: { padding: '20px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 12 },
+  cardIconBg: { width: 32, height: 32, borderRadius: 8, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 },
+  cardTitle: { margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' },
+  chartBody: { padding: 24, minHeight: 200 },
+  
+  barChartContainer: { display: 'flex', flexDirection: 'column', gap: 16 },
+  barGroup: { display: 'flex', alignItems: 'center', gap: 16 },
+  barLabel: { width: 150, fontSize: 13, fontWeight: 500, color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+  barTrack: { flex: 1, height: 10, background: '#f1f5f9', borderRadius: 5, overflow: 'hidden' },
+  barFill: { height: '100%', borderRadius: 5 },
+  barValue: { width: 40, textAlign: 'right', fontSize: 13, fontWeight: 600, color: '#334155' },
+  
+  listContainer: { display: 'flex', flexDirection: 'column' },
+  listItem: { display: 'flex', alignItems: 'center', gap: 12, padding: '16px 24px', borderBottom: '1px solid #f1f5f9' },
+  listItemAvatar: { width: 36, height: 36, borderRadius: 18, background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, color: '#475569' },
+  listItemContent: { flex: 1 },
+  listItemTitle: { fontSize: 14, fontWeight: 600, color: '#0f172a' },
+  listItemSub: { fontSize: 12, color: '#64748b' },
+  miniActionBtn: { border: 'none', background: 'transparent', color: '#3b82f6', fontWeight: 600, fontSize: 13, cursor: 'pointer' },
+  
+  emptyState: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#cbd5e1', minHeight: 150 },
+  emptyIcon: { fontSize: 32, marginBottom: 8, opacity: 0.5 },
+  emptyText: { fontSize: 14 }
+};
