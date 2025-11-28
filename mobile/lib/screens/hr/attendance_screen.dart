@@ -24,6 +24,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   bool _isLoading = false;
   bool _isCheckedIn = false;
   int? _currentAttendanceId;
+  int? _nhanvienId;
   Attendance? _todayAttendance;
   Timer? _timer;
   Position? _currentPosition;
@@ -95,8 +96,20 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
+        // Safely access properties with null coalescing
+        final street = place.street ?? '';
+        final subAdmin = place.subAdministrativeArea ?? '';
+        final admin = place.administrativeArea ?? '';
+        
         setState(() {
-          _currentAddress = '${place.street}, ${place.subAdministrativeArea}, ${place.administrativeArea}';
+          // Join non-empty parts
+          _currentAddress = [street, subAdmin, admin]
+              .where((s) => s.isNotEmpty)
+              .join(', ');
+          
+          if (_currentAddress.isEmpty) {
+            _currentAddress = 'Không xác định được địa chỉ';
+          }
         });
       }
     } catch (e) {
@@ -109,34 +122,40 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       final userIdStr = await _authService.getUserId();
       if (userIdStr != null) {
         final userId = int.parse(userIdStr);
-        final response = await _hrService.getTodayAttendance(userId);
         
-        if (response != null) {
-           // Parse response to check status
-           // Expecting response structure: { hasCheckedIn: bool, hasCheckedOut: bool, chamCong: {...} }
-           final hasCheckedIn = response['hasCheckedIn'] == true;
-           final hasCheckedOut = response['hasCheckedOut'] == true;
-           final chamCongData = response['chamCong'];
+        // Fetch nhanvienId if not already fetched
+        if (_nhanvienId == null) {
+          _nhanvienId = await _hrService.getEmployeeIdByUserId(userId);
+        }
 
-           setState(() {
-             if (hasCheckedIn && !hasCheckedOut) {
-               _isCheckedIn = true;
-               if (chamCongData != null) {
-                 _todayAttendance = Attendance.fromJson(chamCongData);
-                 _currentAttendanceId = _todayAttendance!.chamcongId;
+        if (_nhanvienId != null) {
+          final response = await _hrService.getTodayAttendance(_nhanvienId!);
+          
+          if (response != null) {
+             final hasCheckedIn = response['hasCheckedIn'] == true;
+             final hasCheckedOut = response['hasCheckedOut'] == true;
+             final chamCongData = response['chamCong'];
+
+             setState(() {
+               if (hasCheckedIn && !hasCheckedOut) {
+                 _isCheckedIn = true;
+                 if (chamCongData != null) {
+                   _todayAttendance = Attendance.fromJson(chamCongData);
+                   _currentAttendanceId = _todayAttendance!.chamcongId;
+                 }
+                 _statusMessage = "Bạn đã Check-in. Chúc một ngày làm việc tốt lành!";
+               } else if (hasCheckedIn && hasCheckedOut) {
+                 _isCheckedIn = false; 
+                 if (chamCongData != null) {
+                   _todayAttendance = Attendance.fromJson(chamCongData);
+                 }
+                 _statusMessage = "Bạn đã hoàn thành công việc hôm nay.";
+               } else {
+                 _isCheckedIn = false;
+                 _statusMessage = "Bạn chưa Check-in hôm nay.";
                }
-               _statusMessage = "Bạn đã Check-in. Chúc một ngày làm việc tốt lành!";
-             } else if (hasCheckedIn && hasCheckedOut) {
-               _isCheckedIn = false; // Reset to allow viewing status but maybe disable button
-               if (chamCongData != null) {
-                 _todayAttendance = Attendance.fromJson(chamCongData);
-               }
-               _statusMessage = "Bạn đã hoàn thành công việc hôm nay.";
-             } else {
-               _isCheckedIn = false;
-               _statusMessage = "Bạn chưa Check-in hôm nay.";
-             }
-           });
+             });
+          }
         }
       }
     } catch (e) {
@@ -179,7 +198,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           return;
         }
 
+        if (_nhanvienId == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Không tìm thấy thông tin nhân viên!')),
+          );
+          return;
+        }
+
         await _hrService.checkIn(
+          _nhanvienId!,
           _currentPosition!.latitude,
           _currentPosition!.longitude,
           _currentAddress,

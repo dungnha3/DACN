@@ -471,7 +471,7 @@ Company Location:
 
 ### 🔌 API Endpoints
 
-#### `/nhan-vien` - Employee Management
+#### `/nhan-vien` - Employee Management (No `/api` prefix)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -489,27 +489,27 @@ Company Location:
 | GET | `/nhan-vien/user/{userId}` | **Get by userId** |
 | GET | `/nhan-vien/user/{userId}/exists` | Check if user has employee |
 
-#### `/cham-cong` - Attendance (⭐ GPS-enabled for Mobile)
+#### `/api/cham-cong` - Attendance (⭐ GPS-enabled for Mobile)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/cham-cong` | Manual create |
-| GET | `/cham-cong/{id}` | Get by ID |
-| GET | `/cham-cong` | Get all |
-| PUT | `/cham-cong/{id}` | Update |
-| DELETE | `/cham-cong/{id}` | Delete |
-| GET | `/cham-cong/nhan-vien/{nhanvienId}` | Employee's attendance |
-| GET | `/cham-cong/date-range?startDate=...&endDate=...` | Filter by date range |
-| GET | `/cham-cong/nhan-vien/{id}/month?year=2024&month=1` | Monthly attendance |
-| GET | `/cham-cong/nhan-vien/{id}/working-days?year=...&month=...` | Count working days |
-| GET | `/cham-cong/nhan-vien/{id}/total-hours?year=...&month=...` | Total hours |
-| GET | `/cham-cong/nhan-vien/{id}/statistics?year=...&month=...` | Late/early statistics |
-| POST | `/cham-cong/check-in?nhanvienId=...&ngayCham=...` | Manual check-in |
-| PATCH | `/cham-cong/{id}/check-out` | Check-out |
-| **POST** | **`/cham-cong/gps`** | **⭐ GPS-based check-in** |
-| **GET** | **`/cham-cong/status/{nhanvienId}`** | **Today's status** |
+| POST | `/api/cham-cong` | Manual create |
+| GET | `/api/cham-cong/{id}` | Get by ID |
+| GET | `/api/cham-cong` | Get all |
+| PUT | `/api/cham-cong/{id}` | Update |
+| DELETE | `/api/cham-cong/{id}` | Delete |
+| GET | `/api/cham-cong/nhan-vien/{nhanvienId}` | Employee's attendance |
+| GET | `/api/cham-cong/date-range?startDate=...&endDate=...` | Filter by date range |
+| GET | `/api/cham-cong/nhan-vien/{id}/month?year=2024&month=1` | Monthly attendance |
+| GET | `/api/cham-cong/nhan-vien/{id}/working-days?year=...&month=...` | Count working days |
+| GET | `/api/cham-cong/nhan-vien/{id}/total-hours?year=...&month=...` | Total hours |
+| GET | `/api/cham-cong/nhan-vien/{id}/statistics?year=...&month=...` | Late/early statistics |
+| POST | `/api/cham-cong/check-in?nhanvienId=...&ngayCham=...` | Manual check-in |
+| PATCH | `/api/cham-cong/{id}/check-out` | Check-out |
+| **POST** | **`/api/cham-cong/gps`** | **⭐ GPS-based check-in** |
+| **GET** | **`/api/cham-cong/status/{nhanvienId}`** | **Today's status** |
 
-#### `/bang-luong` - Salary Management
+#### `/bang-luong` - Salary Management (No `/api` prefix)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -530,7 +530,7 @@ Company Location:
 | POST | `/bang-luong/{nhanvienId}/auto?thang=1&nam=2024` | **Auto calculate** |
 | POST | `/bang-luong/auto-all?thang=1&nam=2024` | **Auto calculate all** |
 
-#### `/nghi-phep` - Leave Management
+#### `/nghi-phep` - Leave Management (No `/api` prefix)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|

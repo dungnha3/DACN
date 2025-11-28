@@ -6,7 +6,7 @@ class NotificationService {
 
   Future<List<NotificationModel>> getNotifications({int page = 0, int size = 20}) async {
     try {
-      final response = await _apiService.get('/notification?page=$page&size=$size');
+      final response = await _apiService.get('/notifications?page=$page&size=$size');
       if (response != null && response['content'] is List) {
         return (response['content'] as List).map((e) => NotificationModel.fromJson(e)).toList();
       }
@@ -18,21 +18,21 @@ class NotificationService {
 
   Future<Map<String, dynamic>?> getUnreadCount() async {
     try {
-      return await _apiService.get('/notification/unread-count');
+      return await _apiService.get('/notifications/unread-count');
     } catch (e) {
       return null;
     }
   }
 
   Future<void> markAsRead(int notificationId) async {
-    await _apiService.patch('/notification/$notificationId/read', {});
+    await _apiService.put('/notifications/$notificationId/read', {});
   }
 
   Future<void> markAllAsRead() async {
-    await _apiService.patch('/notification/mark-all-read', {});
+    await _apiService.put('/notifications/mark-all-read', {});
   }
   
   Future<void> deleteNotification(int notificationId) async {
-    await _apiService.delete('/notification/$notificationId');
+    await _apiService.delete('/notifications/$notificationId');
   }
 }

@@ -13,49 +13,54 @@ class ApiService {
     };
   }
 
-  Future<dynamic> get(String endpoint) async {
+  Future<dynamic> get(String endpoint, {bool useApiBase = true}) async {
     final headers = await _getHeaders();
+    final baseUrl = useApiBase ? AppConstants.baseUrl : AppConstants.rootUrl;
     final response = await http.get(
-      Uri.parse('${AppConstants.baseUrl}$endpoint'),
+      Uri.parse('$baseUrl$endpoint'),
       headers: headers,
     );
     return _handleResponse(response);
   }
 
-  Future<dynamic> post(String endpoint, dynamic body) async {
+  Future<dynamic> post(String endpoint, dynamic body, {bool useApiBase = true}) async {
     final headers = await _getHeaders();
+    final baseUrl = useApiBase ? AppConstants.baseUrl : AppConstants.rootUrl;
     final response = await http.post(
-      Uri.parse('${AppConstants.baseUrl}$endpoint'),
+      Uri.parse('$baseUrl$endpoint'),
       headers: headers,
       body: jsonEncode(body),
     );
     return _handleResponse(response);
   }
 
-  Future<dynamic> put(String endpoint, dynamic body) async {
+  Future<dynamic> put(String endpoint, dynamic body, {bool useApiBase = true}) async {
     final headers = await _getHeaders();
+    final baseUrl = useApiBase ? AppConstants.baseUrl : AppConstants.rootUrl;
     final response = await http.put(
-      Uri.parse('${AppConstants.baseUrl}$endpoint'),
+      Uri.parse('$baseUrl$endpoint'),
       headers: headers,
       body: jsonEncode(body),
     );
     return _handleResponse(response);
   }
 
-  Future<dynamic> patch(String endpoint, dynamic body) async {
+  Future<dynamic> patch(String endpoint, dynamic body, {bool useApiBase = true}) async {
     final headers = await _getHeaders();
+    final baseUrl = useApiBase ? AppConstants.baseUrl : AppConstants.rootUrl;
     final response = await http.patch(
-      Uri.parse('${AppConstants.baseUrl}$endpoint'),
+      Uri.parse('$baseUrl$endpoint'),
       headers: headers,
       body: jsonEncode(body),
     );
     return _handleResponse(response);
   }
 
-  Future<dynamic> delete(String endpoint) async {
+  Future<dynamic> delete(String endpoint, {bool useApiBase = true}) async {
     final headers = await _getHeaders();
+    final baseUrl = useApiBase ? AppConstants.baseUrl : AppConstants.rootUrl;
     final response = await http.delete(
-      Uri.parse('${AppConstants.baseUrl}$endpoint'),
+      Uri.parse('$baseUrl$endpoint'),
       headers: headers,
     );
     return _handleResponse(response);
