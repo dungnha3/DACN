@@ -68,12 +68,13 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Công việc của tôi'),
         centerTitle: true,
-        backgroundColor: Colors.blue.shade800,
+        backgroundColor: theme.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
         bottom: TabBar(
@@ -90,19 +91,19 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
         ),
       ),
       body: _isLoading
-          ? const LoadingIndicator()
+          ? Center(child: CircularProgressIndicator(color: theme.primaryColor))
           : TabBarView(
               controller: _tabController,
               children: [
-                _buildTaskList(_todoTasks, Colors.orange),
-                _buildTaskList(_inProgressTasks, Colors.blue),
-                _buildTaskList(_doneTasks, Colors.green),
+                _buildTaskList(_todoTasks, Colors.orange, theme),
+                _buildTaskList(_inProgressTasks, theme.primaryColor, theme),
+                _buildTaskList(_doneTasks, Colors.green, theme),
               ],
             ),
     );
   }
 
-  Widget _buildTaskList(List<Issue> tasks, Color accentColor) {
+  Widget _buildTaskList(List<Issue> tasks, Color accentColor, ThemeData theme) {
     if (tasks.isEmpty) {
       return const EmptyState(message: 'Không có công việc nào', icon: Icons.assignment_turned_in_outlined);
     }
@@ -114,18 +115,18 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
         itemCount: tasks.length,
         itemBuilder: (context, index) {
           final task = tasks[index];
-          return _buildTaskCard(task, accentColor);
+          return _buildTaskCard(task, accentColor, theme);
         },
       ),
     );
   }
 
-  Widget _buildTaskCard(Issue task, Color accentColor) {
+  Widget _buildTaskCard(Issue task, Color accentColor, ThemeData theme) {
     Color priorityColor = Colors.green;
     String priority = task.priority;
     
     if (priority == 'HIGH' || priority == 'URGENT') {
-      priorityColor = Colors.red;
+      priorityColor = theme.colorScheme.error;
     } else if (priority == 'MEDIUM') {
       priorityColor = Colors.orange;
     } else if (priority == 'LOW') {
@@ -164,8 +165,7 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
                   Expanded(
                     child: Text(
                       task.title,
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
                       ),
@@ -177,9 +177,9 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: priorityColor.withValues(alpha: 0.1),
+                      color: priorityColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: priorityColor.withValues(alpha: 0.3)),
+                      border: Border.all(color: priorityColor.withOpacity(0.3)),
                     ),
                     child: Text(
                       priority,

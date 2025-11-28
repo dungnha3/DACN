@@ -75,13 +75,14 @@ class _PayrollScreenState extends State<PayrollScreen> {
   @override
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Bảng Lương'),
         centerTitle: true,
-        backgroundColor: Colors.blue.shade700,
+        backgroundColor: theme.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -91,7 +92,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
             decoration: BoxDecoration(
-              color: Colors.blue.shade700,
+              color: theme.primaryColor,
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(20),
                 bottomRight: Radius.circular(20),
@@ -108,8 +109,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
                   children: [
                     Text(
                       'Tháng ${_selectedDate.month}/${_selectedDate.year}',
-                      style: const TextStyle(
-                        fontSize: 20,
+                      style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
@@ -130,7 +130,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
 
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(child: CircularProgressIndicator(color: theme.primaryColor))
                 : _error != null
                     ? Center(
                         child: Column(
@@ -159,14 +159,14 @@ class _PayrollScreenState extends State<PayrollScreen> {
                                   padding: const EdgeInsets.all(24),
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
-                                      colors: [Colors.green.shade600, Colors.teal.shade500],
+                                      colors: [theme.colorScheme.secondary, theme.primaryColor],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
                                     borderRadius: BorderRadius.circular(24),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.green.withValues(alpha: 0.3),
+                                        color: theme.primaryColor.withOpacity(0.3),
                                         blurRadius: 15,
                                         offset: const Offset(0, 8),
                                       ),
@@ -196,7 +196,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withValues(alpha: 0.2),
+                                          color: Colors.white.withOpacity(0.2),
                                           borderRadius: BorderRadius.circular(20),
                                         ),
                                         child: Text(
@@ -211,7 +211,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
                                 const SizedBox(height: 25),
 
                                 // Income Details
-                                _buildSectionTitle('Thu nhập'),
+                                _buildSectionTitle('Thu nhập', theme),
                                 Card(
                                   elevation: 2,
                                   shadowColor: Colors.black12,
@@ -222,9 +222,9 @@ class _PayrollScreenState extends State<PayrollScreen> {
                                       children: [
                                         _buildRow('Lương cơ bản', _payrollData!.luongCoBan, currencyFormat),
                                         const Divider(height: 24),
-                                        _buildRow('Phụ cấp', _payrollData!.phuCap, currencyFormat, isPositive: true),
+                                        _buildRow('Phụ cấp', _payrollData!.phuCap, currencyFormat, isPositive: true, theme: theme),
                                         const Divider(height: 24),
-                                        _buildRow('Thưởng', _payrollData!.thuong, currencyFormat, isPositive: true),
+                                        _buildRow('Thưởng', _payrollData!.thuong, currencyFormat, isPositive: true, theme: theme),
                                       ],
                                     ),
                                   ),
@@ -233,7 +233,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
                                 const SizedBox(height: 25),
 
                                 // Deductions
-                                _buildSectionTitle('Khấu trừ'),
+                                _buildSectionTitle('Khấu trừ', theme),
                                 Card(
                                   elevation: 2,
                                   shadowColor: Colors.black12,
@@ -242,11 +242,11 @@ class _PayrollScreenState extends State<PayrollScreen> {
                                     padding: const EdgeInsets.all(20),
                                     child: Column(
                                       children: [
-                                        _buildRow('Bảo hiểm', _payrollData!.baoHiem, currencyFormat, isNegative: true),
+                                        _buildRow('Bảo hiểm', _payrollData!.baoHiem, currencyFormat, isNegative: true, theme: theme),
                                         const Divider(height: 24),
-                                        _buildRow('Thuế TNCN', _payrollData!.thue, currencyFormat, isNegative: true),
+                                        _buildRow('Thuế TNCN', _payrollData!.thue, currencyFormat, isNegative: true, theme: theme),
                                         const Divider(height: 24),
-                                        _buildRow('Phạt / Khác', _payrollData!.phat, currencyFormat, isNegative: true),
+                                        _buildRow('Phạt / Khác', _payrollData!.phat, currencyFormat, isNegative: true, theme: theme),
                                       ],
                                     ),
                                   ),
@@ -256,7 +256,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
                                 
                                 // Summary
                                 Card(
-                                  color: Colors.blue.shade50,
+                                  color: theme.primaryColor.withOpacity(0.05),
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                   child: Padding(
@@ -265,7 +265,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
                                       children: [
                                         _buildRow('Tổng thu nhập', _payrollData!.tongLuong, currencyFormat, isBold: true),
                                         const SizedBox(height: 12),
-                                        _buildRow('Tổng khấu trừ', (_payrollData!.baoHiem + _payrollData!.thue + _payrollData!.phat), currencyFormat, isBold: true, isNegative: true),
+                                        _buildRow('Tổng khấu trừ', (_payrollData!.baoHiem + _payrollData!.thue + _payrollData!.phat), currencyFormat, isBold: true, isNegative: true, theme: theme),
                                       ],
                                     ),
                                   ),
@@ -280,14 +280,13 @@ class _PayrollScreenState extends State<PayrollScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, ThemeData theme) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.only(left: 10, bottom: 10),
       child: Text(
         title,
-        style: TextStyle(
-          fontSize: 16,
+        style: theme.textTheme.titleMedium?.copyWith(
           fontWeight: FontWeight.bold,
           color: Colors.grey.shade700,
         ),
@@ -295,10 +294,10 @@ class _PayrollScreenState extends State<PayrollScreen> {
     );
   }
 
-  Widget _buildRow(String label, double value, NumberFormat format, {bool isPositive = false, bool isNegative = false, bool isBold = false}) {
+  Widget _buildRow(String label, double value, NumberFormat format, {bool isPositive = false, bool isNegative = false, bool isBold = false, ThemeData? theme}) {
     Color textColor = Colors.black87;
-    if (isPositive) textColor = Colors.green.shade700;
-    if (isNegative) textColor = Colors.red.shade700;
+    if (isPositive) textColor = theme?.colorScheme.secondary ?? Colors.green.shade700;
+    if (isNegative) textColor = theme?.colorScheme.error ?? Colors.red.shade700;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,

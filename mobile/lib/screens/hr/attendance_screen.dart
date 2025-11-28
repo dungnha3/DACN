@@ -89,6 +89,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       );
       _currentPosition = position;
 
+      // Calculate distance
+      double distance = Geolocator.distanceBetween(
+        position.latitude,
+        position.longitude,
+        _companyLat,
+        _companyLng,
+      );
+      
+      setState(() {
+        _distanceToCompany = distance;
+      });
+
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
@@ -228,8 +240,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
   }
 
+  // Company Location (from gemini.md)
+  static const double _companyLat = 21.0285;
+  static const double _companyLng = 105.8542;
+  static const double _allowedRadius = 500.0; // meters
+
+  double? _distanceToCompany;
+
+  // ... inside _getCurrentLocation ...
+
+  // ... inside build ...
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       body: Stack(
         children: [
@@ -309,16 +332,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         children: [
                           Text(
                             _currentTime,
-                            style: const TextStyle(
-                              fontSize: 32,
+                            style: theme.textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.black87,
                             ),
                           ),
                           Text(
                             _currentDate,
-                            style: TextStyle(
-                              fontSize: 14,
+                            style: theme.textTheme.bodyMedium?.copyWith(
                               color: Colors.grey.shade600,
                             ),
                           ),
@@ -327,13 +348,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: _isCheckedIn ? Colors.green.shade50 : Colors.orange.shade50,
+                          color: _isCheckedIn ? theme.colorScheme.secondary.withOpacity(0.1) : theme.colorScheme.error.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           _isCheckedIn ? 'Đang làm việc' : 'Chưa vào ca',
                           style: TextStyle(
-                            color: _isCheckedIn ? Colors.green : Colors.orange,
+                            color: _isCheckedIn ? theme.colorScheme.secondary : theme.colorScheme.error,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -343,17 +364,31 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   
                   const SizedBox(height: 20),
                   
-                  // Address
+                  // Address & Distance
                   Row(
                     children: [
-                      const Icon(Icons.location_on, color: Colors.blue),
+                      Icon(Icons.location_on, color: theme.primaryColor),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(
-                          _currentAddress,
-                          style: const TextStyle(fontSize: 14),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _currentAddress,
+                              style: const TextStyle(fontSize: 14),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (_distanceToCompany != null)
+                              Text(
+                                'Cách công ty: ${_distanceToCompany!.toStringAsFixed(0)}m',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: (_distanceToCompany! > _allowedRadius) ? theme.colorScheme.error : theme.colorScheme.secondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     ],
@@ -377,14 +412,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       ),
                     ),
 
-                  // Action Button (Slide-like)
+                  // Action Button
                   SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
                       onPressed: (_isLoading || (_todayAttendance?.gioRa != null)) ? null : _handleCheckInOut,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _isCheckedIn ? Colors.red : Colors.blue,
+                        backgroundColor: _isCheckedIn ? theme.colorScheme.error : theme.primaryColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(28),
                         ),
@@ -398,7 +433,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                 Icon(_isCheckedIn ? Icons.logout : Icons.login),
                                 const SizedBox(width: 10),
                                 Text(
-                                  _isCheckedIn ? 'TRƯỢT ĐỂ CHECK-OUT' : 'TRƯỢT ĐỂ CHECK-IN',
+                                  _isCheckedIn ? 'CHECK-OUT' : 'CHECK-IN',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,

@@ -2323,3 +2323,43 @@ Notifications:
 *Total Pages: ~1,400 lines*  
 *API Endpoints: 220+*  
 *Modules: 7*
+
+## 7. NOTIFICATION - Thông báo {#7-notification}
+
+### 📊 Entities
+
+#### Notification
+| Field | Type | Description |
+|-------|------|-------------|
+| notificationId | Long | ID (PK) |
+| user | User | Recipient |
+| title | String | Title |
+| content | String | Content |
+| type | Enum | SYSTEM / TASK / CHAT / LEAVE / PAYROLL |
+| link | String | Deep link (nullable) |
+| isRead | Boolean | Read status |
+| createdAt | LocalDateTime | Created time |
+
+### 🔌 API Endpoints `/api/notifications`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/notifications` | Get my notifications (Paginated) |
+| GET | `/api/notifications/unread-count` | **Get unread count** |
+| PUT | `/api/notifications/{id}/read` | Mark as read |
+| PUT | `/api/notifications/mark-all-read` | Mark all as read |
+| DELETE | `/api/notifications/{id}` | Delete notification |
+
+### 🔐 Security & Permissions Update
+
+**Updated Access Rules:**
+- `/nhan-vien/user/**`: Accessible by **EMPLOYEE**, MANAGER_HR, MANAGER_ACCOUNTING, MANAGER_PROJECT.
+- `/api/projects/**`: Accessible by **EMPLOYEE**, MANAGER_PROJECT.
+- `/api/issues/**`: Accessible by **EMPLOYEE**, MANAGER_PROJECT.
+- `/api/chat/**`: Accessible by **EMPLOYEE**, MANAGER_HR, MANAGER_ACCOUNTING, MANAGER_PROJECT.
+- `/api/notifications/**`: Accessible by **All Authenticated Users**.
+
+**CORS Configuration:**
+- Allowed Origins: `*` (All origins allowed for development)
+- Allowed Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
+- Allowed Headers: `*`

@@ -60,17 +60,33 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        elevation: 0,
+        backgroundColor: theme.primaryColor,
+        title: Row(
           children: [
-            Text('Xin chào,', style: TextStyle(fontSize: 14, color: Colors.white70)),
-            Text('Nhân viên', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.2),
+              ),
+              child: const Icon(Icons.person, color: Colors.white),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Xin chào,', style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70)),
+                const Text('Nhân viên', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              ],
+            ),
           ],
         ),
-        backgroundColor: Colors.blue.shade800,
         actions: [
           Stack(
             children: [
@@ -78,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: const Icon(Icons.notifications_outlined),
                 onPressed: () async {
                   await Navigator.pushNamed(context, AppRouter.notifications);
-                  _fetchUnreadCount(); // Refresh count on return
+                  _fetchUnreadCount();
                 },
               ),
               if (_unreadNotifications > 0)
@@ -88,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
-                      color: Colors.red,
+                      color: theme.colorScheme.error,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     constraints: const BoxConstraints(
@@ -119,14 +135,14 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.blue.shade700, Colors.blue.shade500],
+                  colors: [theme.primaryColor, theme.colorScheme.secondary],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.blue.withValues(alpha: 0.3),
+                    color: theme.primaryColor.withOpacity(0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -156,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             
             const SizedBox(height: 25),
-            const Text('Chức năng chính', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('Chức năng chính', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 15),
 
             // Grid Menu
@@ -168,36 +184,58 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisSpacing: 15,
               children: [
                 _buildMenuCard(
+                  context,
                   icon: Icons.fingerprint,
                   title: 'Chấm công GPS',
                   color: Colors.orange,
                   onTap: () => Navigator.pushNamed(context, AppRouter.attendance),
                 ),
                 _buildMenuCard(
+                  context,
                   icon: Icons.monetization_on,
                   title: 'Bảng lương',
                   color: Colors.green,
-                  onTap: () {
-                    Navigator.pushNamed(context, AppRouter.payroll);
-                  },
+                  onTap: () => Navigator.pushNamed(context, AppRouter.payroll),
                 ),
                 _buildMenuCard(
+                  context,
                   icon: Icons.calendar_today,
                   title: 'Nghỉ phép',
                   color: Colors.purple,
-                  onTap: () {
-                    Navigator.pushNamed(context, AppRouter.leaveRequest);
-                  },
+                  onTap: () => Navigator.pushNamed(context, AppRouter.leaveRequest),
                 ),
                 _buildMenuCard(
+                  context,
                   icon: Icons.task_alt,
                   title: 'Công việc',
-                  color: Colors.blue,
-                  onTap: () {
-                    Navigator.pushNamed(context, AppRouter.myTasks);
-                  },
+                  color: theme.primaryColor,
+                  onTap: () => Navigator.pushNamed(context, AppRouter.myTasks),
                 ),
               ],
+            ),
+
+            const SizedBox(height: 25),
+            Text('Hoạt động gần đây', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 15),
+            // Recent Activity List (Placeholder)
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 3,
+              itemBuilder: (context, index) {
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: theme.primaryColor.withOpacity(0.1),
+                      child: Icon(Icons.notifications_none, color: theme.primaryColor),
+                    ),
+                    title: Text('Thông báo hệ thống ${index + 1}'),
+                    subtitle: Text('Nội dung thông báo mẫu...'),
+                    trailing: Text('2h trước', style: theme.textTheme.bodySmall),
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -206,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.blue.shade800,
+        selectedItemColor: theme.primaryColor,
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
         items: const [
@@ -219,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildMenuCard({required IconData icon, required String title, required Color color, required VoidCallback onTap}) {
+  Widget _buildMenuCard(BuildContext context, {required IconData icon, required String title, required Color color, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -228,7 +266,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
+              color: Colors.grey.withOpacity(0.1),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -240,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(15),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
+                color: color.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 30, color: color),

@@ -81,14 +81,15 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    if (_task == null) return const Scaffold(body: Center(child: Text('Không tìm thấy công việc')));
+    final theme = Theme.of(context);
+    if (_isLoading) return Scaffold(backgroundColor: theme.scaffoldBackgroundColor, body: Center(child: CircularProgressIndicator(color: theme.primaryColor)));
+    if (_task == null) return Scaffold(backgroundColor: theme.scaffoldBackgroundColor, body: const Center(child: Text('Không tìm thấy công việc')));
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Chi tiết công việc'),
-        backgroundColor: Colors.blue.shade800,
+        backgroundColor: theme.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -109,14 +110,14 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                   children: [
                     Text(
                       _task!.title,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        _buildStatusChip(_task!.issueStatus),
+                        _buildStatusChip(_task!.issueStatus, theme),
                         const SizedBox(width: 10),
-                        _buildPriorityChip(_task!.priority),
+                        _buildPriorityChip(_task!.priority, theme),
                       ],
                     ),
                     const Divider(height: 30),
@@ -148,22 +149,46 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
             const SizedBox(height: 25),
 
             // Status Action
-            const Text('Cập nhật trạng thái', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('Cập nhật trạng thái', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildStatusButton('TODO', Colors.grey)),
+                Expanded(child: _buildStatusButton('TODO', Colors.grey, theme)),
                 const SizedBox(width: 10),
-                Expanded(child: _buildStatusButton('IN_PROGRESS', Colors.blue)),
+                Expanded(child: _buildStatusButton('IN_PROGRESS', theme.colorScheme.secondary, theme)),
                 const SizedBox(width: 10),
-                Expanded(child: _buildStatusButton('DONE', Colors.green)),
+                Expanded(child: _buildStatusButton('DONE', theme.colorScheme.primary, theme)),
               ],
             ),
 
             const SizedBox(height: 30),
 
+            // Attachments (Placeholder)
+            Text('Tài liệu đính kèm', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Container(
+              height: 80,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.grey.shade50,
+              ),
+              child: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.attach_file, color: Colors.grey.shade400),
+                    const SizedBox(width: 8),
+                    Text('Chưa có tài liệu nào', style: TextStyle(color: Colors.grey.shade500)),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
             // Comments Section
-            const Text('Bình luận & Hoạt động', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('Bình luận & Hoạt động', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Card(
               elevation: 2,
@@ -190,7 +215,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                         ),
                         const SizedBox(width: 8),
                         CircleAvatar(
-                          backgroundColor: Colors.blue.shade700,
+                          backgroundColor: theme.primaryColor,
                           child: IconButton(
                             icon: _isSendingComment 
                                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
@@ -209,7 +234,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                         child: Text('Chưa có bình luận nào', style: TextStyle(color: Colors.grey)),
                       )
                     else
-                      ..._task!.comments.map((comment) => _buildCommentItem(comment)),
+                      ..._task!.comments.map((comment) => _buildCommentItem(comment, theme)),
                   ],
                 ),
               ),
@@ -220,7 +245,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     );
   }
 
-  Widget _buildStatusButton(String status, Color color) {
+  Widget _buildStatusButton(String status, Color color, ThemeData theme) {
     bool isSelected = _task!.issueStatus == status;
     // Map status codes if needed, assuming backend uses strings
     String label = status;
@@ -243,17 +268,17 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     );
   }
 
-  Widget _buildStatusChip(String status) {
+  Widget _buildStatusChip(String status, ThemeData theme) {
     Color color = Colors.grey;
-    if (status == 'IN_PROGRESS') color = Colors.blue;
-    if (status == 'DONE') color = Colors.green;
+    if (status == 'IN_PROGRESS') color = theme.colorScheme.secondary;
+    if (status == 'DONE') color = theme.colorScheme.primary;
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
+        border: Border.all(color: color.withOpacity(0.5)),
       ),
       child: Text(
         status,
@@ -262,17 +287,17 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     );
   }
 
-  Widget _buildPriorityChip(String priority) {
-    Color color = Colors.green;
-    if (priority == 'HIGH') color = Colors.red;
+  Widget _buildPriorityChip(String priority, ThemeData theme) {
+    Color color = theme.colorScheme.primary;
+    if (priority == 'HIGH') color = theme.colorScheme.error;
     if (priority == 'MEDIUM') color = Colors.orange;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
+        border: Border.all(color: color.withOpacity(0.5)),
       ),
       child: Text(
         priority,
@@ -281,7 +306,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     );
   }
 
-  Widget _buildCommentItem(Comment comment) {
+  Widget _buildCommentItem(Comment comment, ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -289,9 +314,9 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundColor: Colors.blue.shade100,
+            backgroundColor: theme.primaryColor.withOpacity(0.1),
             child: Text(comment.authorName.isNotEmpty ? comment.authorName[0].toUpperCase() : 'U', 
-              style: TextStyle(fontSize: 14, color: Colors.blue.shade800, fontWeight: FontWeight.bold)),
+              style: TextStyle(fontSize: 14, color: theme.primaryColor, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(width: 12),
           Expanded(
