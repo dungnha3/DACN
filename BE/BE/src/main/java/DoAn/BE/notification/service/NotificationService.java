@@ -25,15 +25,18 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final FCMService fcmService;
 
-    public NotificationService(NotificationRepository notificationRepository, UserRepository userRepository) {
+    public NotificationService(NotificationRepository notificationRepository, UserRepository userRepository,
+            FCMService fcmService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
+        this.fcmService = fcmService;
     }
 
     public Notification createNotification(Long userId, String type, String title, String content, String link) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
 
         Notification notification = new Notification();
         notification.setUser(user);
@@ -41,22 +44,13 @@ public class NotificationService {
         notification.setTitle(title);
         notification.setContent(content);
         notification.setLink(link);
-        notification.setIsRead(false);
 
         return notificationRepository.save(notification);
     }
 
-    public Notification createNotification(Long userId, String title, String content) {
-        return createNotification(userId, "GENERAL", title, content, null);
-    }
-
-    public List<Notification> getUserNotifications(Long userId) {
-        return notificationRepository.findByUser_UserIdOrderByCreatedAtDesc(userId);
-    }
-    
     public Page<Notification> getUserNotifications(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
         return notificationRepository.findByUserOrderByCreatedAtDesc(user, pageable);
     }
 
@@ -77,9 +71,9 @@ public class NotificationService {
 
     public void markAllAsRead(Long userId) {
         List<Notification> unreadNotifications = notificationRepository.findByUser_UserIdOrderByCreatedAtDesc(userId)
-            .stream()
-            .filter(Notification::isUnread)
-            .toList();
+                .stream()
+                .filter(Notification::isUnread)
+                .toList();
 
         for (Notification notification : unreadNotifications) {
             notification.markAsRead();

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "245006033216",
+    "project_id": "enterprisemobile-c8dec",
+    "storage_bucket": "enterprisemobile-c8dec.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:245006033216:android:9b2c27dfb2abaa43835aa5",
+        "android_client_info": {
+          "package_name": "com.enterprise.management.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAaPDN2xHKxGw_xcee4uz9jMw_HMGPTnHg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

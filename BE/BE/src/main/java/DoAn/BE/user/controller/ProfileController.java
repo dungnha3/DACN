@@ -17,7 +17,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/profile")
 public class ProfileController {
-    
+
     private final ProfileService profileService;
     private final UserMapper userMapper;
 
@@ -25,7 +25,7 @@ public class ProfileController {
         this.profileService = profileService;
         this.userMapper = userMapper;
     }
-    
+
     /**
      * Lấy thông tin profile của user hiện tại
      * GET /api/profile
@@ -36,7 +36,7 @@ public class ProfileController {
         User user = profileService.getCurrentUserProfile(userId);
         return ResponseEntity.ok(userMapper.toDTO(user));
     }
-    
+
     /**
      * Lấy thông tin profile của user hiện tại (alias)
      * GET /api/profile/me
@@ -47,7 +47,7 @@ public class ProfileController {
         User user = profileService.getCurrentUserProfile(userId);
         return ResponseEntity.ok(userMapper.toDTO(user));
     }
-    
+
     /**
      * Cập nhật profile của user hiện tại
      * PUT /api/profile
@@ -58,7 +58,7 @@ public class ProfileController {
         User user = profileService.updateProfile(userId, request);
         return ResponseEntity.ok(userMapper.toDTO(user));
     }
-    
+
     /**
      * Đổi mật khẩu
      * POST /api/profile/change-password
@@ -67,12 +67,12 @@ public class ProfileController {
     public ResponseEntity<Map<String, String>> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         Long userId = getCurrentUserId();
         profileService.changePassword(userId, request);
-        
+
         Map<String, String> response = new HashMap<>();
         response.put("message", "Đổi mật khẩu thành công");
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Set user online
      * PATCH /api/profile/online
@@ -81,12 +81,12 @@ public class ProfileController {
     public ResponseEntity<Map<String, String>> setOnline() {
         Long userId = getCurrentUserId();
         profileService.setUserOnline(userId);
-        
+
         Map<String, String> response = new HashMap<>();
         response.put("message", "Đã set online");
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Set user offline
      * PATCH /api/profile/offline
@@ -95,12 +95,27 @@ public class ProfileController {
     public ResponseEntity<Map<String, String>> setOffline() {
         Long userId = getCurrentUserId();
         profileService.setUserOffline(userId);
-        
+
         Map<String, String> response = new HashMap<>();
         response.put("message", "Đã set offline");
         return ResponseEntity.ok(response);
     }
-    
+
+    /**
+     * Update FCM token
+     * PUT /api/profile/fcm-token
+     */
+    @PutMapping("/fcm-token")
+    public ResponseEntity<Map<String, String>> updateFcmToken(@RequestBody Map<String, String> request) {
+        Long userId = getCurrentUserId();
+        String token = request.get("token");
+        profileService.updateFcmToken(userId, token);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "FCM token updated successfully");
+        return ResponseEntity.ok(response);
+    }
+
     /**
      * Helper method để lấy userId từ SecurityContext
      */
@@ -108,4 +123,3 @@ public class ProfileController {
         return SecurityUtil.getCurrentUserId();
     }
 }
-

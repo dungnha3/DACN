@@ -22,9 +22,9 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/cham-cong")
+@RequestMapping("/api/cham-cong")
 public class ChamCongController {
-    
+
     private final ChamCongService chamCongService;
     private final ChamCongMapper chamCongMapper;
 
@@ -32,12 +32,12 @@ public class ChamCongController {
         this.chamCongService = chamCongService;
         this.chamCongMapper = chamCongMapper;
     }
-    
+
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return (User) auth.getPrincipal();
     }
-    
+
     /**
      * Tạo chấm công mới
      * POST /api/cham-cong
@@ -48,7 +48,7 @@ public class ChamCongController {
         ChamCong chamCong = chamCongService.createChamCong(request, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(chamCongMapper.toDTO(chamCong));
     }
-    
+
     /**
      * Lấy thông tin chấm công theo ID
      * GET /api/cham-cong/{id}
@@ -59,7 +59,7 @@ public class ChamCongController {
         ChamCong chamCong = chamCongService.getChamCongById(id, currentUser);
         return ResponseEntity.ok(chamCongMapper.toDTO(chamCong));
     }
-    
+
     /**
      * Lấy danh sách tất cả chấm công
      * GET /api/cham-cong
@@ -70,7 +70,7 @@ public class ChamCongController {
         List<ChamCong> chamCongs = chamCongService.getAllChamCong(currentUser);
         return ResponseEntity.ok(chamCongMapper.toDTOList(chamCongs));
     }
-    
+
     /**
      * Cập nhật chấm công
      * PUT /api/cham-cong/{id}
@@ -83,7 +83,7 @@ public class ChamCongController {
         ChamCong chamCong = chamCongService.updateChamCong(id, request, currentUser);
         return ResponseEntity.ok(chamCongMapper.toDTO(chamCong));
     }
-    
+
     /**
      * Xóa chấm công
      * DELETE /api/cham-cong/{id}
@@ -96,7 +96,7 @@ public class ChamCongController {
         response.put("message", "Xóa chấm công thành công");
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Lấy chấm công theo nhân viên
      * GET /api/cham-cong/nhan-vien/{nhanvienId}
@@ -107,7 +107,7 @@ public class ChamCongController {
         List<ChamCong> chamCongs = chamCongService.getChamCongByNhanVien(nhanvienId, currentUser);
         return ResponseEntity.ok(chamCongMapper.toDTOList(chamCongs));
     }
-    
+
     /**
      * Lấy chấm công theo khoảng thời gian
      * GET /api/cham-cong/date-range?startDate=2024-01-01&endDate=2024-01-31
@@ -119,7 +119,7 @@ public class ChamCongController {
         List<ChamCong> chamCongs = chamCongService.getChamCongByDateRange(startDate, endDate);
         return ResponseEntity.ok(chamCongMapper.toDTOList(chamCongs));
     }
-    
+
     /**
      * Lấy chấm công của nhân viên trong tháng
      * GET /api/cham-cong/nhan-vien/{nhanvienId}/month?year=2024&month=1
@@ -132,7 +132,7 @@ public class ChamCongController {
         List<ChamCong> chamCongs = chamCongService.getChamCongByNhanVienAndMonth(nhanvienId, year, month);
         return ResponseEntity.ok(chamCongMapper.toDTOList(chamCongs));
     }
-    
+
     /**
      * Tính số ngày công của nhân viên trong tháng
      * GET /api/cham-cong/nhan-vien/{nhanvienId}/working-days?year=2024&month=1
@@ -150,7 +150,7 @@ public class ChamCongController {
         response.put("workingDays", workingDays);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Tính tổng số giờ làm việc của nhân viên trong tháng
      * GET /api/cham-cong/nhan-vien/{nhanvienId}/total-hours?year=2024&month=1
@@ -168,7 +168,7 @@ public class ChamCongController {
         response.put("totalHours", totalHours);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Thống kê đi trễ/về sớm của nhân viên trong tháng
      * GET /api/cham-cong/nhan-vien/{nhanvienId}/statistics?year=2024&month=1
@@ -181,7 +181,7 @@ public class ChamCongController {
         long lateDays = chamCongService.countLateDays(nhanvienId, year, month);
         long earlyLeaveDays = chamCongService.countEarlyLeaveDays(nhanvienId, year, month);
         int workingDays = chamCongService.countWorkingDays(nhanvienId, year, month);
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("nhanvienId", nhanvienId);
         response.put("year", year);
@@ -191,7 +191,7 @@ public class ChamCongController {
         response.put("earlyLeaveDays", earlyLeaveDays);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Check-in (chấm công vào)
      * POST /api/cham-cong/check-in
@@ -203,7 +203,7 @@ public class ChamCongController {
         ChamCong chamCong = chamCongService.checkIn(nhanvienId, ngayCham);
         return ResponseEntity.status(HttpStatus.CREATED).body(chamCongMapper.toDTO(chamCong));
     }
-    
+
     /**
      * Check-out (chấm công ra)
      * PATCH /api/cham-cong/{id}/check-out
@@ -213,7 +213,7 @@ public class ChamCongController {
         ChamCong chamCong = chamCongService.checkOut(id);
         return ResponseEntity.ok(chamCongMapper.toDTO(chamCong));
     }
-    
+
     /**
      * ⭐⭐⭐ CHẤM CÔNG GPS - API mới
      * POST /api/cham-cong/gps
@@ -224,7 +224,7 @@ public class ChamCongController {
         Map<String, Object> response = chamCongService.chamCongGPS(request, currentUser);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Lấy trạng thái chấm công hôm nay
      * GET /api/cham-cong/status/{nhanvienId}
