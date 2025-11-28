@@ -40,9 +40,27 @@ public class AIActionParser {
             Pattern.UNICODE_CASE
     );
     
-    // Pattern để detect danh sách tasks (bullet points)
-    private static final Pattern TASK_LIST_PATTERN = Pattern.compile(
-            "(?m)^\\s*[-*•]\\s*(.+)$"
+    // Pattern để detect công việc với tiêu đề (Công việc 1:, Task 1:, etc.)
+    private static final Pattern TASK_TITLE_PATTERN = Pattern.compile(
+            "(?i)(?:\\*\\*)?(?:công việc|task|tác vụ|việc)\\s*\\d*\\s*[:.]?\\s*(.+?)(?:\\*\\*)?$"
+    );
+    
+    // Pattern để detect metadata của task
+    private static final Pattern TIME_PATTERN = Pattern.compile(
+            "(?i)(?:thời gian|time|ước tính)[^:]*:\\s*(\\d+)\\s*(?:giờ|h|hour|ngày|day)?",
+            Pattern.UNICODE_CASE
+    );
+    private static final Pattern PRIORITY_PATTERN = Pattern.compile(
+            "(?i)(?:ưu tiên|priority|mức độ)[^:]*:\\s*(LOW|MEDIUM|HIGH|CRITICAL|thấp|trung bình|cao|khẩn cấp)",
+            Pattern.UNICODE_CASE
+    );
+    private static final Pattern DEADLINE_PATTERN = Pattern.compile(
+            "(?i)(?:hạn chót|deadline|hạn)[^:]*:\\s*(\\d+)\\s*(?:ngày|day)?",
+            Pattern.UNICODE_CASE
+    );
+    private static final Pattern DESC_PATTERN = Pattern.compile(
+            "(?i)(?:mô tả|description|desc)[^:]*:\\s*(.+)",
+            Pattern.UNICODE_CASE
     );
     
     /**
@@ -106,9 +124,9 @@ public class AIActionParser {
         
         // Fallback: parse task list from response
         if (actions.isEmpty() && projectId != null) {
-            List<String> taskTitles = extractTaskListFromResponse(aiResponse);
-            if (!taskTitles.isEmpty()) {
-                actions.add(createMultipleTasksAction(taskTitles, projectId));
+            List<Map<String, Object>> taskDataList = extractTaskListFromResponse(aiResponse);
+            if (!taskDataList.isEmpty()) {
+                actions.add(createMultipleTasksAction(taskDataList, projectId));
             }
         }
         
@@ -202,42 +220,254 @@ public class AIActionParser {
                 .build();
     }
     
-    private AIActionDTO createMultipleTasksAction(List<String> taskTitles, Long projectId) {
+    private AIActionDTO createMultipleTasksAction(List<Map<String, Object>> taskDataList, Long projectId) {
         Map<String, Object> data = new HashMap<>();
         data.put("projectId", projectId);
-        
-        List<Map<String, Object>> issues = new ArrayList<>();
-        for (String title : taskTitles) {
-            Map<String, Object> issue = new HashMap<>();
-            issue.put("title", title);
-            issue.put("priority", "MEDIUM");
-            issues.add(issue);
-        }
-        data.put("issues", issues);
+        data.put("issues", taskDataList);
         
         return AIActionDTO.builder()
                 .actionType(ActionType.CREATE_MULTIPLE_ISSUES)
                 .status(ActionStatus.PENDING)
                 .data(data)
-                .message(String.format("Tạo %d tasks từ gợi ý của AI?", taskTitles.size()))
+                .message(String.format("Tạo %d công việc từ gợi ý của AI?", taskDataList.size()))
                 .build();
     }
     
-    private List<String> extractTaskListFromResponse(String response) {
-        List<String> tasks = new ArrayList<>();
-        Matcher matcher = TASK_LIST_PATTERN.matcher(response);
+    /**
+     * Trích xuất danh sách tasks từ AI response
+     * Chỉ lấy các dòng có tiêu đề công việc, bỏ qua metadata
+     */
+    private List<Map<String, Object>> extractTaskListFromResponse(String response) {
+        List<Map<String, Object>> tasks = new ArrayList<>();
         
-        while (matcher.find()) {
-            String task = matcher.group(1).trim();
-            // Filter out non-task items
-            if (task.length() > 5 && task.length() < 200 && 
-                !task.toLowerCase().startsWith("lưu ý") &&
-                !task.toLowerCase().startsWith("note")) {
-                tasks.add(task);
+        log.debug("Parsing AI response for tasks, length: {}", response.length());
+        
+        // Split response into lines
+        String[] lines = response.split("\n");
+        
+        Map<String, Object> currentTask = null;
+        
+        for (String line : lines) {
+            line = line.trim();
+            if (line.isEmpty()) continue;
+            
+            // Remove single bullet points at the beginning (not **)
+            String cleanLine = line;
+            if (line.startsWith("- ")) {
+                cleanLine = line.substring(2).trim();
+            } else if (line.startsWith("• ")) {
+                cleanLine = line.substring(2).trim();
+            } else if (line.matches("^\\d+[.):]\\s+.*")) {
+                cleanLine = line.replaceFirst("^\\d+[.):]\\s+", "");
+            }
+            
+            // Check if this is a task title line
+            if (isTaskTitleLine(cleanLine)) {
+                log.debug("Found task title line: {}", cleanLine);
+                
+                // Save previous task if exists
+                if (currentTask != null && currentTask.containsKey("title")) {
+                    tasks.add(currentTask);
+                }
+                
+                // Start new task
+                currentTask = new HashMap<>();
+                String title = extractTaskTitle(cleanLine);
+                if (title != null && !title.isEmpty()) {
+                    currentTask.put("title", title);
+                    currentTask.put("priority", "MEDIUM"); // Default
+                    log.debug("Extracted task title: {}", title);
+                }
+            } else if (currentTask != null) {
+                // Try to extract metadata for current task
+                extractAndApplyMetadata(cleanLine, currentTask);
             }
         }
         
+        // Add last task
+        if (currentTask != null && currentTask.containsKey("title")) {
+            tasks.add(currentTask);
+        }
+        
+        log.info("Extracted {} tasks from AI response", tasks.size());
         return tasks;
+    }
+    
+    /**
+     * Kiểm tra xem dòng có phải là tiêu đề công việc không
+     */
+    private boolean isTaskTitleLine(String line) {
+        String lowerLine = line.toLowerCase();
+        
+        // Exclude metadata lines first - MUST check this
+        if (isMetadataLine(lowerLine)) {
+            log.debug("Excluded as metadata: {}", line);
+            return false;
+        }
+        
+        // Check for "Công việc X:", "Task X:", etc.
+        if (lowerLine.matches("(?i).*(?:\\*\\*)?(?:công việc|task|tác vụ)\\s*\\d*\\s*[:.].*")) {
+            return true;
+        }
+        
+        // Check for bold text at the start (likely a task title) - e.g., "**Task title**"
+        // But make sure it doesn't contain metadata patterns
+        if (line.startsWith("**") && line.endsWith("**") && line.length() > 6) {
+            String content = line.substring(2, line.length() - 2).toLowerCase();
+            // Double check it's not metadata
+            if (!isMetadataLine(content)) {
+                return true;
+            }
+        }
+        
+        // Check for numbered list items that look like tasks - e.g., "1. Task title" or "1) Task title"
+        if (line.matches("^\\d+[.):]\\s*.+") && line.length() > 10) {
+            String content = line.replaceFirst("^\\d+[.):]\\s*", "").toLowerCase();
+            return !isMetadataLine(content);
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Kiểm tra xem dòng có phải là metadata không
+     */
+    private boolean isMetadataLine(String lowerLine) {
+        // Remove leading whitespace and bullet for checking
+        String check = lowerLine.replaceFirst("^\\s*[-•]?\\s*", "").trim();
+        
+        // List of metadata prefixes (Vietnamese and English)
+        String[] metadataPrefixes = {
+            "thời gian", "ước tính", "estimated",
+            "ưu tiên", "mức độ ưu tiên", "mức độ", "priority", "độ ưu tiên",
+            "hạn chót", "hạn:", "deadline", "due",
+            "mô tả", "mô tả:", "description", "desc:",
+            "lý do", "reason",
+            "assign", "gán cho", "người thực hiện", "assignee",
+            "time:", "duration",
+            "status", "trạng thái",
+            "note", "ghi chú", "lưu ý"
+        };
+        
+        for (String prefix : metadataPrefixes) {
+            if (check.startsWith(prefix)) {
+                return true;
+            }
+        }
+        
+        // Check for "label: value" pattern with priority values
+        if (check.contains(": low") || 
+            check.contains(": medium") || 
+            check.contains(": high") || 
+            check.contains(": critical") ||
+            check.contains(": thấp") ||
+            check.contains(": trung bình") ||
+            check.contains(": cao") ||
+            check.contains(": khẩn cấp")) {
+            return true;
+        }
+        
+        // Check for time patterns like "16 giờ", "2 ngày"
+        if (check.matches("^\\d+\\s*(giờ|ngày|h|hour|day|hours|days)s?$")) {
+            return true;
+        }
+        if (check.matches(".*:\\s*\\d+\\s*(giờ|ngày|h|hour|day).*")) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Trích xuất tiêu đề task từ dòng
+     */
+    private String extractTaskTitle(String line) {
+        // Remove markdown bold markers
+        String clean = line.replaceAll("\\*\\*", "").trim();
+        
+        // Remove bullet points
+        clean = clean.replaceFirst("^[-*•]\\s*", "");
+        
+        // Remove numbered list prefix (e.g., "1. ", "2) ")
+        clean = clean.replaceFirst("^\\d+[.):]+\\s*", "");
+        
+        // Pattern: "Công việc 1: Tên công việc"
+        Matcher matcher = TASK_TITLE_PATTERN.matcher(clean);
+        if (matcher.find()) {
+            return matcher.group(1).trim();
+        }
+        
+        // If line starts with "Công việc", "Task", etc., get text after colon
+        String lowerClean = clean.toLowerCase();
+        if (lowerClean.startsWith("công việc") || 
+            lowerClean.startsWith("task") || 
+            lowerClean.startsWith("tác vụ")) {
+            int colonIndex = clean.indexOf(':');
+            if (colonIndex > 0 && colonIndex < clean.length() - 1) {
+                return clean.substring(colonIndex + 1).trim();
+            }
+        }
+        
+        // Return the whole cleaned line as task title
+        return clean.isEmpty() ? null : clean;
+    }
+    
+    /**
+     * Trích xuất và áp dụng metadata vào task
+     */
+    private void extractAndApplyMetadata(String line, Map<String, Object> task) {
+        // Extract estimated hours
+        Matcher timeMatcher = TIME_PATTERN.matcher(line);
+        if (timeMatcher.find()) {
+            try {
+                int hours = Integer.parseInt(timeMatcher.group(1));
+                task.put("estimatedHours", hours);
+            } catch (NumberFormatException e) {
+                // Ignore
+            }
+            return;
+        }
+        
+        // Extract priority
+        Matcher priorityMatcher = PRIORITY_PATTERN.matcher(line);
+        if (priorityMatcher.find()) {
+            String priority = normalizePriority(priorityMatcher.group(1));
+            task.put("priority", priority);
+            return;
+        }
+        
+        // Extract deadline (days from now)
+        Matcher deadlineMatcher = DEADLINE_PATTERN.matcher(line);
+        if (deadlineMatcher.find()) {
+            try {
+                int days = Integer.parseInt(deadlineMatcher.group(1));
+                task.put("deadlineDays", days);
+            } catch (NumberFormatException e) {
+                // Ignore
+            }
+            return;
+        }
+        
+        // Extract description
+        Matcher descMatcher = DESC_PATTERN.matcher(line);
+        if (descMatcher.find()) {
+            task.put("description", descMatcher.group(1).trim());
+        }
+    }
+    
+    /**
+     * Chuẩn hóa giá trị priority
+     */
+    private String normalizePriority(String priority) {
+        String lower = priority.toLowerCase();
+        if (lower.equals("low") || lower.equals("thấp")) {
+            return "LOW";
+        } else if (lower.equals("high") || lower.equals("cao")) {
+            return "HIGH";
+        } else if (lower.equals("critical") || lower.equals("khẩn cấp")) {
+            return "CRITICAL";
+        }
+        return "MEDIUM";
     }
     
     private String extractDescription(String message, String name) {

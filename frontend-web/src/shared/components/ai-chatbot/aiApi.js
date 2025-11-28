@@ -7,6 +7,9 @@ export const aiApi = {
   // Kiểm tra trạng thái AI service
   getStatus: () => apiService.get('/api/ai/status'),
   
+  // Lấy danh sách dự án của user
+  getMyProjects: () => apiService.get('/api/projects/my-projects'),
+  
   // Chat với AI
   chat: (data) => apiService.post('/api/ai/chat', data),
   
