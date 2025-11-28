@@ -5,10 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/app_constants.dart';
 
 class AuthService {
-  Future<bool> login(String username, String password) async {
+  Future<String?> login(String username, String password) async {
     try {
-
-      
       final response = await http.post(
         Uri.parse('${AppConstants.baseUrl}/auth/login'),
         headers: {'Content-Type': 'application/json'},
@@ -16,9 +14,7 @@ class AuthService {
           'username': username,
           'password': password,
         }),
-      ).timeout(Duration(seconds: 10));
-
-
+      ).timeout(const Duration(seconds: 10));
 
       debugPrint('Login Response: ${response.statusCode} - ${response.body}');
 
@@ -39,13 +35,17 @@ class AuthService {
             await prefs.setString('role', user['role']);
             if (user['email'] != null) await prefs.setString('email', user['email']);
           }
-          return true;
+          return null; // Success
         }
+        return 'Invalid response from server';
+      } else if (response.statusCode == 401) {
+        return 'Sai tên đăng nhập hoặc mật khẩu';
+      } else {
+        return 'Lỗi server: ${response.statusCode}';
       }
-      return false;
     } catch (e) {
       debugPrint('Login Error: $e');
-      return false;
+      return 'Lỗi kết nối: $e';
     }
   }
 

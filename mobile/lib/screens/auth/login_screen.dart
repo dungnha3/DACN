@@ -17,19 +17,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _login() async {
     setState(() => _isLoading = true);
-    final success = await _authService.login(
+    final error = await _authService.login(
       _usernameController.text,
       _passwordController.text,
     );
     setState(() => _isLoading = false);
 
-    if (success) {
+    if (error == null) {
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, AppRouter.home);
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login failed')),
+        SnackBar(content: Text(error)),
       );
     }
   }

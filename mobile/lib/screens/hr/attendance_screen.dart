@@ -3,9 +3,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
-import 'dart:convert' as import_convert;
 import '../../data/services/hr_service.dart';
 import '../../data/services/auth_service.dart';
+import '../../data/models/attendance.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -24,9 +24,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   bool _isLoading = false;
   bool _isCheckedIn = false;
   int? _currentAttendanceId;
-  Map<String, dynamic>? _todayAttendance;
+  Attendance? _todayAttendance;
   Timer? _timer;
   Position? _currentPosition;
+  String? _statusMessage;
 
   @override
   void initState() {
@@ -45,7 +46,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   void _updateTime() {
     final now = DateTime.now();
     setState(() {
-      _currentTime = DateFormat('HH:mm:ss').format(now);
+      _currentTime = DateFormat('HH:mm').format(now);
       _currentDate = DateFormat('EEEE, dd/MM/yyyy', 'vi').format(now);
     });
   }
@@ -99,8 +100,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         });
       }
     } catch (e) {
-
-      setState(() => _currentAddress = 'Không thể lấy vị trí');
+      setState(() => _currentAddress = 'Không thể lấy vị trí: $e');
     }
   }
 
@@ -112,28 +112,42 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         final response = await _hrService.getTodayAttendance(userId);
         
         if (response != null) {
-          setState(() {
-            _todayAttendance = response;
-            // Logic to determine if checked in based on response structure
-            // Assuming response has 'checkInTime' and 'checkOutTime'
-            if (response['checkInTime'] != null && response['checkOutTime'] == null) {
-              _isCheckedIn = true;
-              _currentAttendanceId = response['attendanceId'];
-            } else {
-              _isCheckedIn = false;
-            }
-          });
+           // Parse response to check status
+           // Expecting response structure: { hasCheckedIn: bool, hasCheckedOut: bool, chamCong: {...} }
+           final hasCheckedIn = response['hasCheckedIn'] == true;
+           final hasCheckedOut = response['hasCheckedOut'] == true;
+           final chamCongData = response['chamCong'];
+
+           setState(() {
+             if (hasCheckedIn && !hasCheckedOut) {
+               _isCheckedIn = true;
+               if (chamCongData != null) {
+                 _todayAttendance = Attendance.fromJson(chamCongData);
+                 _currentAttendanceId = _todayAttendance!.chamcongId;
+               }
+               _statusMessage = "Bạn đã Check-in. Chúc một ngày làm việc tốt lành!";
+             } else if (hasCheckedIn && hasCheckedOut) {
+               _isCheckedIn = false; // Reset to allow viewing status but maybe disable button
+               if (chamCongData != null) {
+                 _todayAttendance = Attendance.fromJson(chamCongData);
+               }
+               _statusMessage = "Bạn đã hoàn thành công việc hôm nay.";
+             } else {
+               _isCheckedIn = false;
+               _statusMessage = "Bạn chưa Check-in hôm nay.";
+             }
+           });
         }
       }
     } catch (e) {
-
+      debugPrint('Error checking attendance: $e');
     }
   }
 
   Future<void> _handleCheckInOut() async {
     if (_currentPosition == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng đợi lấy vị trí GPS')),
+        const SnackBar(content: Text('Đang lấy vị trí GPS, vui lòng đợi...')),
       );
       await _getCurrentLocation();
       return;
@@ -157,6 +171,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         }
       } else {
         // Check In
+        // Check if already checked out today
+        if (_todayAttendance != null && _todayAttendance!.gioRa != null) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Bạn đã Check-out hôm nay rồi!')),
+          );
+          return;
+        }
+
         await _hrService.checkIn(
           _currentPosition!.latitude,
           _currentPosition!.longitude,
@@ -170,20 +192,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       await _checkTodayAttendance();
     } catch (e) {
       if (context.mounted) {
-        final errorMessage = _extractErrorMessage(e);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white),
-                const SizedBox(width: 10),
-                Expanded(child: Text(errorMessage)),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
+          SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -191,236 +201,192 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
   }
 
-  String _extractErrorMessage(dynamic error) {
-    final errorStr = error.toString();
-    try {
-      // Look for JSON part in the error string
-      // Format: Exception: API Error: 400 - {"message":"..."}
-      final startIndex = errorStr.indexOf('{');
-      final endIndex = errorStr.lastIndexOf('}');
-      
-      if (startIndex != -1 && endIndex != -1) {
-        final jsonStr = errorStr.substring(startIndex, endIndex + 1);
-        final jsonMap = import_convert.jsonDecode(jsonStr); // Will need import 'dart:convert' as import_convert
-        return jsonMap['message'] ?? errorStr;
-      }
-    } catch (_) {
-      // If parsing fails, try to clean up the string a bit
-      if (errorStr.contains('Exception: ')) {
-        return errorStr.replaceAll('Exception: ', '');
-      }
-    }
-    return errorStr;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Chấm công GPS'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _initializeData,
-          ),
-        ],
-      ),
-      body: _isLoading && _currentPosition == null
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Clock Card
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.blue.shade700, Colors.blue.shade500],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+      body: Stack(
+        children: [
+          // 1. Map Background (Placeholder)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).size.height * 0.6,
+            child: Container(
+              color: Colors.blue.shade50,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.map, size: 80, color: Colors.blue.shade200),
+                    const SizedBox(height: 10),
+                    Text(
+                      "Bản đồ GPS",
+                      style: TextStyle(color: Colors.blue.shade300, fontSize: 18),
+                    ),
+                    if (_currentPosition != null)
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          "Lat: ${_currentPosition!.latitude.toStringAsFixed(4)}, Lng: ${_currentPosition!.longitude.toStringAsFixed(4)}",
+                          style: TextStyle(color: Colors.blue.shade400),
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.blue.withValues(alpha: 0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          
+          // Back Button
+          Positioned(
+            top: 40,
+            left: 10,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black87),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+
+          // 2. Bottom Sheet Action Area
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).size.height * 0.45,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 20,
+                    offset: Offset(0, -5),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Time & Date
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _currentTime,
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            _currentDate,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _isCheckedIn ? Colors.green.shade50 : Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          _currentTime,
-                          style: const TextStyle(
-                            fontSize: 48,
+                        child: Text(
+                          _isCheckedIn ? 'Đang làm việc' : 'Chưa vào ca',
+                          style: TextStyle(
+                            color: _isCheckedIn ? Colors.green : Colors.orange,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        Text(
-                          _currentDate,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                   
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 20),
+                  
+                  // Address
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on, color: Colors.blue),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _currentAddress,
+                          style: const TextStyle(fontSize: 14),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
 
-                  // Location Info
-                  Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.orange.shade50,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.location_on, color: Colors.orange),
+                  const Spacer(),
+
+                  // Status Message
+                  if (_statusMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Center(
+                        child: Text(
+                          _statusMessage!,
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontStyle: FontStyle.italic,
                           ),
-                          const SizedBox(width: 15),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+
+                  // Action Button (Slide-like)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: (_isLoading || (_todayAttendance?.gioRa != null)) ? null : _handleCheckInOut,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _isCheckedIn ? Colors.red : Colors.blue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                        elevation: 5,
+                      ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Text(
-                                  'Vị trí hiện tại',
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
+                                Icon(_isCheckedIn ? Icons.logout : Icons.login),
+                                const SizedBox(width: 10),
                                 Text(
-                                  _currentAddress,
+                                  _isCheckedIn ? 'TRƯỢT ĐỂ CHECK-OUT' : 'TRƯỢT ĐỂ CHECK-IN',
                                   style: const TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 14,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
-
-                  const SizedBox(height: 40),
-
-                  // Check In/Out Button
-                  GestureDetector(
-                    onTap: _isLoading ? null : _handleCheckInOut,
-                    child: Container(
-                      width: 200,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _isCheckedIn ? Colors.red.shade50 : Colors.green.shade50,
-                        border: Border.all(
-                          color: _isCheckedIn ? Colors.red : Colors.green,
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: (_isCheckedIn ? Colors.red : Colors.green).withValues(alpha: 0.2),
-                            blurRadius: 20,
-                            spreadRadius: 5,
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            _isCheckedIn ? Icons.logout : Icons.login,
-                            size: 50,
-                            color: _isCheckedIn ? Colors.red : Colors.green,
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            _isCheckedIn ? 'CHECK OUT' : 'CHECK IN',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: _isCheckedIn ? Colors.red : Colors.green,
-                            ),
-                          ),
-                          if (_isLoading)
-                            const Padding(
-                              padding: EdgeInsets.only(top: 10),
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  // Today's Stats
-                  if (_todayAttendance != null)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                _buildStatItem('Giờ vào', _formatTime(_todayAttendance!['checkInTime'])),
-                                _buildStatItem('Giờ ra', _formatTime(_todayAttendance!['checkOutTime'])),
-                                _buildStatItem('Tổng giờ', '${_todayAttendance!['workingHours'] ?? 0}h'),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
+          ),
+        ],
+      ),
     );
-  }
-
-  Widget _buildStatItem(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(color: Colors.grey, fontSize: 12),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-      ],
-    );
-  }
-
-  String _formatTime(String? dateTimeStr) {
-    if (dateTimeStr == null) return '--:--';
-    try {
-      final dateTime = DateTime.parse(dateTimeStr);
-      return DateFormat('HH:mm').format(dateTime);
-    } catch (e) {
-      return '--:--';
-    }
   }
 }

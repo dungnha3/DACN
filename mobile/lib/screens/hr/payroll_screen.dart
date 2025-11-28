@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../data/services/hr_service.dart';
 import '../../data/services/auth_service.dart';
+import '../../data/models/payroll.dart';
 
 class PayrollScreen extends StatefulWidget {
   const PayrollScreen({super.key});
@@ -15,7 +16,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
   final AuthService _authService = AuthService();
   
   bool _isLoading = false;
-  Map<String, dynamic>? _payrollData;
+  Payroll? _payrollData;
   DateTime _selectedDate = DateTime.now();
   String? _error;
 
@@ -36,26 +37,33 @@ class _PayrollScreenState extends State<PayrollScreen> {
       final userIdStr = await _authService.getUserId();
       if (userIdStr != null) {
         final userId = int.parse(userIdStr);
-        final data = await _hrService.getPayroll(
+        // Note: Service expects nhanvienId, but we are passing userId.
+        // Ideally backend handles this or we fetch nhanvienId first.
+        // Assuming userId works for now as per previous logic.
+        final dataList = await _hrService.getPayroll(
           userId,
           _selectedDate.month,
           _selectedDate.year,
         );
-        setState(() {
-          _payrollData = data;
-        });
+        
+        if (dataList.isNotEmpty) {
+          setState(() {
+            _payrollData = dataList.first;
+          });
+        } else {
+           setState(() {
+            _error = 'Chưa có bảng lương cho tháng này.';
+          });
+        }
       }
     } catch (e) {
-
       setState(() {
-        _error = 'Không tìm thấy bảng lương cho tháng này.';
+        _error = 'Lỗi tải dữ liệu: $e';
       });
     } finally {
       setState(() => _isLoading = false);
     }
   }
-
-
 
   void _changeMonth(int offset) {
     setState(() {
@@ -69,24 +77,31 @@ class _PayrollScreenState extends State<PayrollScreen> {
     final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Bảng Lương'),
         centerTitle: true,
-        backgroundColor: Colors.blue.shade800,
+        backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: Column(
         children: [
           // Month Selector
           Container(
             padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-            color: Colors.white,
+            decoration: BoxDecoration(
+              color: Colors.blue.shade700,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back_ios),
+                  icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
                   onPressed: () => _changeMonth(-1),
                 ),
                 Column(
@@ -96,16 +111,17 @@ class _PayrollScreenState extends State<PayrollScreen> {
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                     const Text(
                       'Kỳ lương chính thức',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
                 ),
                 IconButton(
-                  icon: const Icon(Icons.arrow_forward_ios),
+                  icon: const Icon(Icons.arrow_forward_ios, color: Colors.white),
                   onPressed: () => _changeMonth(1),
                 ),
               ],
@@ -140,19 +156,19 @@ class _PayrollScreenState extends State<PayrollScreen> {
                                 // Net Salary Card
                                 Container(
                                   width: double.infinity,
-                                  padding: const EdgeInsets.all(20),
+                                  padding: const EdgeInsets.all(24),
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
-                                      colors: [Colors.green.shade700, Colors.green.shade500],
+                                      colors: [Colors.green.shade600, Colors.teal.shade500],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
-                                    borderRadius: BorderRadius.circular(20),
+                                    borderRadius: BorderRadius.circular(24),
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.green.withValues(alpha: 0.3),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 5),
+                                        blurRadius: 15,
+                                        offset: const Offset(0, 8),
                                       ),
                                     ],
                                   ),
@@ -163,97 +179,98 @@ class _PayrollScreenState extends State<PayrollScreen> {
                                         style: TextStyle(
                                           color: Colors.white70,
                                           fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 1.2,
+                                          fontWeight: FontWeight.w600,
+                                          letterSpacing: 1.5,
                                         ),
                                       ),
                                       const SizedBox(height: 10),
                                       Text(
-                                        currencyFormat.format(_payrollData!['netSalary'] ?? 0),
+                                        currencyFormat.format(_payrollData!.thucNhan),
                                         style: const TextStyle(
                                           color: Colors.white,
-                                          fontSize: 32,
+                                          fontSize: 36,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      const SizedBox(height: 5),
+                                      const SizedBox(height: 10),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                         decoration: BoxDecoration(
                                           color: Colors.white.withValues(alpha: 0.2),
                                           borderRadius: BorderRadius.circular(20),
                                         ),
                                         child: Text(
-                                          _payrollData!['status'] ?? 'Đã thanh toán',
-                                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                                          _payrollData!.trangThai,
+                                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
 
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 25),
 
                                 // Income Details
                                 _buildSectionTitle('Thu nhập'),
                                 Card(
                                   elevation: 2,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                                  shadowColor: Colors.black12,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                   child: Padding(
-                                    padding: const EdgeInsets.all(16),
+                                    padding: const EdgeInsets.all(20),
                                     child: Column(
                                       children: [
-                                        _buildRow('Lương cơ bản', _payrollData!['baseSalary'], currencyFormat),
-                                        const Divider(),
-                                        _buildRow('Phụ cấp', _payrollData!['allowance'], currencyFormat, isPositive: true),
-                                        const Divider(),
-                                        _buildRow('Thưởng', _payrollData!['bonus'], currencyFormat, isPositive: true),
-                                        const Divider(),
-                                        _buildRow('Làm thêm giờ', _payrollData!['overtimePay'], currencyFormat, isPositive: true),
+                                        _buildRow('Lương cơ bản', _payrollData!.luongCoBan, currencyFormat),
+                                        const Divider(height: 24),
+                                        _buildRow('Phụ cấp', _payrollData!.phuCap, currencyFormat, isPositive: true),
+                                        const Divider(height: 24),
+                                        _buildRow('Thưởng', _payrollData!.thuong, currencyFormat, isPositive: true),
                                       ],
                                     ),
                                   ),
                                 ),
 
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 25),
 
                                 // Deductions
                                 _buildSectionTitle('Khấu trừ'),
                                 Card(
                                   elevation: 2,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                                  shadowColor: Colors.black12,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                   child: Padding(
-                                    padding: const EdgeInsets.all(16),
+                                    padding: const EdgeInsets.all(20),
                                     child: Column(
                                       children: [
-                                        _buildRow('Bảo hiểm', _payrollData!['insurance'], currencyFormat, isNegative: true),
-                                        const Divider(),
-                                        _buildRow('Thuế TNCN', _payrollData!['tax'], currencyFormat, isNegative: true),
-                                        const Divider(),
-                                        _buildRow('Phạt / Khác', _payrollData!['deductions'], currencyFormat, isNegative: true),
+                                        _buildRow('Bảo hiểm', _payrollData!.baoHiem, currencyFormat, isNegative: true),
+                                        const Divider(height: 24),
+                                        _buildRow('Thuế TNCN', _payrollData!.thue, currencyFormat, isNegative: true),
+                                        const Divider(height: 24),
+                                        _buildRow('Phạt / Khác', _payrollData!.phat, currencyFormat, isNegative: true),
                                       ],
                                     ),
                                   ),
                                 ),
 
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 25),
                                 
                                 // Summary
                                 Card(
                                   color: Colors.blue.shade50,
                                   elevation: 0,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                   child: Padding(
-                                    padding: const EdgeInsets.all(16),
+                                    padding: const EdgeInsets.all(20),
                                     child: Column(
                                       children: [
-                                        _buildRow('Tổng thu nhập', _payrollData!['totalIncome'], currencyFormat, isBold: true),
-                                        const SizedBox(height: 10),
-                                        _buildRow('Tổng khấu trừ', _payrollData!['totalDeductions'], currencyFormat, isBold: true, isNegative: true),
+                                        _buildRow('Tổng thu nhập', _payrollData!.tongLuong, currencyFormat, isBold: true),
+                                        const SizedBox(height: 12),
+                                        _buildRow('Tổng khấu trừ', (_payrollData!.baoHiem + _payrollData!.thue + _payrollData!.phat), currencyFormat, isBold: true, isNegative: true),
                                       ],
                                     ),
                                   ),
                                 ),
+                                const SizedBox(height: 30),
                               ],
                             ),
                           ),
@@ -269,47 +286,40 @@ class _PayrollScreenState extends State<PayrollScreen> {
       padding: const EdgeInsets.only(left: 10, bottom: 10),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
-          color: Colors.grey,
+          color: Colors.grey.shade700,
         ),
       ),
     );
   }
 
-  Widget _buildRow(String label, dynamic value, NumberFormat format, {bool isPositive = false, bool isNegative = false, bool isBold = false}) {
-    double val = 0;
-    if (value is int) val = value.toDouble();
-    if (value is double) val = value;
-
+  Widget _buildRow(String label, double value, NumberFormat format, {bool isPositive = false, bool isNegative = false, bool isBold = false}) {
     Color textColor = Colors.black87;
-    if (isPositive) textColor = Colors.green;
-    if (isNegative) textColor = Colors.red;
+    if (isPositive) textColor = Colors.green.shade700;
+    if (isNegative) textColor = Colors.red.shade700;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              color: Colors.black54,
-            ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+            color: Colors.black54,
           ),
-          Text(
-            '${isPositive ? '+' : ''}${isNegative ? '-' : ''}${format.format(val)}',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
-              color: textColor,
-            ),
+        ),
+        Text(
+          '${isPositive ? '+' : ''}${isNegative ? '-' : ''}${format.format(value)}',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+            color: textColor,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

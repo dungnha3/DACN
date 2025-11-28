@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/services/project_service.dart';
+import '../../data/models/issue.dart';
 
 class IssueDetailScreen extends StatefulWidget {
   final int taskId;
@@ -14,7 +15,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   final ProjectService _projectService = ProjectService();
   
   bool _isLoading = true;
-  Map<String, dynamic>? _task;
+  Issue? _task;
   final _commentController = TextEditingController();
   bool _isSendingComment = false;
 
@@ -32,7 +33,6 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         _task = data;
       });
     } catch (e) {
-
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Lỗi tải chi tiết công việc')),
@@ -52,7 +52,6 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
       );
       _fetchTaskDetail(); // Refresh to show updated status/logs
     } catch (e) {
-
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Lỗi cập nhật trạng thái')),
@@ -70,7 +69,6 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
       _commentController.clear();
       _fetchTaskDetail(); // Refresh to show new comment
     } catch (e) {
-
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Lỗi gửi bình luận')),
@@ -87,11 +85,12 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     if (_task == null) return const Scaffold(body: Center(child: Text('Không tìm thấy công việc')));
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Chi tiết công việc'),
         backgroundColor: Colors.blue.shade800,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -101,39 +100,56 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
             // Header Card
             Card(
               elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shadowColor: Colors.black12,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _task!['title'] ?? 'No Title',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      _task!.title,
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
-                        _buildStatusChip(_task!['status']),
-                        const SizedBox(width: 8),
-                        _buildPriorityChip(_task!['priority']),
+                        _buildStatusChip(_task!.issueStatus),
+                        const SizedBox(width: 10),
+                        _buildPriorityChip(_task!.priority),
                       ],
                     ),
-                    const Divider(height: 24),
+                    const Divider(height: 30),
                     Text(
-                      _task!['description'] ?? 'Không có mô tả',
-                      style: TextStyle(color: Colors.grey[800], height: 1.5),
+                      _task!.description.isNotEmpty ? _task!.description : 'Không có mô tả',
+                      style: TextStyle(color: Colors.grey[800], height: 1.6, fontSize: 15),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Icon(Icons.person_outline, size: 18, color: Colors.grey[600]),
+                        const SizedBox(width: 8),
+                        Text('Người giao: ${_task!.reporterName ?? "N/A"}', style: TextStyle(color: Colors.grey[600])),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_today, size: 18, color: Colors.grey[600]),
+                        const SizedBox(width: 8),
+                        Text('Hạn chót: ${_task!.dueDate ?? "N/A"}', style: TextStyle(color: Colors.grey[600])),
+                      ],
                     ),
                   ],
                 ),
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 25),
 
             // Status Action
-            const Text('Cập nhật trạng thái', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
+            const Text('Cập nhật trạng thái', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(child: _buildStatusButton('TODO', Colors.grey)),
@@ -144,14 +160,15 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
 
             // Comments Section
-            const Text('Bình luận & Hoạt động', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
+            const Text('Bình luận & Hoạt động', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 12),
             Card(
               elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shadowColor: Colors.black12,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -162,27 +179,37 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                         Expanded(
                           child: TextField(
                             controller: _commentController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: 'Viết bình luận...',
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(25), borderSide: BorderSide.none),
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
-                        IconButton(
-                          icon: _isSendingComment 
-                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                              : const Icon(Icons.send, color: Colors.blue),
-                          onPressed: _isSendingComment ? null : _addComment,
+                        CircleAvatar(
+                          backgroundColor: Colors.blue.shade700,
+                          child: IconButton(
+                            icon: _isSendingComment 
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : const Icon(Icons.send, color: Colors.white, size: 20),
+                            onPressed: _isSendingComment ? null : _addComment,
+                          ),
                         ),
                       ],
                     ),
-                    const Divider(height: 24),
+                    const Divider(height: 30),
                     
-                    // Comments List (Placeholder logic as API might return mixed list)
-                    if (_task!['comments'] != null)
-                      ...(_task!['comments'] as List).map((comment) => _buildCommentItem(comment)),
+                    // Comments List
+                    if (_task!.comments.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Text('Chưa có bình luận nào', style: TextStyle(color: Colors.grey)),
+                      )
+                    else
+                      ..._task!.comments.map((comment) => _buildCommentItem(comment)),
                   ],
                 ),
               ),
@@ -194,7 +221,11 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   }
 
   Widget _buildStatusButton(String status, Color color) {
-    bool isSelected = _task!['status'] == status;
+    bool isSelected = _task!.issueStatus == status;
+    // Map status codes if needed, assuming backend uses strings
+    String label = status;
+    if (status == 'IN_PROGRESS') label = 'IN PROG';
+    
     return ElevatedButton(
       onPressed: isSelected ? null : () => _updateStatus(status),
       style: ElevatedButton.styleFrom(
@@ -202,64 +233,67 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         foregroundColor: isSelected ? Colors.white : color,
         side: BorderSide(color: color),
         elevation: isSelected ? 2 : 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        padding: const EdgeInsets.symmetric(vertical: 12),
       ),
       child: Text(
-        status == 'IN_PROGRESS' ? 'IN PROG' : status,
+        label,
         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
       ),
     );
   }
 
-  Widget _buildStatusChip(String? status) {
+  Widget _buildStatusChip(String status) {
     Color color = Colors.grey;
     if (status == 'IN_PROGRESS') color = Colors.blue;
     if (status == 'DONE') color = Colors.green;
     
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
-        status ?? 'UNKNOWN',
+        status,
         style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold),
       ),
     );
   }
 
-  Widget _buildPriorityChip(String? priority) {
+  Widget _buildPriorityChip(String priority) {
     Color color = Colors.green;
     if (priority == 'HIGH') color = Colors.red;
     if (priority == 'MEDIUM') color = Colors.orange;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
-        priority ?? 'NORMAL',
+        priority,
         style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold),
       ),
     );
   }
 
-  Widget _buildCommentItem(Map<String, dynamic> comment) {
+  Widget _buildCommentItem(Comment comment) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.grey[300],
-            child: Text((comment['authorName'] ?? 'U')[0], style: const TextStyle(fontSize: 12)),
+            radius: 18,
+            backgroundColor: Colors.blue.shade100,
+            child: Text(comment.authorName.isNotEmpty ? comment.authorName[0].toUpperCase() : 'U', 
+              style: TextStyle(fontSize: 14, color: Colors.blue.shade800, fontWeight: FontWeight.bold)),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,17 +302,17 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      comment['authorName'] ?? 'Unknown',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      comment.authorName,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                     Text(
-                      comment['createdAt'] ?? '',
+                      comment.createdAt,
                       style: TextStyle(color: Colors.grey[500], fontSize: 11),
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(comment['content'] ?? ''),
+                Text(comment.content, style: const TextStyle(fontSize: 14, height: 1.4)),
               ],
             ),
           ),

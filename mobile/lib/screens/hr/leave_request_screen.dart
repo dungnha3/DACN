@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../data/services/hr_service.dart';
 import '../../data/services/auth_service.dart';
+import '../../data/models/leave_request.dart';
 
 class LeaveRequestScreen extends StatefulWidget {
   const LeaveRequestScreen({super.key});
@@ -17,7 +18,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
   
   // List Data
   bool _isLoadingList = false;
-  List<dynamic> _leaveRequests = [];
+  List<LeaveRequest> _leaveRequests = [];
 
   // Form Data
   final _formKey = GlobalKey<FormState>();
@@ -49,11 +50,10 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
         final userId = int.parse(userIdStr);
         final data = await _hrService.getMyLeaveRequests(userId);
         setState(() {
-          _leaveRequests = data ?? [];
+          _leaveRequests = data;
         });
       }
     } catch (e) {
-
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Lỗi tải danh sách: $e')),
@@ -80,11 +80,12 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
         final userId = int.parse(userIdStr);
         
         final requestData = {
-          'userId': userId,
-          'startDate': DateFormat('yyyy-MM-dd').format(_startDate!),
-          'endDate': DateFormat('yyyy-MM-dd').format(_endDate!),
-          'reason': _reasonController.text,
-          'type': _selectedType,
+          'nhanvienId': userId, // Note: Service might expect nhanvienId
+          'tuNgay': DateFormat('yyyy-MM-dd').format(_startDate!),
+          'denNgay': DateFormat('yyyy-MM-dd').format(_endDate!),
+          'lyDo': _reasonController.text,
+          'loaiNghiPhep': _selectedType,
+          'soNgay': _endDate!.difference(_startDate!).inDays + 1,
         };
 
         await _hrService.createLeaveRequest(requestData);
@@ -106,7 +107,6 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
         _fetchLeaveRequests();
       }
     } catch (e) {
-
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Lỗi gửi đơn: $e')),
@@ -142,16 +142,19 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Nghỉ Phép'),
         centerTitle: true,
-        backgroundColor: Colors.blue.shade800,
+        backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
+        elevation: 0,
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.white,
+          indicatorWeight: 3,
           tabs: const [
             Tab(text: 'Danh sách đơn'),
             Tab(text: 'Tạo đơn mới'),
@@ -173,40 +176,96 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_leaveRequests.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.event_busy, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text('Bạn chưa có đơn nghỉ phép nào', style: TextStyle(color: Colors.grey[600])),
-          ],
+    return Column(
+      children: [
+        // Leave Balance Card (Mock Data for now)
+        Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.orange.shade400, Colors.deepOrange.shade400],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.orange.withValues(alpha: 0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Phép năm còn lại',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    '10 / 12 ngày',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.beach_access, color: Colors.white, size: 30),
+              ),
+            ],
+          ),
         ),
-      );
-    }
 
-    return RefreshIndicator(
-      onRefresh: _fetchLeaveRequests,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _leaveRequests.length,
-        itemBuilder: (context, index) {
-          final request = _leaveRequests[index];
-          return _buildRequestCard(request);
-        },
-      ),
+        Expanded(
+          child: _leaveRequests.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.event_busy, size: 64, color: Colors.grey[300]),
+                      const SizedBox(height: 16),
+                      Text('Bạn chưa có đơn nghỉ phép nào', style: TextStyle(color: Colors.grey[600])),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _fetchLeaveRequests,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: _leaveRequests.length,
+                    itemBuilder: (context, index) {
+                      final request = _leaveRequests[index];
+                      return _buildRequestCard(request);
+                    },
+                  ),
+                ),
+        ),
+      ],
     );
   }
 
-  Widget _buildRequestCard(Map<String, dynamic> request) {
+  Widget _buildRequestCard(LeaveRequest request) {
     Color statusColor = Colors.grey;
-    String statusText = request['status'] ?? 'UNKNOWN';
+    String statusText = request.trangThai;
     
     if (statusText == 'PENDING' || statusText == 'CHO_DUYET') {
       statusColor = Colors.orange;
       statusText = 'Chờ duyệt';
-    } else if (statusText == 'APPROVED' || statusText == 'DA_DUYET') {
+    } else if (statusText == 'APPROVED' || statusText == 'DA_DUYET' || statusText == 'DUYET') {
       statusColor = Colors.green;
       statusText = 'Đã duyệt';
     } else if (statusText == 'REJECTED' || statusText == 'TU_CHOI') {
@@ -214,7 +273,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
       statusText = 'Từ chối';
     }
 
-    String typeText = request['type'] ?? 'OTHER';
+    String typeText = request.loaiNghiPhep;
     if (typeText == 'PHEP_NAM') typeText = 'Phép năm';
     if (typeText == 'NGHI_OM') typeText = 'Nghỉ ốm';
     if (typeText == 'KHONG_LUONG') typeText = 'Không lương';
@@ -222,6 +281,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
+      shadowColor: Colors.black12,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -232,18 +292,18 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.blue.shade50,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     typeText,
-                    style: TextStyle(color: Colors.blue.shade800, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: Colors.blue.shade800, fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -256,22 +316,35 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 15),
             Row(
               children: [
-                const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                Icon(Icons.calendar_today, size: 18, color: Colors.grey.shade600),
                 const SizedBox(width: 8),
                 Text(
-                  '${request['startDate']} - ${request['endDate']}',
-                  style: const TextStyle(fontWeight: FontWeight.w500),
+                  '${request.tuNgay} - ${request.denNgay}',
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                ),
+                const Spacer(),
+                Text(
+                  '${request.soNgay} ngày',
+                  style: const TextStyle(color: Colors.grey, fontSize: 13),
                 ),
               ],
             ),
-            if (request['reason'] != null && request['reason'].isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Lý do: ${request['reason']}',
-                style: const TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+            if (request.lyDo.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  request.lyDo,
+                  style: TextStyle(color: Colors.grey.shade700, fontStyle: FontStyle.italic, fontSize: 13),
+                ),
               ),
             ],
           ],
@@ -288,13 +361,15 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Loại nghỉ phép', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
+            const Text('Loại nghỉ phép', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 10),
             DropdownButtonFormField<String>(
               value: _selectedType,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              decoration: InputDecoration(
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                filled: true,
+                fillColor: Colors.white,
               ),
               items: const [
                 DropdownMenuItem(value: 'PHEP_NAM', child: Text('Nghỉ phép năm')),
@@ -306,7 +381,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
               },
             ),
             
-            const SizedBox(height: 20),
+            const SizedBox(height: 25),
             
             Row(
               children: [
@@ -314,21 +389,28 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Từ ngày', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
+                      const Text('Từ ngày', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 10),
                       InkWell(
                         onTap: () => _selectDate(context, true),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Colors.grey.shade400),
+                            borderRadius: BorderRadius.circular(10),
+                            color: Colors.white,
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.calendar_today, size: 18),
-                              const SizedBox(width: 8),
-                              Text(_startDate == null ? 'Chọn ngày' : DateFormat('dd/MM/yyyy').format(_startDate!)),
+                              const Icon(Icons.calendar_today, size: 20, color: Colors.blue),
+                              const SizedBox(width: 10),
+                              Text(
+                                _startDate == null ? 'Chọn ngày' : DateFormat('dd/MM/yyyy').format(_startDate!),
+                                style: TextStyle(
+                                  color: _startDate == null ? Colors.grey : Colors.black87,
+                                  fontWeight: _startDate == null ? FontWeight.normal : FontWeight.w500,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -336,26 +418,33 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
                     ],
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 20),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Đến ngày', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
+                      const Text('Đến ngày', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 10),
                       InkWell(
                         onTap: () => _selectDate(context, false),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Colors.grey.shade400),
+                            borderRadius: BorderRadius.circular(10),
+                            color: Colors.white,
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.calendar_today, size: 18),
-                              const SizedBox(width: 8),
-                              Text(_endDate == null ? 'Chọn ngày' : DateFormat('dd/MM/yyyy').format(_endDate!)),
+                              const Icon(Icons.calendar_today, size: 20, color: Colors.blue),
+                              const SizedBox(width: 10),
+                              Text(
+                                _endDate == null ? 'Chọn ngày' : DateFormat('dd/MM/yyyy').format(_endDate!),
+                                style: TextStyle(
+                                  color: _endDate == null ? Colors.grey : Colors.black87,
+                                  fontWeight: _endDate == null ? FontWeight.normal : FontWeight.w500,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -366,16 +455,18 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 25),
 
-            const Text('Lý do', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
+            const Text('Lý do', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 10),
             TextFormField(
               controller: _reasonController,
-              maxLines: 3,
-              decoration: const InputDecoration(
+              maxLines: 4,
+              decoration: InputDecoration(
                 hintText: 'Nhập lý do nghỉ...',
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                filled: true,
+                fillColor: Colors.white,
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -385,21 +476,22 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
               },
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 40),
 
             SizedBox(
               width: double.infinity,
-              height: 50,
+              height: 55,
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _submitRequest,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade800,
+                  backgroundColor: Colors.blue.shade700,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 3,
                 ),
                 child: _isSubmitting
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('GỬI ĐƠN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    : const Text('GỬI ĐƠN', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),
             ),
           ],

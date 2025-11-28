@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/services/project_service.dart';
 import '../../data/services/auth_service.dart';
-
+import '../../data/models/issue.dart';
 import '../../widgets/common_widgets.dart';
 import '../../config/app_router.dart';
 
@@ -18,10 +18,10 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
   final AuthService _authService = AuthService();
   
   bool _isLoading = false;
-  List<dynamic> _allTasks = [];
-  List<dynamic> _todoTasks = [];
-  List<dynamic> _inProgressTasks = [];
-  List<dynamic> _doneTasks = [];
+  List<Issue> _allTasks = [];
+  List<Issue> _todoTasks = [];
+  List<Issue> _inProgressTasks = [];
+  List<Issue> _doneTasks = [];
 
   @override
   void initState() {
@@ -45,12 +45,11 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
         final data = await _projectService.getMyTasks(userId);
         
         setState(() {
-          _allTasks = data ?? [];
+          _allTasks = data;
           _filterTasks();
         });
       }
     } catch (e) {
-
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Lỗi tải danh sách công việc')),
@@ -62,25 +61,27 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
   }
 
   void _filterTasks() {
-    _todoTasks = _allTasks.where((t) => t['status'] == 'TODO' || t['status'] == 'OPEN').toList();
-    _inProgressTasks = _allTasks.where((t) => t['status'] == 'IN_PROGRESS').toList();
-    _doneTasks = _allTasks.where((t) => t['status'] == 'DONE' || t['status'] == 'CLOSED').toList();
+    _todoTasks = _allTasks.where((t) => t.issueStatus == 'TODO' || t.issueStatus == 'OPEN' || t.issueStatus == 'NEW').toList();
+    _inProgressTasks = _allTasks.where((t) => t.issueStatus == 'IN_PROGRESS').toList();
+    _doneTasks = _allTasks.where((t) => t.issueStatus == 'DONE' || t.issueStatus == 'CLOSED' || t.issueStatus == 'RESOLVED').toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Công việc của tôi'),
         centerTitle: true,
         backgroundColor: Colors.blue.shade800,
         foregroundColor: Colors.white,
+        elevation: 0,
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.white,
+          indicatorWeight: 3,
           tabs: [
             Tab(text: 'Cần làm (${_todoTasks.length})'),
             Tab(text: 'Đang làm (${_inProgressTasks.length})'),
@@ -93,15 +94,15 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
           : TabBarView(
               controller: _tabController,
               children: [
-                _buildTaskList(_todoTasks),
-                _buildTaskList(_inProgressTasks),
-                _buildTaskList(_doneTasks),
+                _buildTaskList(_todoTasks, Colors.orange),
+                _buildTaskList(_inProgressTasks, Colors.blue),
+                _buildTaskList(_doneTasks, Colors.green),
               ],
             ),
     );
   }
 
-  Widget _buildTaskList(List<dynamic> tasks) {
+  Widget _buildTaskList(List<Issue> tasks, Color accentColor) {
     if (tasks.isEmpty) {
       return const EmptyState(message: 'Không có công việc nào', icon: Icons.assignment_turned_in_outlined);
     }
@@ -113,18 +114,20 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
         itemCount: tasks.length,
         itemBuilder: (context, index) {
           final task = tasks[index];
-          return _buildTaskCard(task);
+          return _buildTaskCard(task, accentColor);
         },
       ),
     );
   }
 
-  Widget _buildTaskCard(Map<String, dynamic> task) {
+  Widget _buildTaskCard(Issue task, Color accentColor) {
     Color priorityColor = Colors.green;
-    String priority = task['priority'] ?? 'MEDIUM';
+    String priority = task.priority;
     
     if (priority == 'HIGH' || priority == 'URGENT') {
       priorityColor = Colors.red;
+    } else if (priority == 'MEDIUM') {
+      priorityColor = Colors.orange;
     } else if (priority == 'LOW') {
       priorityColor = Colors.blue;
     }
@@ -132,20 +135,25 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
+      shadowColor: Colors.black12,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () async {
           final result = await Navigator.pushNamed(
             context,
             AppRouter.issueDetail,
-            arguments: {'issueId': task['id']},
+            arguments: {'issueId': task.issueId},
           );
           if (result == true) {
             _fetchTasks(); // Refresh if status changed
           }
         },
         borderRadius: BorderRadius.circular(12),
-        child: Padding(
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(left: BorderSide(color: accentColor, width: 4)),
+            borderRadius: BorderRadius.circular(12),
+          ),
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,10 +163,11 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
                 children: [
                   Expanded(
                     child: Text(
-                      task['title'] ?? 'Tiêu đề công việc',
+                      task.title,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -166,11 +175,11 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: priorityColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: priorityColor.withValues(alpha: 0.5)),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: priorityColor.withValues(alpha: 0.3)),
                     ),
                     child: Text(
                       priority,
@@ -179,22 +188,29 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Row(
                 children: [
-                  Icon(Icons.folder_outlined, size: 14, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    task['projectName'] ?? 'Dự án',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      task.issueKey,
+                      style: TextStyle(color: Colors.grey.shade700, fontSize: 11, fontWeight: FontWeight.w500),
+                    ),
                   ),
                   const Spacer(),
-                  Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    task['dueDate'] ?? 'N/A',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                  ),
+                  if (task.dueDate != null) ...[
+                    Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
+                    const SizedBox(width: 4),
+                    Text(
+                      task.dueDate!,
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    ),
+                  ],
                 ],
               ),
             ],

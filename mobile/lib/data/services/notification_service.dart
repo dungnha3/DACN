@@ -1,25 +1,38 @@
 import 'api_service.dart';
+import '../models/notification_model.dart';
 
 class NotificationService {
   final ApiService _apiService = ApiService();
 
-  Future<dynamic> getNotifications({int page = 0, int size = 20}) async {
-    return await _apiService.get('/thong-bao?page=$page&size=$size');
+  Future<List<NotificationModel>> getNotifications({int page = 0, int size = 20}) async {
+    try {
+      final response = await _apiService.get('/notification?page=$page&size=$size');
+      if (response != null && response['content'] is List) {
+        return (response['content'] as List).map((e) => NotificationModel.fromJson(e)).toList();
+      }
+    } catch (e) {
+      // ignore
+    }
+    return [];
   }
 
-  Future<dynamic> getUnreadCount() async {
-    return await _apiService.get('/thong-bao/unread-count');
+  Future<Map<String, dynamic>?> getUnreadCount() async {
+    try {
+      return await _apiService.get('/notification/unread-count');
+    } catch (e) {
+      return null;
+    }
   }
 
-  Future<dynamic> markAsRead(int notificationId) async {
-    return await _apiService.put('/thong-bao/$notificationId/read', {});
+  Future<void> markAsRead(int notificationId) async {
+    await _apiService.patch('/notification/$notificationId/read', {});
   }
 
-  Future<dynamic> markAllAsRead() async {
-    return await _apiService.put('/thong-bao/mark-all-read', {});
+  Future<void> markAllAsRead() async {
+    await _apiService.patch('/notification/mark-all-read', {});
   }
   
-  Future<dynamic> deleteNotification(int notificationId) async {
-    return await _apiService.delete('/thong-bao/$notificationId');
+  Future<void> deleteNotification(int notificationId) async {
+    await _apiService.delete('/notification/$notificationId');
   }
 }

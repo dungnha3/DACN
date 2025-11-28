@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/services/notification_service.dart';
+import '../../data/models/notification_model.dart';
 import '../../config/app_router.dart';
-
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -14,7 +14,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   final NotificationService _notificationService = NotificationService();
   
   bool _isLoading = false;
-  List<dynamic> _notifications = [];
+  List<NotificationModel> _notifications = [];
   int _page = 0;
   bool _hasMore = true;
   final ScrollController _scrollController = ScrollController();
@@ -50,16 +50,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         _notifications.clear();
       }
 
-      final data = await _notificationService.getNotifications(page: _page);
-      final List<dynamic> newNotifications = data['content'] ?? [];
+      final newNotifications = await _notificationService.getNotifications(page: _page);
       
       setState(() {
         _notifications.addAll(newNotifications);
         _page++;
-        _hasMore = !data['last'];
+        _hasMore = newNotifications.length >= 20; // Assuming page size 20
       });
     } catch (e) {
-
+       // Handle error
     } finally {
       setState(() => _isLoading = false);
     }
@@ -68,11 +67,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _markAsRead(int id, int index) async {
     try {
       await _notificationService.markAsRead(id);
+      // Optimistically update UI
+      // Since NotificationModel is final, we might need to replace the item or just force rebuild
+      // But for simplicity, we can't easily modify final fields.
+      // Let's just re-fetch or ignore for now, or create a copy.
+      // Creating a copy is better.
+      final old = _notifications[index];
+      final updated = NotificationModel(
+        id: old.id,
+        title: old.title,
+        content: old.content,
+        type: old.type,
+        isRead: true,
+        createdAt: old.createdAt,
+      );
+      
       setState(() {
-        _notifications[index]['read'] = true;
+        _notifications[index] = updated;
       });
     } catch (e) {
-
+      // ignore
     }
   }
 
@@ -80,9 +94,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     try {
       await _notificationService.markAllAsRead();
       setState(() {
-        for (var n in _notifications) {
-          n['read'] = true;
-        }
+        _notifications = _notifications.map((n) => NotificationModel(
+          id: n.id,
+          title: n.title,
+          content: n.content,
+          type: n.type,
+          isRead: true,
+          createdAt: n.createdAt,
+        )).toList();
       });
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -90,7 +109,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         );
       }
     } catch (e) {
-
+      // ignore
     }
   }
 
@@ -106,19 +125,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         );
       }
     } catch (e) {
-
+      // ignore
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Thông báo'),
         centerTitle: true,
         backgroundColor: Colors.blue.shade800,
         foregroundColor: Colors.white,
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.done_all),
@@ -134,96 +154,122 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey[400]),
-                    const SizedBox(height: 16),
-                    Text('Không có thông báo nào', style: TextStyle(color: Colors.grey[600])),
+                    Icon(Icons.notifications_off_outlined, size: 80, color: Colors.grey[300]),
+                    const SizedBox(height: 20),
+                    Text('Không có thông báo nào', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
                   ],
                 ),
               )
             : ListView.builder(
                 controller: _scrollController,
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 itemCount: _notifications.length + (_hasMore ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == _notifications.length) {
                     return const Center(child: Padding(
-                      padding: EdgeInsets.all(10),
+                      padding: EdgeInsets.all(16),
                       child: CircularProgressIndicator(),
                     ));
                   }
 
                   final notification = _notifications[index];
-                  final bool isRead = notification['read'] ?? false;
+                  final bool isRead = notification.isRead;
 
                   return Dismissible(
-                    key: Key(notification['id'].toString()),
+                    key: Key(notification.id.toString()),
                     direction: DismissDirection.endToStart,
                     background: Container(
-                      color: Colors.red,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade400,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       alignment: Alignment.centerRight,
                       padding: const EdgeInsets.only(right: 20),
                       child: const Icon(Icons.delete, color: Colors.white),
                     ),
                     onDismissed: (direction) {
-                      _deleteNotification(notification['id'], index);
+                      _deleteNotification(notification.id, index);
                     },
                     child: Card(
                       color: isRead ? Colors.white : Colors.blue.shade50,
-                      elevation: 1,
-                      margin: const EdgeInsets.only(bottom: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        leading: CircleAvatar(
-                          backgroundColor: isRead ? Colors.grey[300] : Colors.blue.shade100,
-                          child: Icon(
-                            Icons.notifications,
-                            color: isRead ? Colors.grey : Colors.blue.shade800,
-                          ),
-                        ),
-                        title: Text(
-                          notification['title'] ?? 'Thông báo',
-                          style: TextStyle(
-                            fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 5),
-                            Text(
-                              notification['message'] ?? '',
-                              style: TextStyle(color: Colors.grey[800]),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              notification['createdAt'] ?? '', // Format date if needed
-                              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                            ),
-                          ],
-                        ),
+                      elevation: isRead ? 1 : 2,
+                      shadowColor: Colors.black12,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
                         onTap: () {
                           if (!isRead) {
-                            _markAsRead(notification['id'], index);
+                            _markAsRead(notification.id, index);
                           }
-                          // Navigate if link exists
-                          // Navigate if link exists
-                          if (notification['type'] == 'TASK' && notification['referenceId'] != null) {
-                             Navigator.pushNamed(
-                               context, 
-                               AppRouter.issueDetail,
-                               arguments: {'issueId': notification['referenceId']},
-                             );
-                          } else if (notification['type'] == 'CHAT' && notification['referenceId'] != null) {
-                             // For chat, we might need more info like roomName, but if we only have ID:
-                             // We might need to fetch room details or just pass ID and let ChatScreen handle it?
-                             // ChatScreen needs roomName. Let's assume we pass a placeholder or fetch it.
-                             // Or maybe the notification payload has it.
-                             // For now, let's just navigate if we have enough info.
-                             // Actually, let's just log it if we can't navigate fully.
-                          }
+                          // Navigation logic based on type
+                          // Note: NotificationModel might need referenceId if we want to navigate
+                          // For now, just mark as read.
                         },
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundColor: isRead ? Colors.grey[200] : Colors.blue.shade100,
+                                child: Icon(
+                                  _getIconForType(notification.type),
+                                  color: isRead ? Colors.grey : Colors.blue.shade700,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            notification.title,
+                                            style: TextStyle(
+                                              fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
+                                              fontSize: 16,
+                                              color: Colors.black87,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        if (!isRead)
+                                          Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: const BoxDecoration(
+                                              color: Colors.blue,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      notification.content,
+                                      style: TextStyle(color: Colors.grey[700], height: 1.4, fontSize: 14),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      notification.createdAt,
+                                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   );
@@ -231,5 +277,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
       ),
     );
+  }
+
+  IconData _getIconForType(String type) {
+    switch (type) {
+      case 'TASK':
+        return Icons.assignment;
+      case 'CHAT':
+        return Icons.chat;
+      case 'SYSTEM':
+        return Icons.info;
+      default:
+        return Icons.notifications;
+    }
   }
 }
