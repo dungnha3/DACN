@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:mobile/services/firebase_notification_service.dart';
-import 'package:mobile/screens/auth/login_screen.dart';
+
 import 'package:mobile/config/navigation.dart';
 import 'package:mobile/config/app_router.dart';
 import 'utils/app_theme.dart';

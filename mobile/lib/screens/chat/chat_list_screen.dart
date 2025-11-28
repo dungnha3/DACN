@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/data/models/chat_room.dart';
 import 'package:mobile/data/services/chat_service.dart';
-import 'package:mobile/screens/chat/chat_screen.dart';
+
 import 'package:mobile/config/app_router.dart';
 import 'package:intl/intl.dart';
 

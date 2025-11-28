@@ -1,0 +1,30 @@
+# Project-wide ignores
+
+# Logs
+logs/
+*.log
+*.gz
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temp files
+*.tmp
+*.bak
+*.cache
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies (will be handled by subproject gitignores)
+node_modules/

@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import '../../data/models/user.dart';
 import '../../data/services/user_service.dart';
 import '../../data/services/auth_service.dart';
-import '../auth/login_screen.dart';
-import 'change_password_screen.dart';
+
 import '../../widgets/common_widgets.dart';
 import '../../config/app_router.dart';
 

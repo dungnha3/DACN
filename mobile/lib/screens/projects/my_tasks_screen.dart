@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/services/project_service.dart';
 import '../../data/services/auth_service.dart';
-import 'issue_detail_screen.dart';
+
 import '../../widgets/common_widgets.dart';
 import '../../config/app_router.dart';
 

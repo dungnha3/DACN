@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/data/services/auth_service.dart';
 
-import 'package:mobile/screens/profile/profile_screen.dart';
-import 'package:mobile/screens/chat/chat_list_screen.dart';
-import 'package:mobile/screens/hr/attendance_screen.dart';
-import 'package:mobile/screens/hr/payroll_screen.dart';
-import 'package:mobile/screens/hr/leave_request_screen.dart';
-import 'package:mobile/screens/projects/projects_screen.dart';
-import 'package:mobile/screens/projects/my_tasks_screen.dart';
-import 'package:mobile/screens/notifications/notifications_screen.dart';
+
 
 import 'package:mobile/data/services/notification_service.dart';
 import 'package:mobile/config/app_router.dart';

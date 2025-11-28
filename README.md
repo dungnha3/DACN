@@ -5,7 +5,7 @@
 [![WebSocket](https://img.shields.io/badge/WebSocket-STOMP-blue.svg)](https://docs.spring.io/spring-framework/reference/web/websocket.html)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> 🎯 **Hệ thống quản lý doanh nghiệp tích hợp đầy đủ** - Project Management, HR, Chat, Notifications, File Storage
+> 🎯 **Hệ thống quản lý doanh nghiệp tích hợp đầy đủ** - Project Management, HR, Chat, Notifications, File Storage, AI Assistant & Mobile App
 
 ---
 
@@ -13,6 +13,7 @@
 
 - [✨ Features](#-features)
 - [🏗️ Architecture](#️-architecture)
+- [📂 Project Structure](#-project-structure)
 - [🛠️ Tech Stack](#️-tech-stack)
 - [📦 Installation](#-installation)
 - [🔧 Configuration](#-configuration)
@@ -238,6 +239,39 @@
 
 ---
 
+### 🤖 **AI Assistant (Gemini)**
+
+#### **Smart Project Management**
+- ✅ **Project Summarization** - Tóm tắt trạng thái và tiến độ dự án
+- ✅ **Sprint Analysis** - Phân tích hiệu quả sprint và gợi ý cải thiện
+- ✅ **Task Suggestions** - Gợi ý công việc dựa trên ngữ cảnh dự án
+- ✅ **Progress Reports** - Tự động tạo báo cáo tiến độ chi tiết
+- ✅ **Natural Language Chat** - Chat với AI để hỏi về dữ liệu dự án
+
+#### **Intelligent Features**
+- ✅ **Context Awareness** - AI hiểu ngữ cảnh của từng dự án/sprint
+- ✅ **Action Execution** - Thực hiện hành động (tạo task, update status) qua chat
+- ✅ **Risk Detection** - Cảnh báo rủi ro tiềm ẩn trong dự án
+- ✅ **Smart Search** - Tìm kiếm thông tin thông minh
+
+---
+
+### 📱 **Mobile Application**
+
+#### **Cross-Platform App (Flutter)**
+- ✅ **iOS & Android** - Native performance trên cả 2 nền tảng
+- ✅ **Real-time Sync** - Đồng bộ dữ liệu tức thì với Web Dashboard
+- ✅ **Offline Mode** - Hỗ trợ làm việc cơ bản khi mất mạng (cached data)
+
+#### **Key Mobile Features**
+- ✅ **GPS Attendance** - Chấm công định vị chính xác
+- ✅ **Mobile Chat** - Chat, gửi ảnh/file tiện lợi
+- ✅ **Push Notifications** - Nhận thông báo quan trọng ngay lập tức
+- ✅ **Task Management** - Xem và cập nhật công việc mọi lúc mọi nơi
+- ✅ **Profile & HR** - Xem phiếu lương, xin nghỉ phép từ điện thoại
+
+---
+
 ### 🤖 **Automation & Scheduled Jobs**
 
 #### **Issue Automation**
@@ -279,6 +313,11 @@
 │           WebSocket Client + REST API Client            │
 └────────────────────┬────────────────────────────────────┘
                      │
+┌────────────────────▼────────────────────────────────────┐
+│                  Mobile App (Flutter)                    │
+│           iOS / Android / WebSocket / REST              │
+└────────────────────┬────────────────────────────────────┘
+                     │
                      │ HTTP/WebSocket
                      │
 ┌────────────────────▼────────────────────────────────────┐
@@ -298,6 +337,10 @@
 │  │   Storage    │  │Notification  │  │     User     │ │
 │  │   Module     │  │    Module    │  │    Module    │ │
 │  └──────────────┘  └──────────────┘  └──────────────┘ │
+│                                                          │
+│  ┌──────────────┐                                         │
+│  │   AI Service │ ◄────► Google Gemini API                │
+│  └──────────────┘                                         │
 └────────────────────┬────────────────────────────────────┘
                      │
                      │ JDBC
@@ -306,6 +349,23 @@
 │              SQL Server Database                         │
 │        (Users, Projects, Messages, Files, etc.)         │
 └─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📂 Project Structure
+
+```
+DACN/
+├── BE/                 # Backend (Spring Boot)
+│   └── src/main/java/  # Java Source Code
+├── frontend-web/       # Web Frontend (React/Next.js)
+├── mobile/             # Mobile App (Flutter)
+├── docs/               # Documentation
+│   ├── gemini.md       # Full API Documentation
+│   ├── PHAN_QUYEN...   # Authorization Details
+│   └── ui_design...    # UI Concepts
+└── README.md           # This file
 ```
 
 ---
@@ -337,6 +397,23 @@
 | WebSocket | Bidirectional Communication |
 | STOMP | Messaging Protocol |
 | SockJS | WebSocket Fallback |
+
+### **Mobile (Flutter)**
+| Technology | Purpose |
+|------------|---------|
+| Flutter | UI Framework |
+| Dart | Programming Language |
+| Bloc/Cubit | State Management |
+| Dio | HTTP Client |
+| Hive | Local Storage |
+| Firebase | Push Notifications (FCM) |
+
+### **AI & Intelligence**
+| Technology | Purpose |
+|------------|---------|
+| Google Gemini Pro | LLM Model |
+| Spring AI | AI Integration Framework |
+| Prompt Engineering | Context Optimization |
 
 ### **DevOps**
 | Tool | Purpose |
@@ -447,7 +524,7 @@ java -jar target/BE-0.0.1-SNAPSHOT.war --spring.profiles.active=prod
 ```
 🌐 API Base URL: http://localhost:8080
 🔌 WebSocket URL: ws://localhost:8080/ws/chat
-📚 API Docs: http://localhost:8080/swagger-ui.html (if enabled)
+📚 API Docs: See `docs/gemini.md` for full documentation
 ```
 
 ---
@@ -760,15 +837,15 @@ thong_bao
 - [x] Comprehensive Notifications
 - [x] Automated Scheduled Jobs
 - [x] User Workload Tracking
+- [x] Mobile App Integration (Flutter)
+- [x] AI Assistant Integration (Gemini)
 
 ### **In Progress** 🚧
-- [ ] Mobile App Integration
 - [ ] Advanced Analytics Dashboard
 - [ ] Email Integration
 - [ ] Export Reports (PDF/Excel)
 
 ### **Planned** 📝
-- [ ] AI-powered Task Recommendations
 - [ ] Video Call Integration
 - [ ] Advanced Security (2FA)
 - [ ] Multi-language Support

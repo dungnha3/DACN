@@ -36,3 +36,19 @@ build/
 logs/
 *.log
 *.gz
+
+### Environment ###
+application-local.properties
+.env
+
+### Uploads ###
+uploads/
+temp/
+
+### Database ###
+*.db
+*.sqlite
+
+### OS ###
+.DS_Store
+Thumbs.db
