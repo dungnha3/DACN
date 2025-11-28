@@ -352,8 +352,8 @@ export default function LeavesPage() {
                   <TableRow key={leave.nghiphepId} style={{ borderBottom: '1px solid #f1f5f9', transition: 'all 0.2s' }}>
                     
                     {/* Cột Nhân viên */}
-                    <TableCell style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                    <TableCell style={{ padding: '16px', textAlign: 'left', verticalAlign: 'middle' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 10 }}>
                         <div style={getAvatarStyle(leave.hoTenNhanVien)}>
                           {leave.hoTenNhanVien ? leave.hoTenNhanVien.charAt(0).toUpperCase() : 'U'}
                         </div>
