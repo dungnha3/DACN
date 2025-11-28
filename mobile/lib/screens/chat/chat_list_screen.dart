@@ -30,52 +30,67 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('Messages'),
+        title: const Text('Tin nhắn'),
+        centerTitle: true,
+        backgroundColor: theme.primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: FutureBuilder<List<ChatRoom>>(
         future: _chatRoomsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator(color: theme.primaryColor));
           } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text('Lỗi: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('No conversations yet'));
+            return const Center(child: Text('Chưa có cuộc trò chuyện nào'));
           }
 
           final chatRooms = snapshot.data!;
           return RefreshIndicator(
             onRefresh: _refreshChatRooms,
-            child: ListView.builder(
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 10),
               itemCount: chatRooms.length,
+              separatorBuilder: (context, index) => const Divider(height: 1, indent: 80),
               itemBuilder: (context, index) {
                 final room = chatRooms[index];
                 return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   leading: CircleAvatar(
+                    radius: 28,
+                    backgroundColor: theme.primaryColor.withOpacity(0.1),
                     backgroundImage: room.avatarUrl != null
                         ? NetworkImage(room.avatarUrl!)
                         : null,
                     child: room.avatarUrl == null
-                        ? Text(room.name.substring(0, 1).toUpperCase())
+                        ? Text(
+                            room.name.substring(0, 1).toUpperCase(),
+                            style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold, fontSize: 20),
+                          )
                         : null,
                   ),
-                  title: Text(room.name, style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          room.lastMessage?.content ?? 'No messages yet',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: room.unreadCount > 0 ? Colors.black87 : Colors.grey,
-                            fontWeight: room.unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
-                          ),
-                        ),
+                  title: Text(
+                    room.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      room.lastMessage?.content ?? 'Chưa có tin nhắn',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: room.unreadCount > 0 ? Colors.black87 : Colors.grey[600],
+                        fontWeight: room.unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 14,
                       ),
-                    ],
+                    ),
                   ),
                   trailing: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -84,19 +99,19 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       if (room.lastMessageAt != null)
                         Text(
                           DateFormat('HH:mm').format(room.lastMessageAt!),
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                         ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       if (room.unreadCount > 0)
                         Container(
-                          padding: EdgeInsets.all(6),
+                          padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: Colors.red,
+                            color: theme.colorScheme.error,
                             shape: BoxShape.circle,
                           ),
                           child: Text(
                             '${room.unreadCount}',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
+                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                           ),
                         ),
                     ],

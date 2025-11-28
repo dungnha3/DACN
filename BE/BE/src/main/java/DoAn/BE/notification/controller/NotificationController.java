@@ -37,9 +37,16 @@ public class NotificationController {
             throw new UnauthorizedException("User chưa đăng nhập");
         }
 
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof User) {
+            return (User) principal;
+        }
+
+        // Fallback if principal is just a username string (should not happen with
+        // JwtAuthenticationFilter)
         String username = authentication.getName();
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("User không tồn tại: " + username));
     }
 
     /**

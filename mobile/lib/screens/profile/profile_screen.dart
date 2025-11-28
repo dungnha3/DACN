@@ -93,13 +93,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Scaffold(body: LoadingIndicator());
-    if (_user == null) return const Scaffold(body: Center(child: Text('Lỗi tải dữ liệu')));
+    final theme = Theme.of(context);
+    if (_isLoading) return Scaffold(backgroundColor: theme.scaffoldBackgroundColor, body: Center(child: CircularProgressIndicator(color: theme.primaryColor)));
+    if (_user == null) return Scaffold(backgroundColor: theme.scaffoldBackgroundColor, body: const Center(child: Text('Lỗi tải dữ liệu')));
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Hồ sơ cá nhân'),
+        centerTitle: true,
+        backgroundColor: theme.primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
         actions: [
           IconButton(
             icon: Icon(_isEditing ? Icons.save : Icons.edit),
@@ -117,49 +122,99 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // Avatar Section
-            Center(
-              child: Stack(
+            // ID Card Section
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [theme.colorScheme.secondary, theme.primaryColor],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.primaryColor.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
                 children: [
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.blue.shade100,
-                      border: Border.all(color: Colors.white, width: 4),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
+                  Stack(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          border: Border.all(color: Colors.white, width: 4),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        _user!.username.isNotEmpty ? _user!.username[0].toUpperCase() : '?',
-                        style: TextStyle(fontSize: 50, color: Colors.blue.shade800, fontWeight: FontWeight.bold),
+                        child: Center(
+                          child: Text(
+                            _user!.username.isNotEmpty ? _user!.username[0].toUpperCase() : '?',
+                            style: TextStyle(fontSize: 40, color: theme.primaryColor, fontWeight: FontWeight.bold),
+                          ),
+                        ),
                       ),
+                      if (_isEditing)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.camera_alt, color: theme.primaryColor, size: 20),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _user!.fullName ?? _user!.username,
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _user!.role ?? 'Nhân viên',
+                    style: const TextStyle(color: Colors.white70, fontSize: 14, letterSpacing: 1),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'ID: ${_user!.userId}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 15),
-            Text(
-              _user!.fullName ?? _user!.username,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              _user!.email,
-              style: const TextStyle(color: Colors.grey),
             ),
             
             const SizedBox(height: 30),
 
             // Form Section
             Card(
+              elevation: 2,
+              shadowColor: Colors.black12,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Form(
@@ -167,13 +222,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Thông tin chi tiết', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text('Thông tin chi tiết', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 20),
-                      _buildTextField('Họ và tên', _fullNameController, Icons.person),
+                      _buildTextField('Họ và tên', _fullNameController, Icons.person, theme),
                       const SizedBox(height: 15),
-                      _buildTextField('Email', _emailController, Icons.email),
+                      _buildTextField('Email', _emailController, Icons.email, theme),
                       const SizedBox(height: 15),
-                      _buildTextField('Số điện thoại', _phoneController, Icons.phone),
+                      _buildTextField('Số điện thoại', _phoneController, Icons.phone, theme),
                     ],
                   ),
                 ),
@@ -185,12 +240,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // Actions Section
             if (!_isEditing) ...[
               Card(
+                elevation: 2,
+                shadowColor: Colors.black12,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 child: Column(
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.lock_outline, color: Colors.blue),
+                      leading: Icon(Icons.lock_outline, color: theme.primaryColor),
                       title: const Text('Đổi mật khẩu'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
                       onTap: () {
                         Navigator.pushNamed(
                           context,
@@ -200,8 +258,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const Divider(height: 1),
                     ListTile(
-                      leading: const Icon(Icons.logout, color: Colors.red),
-                      title: const Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+                      leading: Icon(Icons.logout, color: theme.colorScheme.error),
+                      title: Text('Đăng xuất', style: TextStyle(color: theme.colorScheme.error)),
                       onTap: _logout,
                     ),
                   ],
@@ -214,15 +272,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, IconData icon) {
+  Widget _buildTextField(String label, TextEditingController controller, IconData icon, ThemeData theme) {
     return TextFormField(
       controller: controller,
       enabled: _isEditing,
+      style: TextStyle(color: _isEditing ? Colors.black87 : Colors.grey.shade700),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: Colors.grey),
-        filled: !_isEditing,
+        prefixIcon: Icon(icon, color: _isEditing ? theme.primaryColor : Colors.grey),
+        filled: true,
         fillColor: _isEditing ? Colors.white : Colors.grey.shade50,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: _isEditing ? BorderSide(color: theme.primaryColor) : BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.primaryColor, width: 2),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
       ),
       validator: (v) => v!.isEmpty ? 'Vui lòng nhập thông tin' : null,
     );
