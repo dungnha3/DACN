@@ -1,122 +1,5 @@
-// Mock data for Employee Dashboard
-
-// KPI Data
-export const kpiData = {
-  salary: '15.384.615',
-  leaveDays: 12,
-  lateDays: 1,
-  totalHours: 168.5
-}
-
-// Attendance History
-export const attendanceHistory = [
-  { date: '2025-11-08', timeIn: '08:30', timeOut: '17:45', hours: 9.3, status: 'normal' },
-  { date: '2025-11-07', timeIn: '08:35', timeOut: '17:30', hours: 8.9, status: 'late' },
-  { date: '2025-11-06', timeIn: '08:25', timeOut: '17:15', hours: 8.8, status: 'early' },
-  { date: '2025-11-05', timeIn: '08:30', timeOut: '17:30', hours: 9.0, status: 'normal' },
-  { date: '2025-11-04', timeIn: '08:30', timeOut: '17:30', hours: 9.0, status: 'normal' },
-]
-
-// Leave Requests
-export const leaveRequests = [
-  { id: 1, type: 'Nghỉ phép', date: '07/11/2025', status: 'approved', approver: 'Trần Thị B' },
-  { id: 2, type: 'Giải trình', date: '05/11/2025', status: 'pending', approver: 'Trần Thị B' },
-  { id: 3, type: 'Nghỉ ốm', date: '01/11/2025', status: 'rejected', approver: 'Trần Thị B' },
-]
-
-// Notifications
-export const notifications = [
-  { title: 'Thông báo nghỉ lễ', desc: 'Công ty nghỉ lễ Quốc khánh 2/9', date: '3 ngày trước' },
-  { title: 'Tiệc tất niên', desc: 'Tiệc tất niên công ty sẽ được tổ chức vào 25/12', date: '1 tuần trước' },
-]
-
-// Chat Contacts
-export const chatContacts = [
-  {
-    id: 1,
-    name: 'HR Department',
-    avatar: '👥',
-    lastMessage: 'Đã gửi thông báo về chính sách mới',
-    time: '10:30',
-    unread: 2,
-    online: true
-  },
-  {
-    id: 2,
-    name: 'Tech Team',
-    avatar: '💻',
-    lastMessage: 'Meeting lúc 2PM hôm nay nhé',
-    time: '09:15',
-    unread: 0,
-    online: true
-  },
-  {
-    id: 3,
-    name: 'Nguyễn Văn A',
-    avatar: '👤',
-    lastMessage: 'Cảm ơn bạn!',
-    time: 'Hôm qua',
-    unread: 0,
-    online: false
-  },
-  {
-    id: 4,
-    name: 'Trần Thị B',
-    avatar: '👩',
-    lastMessage: 'File đã được gửi',
-    time: 'Hôm qua',
-    unread: 0,
-    online: false
-  },
-  {
-    id: 5,
-    name: 'Marketing Team',
-    avatar: '📢',
-    lastMessage: 'Chiến dịch mới đã sẵn sàng',
-    time: '2 ngày trước',
-    unread: 0,
-    online: false
-  }
-]
-
-// Chat Messages
-export const chatMessages = [
-  {
-    id: 1,
-    sender: 'HR Department',
-    content: 'Xin chào! Chúng tôi có thông báo về chính sách nghỉ phép mới.',
-    time: '10:25',
-    isOwn: false
-  },
-  {
-    id: 2,
-    sender: 'You',
-    content: 'Dạ, em đã nhận được thông báo. Cho em hỏi thêm về quy định chi tiết được không ạ?',
-    time: '10:27',
-    isOwn: true
-  },
-  {
-    id: 3,
-    sender: 'HR Department',
-    content: 'Được ạ. Chính sách mới cho phép nhân viên đăng ký nghỉ phép trước 3 ngày làm việc.',
-    time: '10:28',
-    isOwn: false
-  },
-  {
-    id: 4,
-    sender: 'HR Department',
-    content: 'Đã gửi thông báo về chính sách mới',
-    time: '10:30',
-    isOwn: false
-  },
-  {
-    id: 5,
-    sender: 'You',
-    content: 'Cảm ơn anh/chị đã giải đáp!',
-    time: '10:31',
-    isOwn: true
-  }
-]
+// Employee Dashboard Configuration
+// Note: Mock data removed - now using real API data from services
 
 // Menu Sections Configuration
 export const sectionsConfig = {
@@ -159,6 +42,11 @@ export const sectionsConfig = {
     title: 'Dự án của tôi',
     pageTitle: 'Dự án của tôi',
     subtitle: 'Xem dự án và tasks được phân công',
+  },
+  reviews: {
+    title: 'Đánh giá của tôi',
+    pageTitle: 'Đánh giá hiệu suất',
+    subtitle: 'Xem đánh giá hiệu suất cá nhân',
   },
   chat: {
     title: 'Trò chuyện',

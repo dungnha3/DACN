@@ -13,6 +13,28 @@ export const leaveService = {
     return await apiService.get('/nghi-phep/pending')
   },
 
+  getApproved: async () => {
+    return await apiService.get('/nghi-phep/approved')
+  },
+
+  getRejected: async () => {
+    return await apiService.get('/nghi-phep/rejected')
+  },
+
+  // Get total leave days for an employee in a year
+  getTotalDays: async (employeeId, year) => {
+    return await apiService.get(`/nghi-phep/nhan-vien/${employeeId}/total-days`, {
+      params: { year }
+    })
+  },
+
+  // Check if employee is on leave on a specific date
+  isOnLeave: async (employeeId, date) => {
+    return await apiService.get(`/nghi-phep/nhan-vien/${employeeId}/is-on-leave`, {
+      params: { date }
+    })
+  },
+
   create: async (data) => {
     return await apiService.post('/nghi-phep', data)
   },

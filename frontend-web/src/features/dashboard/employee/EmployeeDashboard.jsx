@@ -1,15 +1,21 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { usePermissions, useErrorHandler } from '@/shared/hooks'
 import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
-import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar } from './components/EmployeeDashboard.components'
-import { kpiData, attendanceHistory, leaveRequests, notifications, sectionsConfig } from './components/EmployeeDashboard.constants'
-import { ProfilePage, MyPayrollPage, MyAttendancePage, MyLeavePage, MyDocumentsPage, MyProjectsPage, MyStoragePage } from '@/modules/employee'
+import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar, StatCard } from './components/EmployeeDashboard.components'
+import { sectionsConfig } from './components/EmployeeDashboard.constants'
+import { ProfilePage, MyPayrollPage, MyAttendancePage, MyLeavePage, MyDocumentsPage, MyProjectsPage, MyStoragePage, MyReviewsPage } from '@/modules/employee'
 import NotificationBell from '@/shared/components/notification/NotificationBell'
+import AIChatBot from '@/shared/components/ai-chatbot/AIChatBot'
 // Real Chat APIs
 import { chatRoomApi } from '@/features/project/chat/api/chatRoomApi'
 import { messageApi } from '@/features/project/chat/api/messageApi'
 import websocketService from '@/features/project/chat/services/websocketService'
+// HR Services for KPI data
+import { attendanceService } from '@/shared/services/attendance.service'
+import { leaveService } from '@/shared/services/leave.service'
+import { payrollService } from '@/shared/services/payroll.service'
+import { profileService } from '@/shared/services/profile.service'
 
 export default function EmployeeDashboard() {
   const [active, setActive] = useState('dashboard')
@@ -19,6 +25,23 @@ export default function EmployeeDashboard() {
   const [messages, setMessages] = useState([])
   const [messageInput, setMessageInput] = useState('')
   const [wsConnected, setWsConnected] = useState(false)
+  
+  // KPI data state
+  const [kpiData, setKpiData] = useState({
+    salary: '---',
+    leaveDays: 0,
+    lateDays: 0,
+    totalHours: 0
+  })
+  const [kpiLoading, setKpiLoading] = useState(true)
+  const [employeeId, setEmployeeId] = useState(null)
+  const [todayStatus, setTodayStatus] = useState(null)
+  const [notifications, setNotifications] = useState([])
+  
+  // Sidebar hover state (like HR Manager)
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false)
+  const hoverTimeoutRef = useRef(null)
+  
   const { logout, user: authUser } = useAuth()
   const username = authUser?.username || localStorage.getItem('username') || 'Employee'
   const user = useMemo(() => ({ name: username || 'Nguyễn Văn A', role: 'Nhân viên' }), [username])
@@ -28,6 +51,93 @@ export default function EmployeeDashboard() {
 
   const handleLogout = async () => {
     await logout()
+  }
+  
+  // Sidebar hover handlers
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current)
+    setIsSidebarHovered(true)
+  }
+
+  const handleMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => setIsSidebarHovered(false), 100)
+  }
+
+  // Custom Styles for Light/Collapsed Theme (like HR Manager)
+  const customStyles = {
+    appShell: {
+      display: 'flex',
+      backgroundColor: '#f8fafc',
+      height: '100vh',
+      overflow: 'hidden',
+    },
+    sidebar: {
+      width: isSidebarHovered ? '260px' : '70px',
+      background: '#fff',
+      borderRight: '1px solid #e2e8f0',
+      padding: '20px 12px',
+      display: 'flex',
+      flexDirection: 'column',
+      transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+      boxShadow: isSidebarHovered ? '0 4px 6px -1px rgba(0, 0, 0, 0.05)' : 'none',
+      zIndex: 50,
+      flexShrink: 0,
+      overflowY: 'auto',
+      overflowX: 'hidden',
+      height: '100vh',
+    },
+    content: {
+      flex: 1,
+      width: '100%',
+      background: '#f8fafc',
+      height: '100vh',
+      overflowY: 'auto',
+      overflowX: 'hidden',
+    },
+    userCard: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: isSidebarHovered ? 'flex-start' : 'center',
+      marginBottom: 24,
+      transition: 'justify-content 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+    },
+    userInfo: {
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      marginLeft: isSidebarHovered ? 12 : 0,
+    },
+    userInfoInner: {
+      transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+      opacity: isSidebarHovered ? 1 : 0,
+      transform: isSidebarHovered ? 'translateX(0)' : 'translateX(-10px)',
+    },
+    userAvatar: { 
+      minWidth: 40, width: 40, height: 40, flexShrink: 0,
+      background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+      borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      color: '#fff', fontWeight: 700, fontSize: 16,
+      boxShadow: '0 2px 4px rgba(59, 130, 246, 0.3)',
+    },
+    userName: { color: '#334155', fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap' },
+    userRole: { color: '#94a3b8', fontSize: 12, whiteSpace: 'nowrap' },
+    navGroup: { marginBottom: 20 },
+    navGroupLabel: {
+      color: '#94a3b8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+      letterSpacing: '0.5px', paddingLeft: 12, overflow: 'hidden',
+      transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), height 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+      opacity: isSidebarHovered ? 1 : 0,
+      height: isSidebarHovered ? '20px' : '0',
+      marginBottom: isSidebarHovered ? 8 : 0,
+    },
+    divider: { background: '#f1f5f9', height: 1, margin: '16px 0' },
+    logoutBtn: {
+      background: '#fff', color: '#ef4444', border: '1px solid #fecaca',
+      borderRadius: 10, padding: isSidebarHovered ? '12px 16px' : '12px',
+      display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+      justifyContent: isSidebarHovered ? 'flex-start' : 'center',
+      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+      fontWeight: 600, fontSize: 14, fontFamily: 'inherit',
+    }
   }
 
   // Load chat when switching to chat tab
@@ -50,6 +160,101 @@ export default function EmployeeDashboard() {
       subscribeToRoom(selectedContact.roomId)
     }
   }, [selectedContact])
+
+  // Load KPI data on mount
+  useEffect(() => {
+    loadKpiData()
+  }, [])
+
+  // Load KPI data from real APIs
+  const loadKpiData = async () => {
+    try {
+      setKpiLoading(true)
+      
+      // Get profile to get employee ID (nhanvienId)
+      const profile = await profileService.getProfile()
+      const empId = profile?.nhanvienId || profile?.employeeId || authUser?.nhanvienId
+      setEmployeeId(empId)
+      
+      if (!empId) {
+        console.log('Employee ID not found in profile')
+        setKpiLoading(false)
+        return
+      }
+      
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = now.getMonth() + 1
+      
+      // Fetch all KPI data in parallel
+      const [
+        attendanceStats,
+        totalHoursRes,
+        todayStatusRes,
+        salaryRes,
+        leaveRequests
+      ] = await Promise.allSettled([
+        attendanceService.getStatistics(empId, year, month),
+        attendanceService.getTotalHours(empId, year, month),
+        attendanceService.getTodayStatus(empId),
+        payrollService.getByEmployee(empId, month, year),
+        leaveService.getByEmployee(empId)
+      ])
+      
+      // Process attendance statistics
+      let lateDays = 0
+      if (attendanceStats.status === 'fulfilled' && attendanceStats.value) {
+        lateDays = attendanceStats.value.lateDays || attendanceStats.value.diTre || 0
+      }
+      
+      // Process total hours - API returns { totalHours: number } or just number
+      let totalHours = 0
+      if (totalHoursRes.status === 'fulfilled' && totalHoursRes.value) {
+        const hoursData = totalHoursRes.value
+        // Handle both object { totalHours: x } and direct number responses
+        if (typeof hoursData === 'number') {
+          totalHours = hoursData
+        } else if (typeof hoursData === 'object') {
+          totalHours = hoursData.totalHours || hoursData.tongGio || hoursData.soGio || 0
+        }
+      }
+      
+      // Process today's status
+      if (todayStatusRes.status === 'fulfilled') {
+        setTodayStatus(todayStatusRes.value)
+      }
+      
+      // Process salary
+      let salary = '---'
+      if (salaryRes.status === 'fulfilled' && salaryRes.value) {
+        const salaryData = salaryRes.value
+        const salaryAmount = salaryData.thucNhan || salaryData.tongLuong || salaryData.luongCoBan || 0
+        salary = new Intl.NumberFormat('vi-VN').format(salaryAmount)
+      }
+      
+      // Process leave days (remaining)
+      let leaveDays = 12 // Default annual leave
+      if (leaveRequests.status === 'fulfilled' && leaveRequests.value) {
+        const approvedLeaves = (leaveRequests.value || []).filter(
+          l => l.trangThai === 'DUYET' || l.trangThai === 'APPROVED'
+        )
+        const usedDays = approvedLeaves.reduce((sum, l) => sum + (l.soNgay || 0), 0)
+        leaveDays = Math.max(12 - usedDays, 0) // 12 is default annual leave
+      }
+      
+      setKpiData({
+        salary,
+        leaveDays,
+        lateDays,
+        totalHours: typeof totalHours === 'number' ? Number(totalHours).toFixed(1) : '0'
+      })
+      
+    } catch (error) {
+      console.error('Error loading KPI data:', error)
+    } finally {
+      setKpiLoading(false)
+    }
+  }
 
   const loadChatRooms = async () => {
     try {
@@ -119,66 +324,134 @@ export default function EmployeeDashboard() {
     return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
   }
 
+  // Handle GPS Check-in/Check-out
+  const handleGpsCheckIn = async () => {
+    if (!employeeId) {
+      alert('Không tìm thấy thông tin nhân viên. Vui lòng tải lại trang.')
+      return
+    }
+
+    // Check if already checked out today
+    if (todayStatus?.hasCheckedOut) {
+      alert('Bạn đã hoàn thành chấm công hôm nay!')
+      return
+    }
+
+    try {
+      // Get current position
+      if (!navigator.geolocation) {
+        alert('Trình duyệt không hỗ trợ GPS. Vui lòng sử dụng trình duyệt khác.')
+        return
+      }
+
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        })
+      })
+
+      const { latitude, longitude } = position.coords
+
+      if (todayStatus?.hasCheckedIn) {
+        // Check-out
+        const attendanceId = todayStatus.chamCong?.chamcongId
+        if (attendanceId) {
+          await attendanceService.checkOut(attendanceId)
+          alert('✅ Chấm công ra thành công!')
+        }
+      } else {
+        // GPS Check-in
+        const result = await attendanceService.gpsCheckIn(
+          employeeId,
+          latitude,
+          longitude,
+          `Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)}`
+        )
+        
+        if (result.khoangCach && result.khoangCach > 500) {
+          alert(`⚠️ Bạn đang ở ngoài phạm vi công ty (${result.khoangCach.toFixed(0)}m). Chấm công có thể không hợp lệ.`)
+        } else {
+          alert('✅ Chấm công vào thành công!')
+        }
+      }
+
+      // Reload KPI data
+      loadKpiData()
+
+    } catch (error) {
+      console.error('GPS Check-in error:', error)
+      if (error.code === 1) {
+        alert('❌ Bạn đã từ chối quyền truy cập vị trí. Vui lòng cho phép truy cập GPS để chấm công.')
+      } else if (error.code === 2) {
+        alert('❌ Không thể xác định vị trí. Vui lòng kiểm tra GPS và thử lại.')
+      } else if (error.code === 3) {
+        alert('❌ Hết thời gian chờ GPS. Vui lòng thử lại.')
+      } else {
+        alert('❌ Lỗi chấm công: ' + (error.message || 'Không xác định'))
+      }
+    }
+  }
+
   return (
-    <div style={styles.appShell}>
-      <aside style={styles.sidebar}>
-        <div style={styles.brand}>
-          <div style={styles.brandIcon}>⚡</div>
-          <div>
-            <div style={styles.brandName}>QLNS Employee</div>
-            <div style={styles.brandSubtitle}>Portal</div>
+    <div style={customStyles.appShell}>
+      {/* --- SIDEBAR (Collapsible like HR Manager) --- */}
+      <aside 
+        style={customStyles.sidebar}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        <div style={customStyles.userCard}>
+          <div style={customStyles.userAvatar}>{user.name.slice(0, 1).toUpperCase()}</div>
+          <div style={customStyles.userInfo}>
+            <div style={customStyles.userInfoInner}>
+              <div style={customStyles.userName}>{user.name}</div>
+              <div style={customStyles.userRole}>{user.role}</div>
+            </div>
           </div>
         </div>
 
-        <div style={styles.divider} />
+        <div style={customStyles.divider} />
 
-        <div style={styles.userCard}>
-          <div style={styles.userAvatar}>{user.name.slice(0, 1).toUpperCase()}</div>
-          <div style={styles.userInfo}>
-            <div style={styles.userName}>{user.name}</div>
-            <div style={styles.userRole}>🎯 {user.role}</div>
-          </div>
+        <div style={customStyles.navGroup}>
+          <div style={customStyles.navGroupLabel}>Tổng quan</div>
+          <NavItem active={active === 'dashboard'} onClick={() => setActive('dashboard')} icon="🏠" collapsed={!isSidebarHovered}>Dashboard</NavItem>
+          <NavItem active={active === 'profile'} onClick={() => setActive('profile')} icon="👤" collapsed={!isSidebarHovered}>Hồ sơ cá nhân</NavItem>
         </div>
 
-        <div style={styles.divider} />
-
-        <div style={styles.navGroup}>
-          <div style={styles.navGroupLabel}>Menu chính</div>
-          <NavItem active={active === 'dashboard'} onClick={() => setActive('dashboard')} icon="🏠">
-            {sections.dashboard.title}
-          </NavItem>
-          <NavItem active={active === 'profile'} onClick={() => setActive('profile')} icon="👤">
-            {sections.profile.title}
-          </NavItem>
-          <NavItem active={active === 'timesheet'} onClick={() => setActive('timesheet')} icon="🕐">
-            {sections.timesheet.title}
-          </NavItem>
-          <NavItem active={active === 'leave'} onClick={() => setActive('leave')} icon="📋">
-            {sections.leave.title}
-          </NavItem>
-          <NavItem active={active === 'payroll'} onClick={() => setActive('payroll')} icon="💰">
-            {sections.payroll.title}
-          </NavItem>
-          <NavItem active={active === 'documents'} onClick={() => setActive('documents')} icon="📄">
-            {sections.documents.title}
-          </NavItem>
-          <NavItem active={active === 'storage'} onClick={() => setActive('storage')} icon="💾">
-            File của tôi
-          </NavItem>
-          <NavItem active={active === 'projects'} onClick={() => setActive('projects')} icon="🏭">
-            Dự án của tôi
-          </NavItem>
-          <NavItem active={active === 'chat'} onClick={() => setActive('chat')} icon="💬">
-            {sections.chat.title}
-          </NavItem>
+        <div style={customStyles.navGroup}>
+          <div style={customStyles.navGroupLabel}>Công việc</div>
+          <NavItem active={active === 'timesheet'} onClick={() => setActive('timesheet')} icon="🕐" collapsed={!isSidebarHovered}>Chấm công</NavItem>
+          <NavItem active={active === 'leave'} onClick={() => setActive('leave')} icon="📋" collapsed={!isSidebarHovered}>Nghỉ phép</NavItem>
+          <NavItem active={active === 'payroll'} onClick={() => setActive('payroll')} icon="💰" collapsed={!isSidebarHovered}>Phiếu lương</NavItem>
+          <NavItem active={active === 'projects'} onClick={() => setActive('projects')} icon="🏭" collapsed={!isSidebarHovered}>Dự án</NavItem>
         </div>
 
-        <button style={styles.logoutBtn} onClick={handleLogout}>
-          🚪 Đăng xuất
+        <div style={customStyles.navGroup}>
+          <div style={customStyles.navGroupLabel}>Tài liệu & Khác</div>
+          <NavItem active={active === 'documents'} onClick={() => setActive('documents')} icon="📄" collapsed={!isSidebarHovered}>Hợp đồng</NavItem>
+          <NavItem active={active === 'storage'} onClick={() => setActive('storage')} icon="💾" collapsed={!isSidebarHovered}>File của tôi</NavItem>
+          <NavItem active={active === 'reviews'} onClick={() => setActive('reviews')} icon="⭐" collapsed={!isSidebarHovered}>Đánh giá</NavItem>
+          <NavItem active={active === 'chat'} onClick={() => setActive('chat')} icon="💬" collapsed={!isSidebarHovered}>Trò chuyện</NavItem>
+        </div>
+
+        <div style={{flex: 1}} />
+
+        <button style={customStyles.logoutBtn} onClick={handleLogout}>
+          <span style={{fontSize: 18, minWidth: 20, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>🚪</span>
+          <span style={{
+            marginLeft: isSidebarHovered ? 8 : 0,
+            transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+            opacity: isSidebarHovered ? 1 : 0,
+            transform: isSidebarHovered ? 'translateX(0)' : 'translateX(-10px)',
+            overflow: 'hidden', whiteSpace: 'nowrap',
+          }}>Đăng xuất</span>
         </button>
       </aside>
 
-      <main style={styles.content}>
+      {/* --- MAIN CONTENT --- */}
+      <main style={customStyles.content}>
         {/* Hide header for pages with their own headers */}
         {!['profile', 'projects'].includes(active) && (
           <header style={styles.header}>
@@ -196,59 +469,171 @@ export default function EmployeeDashboard() {
 
         {/* Dashboard Main */}
         {active === 'dashboard' && (
-          <div style={styles.dashboardContent}>
-            {/* KPI Cards Row */}
-            <div style={styles.kpiGrid}>
-              <KPICard title="Lương dự kiến" value={`${kpiData.salary}đ`} icon="💵" color="success" change="+5%" />
-              <KPICard title="Ngày phép còn" value={`${kpiData.leaveDays} ngày`} icon="📅" color="info" change="+3 ngày" />
-              <KPICard title="Số lần đi muộn" value={`${kpiData.lateDays} lần`} icon="⏰" color="warning" change="-2 lần" />
-              <KPICard title="Tổng giờ làm (Tháng)" value={`${kpiData.totalHours}h`} icon="🕐" color="primary" change="+8h" />
+          <div style={{ padding: '24px 32px' }}>
+            {/* Stats Grid (like HR Manager) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24, marginBottom: 24 }}>
+              <StatCard 
+                title="Lương tháng này"
+                value={kpiLoading ? '...' : `${kpiData.salary}đ`}
+                subtext="Dự kiến"
+                icon="💰"
+                accentColor="#10b981"
+                onClick={() => setActive('payroll')}
+              />
+              <StatCard 
+                title="Ngày phép còn lại"
+                value={kpiLoading ? '...' : `${kpiData.leaveDays}`}
+                subtext={`/ 12 ngày năm`}
+                icon="📅"
+                accentColor="#3b82f6"
+                onClick={() => setActive('leave')}
+              />
+              <StatCard 
+                title="Số lần đi muộn"
+                value={kpiLoading ? '...' : `${kpiData.lateDays}`}
+                subtext="Tháng này"
+                icon="⏰"
+                accentColor="#f59e0b"
+                highlight={kpiData.lateDays > 0}
+                onClick={() => setActive('timesheet')}
+              />
+              <StatCard 
+                title="Tổng giờ làm"
+                value={kpiLoading ? '...' : `${kpiData.totalHours}h`}
+                subtext="Tháng này"
+                icon="🕐"
+                accentColor="#8b5cf6"
+                onClick={() => setActive('timesheet')}
+              />
             </div>
 
-            {/* Welcome & Notifications Row */}
-            <div style={styles.cardsRow}>
-              <div style={styles.welcomeCard}>
-                <div style={styles.welcomeContent}>
-                  <h3 style={styles.welcomeTitle}>Chào mừng, {user.name}!</h3>
-                  <p style={styles.welcomeText}>
-                    Hãy bắt đầu ngày làm việc của bạn bằng cách chấm công. Chúc bạn một ngày làm việc hiệu quả!
+            {/* Welcome & Attendance Row (Modern style like HR Manager) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24, marginBottom: 24 }}>
+              {/* Welcome Card */}
+              <div style={{
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                padding: '28px 32px', borderRadius: 16, color: '#fff',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+              }}>
+                <h3 style={{ margin: '0 0 12px 0', fontSize: 22, fontWeight: 700 }}>Chào mừng, {user.name}!</h3>
+                {todayStatus ? (
+                  <p style={{ margin: 0, opacity: 0.9, fontSize: 15, lineHeight: 1.6 }}>
+                    {todayStatus.hasCheckedIn 
+                      ? `✅ Bạn đã chấm công vào lúc ${todayStatus.chamCong?.gioVao || 'N/A'}${todayStatus.hasCheckedOut ? ` và ra lúc ${todayStatus.chamCong?.gioRa}` : '. Đừng quên chấm công ra cuối ngày!'}`
+                      : 'Hãy bắt đầu ngày làm việc bằng cách chấm công. Chúc bạn một ngày làm việc hiệu quả!'}
                   </p>
-                  <button style={styles.checkInBtn}>
-                    ✓ Chấm công vào
-                  </button>
-                </div>
+                ) : (
+                  <p style={{ margin: 0, opacity: 0.9, fontSize: 15 }}>
+                    Hãy bắt đầu ngày làm việc bằng cách chấm công. Chúc bạn một ngày hiệu quả!
+                  </p>
+                )}
+                <button 
+                  style={{
+                    marginTop: 20, border: 'none', borderRadius: 10, padding: '12px 24px',
+                    fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                    transition: 'transform 0.2s', boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                    background: todayStatus?.hasCheckedOut ? '#94a3b8' : (todayStatus?.hasCheckedIn ? '#ef4444' : '#fff'),
+                    color: todayStatus?.hasCheckedOut ? '#fff' : (todayStatus?.hasCheckedIn ? '#fff' : '#1d4ed8'),
+                  }}
+                  onClick={handleGpsCheckIn}
+                  disabled={todayStatus?.hasCheckedOut}
+                >
+                  {todayStatus?.hasCheckedOut ? '✅ Đã hoàn thành hôm nay' : todayStatus?.hasCheckedIn ? '📤 Chấm công ra' : '📥 Chấm công vào'}
+                </button>
               </div>
 
-              <div style={styles.notificationCard}>
-                <h4 style={styles.cardTitle}>Thông báo & Sự kiện</h4>
-                <div style={styles.notificationList}>
-                  {notifications.map((notif, idx) => (
-                    <div key={idx} style={styles.notificationItem}>
-                      <div style={styles.notifIcon}>📢</div>
-                      <div style={styles.notifContent}>
-                        <div style={styles.notifTitle}>{notif.title}</div>
-                        <div style={styles.notifDesc}>{notif.desc}</div>
-                        <div style={styles.notifDate}>{notif.date}</div>
+              {/* Today Status Card */}
+              <div style={{
+                background: '#fff', borderRadius: 16, overflow: 'hidden',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+              }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>📊</div>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Trạng thái hôm nay</h3>
+                </div>
+                <div style={{ padding: 20 }}>
+                  {todayStatus ? (
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                        <span style={{ fontSize: 32 }}>{todayStatus.hasCheckedIn ? '✅' : '⏳'}</span>
+                        <div>
+                          <div style={{ fontWeight: 600, color: '#0f172a', fontSize: 15 }}>
+                            {todayStatus.hasCheckedIn ? 'Đã chấm công' : 'Chưa chấm công'}
+                          </div>
+                          {todayStatus.chamCong && (
+                            <div style={{ fontSize: 13, color: '#64748b', marginTop: 2 }}>
+                              Vào: {todayStatus.chamCong.gioVao || '--:--'} • Ra: {todayStatus.chamCong.gioRa || '--:--'}
+                            </div>
+                          )}
+                        </div>
                       </div>
+                      {todayStatus.chamCong?.trangThai && (
+                        <div style={{
+                          padding: '10px 14px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+                          background: todayStatus.chamCong.trangThai === 'DU_GIO' ? '#f0fdf4' : '#fef3c7',
+                          color: todayStatus.chamCong.trangThai === 'DU_GIO' ? '#15803d' : '#d97706',
+                        }}>
+                          {todayStatus.chamCong.trangThai === 'DU_GIO' ? '✓ Đúng giờ' : todayStatus.chamCong.trangThai === 'DI_TRE' ? '⚠️ Đi trễ' : todayStatus.chamCong.trangThai}
+                        </div>
+                      )}
                     </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '24px 0', color: '#94a3b8' }}>
+                      {kpiLoading ? '⏳ Đang tải...' : 'Chưa có dữ liệu chấm công'}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
+              <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🚀</div>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Truy cập nhanh</h3>
+                </div>
+                <div style={{ padding: 20, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  {[
+                    { label: 'Xem chấm công', icon: '🕐', action: () => setActive('timesheet') },
+                    { label: 'Xin nghỉ phép', icon: '📋', action: () => setActive('leave') },
+                    { label: 'Xem lương', icon: '💰', action: () => setActive('payroll') },
+                    { label: 'Dự án', icon: '🏭', action: () => setActive('projects') },
+                  ].map((item, idx) => (
+                    <button key={idx} onClick={item.action} style={{
+                      background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10,
+                      padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10,
+                      transition: 'all 0.2s', fontFamily: 'inherit'
+                    }}>
+                      <span style={{ fontSize: 18 }}>{item.icon}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>{item.label}</span>
+                    </button>
                   ))}
                 </div>
               </div>
-            </div>
 
-            {/* Charts Row */}
-            <div style={styles.chartsRow}>
-              <div style={styles.chartCard}>
-                <h4 style={styles.cardTitle}>Biểu đồ giờ làm theo ngày</h4>
-                <div style={styles.chartPlaceholder}>
-                  <div style={styles.chartInfo}>📊 Biểu đồ đang được phát triển</div>
+              <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>💡</div>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Thông tin hữu ích</h3>
                 </div>
-              </div>
-
-              <div style={styles.chartCard}>
-                <h4 style={styles.cardTitle}>Thống kê nghỉ phép</h4>
-                <div style={styles.chartPlaceholder}>
-                  <div style={styles.chartInfo}>📈 Biểu đồ đang được phát triển</div>
+                <div style={{ padding: 20 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: '#f8fafc', borderRadius: 10 }}>
+                      <span style={{ fontSize: 20 }}>📞</span>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>Hỗ trợ IT</div>
+                        <div style={{ fontSize: 12, color: '#64748b' }}>Ext: 1234</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: '#f8fafc', borderRadius: 10 }}>
+                      <span style={{ fontSize: 20 }}>📧</span>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>HR Support</div>
+                        <div style={{ fontSize: 12, color: '#64748b' }}>hr@company.com</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -557,7 +942,13 @@ export default function EmployeeDashboard() {
 
         {/* Projects Page */}
         {active === 'projects' && <MyProjectsPage />}
+
+        {/* Reviews Page */}
+        {active === 'reviews' && <MyReviewsPage />}
       </main>
+
+      {/* AI Assistant - Floating Button */}
+      <AIChatBot />
     </div>
   )
 }
