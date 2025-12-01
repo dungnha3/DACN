@@ -1,62 +1,78 @@
 import { useState, useMemo, useEffect } from 'react';
 import { evaluationsService, employeesService } from '@/features/hr/shared/services';
-import Pagination from '@/shared/components/table/Pagination';
 import { usePermissions, useErrorHandler } from '@/shared/hooks';
 import { validateRequired } from '@/shared/utils/validation';
+import {
+  PageContainer,
+  PageTitle,
+  Breadcrumb,
+  Button,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  Modal,
+  ModalHeader,
+  ModalTitle,
+  ModalBody,
+  ModalFooter,
+  FormGroup,
+  FormLabel,
+  FormInput,
+  FormSelect,
+  FormTextarea,
+  LoadingState,
+  ErrorState,
+  EmptyState
+} from '@/shared/components/ui';
 
+// SVG Icons
+const IconCheck = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>;
+const IconX = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>;
+const IconClock = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>;
+const IconEdit = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>;
+const IconUsers = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>;
+const IconStar = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>;
+const IconSearch = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>;
+const IconChevronLeft = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>;
+const IconChevronRight = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>;
+
+const itemsPerPage = 5;
 
 export default function EvaluationsPage() {
   const [evaluations, setEvaluations] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  const { isHRManager } = usePermissions();
-  const { handleError } = useErrorHandler();
-  
-  // Permission guard
-  if (!isHRManager) {
-    return (
-      <div style={{ padding: '40px', textAlign: 'center' }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
-        <div style={{ fontSize: '20px', fontWeight: '600', color: '#ef4444' }}>Không có quyền truy cập</div>
-        <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px' }}>Chỉ HR Manager mới có quyền quản lý đánh giá nhân viên</div>
-      </div>
-    );
-  }
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Modals
   const [selectedEval, setSelectedEval] = useState(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
-  const [approvalNote, setApprovalNote] = useState('');
-  const [approvalAction, setApprovalAction] = useState(null); // 'APPROVE' or 'REJECT'
-
-  // Pagination State
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
-  
-  // Create Modal States
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [employees, setEmployees] = useState([]);
+  const [approvalNote, setApprovalNote] = useState('');
+  const [approvalAction, setApprovalAction] = useState(null);
+
   const [formData, setFormData] = useState({
-    nhanvienId: '',
-    kyDanhGia: '',
-    loaiDanhGia: 'HANG_QUY',
-    diemChuyenMon: '',
-    diemThaiDo: '',
-    diemKyNangMem: '',
-    diemDongDoi: '',
-    nhanXet: '',
-    mucTieuTiepTheo: '',
-    keHoachPhatTrien: '',
-    ngayBatDau: new Date().toISOString().split('T')[0],
-    ngayKetThuc: ''
+    nhanvienId: '', kyDanhGia: '', loaiDanhGia: 'HANG_QUY',
+    diemChuyenMon: '', diemThaiDo: '', diemKyNangMem: '', diemDongDoi: '',
+    nhanXet: '', mucTieuTiepTheo: '', keHoachPhatTrien: '',
+    ngayBatDau: new Date().toISOString().split('T')[0], ngayKetThuc: ''
   });
 
-  // Fetch evaluations data and employees
+  const { isHRManager } = usePermissions();
+  const { handleError } = useErrorHandler();
+
   useEffect(() => {
     fetchEvaluationsData();
     fetchEmployees();
   }, []);
+
+  useEffect(() => { setCurrentPage(1); }, [filterStatus, searchTerm]);
 
   const fetchEvaluationsData = async () => {
     try {
@@ -65,9 +81,7 @@ export default function EvaluationsPage() {
       const data = await evaluationsService.getAll();
       setEvaluations(data || []);
     } catch (err) {
-      const errorMessage = handleError(err, { context: 'load_evaluations' });
-      setError(errorMessage);
-      setEvaluations([]);
+      setError(handleError(err, { context: 'load_evaluations' }));
     } finally {
       setLoading(false);
     }
@@ -82,7 +96,6 @@ export default function EvaluationsPage() {
     }
   };
 
-  // --- LOGIC ---
   const filteredEvals = useMemo(() => {
     return evaluations.filter(e => {
       const matchStatus = filterStatus === 'ALL' || e.trangThai === filterStatus;
@@ -91,144 +104,21 @@ export default function EvaluationsPage() {
     });
   }, [evaluations, filterStatus, searchTerm]);
 
-  // --- PAGINATION LOGIC ---
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filterStatus, searchTerm]);
-
-  const paginatedEvals = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredEvals.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredEvals, currentPage, itemsPerPage]);
-
   const totalPages = Math.ceil(filteredEvals.length / itemsPerPage);
+  const paginatedEvals = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredEvals.slice(start, start + itemsPerPage);
+  }, [filteredEvals, currentPage]);
 
   const stats = {
     total: evaluations.length,
     pending: evaluations.filter(e => e.trangThai === 'CHO_DUYET').length,
     approved: evaluations.filter(e => e.trangThai === 'DA_DUYET').length,
     excellent: evaluations.filter(e => e.xepLoai === 'XUAT_SAC').length,
-    avgScore: evaluations.length > 0 
-      ? (evaluations.reduce((sum, e) => sum + (e.diemTong || 0), 0) / evaluations.length).toFixed(1)
-      : 0
-  };
-
-  // --- HANDLERS ---
-  const openApprovalModal = (evalItem, action) => {
-    setSelectedEval(evalItem);
-    setApprovalAction(action);
-    setApprovalNote('');
-    setShowApprovalModal(true);
-  };
-
-  const handleApprovalSubmit = async () => {
-    if (!selectedEval) return;
-    
-    // Validation for reject
-    if (approvalAction === 'REJECT') {
-      const noteError = validateRequired(approvalNote, 'Lý do từ chối');
-      if (noteError) {
-        alert(noteError);
-        return;
-      }
-    }
-    
-    try {
-      if (approvalAction === 'APPROVE') {
-        await evaluationsService.approve(selectedEval.danhGiaId, approvalNote || 'Approved');
-        alert('✅ Đã phê duyệt đánh giá thành công!');
-      } else {
-        await evaluationsService.reject(selectedEval.danhGiaId, approvalNote);
-        alert('✅ Đã từ chối đánh giá!');
-      }
-      
-      // Refresh data
-      fetchEvaluationsData();
-      setShowApprovalModal(false);
-      setSelectedEval(null);
-      setApprovalNote('');
-    } catch (err) {
-      const errorMessage = handleError(err, { context: approvalAction === 'APPROVE' ? 'approve_evaluation' : 'reject_evaluation' });
-      alert(errorMessage);
-    }
-  };
-
-  const handleCreateSubmit = async () => {
-    // Validation
-    const errors = [];
-    
-    const empError = validateRequired(formData.nhanvienId, 'Nhân viên');
-    if (empError) errors.push(empError);
-    
-    const periodError = validateRequired(formData.kyDanhGia, 'Kỳ đánh giá');
-    if (periodError) errors.push(periodError);
-    
-    const scoreErrors = [
-      validateRequired(formData.diemChuyenMon, 'Điểm chuyên môn'),
-      validateRequired(formData.diemThaiDo, 'Điểm thái độ'),
-      validateRequired(formData.diemKyNangMem, 'Điểm kỹ năng mềm'),
-      validateRequired(formData.diemDongDoi, 'Điểm đồng đội')
-    ].filter(Boolean);
-    errors.push(...scoreErrors);
-    
-    const startDateError = validateRequired(formData.ngayBatDau, 'Ngày bắt đầu');
-    if (startDateError) errors.push(startDateError);
-    
-    const endDateError = validateRequired(formData.ngayKetThuc, 'Ngày kết thúc');
-    if (endDateError) errors.push(endDateError);
-    
-    if (formData.ngayBatDau && formData.ngayKetThuc && new Date(formData.ngayKetThuc) < new Date(formData.ngayBatDau)) {
-      errors.push('Ngày kết thúc phải sau ngày bắt đầu');
-    }
-    
-    if (errors.length > 0) {
-      alert(errors.join('\n'));
-      return;
-    }
-
-    try {
-      const payload = {
-        ...formData,
-        nhanvienId: Number(formData.nhanvienId),
-        diemChuyenMon: Number(formData.diemChuyenMon),
-        diemThaiDo: Number(formData.diemThaiDo),
-        diemKyNangMem: Number(formData.diemKyNangMem),
-        diemDongDoi: Number(formData.diemDongDoi)
-      };
-
-      await evaluationsService.create(payload);
-      alert('✅ Tạo đánh giá thành công!');
-      
-      // Reset form
-      setFormData({
-        nhanvienId: '',
-        kyDanhGia: '',
-        loaiDanhGia: 'HANG_QUY',
-        diemChuyenMon: '',
-        diemThaiDo: '',
-        diemKyNangMem: '',
-        diemDongDoi: '',
-        nhanXet: '',
-        mucTieuTiepTheo: '',
-        keHoachPhatTrien: '',
-        ngayBatDau: new Date().toISOString().split('T')[0],
-        ngayKetThuc: ''
-      });
-      
-      // Refresh and close
-      fetchEvaluationsData();
-      setShowCreateModal(false);
-    } catch (err) {
-      const errorMessage = handleError(err, { context: 'create_evaluation' });
-      alert(errorMessage);
-    }
   };
 
   const handleSubmitForApproval = async (evalItem) => {
-    if (!confirm(`Xác nhận gửi đánh giá của ${evalItem.tenNhanVien} để duyệt?`)) {
-      return;
-    }
-    
+    if (!confirm(`Xác nhận gửi đánh giá của ${evalItem.tenNhanVien} để duyệt?`)) return;
     try {
       await evaluationsService.submit(evalItem.danhGiaId);
       alert('✅ Đã gửi đánh giá để duyệt!');
@@ -238,22 +128,106 @@ export default function EvaluationsPage() {
     }
   };
 
-  // --- BADGE HELPERS ---
+  const openApprovalModal = (evalItem, action) => {
+    setSelectedEval(evalItem);
+    setApprovalAction(action);
+    setApprovalNote('');
+    setShowApprovalModal(true);
+  };
+
+  const handleApprovalSubmit = async () => {
+    if (!selectedEval) return;
+    if (approvalAction === 'REJECT' && validateRequired(approvalNote, 'Lý do từ chối')) {
+      return alert('Vui lòng nhập lý do từ chối');
+    }
+    try {
+      if (approvalAction === 'APPROVE') {
+        await evaluationsService.approve(selectedEval.danhGiaId, approvalNote || 'Approved');
+        alert('✅ Đã phê duyệt đánh giá thành công!');
+      } else {
+        await evaluationsService.reject(selectedEval.danhGiaId, approvalNote);
+        alert('✅ Đã từ chối đánh giá!');
+      }
+      fetchEvaluationsData();
+      setShowApprovalModal(false);
+      setSelectedEval(null);
+      setApprovalNote('');
+    } catch (err) {
+      alert(handleError(err, { context: approvalAction === 'APPROVE' ? 'approve_evaluation' : 'reject_evaluation' }));
+    }
+  };
+
+  const handleCreateSubmit = async () => {
+    const errors = [];
+    if (validateRequired(formData.nhanvienId, 'Nhân viên')) errors.push('Nhân viên');
+    if (validateRequired(formData.kyDanhGia, 'Kỳ đánh giá')) errors.push('Kỳ đánh giá');
+    ['diemChuyenMon', 'diemThaiDo', 'diemKyNangMem', 'diemDongDoi'].forEach(f => {
+      if (validateRequired(formData[f], f)) errors.push(f);
+    });
+    if (validateRequired(formData.ngayBatDau, 'Ngày bắt đầu')) errors.push('Ngày bắt đầu');
+    if (validateRequired(formData.ngayKetThuc, 'Ngày kết thúc')) errors.push('Ngày kết thúc');
+    if (formData.ngayBatDau && formData.ngayKetThuc && new Date(formData.ngayKetThuc) < new Date(formData.ngayBatDau)) {
+      errors.push('Ngày kết thúc phải sau ngày bắt đầu');
+    }
+    if (errors.length > 0) return alert('Vui lòng điền: ' + errors.join(', '));
+
+    try {
+      await evaluationsService.create({
+        ...formData,
+        nhanvienId: Number(formData.nhanvienId),
+        diemChuyenMon: Number(formData.diemChuyenMon),
+        diemThaiDo: Number(formData.diemThaiDo),
+        diemKyNangMem: Number(formData.diemKyNangMem),
+        diemDongDoi: Number(formData.diemDongDoi)
+      });
+      alert('✅ Tạo đánh giá thành công!');
+      setFormData({
+        nhanvienId: '', kyDanhGia: '', loaiDanhGia: 'HANG_QUY',
+        diemChuyenMon: '', diemThaiDo: '', diemKyNangMem: '', diemDongDoi: '',
+        nhanXet: '', mucTieuTiepTheo: '', keHoachPhatTrien: '',
+        ngayBatDau: new Date().toISOString().split('T')[0], ngayKetThuc: ''
+      });
+      fetchEvaluationsData();
+      setShowCreateModal(false);
+    } catch (err) {
+      alert(handleError(err, { context: 'create_evaluation' }));
+    }
+  };
+
+  // Helper functions
+  const stringToColor = (str) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+    return '#' + '00000'.substring(0, 6 - c.length) + c;
+  };
+
+  const getAvatarStyle = (name) => {
+    const bg = stringToColor(name || 'User');
+    return {
+      width: 40, height: 40, borderRadius: '50%',
+      background: `${bg}25`, color: bg,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: 14, fontWeight: 700, border: `1px solid ${bg}40`
+    };
+  };
+
   const getStatusBadge = (status) => {
     const config = {
-      DANG_DANH_GIA: { bg: '#e0f2fe', color: '#0369a1', label: '📋 Đang đánh giá', border: '#bae6fd' },
-      CHO_DUYET: { bg: '#fff7ed', color: '#c2410c', label: '⏳ Chờ duyệt', border: '#fed7aa' },
-      DA_DUYET: { bg: '#f0fdf4', color: '#15803d', label: '✓ Đã duyệt', border: '#dcfce7' },
-      TU_CHOI: { bg: '#fef2f2', color: '#b91c1c', label: '✗ Từ chối', border: '#fecaca' },
+      DANG_DANH_GIA: { bg: '#e0f2fe', color: '#0369a1', icon: <IconEdit size={14} />, label: 'Đang đánh giá' },
+      CHO_DUYET: { bg: '#fff7ed', color: '#c2410c', icon: <IconClock size={14} />, label: 'Chờ duyệt' },
+      DA_DUYET: { bg: '#f0fdf4', color: '#15803d', icon: <IconCheck size={14} />, label: 'Đã duyệt' },
+      TU_CHOI: { bg: '#fef2f2', color: '#b91c1c', icon: <IconX size={14} />, label: 'Từ chối' },
     };
     const s = config[status] || config.DANG_DANH_GIA;
     return (
       <span style={{
-        display: 'inline-block', padding: '6px 12px', borderRadius: '20px',
-        fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
-        background: s.bg, color: s.color, border: `1px solid ${s.border}`
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        background: s.bg, color: s.color,
+        padding: '6px 12px', borderRadius: '6px',
+        fontSize: '12px', fontWeight: 600
       }}>
-        {s.label}
+        {s.icon} {s.label}
       </span>
     );
   };
@@ -280,786 +254,496 @@ export default function EvaluationsPage() {
 
   const getEvalTypeBadge = (type) => {
     const types = {
-      HANG_QUY: { label: 'Hàng quý', icon: '📅' },
-      HANG_NAM: { label: 'Hàng năm', icon: '🎆' },
-      THU_VIEC: { label: 'Thử việc', icon: '👤' },
-      THANG_CHUC: { label: 'Thăng chức', icon: '🚀' },
-      DANG_KY_TANG_LUONG: { label: 'Tăng lương', icon: '💰' }
+      HANG_QUY: '📅 Hàng quý', HANG_NAM: '🎆 Hàng năm',
+      THU_VIEC: '👤 Thử việc', THANG_CHUC: '🚀 Thăng chức',
+      DANG_KY_TANG_LUONG: '💰 Tăng lương'
     };
-    const t = types[type] || { label: type, icon: '📝' };
-    return `${t.icon} ${t.label}`;
+    return types[type] || `📝 ${type}`;
   };
 
+  const ModernStatCard = ({ title, value, icon, iconColor }) => (
+    <div style={{
+      background: 'white', borderRadius: '16px', padding: '24px',
+      boxShadow: '0 2px 10px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9',
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+    }}>
+      <div>
+        <p style={{ margin: 0, fontSize: '13px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{title}</p>
+        <h3 style={{ margin: '8px 0 0', fontSize: '28px', fontWeight: 700, color: '#1e293b' }}>{value}</h3>
+      </div>
+      <div style={{
+        width: 48, height: 48, borderRadius: '12px', background: `${iconColor}15`,
+        color: iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center'
+      }}>
+        {icon}
+      </div>
+    </div>
+  );
+
+  if (!isHRManager) {
+    return (
+      <PageContainer>
+        <div style={{ padding: '40px', textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
+          <div style={{ fontSize: '20px', fontWeight: '600', color: '#ef4444' }}>Không có quyền truy cập</div>
+          <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px' }}>Chỉ HR Manager mới có quyền quản lý đánh giá nhân viên</div>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (loading) return <PageContainer><LoadingState message="Đang tải..." /></PageContainer>;
+  if (error) return <PageContainer><ErrorState message={error} onRetry={fetchEvaluationsData} /></PageContainer>;
+
   return (
-    <div style={s.container}>
-      {/* HEADER */}
-      <div style={s.headerWrapper}>
+    <PageContainer>
+      {/* Header */}
+      <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <div style={s.breadcrumb}>Quản lý nhân sự / Đánh giá</div>
-          <h1 style={s.pageTitle}>Đánh giá Hiệu suất Nhân viên</h1>
-          <p style={s.subtitle}>{stats.approved} đã duyệt, {stats.pending} chờ duyệt, điểm trung bình: {stats.avgScore}</p>
+          <Breadcrumb style={{ fontSize: 13, color: '#64748b', marginBottom: 4 }}>Quản lý nhân sự / Đánh giá</Breadcrumb>
+          <PageTitle style={{ color: '#0f172a', fontSize: 24 }}>Đánh giá Hiệu suất Nhân viên</PageTitle>
         </div>
-        <button style={s.btnAdd} onClick={() => setShowCreateModal(true)}>
-          <span style={{marginRight: 6}}>+</span> Tạo đánh giá mới
-        </button>
-      </div>
-
-      {/* STATS CARDS */}
-      <div style={s.statsGrid}>
-        <StatCard title="Tổng đánh giá" value={stats.total} icon="📊" color="#6366f1" bg="#eef2ff" />
-        <StatCard title="Chờ duyệt" value={stats.pending} icon="⏳" color="#f59e0b" bg="#fffbeb" />
-        <StatCard title="Đã duyệt" value={stats.approved} icon="✓" color="#10b981" bg="#f0fdf4" />
-        <StatCard title="Xuất sắc" value={stats.excellent} icon="🏆" color="#ec4899" bg="#fdf2f8" />
-      </div>
-
-      {/* FILTER BAR */}
-      <div style={s.filterBar}>
-        <div style={s.searchWrapper}>
-          <span style={s.searchIcon}>🔍</span>
-          <input 
-            style={s.searchInput} 
-            placeholder="Tìm nhân viên..." 
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <select 
-          style={s.filterSelect} 
-          value={filterStatus} 
-          onChange={e => setFilterStatus(e.target.value)}
+        <Button
+          variant="primary"
+          onClick={() => setShowCreateModal(true)}
+          style={{
+            borderRadius: '8px', padding: '10px 24px', fontWeight: 600,
+            background: '#3b82f6', border: 'none', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
+          }}
         >
-          <option value="ALL">Tất cả trạng thái</option>
-          <option value="DANG_DANH_GIA">Đang đánh giá</option>
-          <option value="CHO_DUYET">Chờ duyệt</option>
-          <option value="DA_DUYET">Đã duyệt</option>
-          <option value="TU_CHOI">Từ chối</option>
-        </select>
+          + Tạo đánh giá mới
+        </Button>
       </div>
 
-      {/* TABLE CARD */}
-      <div style={s.tableCard}>
-        <table style={s.table}>
-          <thead>
-            <tr>
-              <th style={{...s.th, width: '20%'}}>Nhân viên</th>
-              <th style={{...s.th, width: '10%'}}>Kỳ đánh giá</th>
-              <th style={{...s.th, width: '8%'}}>CM</th>
-              <th style={{...s.th, width: '8%'}}>TĐ</th>
-              <th style={{...s.th, width: '8%'}}>KN</th>
-              <th style={{...s.th, width: '8%'}}>ĐĐ</th>
-              <th style={{...s.th, width: '8%'}}>Điểm TB</th>
-              <th style={{...s.th, width: '12%', textAlign: 'center'}}>Xếp loại</th>
-              <th style={{...s.th, width: '10%', textAlign: 'center'}}>Trạng thái</th>
-              <th style={{...s.th, width: '10%', textAlign: 'center'}}>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedEvals.map(e => (
-              <tr key={e.danhGiaId} style={s.tr}>
-                <td style={s.td}>
-                  <div style={s.profileCell}>
-                    <div style={s.avatarBox}>{e.avatar || '👤'}</div>
-                    <div>
-                      <div style={s.empName}>{e.tenNhanVien}</div>
-                      <div style={s.empRole}>{e.chucVu}</div>
-                    </div>
-                  </div>
-                </td>
-                <td style={s.td}>
-                  <div style={{fontSize: 12, fontWeight: 600}}>{e.kyDanhGia}</div>
-                  <div style={{fontSize: 11, color: '#7b809a'}}>{getEvalTypeBadge(e.loaiDanhGia)}</div>
-                </td>
-                <td style={s.td}><span style={s.scoreBox}>{e.diemChuyenMon}</span></td>
-                <td style={s.td}><span style={s.scoreBox}>{e.diemThaiDo}</span></td>
-                <td style={s.td}><span style={s.scoreBox}>{e.diemKyNangMem}</span></td>
-                <td style={s.td}><span style={s.scoreBox}>{e.diemDongDoi}</span></td>
-                <td style={s.td}><span style={s.totalScore}>{e.diemTong}</span></td>
-                <td style={{...s.td, textAlign: 'center'}}>{getRankBadge(e.xepLoai)}</td>
-                <td style={{...s.td, textAlign: 'center'}}>{getStatusBadge(e.trangThai)}</td>
-                <td style={s.tdActions}>
-                  <div style={s.actionGroup}>
-                    {/* Nút Gửi duyệt - cho đánh giá đang làm */}
-                    {e.trangThai === 'DANG_DANH_GIA' && (
-                      <button 
-                        style={s.submitBtn} 
-                        onClick={() => handleSubmitForApproval(e)}
-                        title="Gửi duyệt"
-                      >
-                        📤
-                      </button>
-                    )}
-                    
-                    {/* Nút Duyệt/Từ chối - cho đánh giá chờ duyệt */}
-                    {e.trangThai === 'CHO_DUYET' && (
-                      <>
-                        <button 
-                          style={s.approveBtn} 
-                          onClick={() => openApprovalModal(e, 'APPROVE')}
-                          title="Phê duyệt"
-                        >
-                          ✓
-                        </button>
-                        <button 
-                          style={s.rejectBtn} 
-                          onClick={() => openApprovalModal(e, 'REJECT')}
-                          title="Từ chối"
-                        >
-                          ✗
-                        </button>
-                      </>
-                    )}
-                    
-                    <button style={s.viewBtn} onClick={() => setSelectedEval(e)} title="Xem chi tiết">
-                      👁️
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {filteredEvals.length === 0 && (
-          <div style={s.emptyState}>Không tìm thấy đánh giá nào.</div>
-        )}
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24, marginBottom: 32 }}>
+        <ModernStatCard title="Tổng đánh giá" value={stats.total} icon={<IconUsers size={24} />} iconColor="#6366f1" />
+        <ModernStatCard title="Chờ duyệt" value={stats.pending} icon={<IconClock size={24} />} iconColor="#f59e0b" />
+        <ModernStatCard title="Đã duyệt" value={stats.approved} icon={<IconCheck size={24} />} iconColor="#10b981" />
+        <ModernStatCard title="Xuất sắc" value={stats.excellent} icon={<IconStar size={24} />} iconColor="#ec4899" />
+      </div>
 
-        {filteredEvals.length > 0 && (
-          <div style={{ padding: '16px 0', borderTop: '1px solid #f0f2f5' }}>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
+      {/* Main Card */}
+      <div style={{
+        background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', overflow: 'hidden'
+      }}>
+        {/* Filter Bar */}
+        <div style={{
+          padding: '16px 24px', borderBottom: '1px solid #f1f5f9',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          flexWrap: 'wrap', gap: 16
+        }}>
+          <div style={{ background: '#f1f5f9', padding: 4, borderRadius: 8, display: 'flex', gap: 2 }}>
+            {[
+              { id: 'ALL', label: 'Tất cả' },
+              { id: 'DANG_DANH_GIA', label: 'Đang đánh giá' },
+              { id: 'CHO_DUYET', label: 'Chờ duyệt' },
+              { id: 'DA_DUYET', label: 'Đã duyệt' },
+              { id: 'TU_CHOI', label: 'Từ chối' }
+            ].map(tab => {
+              const isActive = filterStatus === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setFilterStatus(tab.id)}
+                  style={{
+                    border: 'none',
+                    background: isActive ? 'white' : 'transparent',
+                    color: isActive ? '#0f172a' : '#64748b',
+                    padding: '8px 16px', borderRadius: 6, fontSize: 13,
+                    fontWeight: isActive ? 600 : 500, cursor: 'pointer',
+                    boxShadow: isActive ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{ position: 'relative', width: 260 }}>
+            <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
+              <IconSearch />
+            </div>
+            <input
+              placeholder="Tìm nhân viên..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              style={{
+                width: '100%', padding: '10px 12px 10px 40px', borderRadius: 8,
+                border: '1px solid #e2e8f0', fontSize: 13, outline: 'none',
+                background: '#f8fafc', color: '#334155'
+              }}
             />
           </div>
+        </div>
+
+        {/* Table */}
+        <Table style={{ tableLayout: 'fixed', width: '100%' }}>
+          <colgroup>
+            <col style={{ width: '18%' }} />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '8%' }} />
+            <col style={{ width: '8%' }} />
+            <col style={{ width: '8%' }} />
+            <col style={{ width: '8%' }} />
+            <col style={{ width: '8%' }} />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '8%' }} />
+          </colgroup>
+          <TableHeader>
+            <TableRow style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'left' }}>NHÂN VIÊN</TableHead>
+              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>KỲ</TableHead>
+              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>CM</TableHead>
+              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>TĐ</TableHead>
+              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>KN</TableHead>
+              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>ĐĐ</TableHead>
+              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>TỔNG</TableHead>
+              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>XẾP LOẠI</TableHead>
+              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>TRẠNG THÁI</TableHead>
+              <TableHead style={{ padding: '14px 16px', textAlign: 'center' }}></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paginatedEvals.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={10} align="center" style={{ padding: 48 }}>
+                  <EmptyState icon="📊" title="Không có dữ liệu" message="Không tìm thấy đánh giá nào" />
+                </TableCell>
+              </TableRow>
+            ) : (
+              paginatedEvals.map(e => (
+                <TableRow key={e.danhGiaId} style={{ borderBottom: '1px solid #f1f5f9', transition: 'all 0.2s' }}>
+                  <TableCell style={{ padding: '16px', textAlign: 'left', verticalAlign: 'middle' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={getAvatarStyle(e.tenNhanVien)}>
+                        {e.tenNhanVien ? e.tenNhanVien.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600, color: '#1e293b', fontSize: 14 }}>{e.tenNhanVien}</div>
+                        <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>{e.chucVu}</div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>{e.kyDanhGia}</div>
+                    <div style={{ fontSize: 11, color: '#7b809a', marginTop: 2 }}>{getEvalTypeBadge(e.loaiDanhGia)}</div>
+                  </TableCell>
+                  <TableCell style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
+                    <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '4px 8px', borderRadius: 6, fontSize: 13, fontWeight: 700 }}>{e.diemChuyenMon}</span>
+                  </TableCell>
+                  <TableCell style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
+                    <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '4px 8px', borderRadius: 6, fontSize: 13, fontWeight: 700 }}>{e.diemThaiDo}</span>
+                  </TableCell>
+                  <TableCell style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
+                    <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '4px 8px', borderRadius: 6, fontSize: 13, fontWeight: 700 }}>{e.diemKyNangMem}</span>
+                  </TableCell>
+                  <TableCell style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
+                    <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '4px 8px', borderRadius: 6, fontSize: 13, fontWeight: 700 }}>{e.diemDongDoi}</span>
+                  </TableCell>
+                  <TableCell style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
+                    <span style={{ background: 'linear-gradient(195deg, #ec4899, #d946ef)', color: '#fff', padding: '6px 12px', borderRadius: 8, fontSize: 15, fontWeight: 700 }}>{e.diemTong}</span>
+                  </TableCell>
+                  <TableCell style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
+                    {getRankBadge(e.xepLoai)}
+                  </TableCell>
+                  <TableCell style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
+                    {getStatusBadge(e.trangThai)}
+                  </TableCell>
+                  <TableCell style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
+                      {e.trangThai === 'DANG_DANH_GIA' && (
+                        <div onClick={() => handleSubmitForApproval(e)} title="Gửi duyệt"
+                          style={{ width: 32, height: 32, borderRadius: 6, background: 'white', border: '1px solid #e2e8f0', color: '#64748b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = '#fff7ed'; e.currentTarget.style.color = '#f59e0b'; e.currentTarget.style.borderColor = '#f59e0b'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = '#64748b'; e.currentTarget.style.borderColor = '#e2e8f0'; }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
+                        </div>
+                      )}
+                      {e.trangThai === 'CHO_DUYET' && (
+                        <>
+                          <div onClick={() => openApprovalModal(e, 'APPROVE')} title="Phê duyệt"
+                            style={{ width: 32, height: 32, borderRadius: 6, background: 'white', border: '1px solid #e2e8f0', color: '#64748b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = '#f0fdf4'; e.currentTarget.style.color = '#10b981'; e.currentTarget.style.borderColor = '#10b981'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = '#64748b'; e.currentTarget.style.borderColor = '#e2e8f0'; }}>
+                            <IconCheck size={16} />
+                          </div>
+                          <div onClick={() => openApprovalModal(e, 'REJECT')} title="Từ chối"
+                            style={{ width: 32, height: 32, borderRadius: 6, background: 'white', border: '1px solid #e2e8f0', color: '#64748b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.borderColor = '#ef4444'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = '#64748b'; e.currentTarget.style.borderColor = '#e2e8f0'; }}>
+                            <IconX size={16} />
+                          </div>
+                        </>
+                      )}
+                      <div onClick={() => setSelectedEval(e)} title="Xem chi tiết"
+                        style={{ width: 32, height: 32, borderRadius: 6, background: 'white', border: '1px solid #e2e8f0', color: '#64748b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.color = '#3b82f6'; e.currentTarget.style.borderColor = '#3b82f6'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = '#64748b'; e.currentTarget.style.borderColor = '#e2e8f0'; }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                      </div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+
+        {/* Pagination */}
+        {filteredEvals.length > 0 && (
+          <div style={{ padding: '16px 24px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontSize: 13, color: '#64748b' }}>
+              Hiển thị <b>{(currentPage - 1) * itemsPerPage + 1}</b> - <b>{Math.min(currentPage * itemsPerPage, filteredEvals.length)}</b> trên tổng <b>{filteredEvals.length}</b>
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+                style={{ border: '1px solid #e2e8f0', background: 'white', padding: '6px 10px', borderRadius: 6, cursor: currentPage === 1 ? 'not-allowed' : 'pointer', color: currentPage === 1 ? '#cbd5e1' : '#475569', display: 'flex' }}>
+                <IconChevronLeft />
+              </button>
+              {[...Array(totalPages)].map((_, idx) => (
+                <button key={idx} onClick={() => setCurrentPage(idx + 1)}
+                  style={{ border: currentPage === idx + 1 ? 'none' : '1px solid #e2e8f0', background: currentPage === idx + 1 ? '#3b82f6' : 'white', color: currentPage === idx + 1 ? 'white' : '#475569', width: 32, height: 32, borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                  {idx + 1}
+                </button>
+              ))}
+              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+                style={{ border: '1px solid #e2e8f0', background: 'white', padding: '6px 10px', borderRadius: 6, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', color: currentPage === totalPages ? '#cbd5e1' : '#475569', display: 'flex' }}>
+                <IconChevronRight />
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
-      {/* DETAIL MODAL */}
+      {/* Detail Modal */}
       {selectedEval && !showApprovalModal && (
-        <div style={s.modalOverlay} onClick={() => setSelectedEval(null)}>
-          <div style={{...s.modal, maxWidth: 700}} onClick={(e) => e.stopPropagation()}>
-            <div style={s.modalHeader}>
-              <h3 style={s.modalTitle}>Chi tiết Đánh giá #{selectedEval.danhGiaId}</h3>
-              <button style={s.closeBtn} onClick={() => setSelectedEval(null)}>×</button>
+        <Modal isOpen={true} onClose={() => setSelectedEval(null)} size="large">
+          <ModalHeader onClose={() => setSelectedEval(null)}>
+            <ModalTitle>Chi tiết Đánh giá</ModalTitle>
+          </ModalHeader>
+          <ModalBody style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, paddingBottom: 20, borderBottom: '1px solid #f1f5f9', marginBottom: 20 }}>
+              <div style={{ ...getAvatarStyle(selectedEval.tenNhanVien), width: 56, height: 56, fontSize: 20 }}>
+                {selectedEval.tenNhanVien ? selectedEval.tenNhanVien.charAt(0) : 'U'}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#0f172a' }}>{selectedEval.tenNhanVien}</div>
+                <div style={{ fontSize: 14, color: '#64748b' }}>{selectedEval.chucVu} - {selectedEval.phongBan}</div>
+              </div>
+              <div>{getRankBadge(selectedEval.xepLoai)}</div>
             </div>
-            
-            <div style={s.modalBody}>
-              {/* Info Section */}
-              <div style={s.infoSection}>
-                <div style={s.profileCell}>
-                  <div style={{...s.avatarBox, width: 48, height: 48, fontSize: 24}}>{selectedEval.avatar || '👤'}</div>
-                  <div>
-                    <div style={{...s.empName, fontSize: 16}}>{selectedEval.tenNhanVien}</div>
-                    <div style={s.empRole}>{selectedEval.chucVu} - {selectedEval.phongBan}</div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}>
+              {[
+                { label: 'Kỳ đánh giá', val: selectedEval.kyDanhGia },
+                { label: 'Loại đánh giá', val: getEvalTypeBadge(selectedEval.loaiDanhGia) },
+                { label: 'Người đánh giá', val: selectedEval.tenNguoiDanhGia },
+                { label: 'Trạng thái', val: getStatusBadge(selectedEval.trangThai) },
+              ].map((item, idx) => (
+                <div key={idx}>
+                  <div style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>{item.label}</div>
+                  <div style={{ fontSize: 15, color: '#334155', fontWeight: 500 }}>{item.val}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: '#f8f9fa', padding: 16, borderRadius: 12, marginBottom: 16 }}>
+              <h4 style={{ margin: '0 0 16px 0', fontSize: 15, fontWeight: 700, color: '#334155' }}>📊 Chi tiết điểm số</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                {[
+                  { label: 'Chuyên môn', score: selectedEval.diemChuyenMon, color: '#3b82f6' },
+                  { label: 'Thái độ', score: selectedEval.diemThaiDo, color: '#10b981' },
+                  { label: 'Kỹ năng mềm', score: selectedEval.diemKyNangMem, color: '#f59e0b' },
+                  { label: 'Đồng đội', score: selectedEval.diemDongDoi, color: '#8b5cf6' }
+                ].map((item, idx) => (
+                  <div key={idx}>
+                    <div style={{ fontSize: 12, color: '#7b809a', fontWeight: 600, marginBottom: 4 }}>{item.label}</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: item.color, marginBottom: 4 }}>{item.score}</div>
+                    <div style={{ height: 6, borderRadius: 3, background: `${item.color}20`, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${item.score * 10}%`, background: item.color, borderRadius: 3, transition: 'width 0.3s' }} />
+                    </div>
                   </div>
-                </div>
-                <div>{getRankBadge(selectedEval.xepLoai)}</div>
+                ))}
               </div>
-
-              {/* Eval Info */}
-              <div style={s.detailGrid}>
-                <div style={s.detailItem}>
-                  <label style={s.detailLabel}>Kỳ đánh giá</label>
-                  <div style={s.detailValue}>{selectedEval.kyDanhGia}</div>
-                </div>
-                <div style={s.detailItem}>
-                  <label style={s.detailLabel}>Loại đánh giá</label>
-                  <div style={s.detailValue}>{getEvalTypeBadge(selectedEval.loaiDanhGia)}</div>
-                </div>
-                <div style={s.detailItem}>
-                  <label style={s.detailLabel}>Người đánh giá</label>
-                  <div style={s.detailValue}>{selectedEval.tenNguoiDanhGia}</div>
-                </div>
-                <div style={s.detailItem}>
-                  <label style={s.detailLabel}>Trạng thái</label>
-                  <div style={s.detailValue}>{getStatusBadge(selectedEval.trangThai)}</div>
-                </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: 12, borderRadius: 8, border: '2px solid #e5e7eb' }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#334155' }}>Tổng điểm:</span>
+                <span style={{ fontSize: 32, fontWeight: 700, color: '#ec4899' }}>{selectedEval.diemTong}</span>
               </div>
-
-              {/* Scores Section */}
-              <div style={s.scoresSection}>
-                <h4 style={s.sectionTitle}>📊 Chi tiết điểm số</h4>
-                <div style={s.scoresGrid}>
-                  <ScoreItem label="Chuyên môn" score={selectedEval.diemChuyenMon} color="#3b82f6" />
-                  <ScoreItem label="Thái độ" score={selectedEval.diemThaiDo} color="#10b981" />
-                  <ScoreItem label="Kỹ năng mềm" score={selectedEval.diemKyNangMem} color="#f59e0b" />
-                  <ScoreItem label="Đồng đội" score={selectedEval.diemDongDoi} color="#8b5cf6" />
-                </div>
-                <div style={s.totalScoreBox}>
-                  <span>Tổng điểm:</span>
-                  <span style={s.bigScore}>{selectedEval.diemTong}</span>
-                </div>
-              </div>
-
-              {/* Comments Section */}
-              {selectedEval.nhanXet && (
-                <div style={s.commentSection}>
-                  <label style={s.detailLabel}>📝 Nhận xét</label>
-                  <div style={s.commentBox}>{selectedEval.nhanXet}</div>
-                </div>
-              )}
-              
-              {selectedEval.mucTieuTiepTheo && (
-                <div style={s.commentSection}>
-                  <label style={s.detailLabel}>🎯 Mục tiêu tiếp theo</label>
-                  <div style={s.commentBox}>{selectedEval.mucTieuTiepTheo}</div>
-                </div>
-              )}
-              
-              {selectedEval.keHoachPhatTrien && (
-                <div style={s.commentSection}>
-                  <label style={s.detailLabel}>🚀 Kế hoạch phát triển</label>
-                  <div style={s.commentBox}>{selectedEval.keHoachPhatTrien}</div>
-                </div>
-              )}
             </div>
-            
-            <div style={s.modalFooter}>
-              <button style={s.btnCancel} onClick={() => setSelectedEval(null)}>Đóng</button>
-            </div>
-          </div>
-        </div>
+
+            {selectedEval.nhanXet && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>📝 Nhận xét</div>
+                <div style={{ background: '#fff', padding: 10, borderRadius: 8, fontSize: 13, lineHeight: 1.5, border: '1px solid #e9ecef', color: '#334155' }}>{selectedEval.nhanXet}</div>
+              </div>
+            )}
+            {selectedEval.mucTieuTiepTheo && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>🎯 Mục tiêu tiếp theo</div>
+                <div style={{ background: '#fff', padding: 10, borderRadius: 8, fontSize: 13, lineHeight: 1.5, border: '1px solid #e9ecef', color: '#334155' }}>{selectedEval.mucTieuTiepTheo}</div>
+              </div>
+            )}
+            {selectedEval.keHoachPhatTrien && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>🚀 Kế hoạch phát triển</div>
+                <div style={{ background: '#fff', padding: 10, borderRadius: 8, fontSize: 13, lineHeight: 1.5, border: '1px solid #e9ecef', color: '#334155' }}>{selectedEval.keHoachPhatTrien}</div>
+              </div>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="secondary" onClick={() => setSelectedEval(null)}>Đóng</Button>
+          </ModalFooter>
+        </Modal>
       )}
 
-      {/* CREATE MODAL */}
+      {/* Create Modal */}
       {showCreateModal && (
-        <div style={s.modalOverlay}>
-          <div style={{...s.modal, maxWidth: 800}}>
-            <div style={s.modalHeader}>
-              <h3 style={s.modalTitle}>➕ Tạo đánh giá mới</h3>
-              <button style={s.closeBtn} onClick={() => setShowCreateModal(false)}>×</button>
+        <Modal isOpen={true} onClose={() => setShowCreateModal(false)} size="large">
+          <ModalHeader onClose={() => setShowCreateModal(false)}>
+            <ModalTitle>Tạo đánh giá mới</ModalTitle>
+          </ModalHeader>
+          <ModalBody style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+              <FormGroup style={{ gridColumn: '1 / -1' }}>
+                <FormLabel required>Nhân viên</FormLabel>
+                <FormSelect value={formData.nhanvienId} onChange={e => setFormData({ ...formData, nhanvienId: e.target.value })}>
+                  <option value="">-- Chọn nhân viên --</option>
+                  {employees.map(emp => (
+                    <option key={emp.nhanvienId} value={emp.nhanvienId}>{emp.hoTen} - {emp.chucVu?.tenChucVu || 'N/A'}</option>
+                  ))}
+                </FormSelect>
+              </FormGroup>
+              <FormGroup>
+                <FormLabel required>Kỳ đánh giá</FormLabel>
+                <FormInput type="text" placeholder="VD: Q1-2024" value={formData.kyDanhGia} onChange={e => setFormData({ ...formData, kyDanhGia: e.target.value })} />
+              </FormGroup>
+              <FormGroup>
+                <FormLabel required>Loại đánh giá</FormLabel>
+                <FormSelect value={formData.loaiDanhGia} onChange={e => setFormData({ ...formData, loaiDanhGia: e.target.value })}>
+                  <option value="HANG_QUY">📅 Hàng quý</option>
+                  <option value="HANG_NAM">🎆 Hàng năm</option>
+                  <option value="THU_VIEC">👤 Thử việc</option>
+                  <option value="THANG_CHUC">🚀 Thăng chức</option>
+                  <option value="DANG_KY_TANG_LUONG">💰 Đăng ký tăng lương</option>
+                </FormSelect>
+              </FormGroup>
+              <FormGroup>
+                <FormLabel required>Ngày bắt đầu</FormLabel>
+                <FormInput type="date" value={formData.ngayBatDau} onChange={e => setFormData({ ...formData, ngayBatDau: e.target.value })} />
+              </FormGroup>
+              <FormGroup>
+                <FormLabel required>Ngày kết thúc</FormLabel>
+                <FormInput type="date" value={formData.ngayKetThuc} onChange={e => setFormData({ ...formData, ngayKetThuc: e.target.value })} />
+              </FormGroup>
             </div>
-            
-            <div style={s.modalBody}>
-              <div style={s.formGrid}>
-                {/* Nhân viên */}
-                <div style={s.formGroup}>
-                  <label style={s.label}>Nhân viên <span style={{color: 'red'}}>*</span></label>
-                  <select
-                    style={s.input}
-                    value={formData.nhanvienId}
-                    onChange={e => setFormData({...formData, nhanvienId: e.target.value})}
-                  >
-                    <option value="">-- Chọn nhân viên --</option>
-                    {employees.map(emp => (
-                      <option key={emp.nhanvienId} value={emp.nhanvienId}>
-                        {emp.hoTen} - {emp.chucVu?.tenChucVu || 'N/A'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
 
-                {/* Kỳ đánh giá */}
-                <div style={s.formGroup}>
-                  <label style={s.label}>Kỳ đánh giá <span style={{color: 'red'}}>*</span></label>
-                  <input
-                    style={s.input}
-                    type="text"
-                    placeholder="VD: Q1-2024, Q2-2024, 2024"
-                    value={formData.kyDanhGia}
-                    onChange={e => setFormData({...formData, kyDanhGia: e.target.value})}
-                  />
-                </div>
-
-                {/* Loại đánh giá */}
-                <div style={s.formGroup}>
-                  <label style={s.label}>Loại đánh giá <span style={{color: 'red'}}>*</span></label>
-                  <select
-                    style={s.input}
-                    value={formData.loaiDanhGia}
-                    onChange={e => setFormData({...formData, loaiDanhGia: e.target.value})}
-                  >
-                    <option value="HANG_QUY">📅 Hàng quý</option>
-                    <option value="HANG_NAM">🎆 Hàng năm</option>
-                    <option value="THU_VIEC">👤 Thử việc</option>
-                    <option value="THANG_CHUC">🚀 Thăng chức</option>
-                    <option value="DANG_KY_TANG_LUONG">💰 Đăng ký tăng lương</option>
-                  </select>
-                </div>
-
-                {/* Ngày bắt đầu */}
-                <div style={s.formGroup}>
-                  <label style={s.label}>Ngày bắt đầu <span style={{color: 'red'}}>*</span></label>
-                  <input
-                    style={s.input}
-                    type="date"
-                    value={formData.ngayBatDau}
-                    onChange={e => setFormData({...formData, ngayBatDau: e.target.value})}
-                  />
-                </div>
-
-                {/* Ngày kết thúc */}
-                <div style={s.formGroup}>
-                  <label style={s.label}>Ngày kết thúc <span style={{color: 'red'}}>*</span></label>
-                  <input
-                    style={s.input}
-                    type="date"
-                    value={formData.ngayKetThuc}
-                    onChange={e => setFormData({...formData, ngayKetThuc: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              {/* Scores Section */}
-              <div style={{...s.scoresSection, marginTop: 20}}>
-                <h4 style={s.sectionTitle}>📊 Điểm đánh giá (0-10)</h4>
-                <div style={s.scoresGrid}>
-                  <div style={s.formGroup}>
-                    <label style={s.label}>Chuyên môn (40%) <span style={{color: 'red'}}>*</span></label>
-                    <input
-                      style={s.input}
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      placeholder="0-10"
-                      value={formData.diemChuyenMon}
-                      onChange={e => setFormData({...formData, diemChuyenMon: e.target.value})}
-                    />
-                  </div>
-
-                  <div style={s.formGroup}>
-                    <label style={s.label}>Thái độ (30%) <span style={{color: 'red'}}>*</span></label>
-                    <input
-                      style={s.input}
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      placeholder="0-10"
-                      value={formData.diemThaiDo}
-                      onChange={e => setFormData({...formData, diemThaiDo: e.target.value})}
-                    />
-                  </div>
-
-                  <div style={s.formGroup}>
-                    <label style={s.label}>Kỹ năng mềm (20%) <span style={{color: 'red'}}>*</span></label>
-                    <input
-                      style={s.input}
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      placeholder="0-10"
-                      value={formData.diemKyNangMem}
-                      onChange={e => setFormData({...formData, diemKyNangMem: e.target.value})}
-                    />
-                  </div>
-
-                  <div style={s.formGroup}>
-                    <label style={s.label}>Đồng đội (10%) <span style={{color: 'red'}}>*</span></label>
-                    <input
-                      style={s.input}
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      placeholder="0-10"
-                      value={formData.diemDongDoi}
-                      onChange={e => setFormData({...formData, diemDongDoi: e.target.value})}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Comments */}
-              <div style={{marginTop: 16}}>
-                <div style={s.formGroup}>
-                  <label style={s.label}>📝 Nhận xét</label>
-                  <textarea
-                    style={s.textarea}
-                    placeholder="Nhận xét về hiệu suất làm việc..."
-                    value={formData.nhanXet}
-                    onChange={e => setFormData({...formData, nhanXet: e.target.value})}
-                    rows={3}
-                  />
-                </div>
-
-                <div style={s.formGroup}>
-                  <label style={s.label}>🎯 Mục tiêu tiếp theo</label>
-                  <textarea
-                    style={s.textarea}
-                    placeholder="Đặt mục tiêu cho kỳ tiếp theo..."
-                    value={formData.mucTieuTiepTheo}
-                    onChange={e => setFormData({...formData, mucTieuTiepTheo: e.target.value})}
-                    rows={2}
-                  />
-                </div>
-
-                <div style={s.formGroup}>
-                  <label style={s.label}>🚀 Kế hoạch phát triển</label>
-                  <textarea
-                    style={s.textarea}
-                    placeholder="Kế hoạch phát triển năng lực..."
-                    value={formData.keHoachPhatTrien}
-                    onChange={e => setFormData({...formData, keHoachPhatTrien: e.target.value})}
-                    rows={2}
-                  />
-                </div>
+            <div style={{ background: '#f8f9fa', padding: 16, borderRadius: 12, marginBottom: 16 }}>
+              <h4 style={{ margin: '0 0 16px 0', fontSize: 15, fontWeight: 700, color: '#334155' }}>📊 Điểm đánh giá (0-10)</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                {[
+                  { key: 'diemChuyenMon', label: 'Chuyên môn (40%)' },
+                  { key: 'diemThaiDo', label: 'Thái độ (30%)' },
+                  { key: 'diemKyNangMem', label: 'Kỹ năng mềm (20%)' },
+                  { key: 'diemDongDoi', label: 'Đồng đội (10%)' }
+                ].map(item => (
+                  <FormGroup key={item.key}>
+                    <FormLabel required>{item.label}</FormLabel>
+                    <FormInput type="number" min="0" max="10" step="0.1" placeholder="0-10"
+                      value={formData[item.key]} onChange={e => setFormData({ ...formData, [item.key]: e.target.value })} />
+                  </FormGroup>
+                ))}
               </div>
             </div>
-            
-            <div style={s.modalFooter}>
-              <button style={s.btnCancel} onClick={() => setShowCreateModal(false)}>Hủy</button>
-              <button style={s.btnCreate} onClick={handleCreateSubmit}>
-                ✓ Tạo đánh giá
-              </button>
-            </div>
-          </div>
-        </div>
+
+            <FormGroup>
+              <FormLabel>📝 Nhận xét</FormLabel>
+              <FormTextarea placeholder="Nhận xét về hiệu suất làm việc..." rows={3}
+                value={formData.nhanXet} onChange={e => setFormData({ ...formData, nhanXet: e.target.value })} />
+            </FormGroup>
+            <FormGroup>
+              <FormLabel>🎯 Mục tiêu tiếp theo</FormLabel>
+              <FormTextarea placeholder="Đặt mục tiêu cho kỳ tiếp theo..." rows={2}
+                value={formData.mucTieuTiepTheo} onChange={e => setFormData({ ...formData, mucTieuTiepTheo: e.target.value })} />
+            </FormGroup>
+            <FormGroup>
+              <FormLabel>🚀 Kế hoạch phát triển</FormLabel>
+              <FormTextarea placeholder="Kế hoạch phát triển năng lực..." rows={2}
+                value={formData.keHoachPhatTrien} onChange={e => setFormData({ ...formData, keHoachPhatTrien: e.target.value })} />
+            </FormGroup>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="secondary" onClick={() => setShowCreateModal(false)}>Hủy</Button>
+            <Button variant="success" onClick={handleCreateSubmit}>Tạo đánh giá</Button>
+          </ModalFooter>
+        </Modal>
       )}
 
-      {/* APPROVAL MODAL */}
+      {/* Approval Modal */}
       {showApprovalModal && selectedEval && (
-        <div style={s.modalOverlay}>
-          <div style={{...s.modal, maxWidth: 600}}>
-            <div style={s.modalHeader}>
-              <h3 style={s.modalTitle}>
-                {approvalAction === 'APPROVE' ? '🟢 Phê duyệt đánh giá' : '🔴 Từ chối đánh giá'}
-              </h3>
-              <button style={s.closeBtn} onClick={() => setShowApprovalModal(false)}>×</button>
-            </div>
-            
-            <div style={s.modalBody}>
-              {/* Employee Info */}
-              <div style={s.approvalInfoCard}>
-                <div style={s.profileCell}>
-                  <div style={{...s.avatarBox, width: 42, height: 42}}>{selectedEval.avatar || '👤'}</div>
-                  <div>
-                    <div style={{...s.empName, fontSize: 15}}>{selectedEval.tenNhanVien}</div>
-                    <div style={s.empRole}>{selectedEval.chucVu} - {selectedEval.kyDanhGia}</div>
-                  </div>
+        <Modal isOpen={true} onClose={() => setShowApprovalModal(false)}>
+          <ModalHeader onClose={() => setShowApprovalModal(false)}>
+            <ModalTitle>{approvalAction === 'APPROVE' ? '🟢 Phê duyệt đánh giá' : '🔴 Từ chối đánh giá'}</ModalTitle>
+          </ModalHeader>
+          <ModalBody>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 16, background: '#f8f9fa', borderRadius: 12, marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ ...getAvatarStyle(selectedEval.tenNhanVien), width: 42, height: 42 }}>
+                  {selectedEval.tenNhanVien ? selectedEval.tenNhanVien.charAt(0) : 'U'}
                 </div>
-                <div style={{textAlign: 'right'}}>
-                  <div style={{fontSize: 12, color: '#7b809a', marginBottom: 4}}>Xếp loại</div>
-                  {getRankBadge(selectedEval.xepLoai)}
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: '#334155' }}>{selectedEval.tenNhanVien}</div>
+                  <div style={{ fontSize: 12, color: '#7b809a' }}>{selectedEval.chucVu} - {selectedEval.kyDanhGia}</div>
                 </div>
               </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 12, color: '#7b809a', marginBottom: 4 }}>Xếp loại</div>
+                {getRankBadge(selectedEval.xepLoai)}
+              </div>
+            </div>
 
-              {/* Scores Display */}
-              <div style={s.approvalScoresBox}>
-                <div style={s.approvalScoreItem}>
-                  <span style={s.approvalScoreLabel}>Chuyên môn:</span>
-                  <span style={s.approvalScoreValue}>{selectedEval.diemChuyenMon}</span>
+            <div style={{ background: '#fff', border: '1px solid #e9ecef', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+              {[
+                { label: 'Chuyên môn:', value: selectedEval.diemChuyenMon },
+                { label: 'Thái độ:', value: selectedEval.diemThaiDo },
+                { label: 'Kỹ năng mềm:', value: selectedEval.diemKyNangMem },
+                { label: 'Đồng đội:', value: selectedEval.diemDongDoi }
+              ].map((item, idx) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
+                  <span style={{ fontSize: 13, color: '#7b809a', fontWeight: 500 }}>{item.label}</span>
+                  <span style={{ fontSize: 15, color: '#334155', fontWeight: 600 }}>{item.value}</span>
                 </div>
-                <div style={s.approvalScoreItem}>
-                  <span style={s.approvalScoreLabel}>Thái độ:</span>
-                  <span style={s.approvalScoreValue}>{selectedEval.diemThaiDo}</span>
-                </div>
-                <div style={s.approvalScoreItem}>
-                  <span style={s.approvalScoreLabel}>Kỹ năng mềm:</span>
-                  <span style={s.approvalScoreValue}>{selectedEval.diemKyNangMem}</span>
-                </div>
-                <div style={s.approvalScoreItem}>
-                  <span style={s.approvalScoreLabel}>Đồng đội:</span>
-                  <span style={s.approvalScoreValue}>{selectedEval.diemDongDoi}</span>
-                </div>
-                <div style={{...s.approvalScoreItem, borderTop: '2px solid #e9ecef', paddingTop: 8, marginTop: 8}}>
-                  <span style={{...s.approvalScoreLabel, fontWeight: 700}}>Điểm tổng:</span>
-                  <span style={{...s.approvalScoreValue, fontSize: 18, fontWeight: 700, color: '#ec4899'}}>{selectedEval.diemTong}</span>
-                </div>
+              ))}
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #e9ecef', paddingTop: 8, marginTop: 8 }}>
+                <span style={{ fontSize: 13, color: '#334155', fontWeight: 700 }}>Điểm tổng:</span>
+                <span style={{ fontSize: 18, fontWeight: 700, color: '#ec4899' }}>{selectedEval.diemTong}</span>
               </div>
-              
-              {/* Note/Reason Input */}
-              <div style={s.formGroup}>
-                <label style={s.label}>
-                  {approvalAction === 'APPROVE' 
-                    ? '📝 Ghi chú (không bắt buộc)' 
-                    : '❗ Lý do từ chối *'}
-                </label>
-                <textarea 
-                  style={s.textarea}
-                  placeholder={approvalAction === 'APPROVE' 
-                    ? 'Nhập ghi chú phê duyệt...' 
-                    : 'Nhập lý do từ chối (bắt buộc)...'}
-                  value={approvalNote}
-                  onChange={e => setApprovalNote(e.target.value)}
-                  rows={4}
-                />
-              </div>
+            </div>
 
-              {/* Warning for reject */}
-              {approvalAction === 'REJECT' && (
-                <div style={s.warningBox}>
-                  ⚠️ Đánh giá sẽ chuyển về trạng thái "Từ chối" và không thể hoàn tác.
-                </div>
-              )}
-            </div>
-            
-            <div style={s.modalFooter}>
-              <button style={s.btnCancel} onClick={() => setShowApprovalModal(false)}>Hủy</button>
-              <button 
-                style={approvalAction === 'APPROVE' ? s.btnApprove : s.btnReject}
-                onClick={handleApprovalSubmit}
-              >
-                {approvalAction === 'APPROVE' ? '✓ Xác nhận phê duyệt' : '✗ Xác nhận từ chối'}
-              </button>
-            </div>
-          </div>
-        </div>
+            <FormGroup>
+              <FormLabel>{approvalAction === 'APPROVE' ? '📝 Ghi chú (không bắt buộc)' : '❗ Lý do từ chối *'}</FormLabel>
+              <FormTextarea placeholder={approvalAction === 'APPROVE' ? 'Nhập ghi chú phê duyệt...' : 'Nhập lý do từ chối (bắt buộc)...'}
+                rows={4} value={approvalNote} onChange={e => setApprovalNote(e.target.value)} />
+            </FormGroup>
+
+            {approvalAction === 'REJECT' && (
+              <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: 12, fontSize: 13, color: '#c2410c', marginTop: 12 }}>
+                ⚠️ Đánh giá sẽ chuyển về trạng thái "Từ chối" và không thể hoàn tác.
+              </div>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="secondary" onClick={() => setShowApprovalModal(false)}>Hủy</Button>
+            <Button variant={approvalAction === 'APPROVE' ? 'success' : 'danger'} onClick={handleApprovalSubmit}>
+              {approvalAction === 'APPROVE' ? '✓ Xác nhận phê duyệt' : '✗ Xác nhận từ chối'}
+            </Button>
+          </ModalFooter>
+        </Modal>
       )}
-    </div>
+    </PageContainer>
   );
 }
-
-// --- SUB COMPONENTS ---
-function StatCard({ title, value, icon, color, bg }) {
-  return (
-    <div style={{...s.statCard, background: bg, borderLeft: `4px solid ${color}`}}>
-      <div style={s.statContent}>
-        <div>
-          <div style={{...s.statTitle, color: color}}>{title}</div>
-          <div style={{...s.statValue, color: color}}>{value}</div>
-        </div>
-        <div style={{...s.statIcon, color: color}}>{icon}</div>
-      </div>
-    </div>
-  );
-}
-
-function ScoreItem({ label, score, color }) {
-  return (
-    <div style={s.scoreItem}>
-      <div style={s.scoreLabel}>{label}</div>
-      <div style={{...s.scoreValue, color: color}}>{score}</div>
-      <div style={{...s.scoreBar, background: `${color}20`}}>
-        <div style={{...s.scoreBarFill, width: `${score * 10}%`, background: color}} />
-      </div>
-    </div>
-  );
-}
-
-// --- STYLES ---
-const s = {
-  container: {
-    padding: '24px 32px',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    color: '#344767'
-  },
-  headerWrapper: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24
-  },
-  breadcrumb: {
-    fontSize: 13, color: '#7b809a', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase'
-  },
-  pageTitle: {
-    fontSize: 28, fontWeight: 700, margin: 0, color: '#344767'
-  },
-  subtitle: {
-    fontSize: 14, color: '#7b809a', margin: '4px 0 0 0'
-  },
-  btnAdd: {
-    background: 'linear-gradient(195deg, #6366f1, #4f46e5)',
-    color: '#fff', border: 'none', borderRadius: 8, padding: '10px 24px',
-    fontSize: 13, fontWeight: 700, cursor: 'pointer',
-    boxShadow: '0 4px 6px rgba(99, 102, 241, 0.3)', display: 'flex', alignItems: 'center'
-  },
-
-  // Stats
-  statsGrid: {
-    display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginBottom: 24
-  },
-  statCard: {
-    padding: 20, borderRadius: 12, boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
-  },
-  statContent: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-  },
-  statTitle: { fontSize: 13, fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 },
-  statValue: { fontSize: 28, fontWeight: 700 },
-  statIcon: { fontSize: 24, opacity: 0.8 },
-
-  // Filter
-  filterBar: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    marginBottom: 24, background: '#fff', padding: 16, borderRadius: 16,
-    boxShadow: '0 4px 20px rgba(0,0,0,0.03)'
-  },
-  searchWrapper: {
-    position: 'relative', display: 'flex', alignItems: 'center', width: 300
-  },
-  searchIcon: { position: 'absolute', left: 12, color: '#7b809a' },
-  searchInput: {
-    width: '100%', padding: '10px 12px 10px 40px', border: '1px solid #d2d6da',
-    borderRadius: 8, outline: 'none', fontSize: 14, background: '#fff', color: '#344767'
-  },
-  filterSelect: {
-    padding: '10px 12px', border: '1px solid #d2d6da', borderRadius: 8,
-    outline: 'none', fontSize: 14, minWidth: 180, cursor: 'pointer', color: '#344767', background: '#fff'
-  },
-
-  // Table
-  tableCard: {
-    background: '#fff', borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-    overflow: 'hidden', border: '1px solid rgba(0,0,0,0.02)'
-  },
-  table: { width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' },
-  th: {
-    padding: '16px 12px', textAlign: 'left', fontSize: 12, fontWeight: 700,
-    color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5', background: '#fff'
-  },
-  tr: { borderBottom: '1px solid #f0f2f5' },
-  td: { padding: '14px 12px', fontSize: 14, verticalAlign: 'middle', color: '#344767' },
-  tdActions: { padding: '14px 12px', textAlign: 'center' },
-
-  // Cells
-  profileCell: { display: 'flex', alignItems: 'center', gap: 12 },
-  avatarBox: {
-    width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(195deg, #42424a, #191919)',
-    color: '#fff', display: 'grid', placeItems: 'center', fontSize: 16, boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-  },
-  empName: { fontWeight: 600, fontSize: 14 },
-  empRole: { fontSize: 12, color: '#7b809a' },
-
-  scoreBox: {
-    background: '#e0f2fe', color: '#0369a1', padding: '4px 8px',
-    borderRadius: 6, fontSize: 13, fontWeight: 700, display: 'inline-block'
-  },
-  totalScore: {
-    background: 'linear-gradient(195deg, #ec4899, #d946ef)', color: '#fff',
-    padding: '6px 12px', borderRadius: 8, fontSize: 15, fontWeight: 700, display: 'inline-block'
-  },
-
-  // Actions
-  actionGroup: { display: 'flex', justifyContent: 'center', gap: 8 },
-  submitBtn: {
-    padding: '8px 10px', background: '#f59e0b', color: '#fff', border: 'none',
-    borderRadius: 6, cursor: 'pointer', fontSize: 14, fontWeight: 600,
-    transition: 'all 0.2s',
-  },
-  approveBtn: {
-    padding: '8px 10px', background: '#10b981', color: '#fff', border: 'none',
-    borderRadius: 6, cursor: 'pointer', fontSize: 14, fontWeight: 600,
-    transition: 'all 0.2s',
-  },
-  rejectBtn: {
-    padding: '8px 10px', background: '#ef4444', color: '#fff', border: 'none',
-    borderRadius: 6, cursor: 'pointer', fontSize: 14, fontWeight: 600,
-    transition: 'all 0.2s',
-  },
-  viewBtn: {
-    padding: '8px 10px', background: '#e9ecef', color: '#344767', border: 'none',
-    borderRadius: 6, cursor: 'pointer', fontSize: 14
-  },
-  emptyState: { textAlign: 'center', padding: 40, color: '#7b809a', fontSize: 16 },
-
-  // Modal
-  modalOverlay: {
-    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-  },
-  modal: {
-    background: '#fff', borderRadius: 16, width: 550, maxWidth: '95%',
-    maxHeight: '90vh', display: 'flex', flexDirection: 'column',
-    boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
-  },
-  modalHeader: {
-    padding: '20px 24px', borderBottom: '1px solid #f0f2f5',
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-  },
-  modalTitle: { margin: 0, fontSize: 18, fontWeight: 700, color: '#344767' },
-  closeBtn: { border: 'none', background: 'none', fontSize: 24, color: '#7b809a', cursor: 'pointer' },
-  modalBody: { padding: 20, overflowY: 'auto', flex: 1 },
-
-  infoSection: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    paddingBottom: 16, borderBottom: '1px solid #f0f2f5', marginBottom: 16
-  },
-
-  detailGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 },
-  detailItem: {},
-  detailLabel: {
-    fontSize: 12, color: '#7b809a', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase'
-  },
-  detailValue: { fontSize: 14, color: '#344767', fontWeight: 500 },
-
-  // Scores Section
-  scoresSection: {
-    background: '#f8f9fa', padding: 16, borderRadius: 12, marginBottom: 16
-  },
-  sectionTitle: { margin: '0 0 16px 0', fontSize: 15, fontWeight: 700, color: '#344767' },
-  scoresGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 },
-  scoreItem: { display: 'flex', flexDirection: 'column', gap: 4 },
-  scoreLabel: { fontSize: 12, color: '#7b809a', fontWeight: 600 },
-  scoreValue: { fontSize: 20, fontWeight: 700 },
-  scoreBar: { height: 6, borderRadius: 3, overflow: 'hidden' },
-  scoreBarFill: { height: '100%', borderRadius: 3, transition: 'width 0.3s' },
-  totalScoreBox: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    background: '#fff', padding: 12, borderRadius: 8, border: '2px solid #e5e7eb'
-  },
-  bigScore: { fontSize: 32, fontWeight: 700, color: '#ec4899' },
-
-  // Comments
-  commentSection: { marginBottom: 12 },
-  commentBox: {
-    background: '#fff', padding: 10, borderRadius: 8, fontSize: 13, lineHeight: 1.5,
-    border: '1px solid #e9ecef', color: '#344767'
-  },
-
-  // Form
-  formGroup: { display: 'flex', flexDirection: 'column', gap: 8 },
-  label: { fontSize: 14, fontWeight: 600, color: '#344767' },
-  textarea: {
-    width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #d2d6da',
-    outline: 'none', fontSize: 14, minHeight: 80, resize: 'vertical',
-    color: '#344767', background: '#fff', fontFamily: 'inherit', boxSizing: 'border-box'
-  },
-
-  modalFooter: {
-    padding: '16px 24px', display: 'flex', justifyContent: 'flex-end', gap: 12,
-    borderTop: '1px solid #f0f2f5'
-  },
-  btnCancel: {
-    padding: '10px 20px', borderRadius: 8, border: 'none', background: '#f0f2f5',
-    color: '#7b809a', fontWeight: 600, cursor: 'pointer'
-  },
-  btnApprove: {
-    padding: '10px 24px', borderRadius: 8, border: 'none',
-    background: 'linear-gradient(195deg, #10b981, #059669)', color: '#fff',
-    fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-  },
-  btnReject: {
-    padding: '10px 24px', borderRadius: 8, border: 'none',
-    background: 'linear-gradient(195deg, #ef4444, #dc2626)', color: '#fff',
-    fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-  },
-  btnCreate: {
-    padding: '10px 24px', borderRadius: 8, border: 'none',
-    background: 'linear-gradient(195deg, #6366f1, #4f46e5)', color: '#fff',
-    fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-  },
-  
-  // Form styles
-  formGrid: {
-    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16
-  },
-  input: {
-    width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #d2d6da',
-    outline: 'none', fontSize: 14, color: '#344767', background: '#fff',
-    fontFamily: 'inherit', boxSizing: 'border-box'
-  },
-  
-  // Approval modal specific styles
-  approvalInfoCard: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: 16, background: '#f8f9fa', borderRadius: 12, marginBottom: 16
-  },
-  approvalScoresBox: {
-    background: '#fff', border: '1px solid #e9ecef', borderRadius: 12,
-    padding: 16, marginBottom: 16
-  },
-  approvalScoreItem: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '8px 0'
-  },
-  approvalScoreLabel: {
-    fontSize: 13, color: '#7b809a', fontWeight: 500
-  },
-  approvalScoreValue: {
-    fontSize: 15, color: '#344767', fontWeight: 600
-  },
-  warningBox: {
-    background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8,
-    padding: 12, fontSize: 13, color: '#c2410c', marginTop: 12
-  }
-};
