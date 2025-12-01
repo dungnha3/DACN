@@ -48,16 +48,18 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Dự án của tôi'),
         centerTitle: true,
-        backgroundColor: Colors.blue.shade800,
+        backgroundColor: theme.primaryColor,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: _isLoading
-          ? const LoadingIndicator()
+          ? Center(child: CircularProgressIndicator(color: theme.primaryColor))
           : _projects.isEmpty
               ? const EmptyState(message: 'Bạn chưa tham gia dự án nào', icon: Icons.folder_open)
               : RefreshIndicator(
@@ -67,39 +69,43 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     itemCount: _projects.length,
                     itemBuilder: (context, index) {
                       final project = _projects[index];
-                      return _buildProjectCard(project);
+                      return _buildProjectCard(project, theme);
                     },
                   ),
                 ),
     );
   }
 
-  Widget _buildProjectCard(Map<String, dynamic> project) {
+  Widget _buildProjectCard(Map<String, dynamic> project, ThemeData theme) {
     Color statusColor = Colors.grey;
     String statusText = project['status'] ?? 'UNKNOWN';
     
     if (statusText == 'ACTIVE' || statusText == 'RUNNING') {
-      statusColor = Colors.green;
+      statusColor = theme.colorScheme.secondary;
       statusText = 'Đang chạy';
     } else if (statusText == 'COMPLETED' || statusText == 'FINISHED') {
-      statusColor = Colors.blue;
+      statusColor = theme.colorScheme.primary;
       statusText = 'Hoàn thành';
     } else if (statusText == 'PENDING') {
-      statusColor = Colors.orange;
+      statusColor = theme.colorScheme.error; // Or warning color
       statusText = 'Chờ duyệt';
     }
 
+    // Mock Progress
+    double progress = 0.75; // 75%
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
+      shadowColor: Colors.black.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () {
-          // Navigate to project details or tasks in this project
+          // Navigate to project details
         },
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -109,8 +115,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   Expanded(
                     child: Text(
                       project['name'] ?? 'Tên dự án',
-                      style: const TextStyle(
-                        fontSize: 18,
+                      style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,
@@ -118,11 +123,11 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: statusColor.withValues(alpha: 0.5)),
+                      color: statusColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: statusColor.withOpacity(0.5)),
                     ),
                     child: Text(
                       statusText,
@@ -138,21 +143,88 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
+              
+              // Progress Bar
               Row(
                 children: [
-                  const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Bắt đầu: ${project['startDate'] ?? 'N/A'}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: Colors.grey.shade200,
+                        valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.secondary),
+                        minHeight: 8,
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 16),
-                  const Icon(Icons.flag_outlined, size: 14, color: Colors.grey),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 10),
                   Text(
-                    'Kết thúc: ${project['endDate'] ?? 'N/A'}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    '${(progress * 100).toInt()}%',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade700),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // Footer: Dates & Avatars
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today, size: 16, color: Colors.grey.shade400),
+                      const SizedBox(width: 6),
+                      Text(
+                        project['endDate'] ?? 'N/A',
+                        style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                      ),
+                    ],
+                  ),
+                  
+                  // Avatar Stack (Mock)
+                  SizedBox(
+                    width: 80,
+                    height: 30,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          left: 0,
+                          child: CircleAvatar(
+                            radius: 14,
+                            backgroundColor: Colors.white,
+                            child: CircleAvatar(
+                              radius: 12,
+                              backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=1'),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          left: 20,
+                          child: CircleAvatar(
+                            radius: 14,
+                            backgroundColor: Colors.white,
+                            child: CircleAvatar(
+                              radius: 12,
+                              backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=2'),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          left: 40,
+                          child: CircleAvatar(
+                            radius: 14,
+                            backgroundColor: Colors.white,
+                            child: CircleAvatar(
+                              radius: 12,
+                              backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=3'),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

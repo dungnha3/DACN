@@ -131,12 +131,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Thông báo'),
         centerTitle: true,
-        backgroundColor: Colors.blue.shade800,
+        backgroundColor: theme.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -166,9 +167,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 itemCount: _notifications.length + (_hasMore ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == _notifications.length) {
-                    return const Center(child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: CircularProgressIndicator(),
+                    return Center(child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: CircularProgressIndicator(color: theme.primaryColor),
                     ));
                   }
 
@@ -181,7 +182,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     background: Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade400,
+                        color: theme.colorScheme.error,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       alignment: Alignment.centerRight,
@@ -192,20 +193,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       _deleteNotification(notification.id, index);
                     },
                     child: Card(
-                      color: isRead ? Colors.white : Colors.blue.shade50,
-                      elevation: isRead ? 1 : 2,
+                      color: isRead ? Colors.white : theme.primaryColor.withOpacity(0.05),
+                      elevation: isRead ? 1 : 0,
                       shadowColor: Colors.black12,
                       margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: isRead ? BorderSide.none : BorderSide(color: theme.primaryColor.withOpacity(0.2)),
+                      ),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(12),
                         onTap: () {
                           if (!isRead) {
                             _markAsRead(notification.id, index);
                           }
-                          // Navigation logic based on type
-                          // Note: NotificationModel might need referenceId if we want to navigate
-                          // For now, just mark as read.
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(16),
@@ -214,10 +215,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             children: [
                               CircleAvatar(
                                 radius: 20,
-                                backgroundColor: isRead ? Colors.grey[200] : Colors.blue.shade100,
+                                backgroundColor: isRead ? Colors.grey[200] : theme.primaryColor.withOpacity(0.1),
                                 child: Icon(
                                   _getIconForType(notification.type),
-                                  color: isRead ? Colors.grey : Colors.blue.shade700,
+                                  color: isRead ? Colors.grey : theme.primaryColor,
                                   size: 20,
                                 ),
                               ),
@@ -235,7 +236,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                             style: TextStyle(
                                               fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
                                               fontSize: 16,
-                                              color: Colors.black87,
+                                              color: isRead ? Colors.black87 : theme.primaryColor,
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
@@ -245,8 +246,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                           Container(
                                             width: 8,
                                             height: 8,
-                                            decoration: const BoxDecoration(
-                                              color: Colors.blue,
+                                            decoration: BoxDecoration(
+                                              color: theme.colorScheme.error,
                                               shape: BoxShape.circle,
                                             ),
                                           ),
@@ -282,13 +283,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   IconData _getIconForType(String type) {
     switch (type) {
       case 'TASK':
-        return Icons.assignment;
+        return Icons.assignment_outlined;
       case 'CHAT':
-        return Icons.chat;
+        return Icons.chat_bubble_outline;
       case 'SYSTEM':
-        return Icons.info;
+        return Icons.info_outline;
+      case 'LEAVE':
+        return Icons.calendar_today_outlined;
+      case 'PAYROLL':
+        return Icons.attach_money;
       default:
-        return Icons.notifications;
+        return Icons.notifications_none;
     }
   }
 }

@@ -141,12 +141,13 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Nghỉ Phép'),
         centerTitle: true,
-        backgroundColor: Colors.blue.shade700,
+        backgroundColor: theme.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
         bottom: TabBar(
@@ -164,16 +165,16 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildListTab(),
-          _buildCreateTab(),
+          _buildListTab(theme),
+          _buildCreateTab(theme),
         ],
       ),
     );
   }
 
-  Widget _buildListTab() {
+  Widget _buildListTab(ThemeData theme) {
     if (_isLoadingList) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator(color: theme.primaryColor));
     }
 
     return Column(
@@ -184,14 +185,14 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.orange.shade400, Colors.deepOrange.shade400],
+              colors: [theme.colorScheme.secondary, theme.primaryColor],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.orange.withValues(alpha: 0.3),
+                color: theme.primaryColor.withOpacity(0.3),
                 blurRadius: 10,
                 offset: const Offset(0, 5),
               ),
@@ -221,7 +222,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: Colors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.beach_access, color: Colors.white, size: 30),
@@ -249,7 +250,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
                     itemCount: _leaveRequests.length,
                     itemBuilder: (context, index) {
                       final request = _leaveRequests[index];
-                      return _buildRequestCard(request);
+                      return _buildRequestCard(request, theme);
                     },
                   ),
                 ),
@@ -258,18 +259,18 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
     );
   }
 
-  Widget _buildRequestCard(LeaveRequest request) {
+  Widget _buildRequestCard(LeaveRequest request, ThemeData theme) {
     Color statusColor = Colors.grey;
     String statusText = request.trangThai;
     
     if (statusText == 'PENDING' || statusText == 'CHO_DUYET') {
-      statusColor = Colors.orange;
+      statusColor = theme.colorScheme.secondary; // Use secondary for pending/info
       statusText = 'Chờ duyệt';
     } else if (statusText == 'APPROVED' || statusText == 'DA_DUYET' || statusText == 'DUYET') {
-      statusColor = Colors.green;
+      statusColor = theme.colorScheme.primary; // Use primary/success
       statusText = 'Đã duyệt';
     } else if (statusText == 'REJECTED' || statusText == 'TU_CHOI') {
-      statusColor = Colors.red;
+      statusColor = theme.colorScheme.error;
       statusText = 'Từ chối';
     }
 
@@ -294,20 +295,20 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
+                    color: theme.primaryColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     typeText,
-                    style: TextStyle(color: Colors.blue.shade800, fontWeight: FontWeight.bold, fontSize: 12),
+                    style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
+                    color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: statusColor.withValues(alpha: 0.5)),
+                    border: Border.all(color: statusColor.withOpacity(0.5)),
                   ),
                   child: Text(
                     statusText,
@@ -353,7 +354,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
     );
   }
 
-  Widget _buildCreateTab() {
+  Widget _buildCreateTab(ThemeData theme) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Form(
@@ -361,24 +362,15 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Loại nghỉ phép', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('Loại nghỉ phép', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            DropdownButtonFormField<String>(
-              value: _selectedType,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                filled: true,
-                fillColor: Colors.white,
-              ),
-              items: const [
-                DropdownMenuItem(value: 'PHEP_NAM', child: Text('Nghỉ phép năm')),
-                DropdownMenuItem(value: 'NGHI_OM', child: Text('Nghỉ ốm')),
-                DropdownMenuItem(value: 'KHONG_LUONG', child: Text('Nghỉ không lương')),
+            Wrap(
+              spacing: 10,
+              children: [
+                _buildChoiceChip('Phép năm', 'PHEP_NAM', theme),
+                _buildChoiceChip('Nghỉ ốm', 'NGHI_OM', theme),
+                _buildChoiceChip('Không lương', 'KHONG_LUONG', theme),
               ],
-              onChanged: (value) {
-                if (value != null) setState(() => _selectedType = value);
-              },
             ),
             
             const SizedBox(height: 25),
@@ -389,7 +381,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Từ ngày', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text('Từ ngày', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 10),
                       InkWell(
                         onTap: () => _selectDate(context, true),
@@ -402,7 +394,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.calendar_today, size: 20, color: Colors.blue),
+                              Icon(Icons.calendar_today, size: 20, color: theme.primaryColor),
                               const SizedBox(width: 10),
                               Text(
                                 _startDate == null ? 'Chọn ngày' : DateFormat('dd/MM/yyyy').format(_startDate!),
@@ -423,7 +415,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Đến ngày', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text('Đến ngày', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 10),
                       InkWell(
                         onTap: () => _selectDate(context, false),
@@ -436,7 +428,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.calendar_today, size: 20, color: Colors.blue),
+                              Icon(Icons.calendar_today, size: 20, color: theme.primaryColor),
                               const SizedBox(width: 10),
                               Text(
                                 _endDate == null ? 'Chọn ngày' : DateFormat('dd/MM/yyyy').format(_endDate!),
@@ -457,7 +449,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
 
             const SizedBox(height: 25),
 
-            const Text('Lý do', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('Lý do', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             TextFormField(
               controller: _reasonController,
@@ -484,9 +476,9 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _submitRequest,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade700,
+                  backgroundColor: theme.primaryColor,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                   elevation: 3,
                 ),
                 child: _isSubmitting
@@ -497,6 +489,25 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildChoiceChip(String label, String value, ThemeData theme) {
+    bool isSelected = _selectedType == value;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        if (selected) {
+          setState(() => _selectedType = value);
+        }
+      },
+      selectedColor: theme.primaryColor,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : Colors.black87,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+      backgroundColor: Colors.grey.shade200,
     );
   }
 }
