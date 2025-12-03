@@ -43,4 +43,3 @@ public class ChatRoomMember {
         MEMBER
     }
 }
-

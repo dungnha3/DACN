@@ -30,10 +30,10 @@ public class ChatUtilityController {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new UnauthorizedException("User chưa đăng nhập");
         }
-        
+
         String username = authentication.getName();
         return userRepository.findByUsername(username)
-            .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
     }
 
     /**
@@ -42,14 +42,14 @@ public class ChatUtilityController {
     @GetMapping("/me")
     public ResponseEntity<Map<String, Object>> getCurrentUserInfo() {
         User currentUser = getCurrentUser();
-        
+
         Map<String, Object> userInfo = new HashMap<>();
         userInfo.put("userId", currentUser.getUserId());
         userInfo.put("username", currentUser.getUsername());
         userInfo.put("email", currentUser.getEmail());
         userInfo.put("avatarUrl", currentUser.getAvatarUrl());
         userInfo.put("isOnline", currentUser.getIsOnline());
-        
+
         return ResponseEntity.ok(userInfo);
     }
 
@@ -65,4 +65,3 @@ public class ChatUtilityController {
         return ResponseEntity.ok(response);
     }
 }
-

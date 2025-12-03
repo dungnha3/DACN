@@ -4,9 +4,9 @@ export default function MessageBubble({ message, isOwn }) {
   const formatTime = (timestamp) => {
     if (!timestamp) return ''
     const date = new Date(timestamp)
-    return date.toLocaleTimeString('vi-VN', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return date.toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit'
     })
   }
 
@@ -28,7 +28,7 @@ export default function MessageBubble({ message, isOwn }) {
     if (message.messageType === 'IMAGE' && message.file) {
       return (
         <div style={styles.imageMessage}>
-          <img 
+          <img
             src={message.file.fileUrl || `/api/storage/files/${message.file.fileId}`}
             alt={message.file.originalFilename}
             style={styles.messageImage}
@@ -51,25 +51,25 @@ export default function MessageBubble({ message, isOwn }) {
           {message.senderName?.charAt(0).toUpperCase() || '?'}
         </div>
       )}
-      
+
       <div style={styles.bubble}>
         {!isOwn && message.senderName && (
           <div style={styles.senderName}>{message.senderName}</div>
         )}
-        
+
         <div style={{
           ...styles.content,
           ...(isOwn ? styles.contentOwn : styles.contentOther)
         }}>
           {renderMessageContent()}
-          
+
           {message.isDeleted && (
             <div style={styles.deletedMessage}>
               <em>Tin nhắn đã bị xóa</em>
             </div>
           )}
         </div>
-        
+
         <div style={{
           ...styles.meta,
           ...(isOwn ? styles.metaOwn : styles.metaOther)
@@ -85,7 +85,7 @@ export default function MessageBubble({ message, isOwn }) {
       </div>
 
       {isOwn && (
-        <div style={{...styles.avatar, ...styles.avatarOwn}}>
+        <div style={{ ...styles.avatar, ...styles.avatarOwn }}>
           {message.senderName?.charAt(0).toUpperCase() || 'B'}
         </div>
       )}

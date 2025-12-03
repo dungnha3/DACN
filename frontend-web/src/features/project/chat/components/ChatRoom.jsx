@@ -43,14 +43,14 @@ export default function ChatRoom({ roomId, wsConnected }) {
         chatRoomApi.getById(roomId),
         messageApi.getMessages(roomId)
       ])
-      
+
       // Transform messages to include senderName and senderId for compatibility
       const transformedMessages = messagesData.map(msg => ({
         ...msg,
         senderName: msg.sender?.username,
         senderId: msg.sender?.userId
       }))
-      
+
       setRoomInfo(roomData)
       setMessages(transformedMessages)
       setLoading(false)
@@ -64,19 +64,19 @@ export default function ChatRoom({ roomId, wsConnected }) {
       if (wsMessage.type === 'CHAT_MESSAGE') {
         // wsMessage.data contains full MessDTO from backend
         const messageData = wsMessage.data
-        
+
         if (!messageData) {
           console.error('Message data is missing from WebSocket message')
           return
         }
-        
+
         // Transform message to include senderName and senderId for compatibility
         const message = {
           ...messageData,
           senderName: messageData.sender?.username || wsMessage.username,
           senderId: messageData.sender?.userId || wsMessage.userId
         }
-        
+
         setMessages(prev => [...prev, message])
         scrollToBottom()
       }
@@ -89,7 +89,7 @@ export default function ChatRoom({ roomId, wsConnected }) {
 
   const handleSendMessage = async (e) => {
     e.preventDefault()
-    
+
     if (!newMessage.trim() || sending) return
 
     try {
@@ -105,26 +105,26 @@ export default function ChatRoom({ roomId, wsConnected }) {
 
   const getRoomTitle = () => {
     if (!roomInfo) return 'Đang tải...'
-    
+
     if (roomInfo.type === 'DIRECT' && roomInfo.members?.length === 2) {
       const otherMember = roomInfo.members.find(m => m.userId !== user?.userId)
       return otherMember?.username || 'Unknown User'
     }
-    
+
     return roomInfo.name || 'Cuộc trò chuyện'
   }
 
   const getRoomSubtitle = () => {
     if (!roomInfo) return ''
-    
+
     if (roomInfo.type === 'PROJECT') {
       return `Dự án: ${roomInfo.project?.name || 'N/A'}`
     }
-    
+
     if (roomInfo.type === 'GROUP') {
       return `${roomInfo.members?.length || 0} thành viên`
     }
-    
+
     return 'Chat trực tiếp'
   }
 
@@ -148,7 +148,7 @@ export default function ChatRoom({ roomId, wsConnected }) {
           {wsConnected && (
             <span style={styles.onlineIndicator} title="Đang kết nối">🟢</span>
           )}
-          <button 
+          <button
             style={styles.moreBtn}
             onClick={() => setShowSettings(true)}
             title="Cài đặt nhóm"
@@ -180,8 +180,8 @@ export default function ChatRoom({ roomId, wsConnected }) {
 
       {/* Input Area */}
       <div style={styles.inputArea}>
-        <button 
-          style={styles.attachBtn} 
+        <button
+          style={styles.attachBtn}
           title="Đính kèm file"
           onClick={() => setShowFileModal(true)}
         >

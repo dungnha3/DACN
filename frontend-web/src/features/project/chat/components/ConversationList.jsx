@@ -46,8 +46,8 @@ export default function ConversationList({ rooms = [], selectedRoomId, onSelectR
       {/* Header */}
       <div style={styles.header}>
         <h2 style={styles.title}>Trò chuyện</h2>
-        <button 
-          style={styles.newChatBtn} 
+        <button
+          style={styles.newChatBtn}
           title="Tạo nhóm chat mới"
           onClick={() => setShowCreateModal(true)}
         >

@@ -14,20 +14,20 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateChatRoomRequest {
-    
+
     @NotBlank(message = "Tên phòng chat không được để trống")
     @Size(max = 100, message = "Tên phòng chat không được vượt quá 100 ký tự")
     private String name;
-    
+
     @Size(max = 500, message = "URL avatar không được vượt quá 500 ký tự")
     private String avatarUrl;
-    
+
     private Long projectId;
-    
+
     @NotNull(message = "Danh sách thành viên không được để trống")
     @Size(min = 2, message = "Phòng chat phải có ít nhất 2 thành viên")
     private List<Long> memberIds;
-    
+
     @NotNull(message = "Loại phòng chat không được để trống")
     private ChatRoom.RoomType roomType;
 }

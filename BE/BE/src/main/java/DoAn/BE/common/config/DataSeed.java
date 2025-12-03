@@ -197,6 +197,14 @@ public class DataSeed {
             nv.setDiaChi("Số " + (i + 1) + " Phố Láng Hạ, " + cities[i % cities.length]);
 
             nv.setCccd("0" + String.format("%011d", 12345678900L + i));
+
+            // Generate US phone number: +1 (XXX) XXX-XXXX
+            int areaCode = 200 + (i * 17) % 800; // 200-999
+            int prefix = 200 + (i * 23) % 800; // 200-999
+            int lineNumber = 1000 + (i * 37) % 9000; // 1000-9999
+            String usPhoneNumber = String.format("+1 (%03d) %03d-%04d", areaCode, prefix, lineNumber);
+            nv.setSdt(usPhoneNumber);
+
             nv.setNgayVaoLam(LocalDate.now().minusMonths(i * 2L));
             nv.setPhongBan(departments.get(i % departments.size()));
 
@@ -377,6 +385,7 @@ public class DataSeed {
             dg.setDiemChuyenMon(new BigDecimal(7.0 + (i % 5) * 0.5));
             dg.setDiemThaiDo(new BigDecimal(7.5 + (i % 5) * 0.5));
             dg.setDiemKyNangMem(new BigDecimal(7.0 + (i % 6) * 0.4));
+            dg.setDiemDongDoi(new BigDecimal(7.0 + (i % 7) * 0.5));
 
             String[] comments = {
                     "Nhân viên nhiệt tình, tích cực trong công việc",

@@ -26,10 +26,10 @@ export const leaveRequests = [
 
 // Pending Leave Approvals (for team members)
 export const pendingApprovals = [
-  { 
-    id: 1, 
-    employeeName: 'Nguyễn Văn A', 
-    type: 'Nghỉ phép', 
+  {
+    id: 1,
+    employeeName: 'Nguyễn Văn A',
+    type: 'Nghỉ phép',
     fromDate: '10/11/2025',
     toDate: '12/11/2025',
     days: 3,
@@ -37,10 +37,10 @@ export const pendingApprovals = [
     submitDate: '08/11/2025',
     status: 'pending'
   },
-  { 
-    id: 2, 
-    employeeName: 'Trần Thị B', 
-    type: 'Nghỉ ốm', 
+  {
+    id: 2,
+    employeeName: 'Trần Thị B',
+    type: 'Nghỉ ốm',
     fromDate: '09/11/2025',
     toDate: '09/11/2025',
     days: 1,
@@ -48,10 +48,10 @@ export const pendingApprovals = [
     submitDate: '08/11/2025',
     status: 'pending'
   },
-  { 
-    id: 3, 
-    employeeName: 'Lê Văn C', 
-    type: 'Giải trình', 
+  {
+    id: 3,
+    employeeName: 'Lê Văn C',
+    type: 'Giải trình',
     fromDate: '07/11/2025',
     toDate: '07/11/2025',
     days: 1,
@@ -59,10 +59,10 @@ export const pendingApprovals = [
     submitDate: '07/11/2025',
     status: 'pending'
   },
-  { 
-    id: 4, 
-    employeeName: 'Phạm Thị D', 
-    type: 'Nghỉ phép', 
+  {
+    id: 4,
+    employeeName: 'Phạm Thị D',
+    type: 'Nghỉ phép',
     fromDate: '15/11/2025',
     toDate: '16/11/2025',
     days: 2,
@@ -70,10 +70,10 @@ export const pendingApprovals = [
     submitDate: '08/11/2025',
     status: 'approved'
   },
-  { 
-    id: 5, 
-    employeeName: 'Hoàng Văn E', 
-    type: 'Nghỉ phép', 
+  {
+    id: 5,
+    employeeName: 'Hoàng Văn E',
+    type: 'Nghỉ phép',
     fromDate: '05/11/2025',
     toDate: '05/11/2025',
     days: 1,
@@ -119,8 +119,8 @@ export const sectionsConfig = {
     subtitle: 'Tổng quan quản lý dự án của bạn',
   },
   profile: {
-    title: 'Hồ sơ cá nhân',
-    pageTitle: 'Hồ sơ cá nhân',
+    title: 'Thông tin & Tài khoản',
+    pageTitle: 'Thông tin & Tài khoản',
     subtitle: 'Xem và cập nhật thông tin cá nhân',
   },
   timesheet: {
@@ -172,38 +172,38 @@ export const sectionsConfig = {
 
 // START: DATA MẪU MỚI CHO TRANG DỰ ÁN (CHI TIẾT HƠN)
 export const mockProjects = [
-  { 
-    id: 1, 
-    name: 'Website E-commerce (QLNS)', 
-    status: 'Đang tiến hành', 
-    progress: 65, 
+  {
+    id: 1,
+    name: 'Website E-commerce (QLNS)',
+    status: 'Đang tiến hành',
+    progress: 65,
     team: ['A', 'B', 'C', 'D'],
     dueDate: '30/12/2025',
     leader: 'Trần Thị B'
   },
-  { 
-    id: 2, 
-    name: 'Ứng dụng Mobile Banking', 
-    status: 'Tạm dừng', 
-    progress: 20, 
+  {
+    id: 2,
+    name: 'Ứng dụng Mobile Banking',
+    status: 'Tạm dừng',
+    progress: 20,
     team: ['E', 'F'],
     dueDate: 'N/A',
     leader: 'Trần Thị B'
   },
-  { 
-    id: 3, 
-    name: 'Hệ thống ERP nội bộ', 
-    status: 'Hoàn thành', 
-    progress: 100, 
+  {
+    id: 3,
+    name: 'Hệ thống ERP nội bộ',
+    status: 'Hoàn thành',
+    progress: 100,
     team: ['A', 'G', 'H'],
     dueDate: '01/10/2025',
     leader: 'Nguyễn Văn A'
   },
-  { 
-    id: 4, 
-    name: 'Nâng cấp Cơ sở dữ liệu', 
-    status: 'Chưa bắt đầu', 
-    progress: 0, 
+  {
+    id: 4,
+    name: 'Nâng cấp Cơ sở dữ liệu',
+    status: 'Chưa bắt đầu',
+    progress: 0,
     team: ['B', 'D'],
     dueDate: '15/01/2026',
     leader: 'Lê Văn C'
@@ -287,29 +287,29 @@ export const projectTasksData = [
 ]
 
 export const mockSprints = [
-  { 
-    id: 1, 
-    name: 'Sprint 1: Setup & UI Base', 
-    status: 'Hoàn thành', 
-    startDate: '01/10/2025', 
-    endDate: '15/10/2025', 
-    issues: 15 
+  {
+    id: 1,
+    name: 'Sprint 1: Setup & UI Base',
+    status: 'Hoàn thành',
+    startDate: '01/10/2025',
+    endDate: '15/10/2025',
+    issues: 15
   },
-  { 
-    id: 2, 
-    name: 'Sprint 2: Core Features', 
-    status: 'Đang tiến hành', 
-    startDate: '16/10/2025', 
-    endDate: '30/10/2025', 
-    issues: 8 
+  {
+    id: 2,
+    name: 'Sprint 2: Core Features',
+    status: 'Đang tiến hành',
+    startDate: '16/10/2025',
+    endDate: '30/10/2025',
+    issues: 8
   },
-  { 
-    id: 3, 
-    name: 'Sprint 3: Payment & Checkout', 
-    status: 'Chưa bắt đầu', 
-    startDate: '01/11/2025', 
-    endDate: '15/11/2025', 
-    issues: 0 
+  {
+    id: 3,
+    name: 'Sprint 3: Payment & Checkout',
+    status: 'Chưa bắt đầu',
+    startDate: '01/11/2025',
+    endDate: '15/11/2025',
+    issues: 0
   },
 ]
 

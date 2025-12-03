@@ -398,10 +398,10 @@ export default function EvaluationsPage() {
             <TableRow style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'left' }}>NHÂN VIÊN</TableHead>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>KỲ</TableHead>
-              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>CM</TableHead>
-              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>TĐ</TableHead>
-              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>KN</TableHead>
-              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>ĐĐ</TableHead>
+              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>CHUYÊN MÔN</TableHead>
+              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>THÁI ĐỘ</TableHead>
+              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>KỸ NĂNG MỀM</TableHead>
+              <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>ĐỒNG ĐỘI</TableHead>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>TỔNG</TableHead>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>XẾP LOẠI</TableHead>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>TRẠNG THÁI</TableHead>
@@ -526,7 +526,7 @@ export default function EvaluationsPage() {
           <ModalHeader onClose={() => setSelectedEval(null)}>
             <ModalTitle>Chi tiết Đánh giá</ModalTitle>
           </ModalHeader>
-          <ModalBody style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
+          <ModalBody style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto', padding: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, paddingBottom: 20, borderBottom: '1px solid #f1f5f9', marginBottom: 20 }}>
               <div style={{ ...getAvatarStyle(selectedEval.tenNhanVien), width: 56, height: 56, fontSize: 20 }}>
                 {selectedEval.tenNhanVien ? selectedEval.tenNhanVien.charAt(0) : 'U'}
@@ -607,7 +607,7 @@ export default function EvaluationsPage() {
           <ModalHeader onClose={() => setShowCreateModal(false)}>
             <ModalTitle>Tạo đánh giá mới</ModalTitle>
           </ModalHeader>
-          <ModalBody style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
+          <ModalBody style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto', padding: '24px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
               <FormGroup style={{ gridColumn: '1 / -1' }}>
                 <FormLabel required>Nhân viên</FormLabel>
@@ -689,7 +689,7 @@ export default function EvaluationsPage() {
           <ModalHeader onClose={() => setShowApprovalModal(false)}>
             <ModalTitle>{approvalAction === 'APPROVE' ? '🟢 Phê duyệt đánh giá' : '🔴 Từ chối đánh giá'}</ModalTitle>
           </ModalHeader>
-          <ModalBody>
+          <ModalBody style={{ padding: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 16, background: '#f8f9fa', borderRadius: 12, marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ ...getAvatarStyle(selectedEval.tenNhanVien), width: 42, height: 42 }}>

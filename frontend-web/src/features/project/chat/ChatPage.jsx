@@ -26,12 +26,12 @@ export default function ChatPage() {
       setLoading(true)
       const rooms = await chatRoomApi.getMyChatRooms()
       setChatRooms(rooms)
-      
+
       // Auto select first room if available
       if (rooms.length > 0 && !selectedRoomId) {
         setSelectedRoomId(rooms[0].roomId)
       }
-      
+
       setLoading(false)
     } catch (error) {
       setLoading(false)
@@ -71,7 +71,7 @@ export default function ChatPage() {
     <div style={styles.container}>
       {/* Sidebar - Danh sách cuộc trò chuyện */}
       <div style={styles.sidebar}>
-        <ConversationList 
+        <ConversationList
           rooms={chatRooms}
           selectedRoomId={selectedRoomId}
           onSelectRoom={handleSelectRoom}
@@ -82,7 +82,7 @@ export default function ChatPage() {
       {/* Main Chat Area */}
       <div style={styles.mainArea}>
         {selectedRoomId ? (
-          <ChatRoom 
+          <ChatRoom
             roomId={selectedRoomId}
             wsConnected={wsConnected}
           />

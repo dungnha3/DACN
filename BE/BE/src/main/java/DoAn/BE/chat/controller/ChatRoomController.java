@@ -28,7 +28,7 @@ public class ChatRoomController {
 
     @Autowired
     private ChatRoomService chatRoomService;
-    
+
     @Autowired
     private UserRepository userRepository;
 
@@ -38,17 +38,17 @@ public class ChatRoomController {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new UnauthorizedException("User chưa đăng nhập");
         }
-        
+
         // Get User from principal (set by JwtAuthenticationFilter)
         Object principal = authentication.getPrincipal();
         if (principal instanceof User) {
             return (User) principal;
         }
-        
+
         // Fallback: try to find by username
         String username = authentication.getName();
         return userRepository.findByUsername(username)
-            .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("User không tồn tại"));
     }
 
     // Tạo phòng chat mới
@@ -108,7 +108,7 @@ public class ChatRoomController {
     public ResponseEntity<Map<String, String>> leaveRoom(@PathVariable Long roomId) {
         User currentUser = getCurrentUser();
         chatRoomService.leaveRoom(roomId, currentUser.getUserId());
-        
+
         Map<String, String> response = new HashMap<>();
         response.put("message", "Đã rời khỏi phòng chat");
         return ResponseEntity.ok(response);
@@ -154,4 +154,3 @@ public class ChatRoomController {
         return ResponseEntity.ok(chatRoom);
     }
 }
-
