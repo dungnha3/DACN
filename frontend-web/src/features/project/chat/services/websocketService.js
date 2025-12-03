@@ -35,7 +35,7 @@ class WebSocketService {
         console.log('WebSocket connected:', frame)
         this.connected = true
         this.reconnectAttempts = 0
-        
+
         if (onConnected) {
           onConnected(frame)
         }
@@ -43,7 +43,7 @@ class WebSocketService {
       onStompError: (frame) => {
         console.error('STOMP error:', frame)
         this.connected = false
-        
+
         if (onError) {
           onError(frame)
         }
@@ -76,7 +76,7 @@ class WebSocketService {
       })
       this.subscriptions.clear()
       this.messageHandlers.clear()
-      
+
       this.client.deactivate()
       this.connected = false
       console.log('WebSocket disconnected')
@@ -91,7 +91,7 @@ class WebSocketService {
     }
 
     const id = subscriptionId || destination
-    
+
     // Unsubscribe nếu đã tồn tại
     if (this.subscriptions.has(id)) {
       this.subscriptions.get(id).unsubscribe()
@@ -101,7 +101,7 @@ class WebSocketService {
       try {
         const data = JSON.parse(message.body)
         console.log(`Message received from ${destination}:`, data)
-        
+
         if (callback) {
           callback(data)
         }
@@ -112,7 +112,7 @@ class WebSocketService {
 
     this.subscriptions.set(id, subscription)
     console.log(`Subscribed to ${destination}`)
-    
+
     return subscription
   }
 

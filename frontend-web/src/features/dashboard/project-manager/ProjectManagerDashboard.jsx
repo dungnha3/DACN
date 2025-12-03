@@ -44,7 +44,7 @@ export default function ProjectManagerDashboard() {
 
   // Function để render nội dung dựa trên tab được chọn
   const renderContent = () => {
-    switch(active) {
+    switch (active) {
       case 'dashboard':
         return <DashboardOverview user={user} setActive={setActive} />
       case 'profile':
@@ -121,21 +121,21 @@ export default function ProjectManagerDashboard() {
       opacity: isSidebarHovered ? 1 : 0,
       transform: isSidebarHovered ? 'translateX(0)' : 'translateX(-10px)',
     },
-    userName: { 
-      ...styles.userName, 
+    userName: {
+      ...styles.userName,
       color: '#334155',
       whiteSpace: 'nowrap',
       fontSize: 14,
       fontWeight: 600,
     },
-    userRole: { 
-      ...styles.userRole, 
+    userRole: {
+      ...styles.userRole,
       color: '#94a3b8',
       whiteSpace: 'nowrap',
       fontSize: 12,
     },
-    userAvatar: { 
-      ...styles.userAvatar, 
+    userAvatar: {
+      ...styles.userAvatar,
       minWidth: 40,
       width: 40,
       height: 40,
@@ -182,7 +182,7 @@ export default function ProjectManagerDashboard() {
   return (
     <div style={customStyles.appShell}>
       {/* --- SIDEBAR --- */}
-      <aside 
+      <aside
         style={customStyles.sidebar}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -203,9 +203,6 @@ export default function ProjectManagerDashboard() {
           <div style={customStyles.navGroupLabel}>Tổng quan</div>
           <NavItem active={active === 'dashboard'} onClick={() => setActive('dashboard')} icon="🏠" collapsed={!isSidebarHovered}>
             {sections.dashboard.title}
-          </NavItem>
-          <NavItem active={active === 'profile'} onClick={() => setActive('profile')} icon="👤" collapsed={!isSidebarHovered}>
-            {sections.profile.title}
           </NavItem>
         </div>
 
@@ -236,10 +233,17 @@ export default function ProjectManagerDashboard() {
           </NavItem>
         </div>
 
-        <div style={{flex: 1}} />
+        <div style={{ flex: 1 }} />
+
+        <div style={customStyles.navGroup}>
+          <div style={customStyles.navGroupLabel}>Hệ thống</div>
+          <NavItem active={active === 'profile'} onClick={() => setActive('profile')} icon="⚙️" collapsed={!isSidebarHovered}>
+            Thông tin & Tài khoản
+          </NavItem>
+        </div>
 
         <button style={customStyles.logoutBtn} onClick={handleLogout}>
-          <span style={{fontSize: 20, minWidth: 20, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>🚪</span>
+          <span style={{ fontSize: 20, minWidth: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🚪</span>
           <span style={{
             marginLeft: isSidebarHovered ? 12 : 0,
             transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -284,33 +288,33 @@ function DashboardOverview({ user, setActive }) {
     <div style={styles.dashboardContent}>
       {/* KPI Cards Row */}
       <div style={styles.kpiGrid}>
-        <KPICard 
-          title="Số nhân viên" 
-          value={`${kpiData.teamSize} người`} 
-          icon="👥" 
-          color="success" 
-          change="+2 người" 
+        <KPICard
+          title="Số nhân viên"
+          value={`${kpiData.teamSize} người`}
+          icon="👥"
+          color="success"
+          change="+2 người"
         />
-        <KPICard 
-          title="Đơn chờ duyệt" 
-          value={`${kpiData.pendingLeaves} đơn`} 
-          icon="⏳" 
-          color="warning" 
-          change="Cần xử lý" 
+        <KPICard
+          title="Đơn chờ duyệt"
+          value={`${kpiData.pendingLeaves} đơn`}
+          icon="⏳"
+          color="warning"
+          change="Cần xử lý"
         />
-        <KPICard 
-          title="Đã duyệt hôm nay" 
-          value={`${kpiData.approvedToday} đơn`} 
-          icon="✓" 
-          color="info" 
-          change="+2 đơn" 
+        <KPICard
+          title="Đã duyệt hôm nay"
+          value={`${kpiData.approvedToday} đơn`}
+          icon="✓"
+          color="info"
+          change="+2 đơn"
         />
-        <KPICard 
-          title="Tổng đơn tháng" 
-          value={`${kpiData.totalRequests} đơn`} 
-          icon="📊" 
-          color="primary" 
-          change="+5 đơn" 
+        <KPICard
+          title="Tổng đơn tháng"
+          value={`${kpiData.totalRequests} đơn`}
+          icon="📊"
+          color="primary"
+          change="+5 đơn"
         />
       </div>
 
@@ -320,7 +324,7 @@ function DashboardOverview({ user, setActive }) {
           <div style={styles.welcomeContent}>
             <h3 style={styles.welcomeTitle}>Chào mừng, {user.name}!</h3>
             <p style={styles.welcomeText}>
-              Bạn có {kpiData.pendingLeaves} đơn nghỉ phép đang chờ duyệt. 
+              Bạn có {kpiData.pendingLeaves} đơn nghỉ phép đang chờ duyệt.
               Hãy xem xét và phê duyệt để nhân viên có thể sắp xếp công việc.
             </p>
             <button style={styles.checkInBtn} onClick={() => setActive('approvals')}>

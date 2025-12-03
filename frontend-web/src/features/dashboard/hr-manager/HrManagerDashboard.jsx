@@ -8,11 +8,11 @@ import { sectionsConfig } from './components/HrManagerDashboard.constants'
 import {
   EmployeesPage,
   EmployeeDetailPage,
-  LeavesPage, 
+  LeavesPage,
   DepartmentsPage,
   DepartmentDetailPage,
-  ContractsPage, 
-  PositionsPage, 
+  ContractsPage,
+  PositionsPage,
   EvaluationsPage,
   HRStoragePage
 } from '@modules/hr'
@@ -25,7 +25,7 @@ export default function HrManagerDashboard() {
   const [active, setActive] = useState('dashboard')
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null)
   const [selectedDepartmentId, setSelectedDepartmentId] = useState(null)
-  
+
   // Dashboard Data State
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -60,7 +60,7 @@ export default function HrManagerDashboard() {
   // Normalize data to handle both Flat (DashboardDTO) and Nested (DashboardStatsDTO) structures
   const normalizeData = (data) => {
     if (!data) return null;
-    
+
     // Check if nested (DashboardStatsDTO)
     if (data.tongQuan) {
       return {
@@ -71,7 +71,7 @@ export default function HrManagerDashboard() {
         luongTheoThang: data.luongTheoThang || []
       };
     }
-    
+
     // Assume Flat (DashboardDTO) - This matches the simple DTO structure
     return {
       tongNhanVien: data.tongNhanVien || 0,
@@ -175,21 +175,21 @@ export default function HrManagerDashboard() {
       opacity: isSidebarHovered ? 1 : 0,
       transform: isSidebarHovered ? 'translateX(0)' : 'translateX(-10px)',
     },
-    userName: { 
-      ...styles.userName, 
+    userName: {
+      ...styles.userName,
       color: '#334155',
       whiteSpace: 'nowrap',
       fontSize: 14,
       fontWeight: 600,
     },
-    userRole: { 
-      ...styles.userRole, 
+    userRole: {
+      ...styles.userRole,
       color: '#94a3b8',
       whiteSpace: 'nowrap',
       fontSize: 12,
     },
-    userAvatar: { 
-      ...styles.userAvatar, 
+    userAvatar: {
+      ...styles.userAvatar,
       minWidth: 40,
       width: 40,
       height: 40,
@@ -197,7 +197,7 @@ export default function HrManagerDashboard() {
       background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
       boxShadow: '0 2px 4px rgba(100, 116, 139, 0.2)',
     },
-    
+
     // Navigation overrides
     navGroup: {
       marginBottom: 24,
@@ -238,7 +238,7 @@ export default function HrManagerDashboard() {
   return (
     <div style={customStyles.appShell}>
       {/* --- SIDEBAR --- */}
-      <aside 
+      <aside
         style={customStyles.sidebar}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -258,7 +258,6 @@ export default function HrManagerDashboard() {
         <div style={customStyles.navGroup}>
           <div style={customStyles.navGroupLabel}>Tổng quan</div>
           <NavItem active={active === 'dashboard'} onClick={() => setActive('dashboard')} icon="🏠" collapsed={!isSidebarHovered}>Dashboard</NavItem>
-          <NavItem active={active === 'profile'} onClick={() => setActive('profile')} icon="👤" collapsed={!isSidebarHovered}>Hồ sơ cá nhân</NavItem>
         </div>
 
         <div style={customStyles.navGroup}>
@@ -282,10 +281,15 @@ export default function HrManagerDashboard() {
           <NavItem active={active === 'chat'} onClick={() => setActive('chat')} icon="💬" collapsed={!isSidebarHovered}>Trò chuyện</NavItem>
         </div>
 
-        <div style={{flex: 1}} />
+        <div style={{ flex: 1 }} />
+
+        <div style={customStyles.navGroup}>
+          <div style={customStyles.navGroupLabel}>Hệ thống</div>
+          <NavItem active={active === 'profile'} onClick={() => setActive('profile')} icon="⚙️" collapsed={!isSidebarHovered}>Cài đặt</NavItem>
+        </div>
 
         <button style={customStyles.logoutBtn} onClick={handleLogout}>
-          <span style={{fontSize: 20, minWidth: 20, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>🚪</span>
+          <span style={{ fontSize: 20, minWidth: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🚪</span>
           <span style={{
             marginLeft: isSidebarHovered ? 12 : 0,
             transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -302,7 +306,7 @@ export default function HrManagerDashboard() {
 
       {/* --- MAIN CONTENT --- */}
       <main style={customStyles.content}>
-        
+
         {/* Dynamic Header */}
         {!['employees', 'employee-detail', 'departments', 'department-detail', 'positions', 'contracts', 'leaves', 'evaluations', 'storage', 'profile', 'my-leave'].includes(active) && (
           <header style={styles.header}>
@@ -322,14 +326,14 @@ export default function HrManagerDashboard() {
           <div style={styles.dashboardContent}>
             {loading ? (
               <div style={localStyles.loadingContainer}>
-                <div className="spinner" style={localStyles.spinner}>⏳</div> 
-                <div style={{color: '#64748b', marginTop: 16}}>Đang tải dữ liệu hệ thống...</div>
+                <div className="spinner" style={localStyles.spinner}>⏳</div>
+                <div style={{ color: '#64748b', marginTop: 16 }}>Đang tải dữ liệu hệ thống...</div>
               </div>
             ) : (
               <>
                 {/* Stats Grid */}
                 <div style={localStyles.statsGrid}>
-                  <StatCard 
+                  <StatCard
                     title="Tổng nhân viên"
                     value={stats?.tongNhanVien || 0}
                     subtext={`${stats?.nhanVienDangLam || 0} đang hoạt động`}
@@ -337,7 +341,7 @@ export default function HrManagerDashboard() {
                     accentColor="#3b82f6"
                     onClick={() => setActive('employees')}
                   />
-                  <StatCard 
+                  <StatCard
                     title="Cần phê duyệt"
                     value={(stats?.donNghiPhepChoDuyet || 0) + (stats?.bangLuongChoDuyet || 0)}
                     subtext={`${stats?.donNghiPhepChoDuyet || 0} đơn nghỉ • ${stats?.bangLuongChoDuyet || 0} bảng lương`}
@@ -346,7 +350,7 @@ export default function HrManagerDashboard() {
                     onClick={() => setActive('leaves')}
                     highlight={(stats?.donNghiPhepChoDuyet || 0) > 0}
                   />
-                  <StatCard 
+                  <StatCard
                     title="Hợp đồng sắp hết hạn"
                     value={stats?.hopDongHetHan30Ngay || 0}
                     subtext="Trong 30 ngày tới"
@@ -355,7 +359,7 @@ export default function HrManagerDashboard() {
                     onClick={() => setActive('contracts')}
                     highlight={(stats?.hopDongHetHan30Ngay || 0) > 0}
                   />
-                  <StatCard 
+                  <StatCard
                     title="Chi phí lương tháng"
                     value={formatCurrency(stats?.tongChiPhiLuongThang)}
                     subtext="Ước tính hiện tại"
@@ -372,7 +376,7 @@ export default function HrManagerDashboard() {
                       <div style={localStyles.cardIconBg}>📊</div>
                       <h3 style={localStyles.cardTitle}>Chấm công theo phòng ban</h3>
                     </div>
-                    
+
                     <div style={localStyles.chartBody}>
                       {stats?.chamCongPhongBan?.length > 0 ? (
                         <div style={localStyles.barChartContainer}>
@@ -381,9 +385,9 @@ export default function HrManagerDashboard() {
                               <div style={localStyles.barLabel} title={dept.tenPhongBan}>{dept.tenPhongBan}</div>
                               <div style={localStyles.barTrack}>
                                 {/* Stacked Bar */}
-                                <div style={{...localStyles.barSegment, width: `${dept.tiLeDungGio}%`, background: '#10b981'}} title={`Đúng giờ: ${dept.tiLeDungGio}%`}/>
-                                <div style={{...localStyles.barSegment, width: `${(dept.nhanVienDiMuon / dept.tongNhanVien * 100) || 0}%`, background: '#f59e0b'}} title={`Đi muộn: ${dept.nhanVienDiMuon}`}/>
-                                <div style={{...localStyles.barSegment, width: `${(dept.nhanVienVeSom / dept.tongNhanVien * 100) || 0}%`, background: '#ef4444'}} title={`Về sớm: ${dept.nhanVienVeSom}`}/>
+                                <div style={{ ...localStyles.barSegment, width: `${dept.tiLeDungGio}%`, background: '#10b981' }} title={`Đúng giờ: ${dept.tiLeDungGio}%`} />
+                                <div style={{ ...localStyles.barSegment, width: `${(dept.nhanVienDiMuon / dept.tongNhanVien * 100) || 0}%`, background: '#f59e0b' }} title={`Đi muộn: ${dept.nhanVienDiMuon}`} />
+                                <div style={{ ...localStyles.barSegment, width: `${(dept.nhanVienVeSom / dept.tongNhanVien * 100) || 0}%`, background: '#ef4444' }} title={`Về sớm: ${dept.nhanVienVeSom}`} />
                               </div>
                               <div style={localStyles.barValue}>{dept.tiLeDungGio}%</div>
                             </div>
@@ -421,7 +425,7 @@ export default function HrManagerDashboard() {
                                   <span style={localStyles.pieValue}>{item.soLuong}</span>
                                 </div>
                                 <div style={localStyles.pieTrack}>
-                                  <div style={{...localStyles.pieFill, width: `${item.tiLe}%`}} />
+                                  <div style={{ ...localStyles.pieFill, width: `${item.tiLe}%` }} />
                                 </div>
                               </div>
                             ))}
@@ -459,9 +463,9 @@ export default function HrManagerDashboard() {
 // --- Sub-components ---
 
 const StatCard = ({ title, value, subtext, icon, accentColor, onClick, highlight }) => (
-  <div 
+  <div
     style={{
-      ...localStyles.statCard, 
+      ...localStyles.statCard,
       cursor: onClick ? 'pointer' : 'default',
       borderLeft: highlight ? `4px solid ${accentColor}` : 'none'
     }}
@@ -469,12 +473,12 @@ const StatCard = ({ title, value, subtext, icon, accentColor, onClick, highlight
     className="hover-card" // Class for CSS hover effects if globally available
   >
     <div style={localStyles.statHeader}>
-      <div style={{...localStyles.statIcon, background: `${accentColor}20`, color: accentColor}}>{icon}</div>
+      <div style={{ ...localStyles.statIcon, background: `${accentColor}20`, color: accentColor }}>{icon}</div>
       {highlight && <div style={localStyles.badge}>Cần xử lý</div>}
     </div>
     <div style={localStyles.statValue}>{value}</div>
     <div style={localStyles.statLabel}>{title}</div>
-    <div style={{...localStyles.statSub, color: highlight ? accentColor : '#64748b'}}>
+    <div style={{ ...localStyles.statSub, color: highlight ? accentColor : '#64748b' }}>
       {subtext}
     </div>
   </div>
@@ -489,7 +493,7 @@ const EmptyState = ({ message, icon }) => (
 
 const LegendItem = ({ color, label }) => (
   <div style={localStyles.legendItem}>
-    <div style={{...localStyles.legendDot, background: color}} />
+    <div style={{ ...localStyles.legendDot, background: color }} />
     {label}
   </div>
 );
@@ -499,7 +503,7 @@ const LegendItem = ({ color, label }) => (
 const localStyles = {
   loadingContainer: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 400 },
   spinner: { fontSize: 40, animation: 'spin 1s linear infinite' },
-  
+
   welcomeBanner: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
@@ -514,11 +518,11 @@ const localStyles = {
     padding: '12px 24px', borderRadius: 8, fontSize: 14, fontWeight: 600,
     cursor: 'pointer', transition: 'transform 0.2s', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
   },
-  
+
   statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24, marginBottom: 24 },
-  
-  statCard: { 
-    background: '#fff', padding: 24, borderRadius: 16, 
+
+  statCard: {
+    background: '#fff', padding: 24, borderRadius: 16,
     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
     transition: 'transform 0.2s, box-shadow 0.2s',
     display: 'flex', flexDirection: 'column'
@@ -529,12 +533,12 @@ const localStyles = {
   statLabel: { fontSize: 14, fontWeight: 600, color: '#64748b', marginTop: 8 },
   statSub: { fontSize: 13, marginTop: 4 },
   badge: { padding: '2px 8px', background: '#fee2e2', color: '#ef4444', borderRadius: 100, fontSize: 11, fontWeight: 600 },
-  
+
   mainGrid: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24, alignItems: 'start' },
   sideColumn: { display: 'flex', flexDirection: 'column', gap: 24 },
-  
-  card: { 
-    background: '#fff', borderRadius: 16, 
+
+  card: {
+    background: '#fff', borderRadius: 16,
     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
     overflow: 'hidden', display: 'flex', flexDirection: 'column'
   },
@@ -542,18 +546,18 @@ const localStyles = {
   cardIconBg: { width: 32, height: 32, borderRadius: 8, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 },
   cardTitle: { margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' },
   chartBody: { padding: 24, minHeight: 200 },
-  
+
   barChartContainer: { display: 'flex', flexDirection: 'column', gap: 16 },
   barGroup: { display: 'flex', alignItems: 'center', gap: 16 },
   barLabel: { width: 120, fontSize: 13, fontWeight: 500, color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
   barTrack: { flex: 1, height: 12, background: '#f1f5f9', borderRadius: 6, overflow: 'hidden', display: 'flex' },
   barSegment: { height: '100%' },
   barValue: { width: 40, textAlign: 'right', fontSize: 13, fontWeight: 600, color: '#334155' },
-  
+
   legend: { display: 'flex', gap: 20, padding: '0 24px 24px 24px', borderTop: '1px solid #f8fafc', paddingTop: 16 },
   legendItem: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#64748b' },
   legendDot: { width: 10, height: 10, borderRadius: 4 },
-  
+
   pieList: { display: 'flex', flexDirection: 'column', gap: 16 },
   pieItem: { display: 'flex', flexDirection: 'column', gap: 6 },
   pieItemHeader: { display: 'flex', justifyContent: 'space-between', fontSize: 13 },
@@ -561,13 +565,13 @@ const localStyles = {
   pieValue: { color: '#0f172a', fontWeight: 600 },
   pieTrack: { height: 8, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' },
   pieFill: { height: '100%', background: '#3b82f6', borderRadius: 4 },
-  
-  actionBtn: { 
-    border: 'none', background: '#fff', color: '#2563eb', 
-    padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, 
-    cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' 
+
+  actionBtn: {
+    border: 'none', background: '#fff', color: '#2563eb',
+    padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+    cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
   },
-  
+
   emptyState: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#cbd5e1', minHeight: 150 },
   emptyIcon: { fontSize: 32, marginBottom: 8, opacity: 0.5 },
   emptyText: { fontSize: 14 }

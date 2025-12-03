@@ -57,7 +57,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }) {
       })
 
       alert('✅ Tạo nhóm chat thành công!')
-      
+
       if (onSuccess) {
         onSuccess(newGroup)
       }
@@ -120,7 +120,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }) {
                 style={styles.input}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearchUser()}
               />
-              <button 
+              <button
                 onClick={handleSearchUser}
                 style={styles.searchBtn}
               >

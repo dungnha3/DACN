@@ -36,11 +36,11 @@ public class FileService {
     private final UserRepository userRepository;
 
     public FileService(FileRepository fileRepository,
-                      ChatRoomRepository chatRoomRepository,
-                      ChatRoomMemberRepository chatRoomMemberRepository,
-                      MessageRepository messageRepository,
-                      MessageStatusRepository messageStatusRepository,
-                      UserRepository userRepository) {
+            ChatRoomRepository chatRoomRepository,
+            ChatRoomMemberRepository chatRoomMemberRepository,
+            MessageRepository messageRepository,
+            MessageStatusRepository messageStatusRepository,
+            UserRepository userRepository) {
         this.fileRepository = fileRepository;
         this.chatRoomRepository = chatRoomRepository;
         this.chatRoomMemberRepository = chatRoomMemberRepository;
@@ -52,23 +52,24 @@ public class FileService {
     // Gửi tin nhắn có file đính kèm
     public MessDTO sendMessageWithFile(SendMessageRequest request, Long senderId) {
         User sender = userRepository.findById(senderId)
-            .orElseThrow(() -> new EntityNotFoundException("Người gửi không tồn tại"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Người gửi không tồn tại"));
+
         ChatRoom chatRoom = chatRoomRepository.findById(request.getRoomId())
-            .orElseThrow(() -> new EntityNotFoundException("Phòng chat không tồn tại"));
-        
-        boolean isMember = chatRoomMemberRepository.existsByChatRoom_RoomIdAndUser_UserId(request.getRoomId(), senderId);
+                .orElseThrow(() -> new EntityNotFoundException("Phòng chat không tồn tại"));
+
+        boolean isMember = chatRoomMemberRepository.existsByChatRoom_RoomIdAndUser_UserId(request.getRoomId(),
+                senderId);
         if (!isMember) {
             throw new BadRequestException("Bạn không có quyền gửi tin nhắn trong phòng này");
         }
-        
+
         if (request.getFileId() == null) {
             throw new BadRequestException("File ID không được để trống");
         }
-        
+
         DoAn.BE.storage.entity.File file = fileRepository.findById(request.getFileId())
-            .orElseThrow(() -> new EntityNotFoundException("File không tồn tại"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("File không tồn tại"));
+
         Message message = new Message();
         message.setChatRoom(chatRoom);
         message.setSender(sender);
@@ -77,9 +78,9 @@ public class FileService {
         message.setFile(file);
         message.setSentAt(LocalDateTime.now());
         message.setIsDeleted(false);
-        
+
         message = messageRepository.save(message);
-        
+
         List<ChatRoomMember> members = chatRoomMemberRepository.findByChatRoom_RoomId(request.getRoomId());
         for (ChatRoomMember member : members) {
             if (member.getUser() != null && !member.getUser().getUserId().equals(senderId)) {
@@ -91,25 +92,25 @@ public class FileService {
                 messageStatusRepository.save(status);
             }
         }
-        
+
         return convertToMessageDTO(message);
     }
-    
+
     // Upload file và gửi tin nhắn
     public MessDTO uploadAndSendFile(MultipartFile file, Long roomId, String content, Long senderId) {
         if (file.isEmpty()) {
             throw new BadRequestException("File không được để trống");
         }
-        
+
         if (file.getSize() > 10 * 1024 * 1024) { // Max 10MB
             throw new BadRequestException("File không được vượt quá 10MB");
         }
-        
+
         String contentType = file.getContentType();
         if (contentType == null || (!contentType.startsWith("image/") && !contentType.startsWith("application/"))) {
             throw new BadRequestException("Loại file không được hỗ trợ");
         }
-        
+
         DoAn.BE.storage.entity.File fileEntity = new DoAn.BE.storage.entity.File();
         fileEntity.setOriginalFilename(file.getOriginalFilename());
         fileEntity.setFilename(file.getOriginalFilename());
@@ -118,7 +119,7 @@ public class FileService {
         // NOTE: Path tạm thời - cần tích hợp với FileStorageService để lưu file thực tế
         fileEntity.setFilePath("/uploads/" + file.getOriginalFilename());
         fileEntity = fileRepository.save(fileEntity);
-        
+
         SendMessageRequest request = new SendMessageRequest();
         request.setRoomId(roomId);
         request.setContent(content);
@@ -127,30 +128,30 @@ public class FileService {
         request.setFileUrl(fileEntity.getFilePath());
         request.setFileSize(fileEntity.getFileSize());
         request.setFileType(fileEntity.getMimeType());
-        
+
         return sendMessageWithFile(request, senderId);
     }
-    
+
     // Upload và gửi hình ảnh
     public MessDTO uploadAndSendImage(MultipartFile imageFile, Long roomId, String caption, Long senderId) {
         if (imageFile.isEmpty()) {
             throw new BadRequestException("Hình ảnh không được để trống");
         }
-        
+
         if (imageFile.getSize() > 5 * 1024 * 1024) { // Max 5MB cho ảnh
             throw new BadRequestException("Hình ảnh không được vượt quá 5MB");
         }
-        
+
         String contentType = imageFile.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new BadRequestException("Chỉ được phép gửi file hình ảnh");
         }
-        
+
         String fileName = imageFile.getOriginalFilename();
         if (fileName == null || !isValidImageFormat(fileName)) {
             throw new BadRequestException("Định dạng ảnh không được hỗ trợ. Chỉ hỗ trợ: JPG, JPEG, PNG, GIF, WEBP");
         }
-        
+
         DoAn.BE.storage.entity.File imageEntity = new DoAn.BE.storage.entity.File();
         imageEntity.setOriginalFilename(fileName);
         imageEntity.setFilename(fileName);
@@ -159,7 +160,7 @@ public class FileService {
         // NOTE: Path tạm thời - cần tích hợp với FileStorageService để lưu ảnh thực tế
         imageEntity.setFilePath("/uploads/images/" + fileName);
         imageEntity = fileRepository.save(imageEntity);
-        
+
         SendMessageRequest request = new SendMessageRequest();
         request.setRoomId(roomId);
         request.setContent(caption);
@@ -169,52 +170,52 @@ public class FileService {
         request.setFileSize(imageEntity.getFileSize());
         request.setFileType(imageEntity.getMimeType());
         request.setMessageType(Message.MessageType.IMAGE);
-        
+
         return sendMessageWithFile(request, senderId);
     }
-    
+
     // Lấy danh sách file trong phòng chat
     public List<MessDTO> getFilesByRoomId(Long roomId, Long userId) {
         chatRoomRepository.findById(roomId)
-            .orElseThrow(() -> new EntityNotFoundException("Phòng chat không tồn tại"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Phòng chat không tồn tại"));
+
         boolean isMember = chatRoomMemberRepository.existsByChatRoom_RoomIdAndUser_UserId(roomId, userId);
         if (!isMember) {
             throw new BadRequestException("Bạn không có quyền xem file trong phòng này");
         }
-        
+
         List<Message> messages = messageRepository.findByChatRoom_RoomIdOrderBySentAtAsc(roomId);
-        
+
         return messages.stream()
-            .filter(message -> message.getFile() != null)
-            .map(this::convertToMessageDTO)
-            .collect(Collectors.toList());
+                .filter(message -> message.getFile() != null)
+                .map(this::convertToMessageDTO)
+                .collect(Collectors.toList());
     }
-    
+
     // Lấy danh sách hình ảnh trong phòng chat
     public List<MessDTO> getImagesByRoomId(Long roomId, Long userId) {
         chatRoomRepository.findById(roomId)
-            .orElseThrow(() -> new EntityNotFoundException("Phòng chat không tồn tại"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Phòng chat không tồn tại"));
+
         boolean isMember = chatRoomMemberRepository.existsByChatRoom_RoomIdAndUser_UserId(roomId, userId);
         if (!isMember) {
             throw new BadRequestException("Bạn không có quyền xem hình ảnh trong phòng này");
         }
-        
+
         List<Message> messages = messageRepository.findByChatRoom_RoomIdOrderBySentAtAsc(roomId);
-        
+
         return messages.stream()
-            .filter(message -> message.getMessageType() == Message.MessageType.IMAGE)
-            .map(this::convertToMessageDTO)
-            .collect(Collectors.toList());
+                .filter(message -> message.getMessageType() == Message.MessageType.IMAGE)
+                .map(this::convertToMessageDTO)
+                .collect(Collectors.toList());
     }
-    
+
     // Kiểm tra định dạng ảnh hợp lệ
     private boolean isValidImageFormat(String fileName) {
         String extension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
         return List.of("jpg", "jpeg", "png", "gif", "webp", "bmp").contains(extension);
     }
-    
+
     // Tự động xác định loại tin nhắn
     private Message.MessageType detectMessageType(SendMessageRequest request) {
         if (request.getFileId() != null) {
@@ -229,7 +230,7 @@ public class FileService {
         }
         return Message.MessageType.TEXT;
     }
-    
+
     // Chuyển đổi Message entity sang DTO
     private MessDTO convertToMessageDTO(Message message) {
         MessDTO dto = new MessDTO();
@@ -250,7 +251,7 @@ public class FileService {
         dto.setIsDeleted(message.getIsDeleted());
         dto.setEditedAt(message.getEditedAt());
         dto.setIsEdited(message.getEditedAt() != null);
-        
+
         return dto;
     }
 }

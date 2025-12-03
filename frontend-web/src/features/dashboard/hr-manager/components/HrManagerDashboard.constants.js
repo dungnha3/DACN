@@ -26,10 +26,10 @@ export const leaveRequests = [
 
 // Pending Leave Approvals (for all employees)
 export const pendingApprovals = [
-  { 
-    id: 1, 
-    employeeName: 'Nguyễn Văn A', 
-    type: 'Nghỉ phép', 
+  {
+    id: 1,
+    employeeName: 'Nguyễn Văn A',
+    type: 'Nghỉ phép',
     fromDate: '10/11/2025',
     toDate: '12/11/2025',
     days: 3,
@@ -37,10 +37,10 @@ export const pendingApprovals = [
     submitDate: '08/11/2025',
     status: 'pending'
   },
-  { 
-    id: 2, 
-    employeeName: 'Trần Thị B', 
-    type: 'Nghỉ ốm', 
+  {
+    id: 2,
+    employeeName: 'Trần Thị B',
+    type: 'Nghỉ ốm',
     fromDate: '09/11/2025',
     toDate: '09/11/2025',
     days: 1,
@@ -48,10 +48,10 @@ export const pendingApprovals = [
     submitDate: '08/11/2025',
     status: 'pending'
   },
-  { 
-    id: 3, 
-    employeeName: 'Lê Văn C', 
-    type: 'Giải trình', 
+  {
+    id: 3,
+    employeeName: 'Lê Văn C',
+    type: 'Giải trình',
     fromDate: '07/11/2025',
     toDate: '07/11/2025',
     days: 1,
@@ -59,10 +59,10 @@ export const pendingApprovals = [
     submitDate: '07/11/2025',
     status: 'pending'
   },
-  { 
-    id: 4, 
-    employeeName: 'Phạm Thị D', 
-    type: 'Nghỉ phép', 
+  {
+    id: 4,
+    employeeName: 'Phạm Thị D',
+    type: 'Nghỉ phép',
     fromDate: '15/11/2025',
     toDate: '16/11/2025',
     days: 2,
@@ -70,10 +70,10 @@ export const pendingApprovals = [
     submitDate: '08/11/2025',
     status: 'approved'
   },
-  { 
-    id: 5, 
-    employeeName: 'Hoàng Văn E', 
-    type: 'Nghỉ phép', 
+  {
+    id: 5,
+    employeeName: 'Hoàng Văn E',
+    type: 'Nghỉ phép',
     fromDate: '05/11/2025',
     toDate: '05/11/2025',
     days: 1,
@@ -81,10 +81,10 @@ export const pendingApprovals = [
     submitDate: '04/11/2025',
     status: 'rejected'
   },
-  { 
-    id: 6, 
-    employeeName: 'Vũ Thị F', 
-    type: 'Nghỉ thai sản', 
+  {
+    id: 6,
+    employeeName: 'Vũ Thị F',
+    type: 'Nghỉ thai sản',
     fromDate: '20/11/2025',
     toDate: '20/02/2026',
     days: 90,
@@ -92,10 +92,10 @@ export const pendingApprovals = [
     submitDate: '10/11/2025',
     status: 'pending'
   },
-  { 
-    id: 7, 
-    employeeName: 'Đỗ Văn G', 
-    type: 'Nghỉ phép', 
+  {
+    id: 7,
+    employeeName: 'Đỗ Văn G',
+    type: 'Nghỉ phép',
     fromDate: '25/11/2025',
     toDate: '27/11/2025',
     days: 3,
@@ -218,8 +218,8 @@ export const sectionsConfig = {
     subtitle: 'Tổng quan quản lý nhân sự của bạn',
   },
   profile: {
-    title: 'Hồ sơ cá nhân',
-    pageTitle: 'Hồ sơ cá nhân',
+    title: 'Thông tin & Tài khoản',
+    pageTitle: 'Thông tin & Tài khoản',
     subtitle: 'Xem và cập nhật thông tin cá nhân',
   },
   timesheet: {

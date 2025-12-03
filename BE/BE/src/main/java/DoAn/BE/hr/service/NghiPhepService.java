@@ -26,16 +26,16 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 @Slf4j
 public class NghiPhepService {
-    
+
     private final NghiPhepRepository nghiPhepRepository;
     private final NhanVienRepository nhanVienRepository;
     private final UserRepository userRepository;
     private final HRNotificationService hrNotificationService;
 
-    public NghiPhepService(NghiPhepRepository nghiPhepRepository, 
-                          NhanVienRepository nhanVienRepository,
-                          UserRepository userRepository,
-                          HRNotificationService hrNotificationService) {
+    public NghiPhepService(NghiPhepRepository nghiPhepRepository,
+            NhanVienRepository nhanVienRepository,
+            UserRepository userRepository,
+            HRNotificationService hrNotificationService) {
         this.nghiPhepRepository = nghiPhepRepository;
         this.nhanVienRepository = nhanVienRepository;
         this.userRepository = userRepository;
@@ -48,10 +48,10 @@ public class NghiPhepService {
         if (currentUser.isAdmin()) {
             throw new ForbiddenException("Admin không có quyền tạo đơn nghỉ phép");
         }
-        
+
         log.info("User {} tạo đơn nghỉ phép cho nhân viên ID: {}", currentUser.getUsername(), request.getNhanvienId());
         NhanVien nhanVien = nhanVienRepository.findById(request.getNhanvienId())
-            .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
         if (request.getNgayKetThuc().isBefore(request.getNgayBatDau())) {
             throw new BadRequestException("Ngày kết thúc phải sau ngày bắt đầu");
         }
@@ -74,29 +74,29 @@ public class NghiPhepService {
      */
     public NghiPhep getNghiPhepById(Long id, User currentUser) {
         NghiPhep nghiPhep = nghiPhepRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Đơn nghỉ phép không tồn tại"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Đơn nghỉ phép không tồn tại"));
+
         // Admin không có quyền xem
         if (currentUser.isAdmin()) {
             throw new ForbiddenException("Admin không có quyền truy cập dữ liệu nghỉ phép");
         }
-        
+
         // HR/Accounting/Project Manager xem tất cả
         if (PermissionUtil.canViewLeave(currentUser)) {
             return nghiPhep;
         }
-        
+
         // Employee chỉ xem của mình
         if (!nghiPhep.getNhanVien().getUser().getUserId().equals(currentUser.getUserId())) {
             throw new ForbiddenException("Bạn không có quyền xem đơn nghỉ phép này");
         }
-        
+
         return nghiPhep;
     }
-    
+
     public NghiPhep getNghiPhepById(Long id) {
         return nghiPhepRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Đơn nghỉ phép không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("Đơn nghỉ phép không tồn tại"));
     }
 
     /**
@@ -108,7 +108,7 @@ public class NghiPhepService {
         }
         return nghiPhepRepository.findAll();
     }
-    
+
     public List<NghiPhep> getAllNghiPhep() {
         return nghiPhepRepository.findAll();
     }
@@ -118,12 +118,12 @@ public class NghiPhepService {
      */
     public NghiPhep updateNghiPhep(Long id, NghiPhepRequest request, User currentUser) {
         NghiPhep nghiPhep = getNghiPhepById(id, currentUser);
-        
+
         // Employee chỉ sửa đơn của mình, Manager không được sửa
         if (!nghiPhep.getNhanVien().getUser().getUserId().equals(currentUser.getUserId())) {
             throw new ForbiddenException("Bạn chỉ có thể sửa đơn nghỉ phép của chính mình");
         }
-        
+
         log.info("User {} cập nhật đơn nghỉ phép ID: {}", currentUser.getUsername(), id);
 
         // Chỉ cho phép cập nhật nếu đang chờ duyệt
@@ -132,8 +132,8 @@ public class NghiPhepService {
         }
 
         // Không cho đổi nhân viên
-        if (request.getNhanvienId() != null && 
-            !request.getNhanvienId().equals(nghiPhep.getNhanVien().getNhanvienId())) {
+        if (request.getNhanvienId() != null &&
+                !request.getNhanvienId().equals(nghiPhep.getNhanVien().getNhanvienId())) {
             throw new BadRequestException("Không thể thay đổi nhân viên");
         }
 
@@ -164,12 +164,12 @@ public class NghiPhepService {
      */
     public void deleteNghiPhep(Long id) {
         NghiPhep nghiPhep = getNghiPhepById(id);
-        
+
         // Chỉ cho phép xóa nếu đang chờ duyệt
         if (nghiPhep.getTrangThai() != TrangThaiNghiPhep.CHO_DUYET) {
             throw new BadRequestException("Chỉ có thể xóa đơn đang chờ duyệt");
         }
-        
+
         nghiPhepRepository.delete(nghiPhep);
     }
 
@@ -194,21 +194,21 @@ public class NghiPhepService {
         if (!currentUser.isManagerProject()) {
             throw new ForbiddenException("Chỉ Project Manager mới có quyền duyệt về mặt tiến độ dự án");
         }
-        
+
         log.info("PM {} duyệt đơn nghỉ phép ID: {}", currentUser.getUsername(), id);
         NghiPhep nghiPhep = getNghiPhepById(id);
-        
+
         if (nghiPhep.getTrangThai() != TrangThaiNghiPhep.CHO_DUYET) {
             throw new BadRequestException("Đơn này đã được xử lý hoặc đang chờ Accounting");
         }
-        
+
         nghiPhep.approvePM(currentUser, note);
         NghiPhep saved = nghiPhepRepository.save(nghiPhep);
         log.info("✅ PM đã duyệt đơn nghỉ phép, chờ Accounting duyệt phép tồn");
-        
+
         return saved;
     }
-    
+
     /**
      * Accounting duyệt đơn nghỉ phép (Step 2: Kiểm tra phép tồn/lương)
      */
@@ -216,34 +216,33 @@ public class NghiPhepService {
         if (!currentUser.isManagerAccounting()) {
             throw new ForbiddenException("Chỉ Accounting Manager mới có quyền duyệt về mặt phép tồn/lương");
         }
-        
+
         log.info("Accounting {} duyệt đơn nghỉ phép ID: {}", currentUser.getUsername(), id);
         NghiPhep nghiPhep = getNghiPhepById(id);
-        
+
         if (nghiPhep.getTrangThai() != TrangThaiNghiPhep.PM_APPROVED) {
             throw new BadRequestException("Đơn này cần PM duyệt trước hoặc đã được xử lý");
         }
-        
+
         nghiPhep.approveAccounting(currentUser, note);
         NghiPhep saved = nghiPhepRepository.save(nghiPhep);
         log.info("✅ Accounting đã duyệt đơn nghỉ phép - Hoàn tất 2-step approval");
-        
+
         // 🔔 Gửi notification cho nhân viên khi hoàn tất
         try {
             if (nghiPhep.getNhanVien().getUser() != null) {
                 hrNotificationService.createLeaveApprovedNotification(
-                    nghiPhep.getNhanVien().getUser().getUserId(),
-                    nghiPhep.getNgayBatDau().toString(),
-                    nghiPhep.getNgayKetThuc().toString()
-                );
+                        nghiPhep.getNhanVien().getUser().getUserId(),
+                        nghiPhep.getNgayBatDau().toString(),
+                        nghiPhep.getNgayKetThuc().toString());
             }
         } catch (Exception e) {
             log.warn("Không thể gửi notification: {}", e.getMessage());
         }
-        
+
         return saved;
     }
-    
+
     /**
      * Legacy approve method (backward compatibility)
      * Duyệt đơn nghỉ phép - Chỉ Accounting/PM
@@ -252,31 +251,30 @@ public class NghiPhepService {
         if (!PermissionUtil.canApproveLeave(currentUser)) {
             throw new ForbiddenException("Bạn không có quyền duyệt nghỉ phép");
         }
-        
+
         log.info("Phê duyệt đơn nghỉ phép ID: {} bởi user: {}", id, currentUser.getUsername());
         NghiPhep nghiPhep = getNghiPhepById(id);
-        
+
         if (nghiPhep.getTrangThai() != TrangThaiNghiPhep.CHO_DUYET) {
             throw new BadRequestException("Đơn này đã được xử lý");
         }
-        
+
         nghiPhep.approve(currentUser, note);
         NghiPhep saved = nghiPhepRepository.save(nghiPhep);
         log.info("✅ Đã phê duyệt đơn nghỉ phép cho nhân viên: {}", nghiPhep.getNhanVien().getHoTen());
-        
+
         // 🔔 Gửi notification cho nhân viên
         try {
             if (nghiPhep.getNhanVien().getUser() != null) {
                 hrNotificationService.createLeaveApprovedNotification(
-                    nghiPhep.getNhanVien().getUser().getUserId(),
-                    nghiPhep.getNgayBatDau().toString(),
-                    nghiPhep.getNgayKetThuc().toString()
-                );
+                        nghiPhep.getNhanVien().getUser().getUserId(),
+                        nghiPhep.getNgayBatDau().toString(),
+                        nghiPhep.getNgayKetThuc().toString());
             }
         } catch (Exception e) {
             log.warn("Không thể gửi notification: {}", e.getMessage());
         }
-        
+
         return saved;
     }
 
@@ -287,32 +285,31 @@ public class NghiPhepService {
         if (!PermissionUtil.canApproveLeave(currentUser)) {
             throw new ForbiddenException("Bạn không có quyền từ chối nghỉ phép");
         }
-        
+
         log.info("Từ chối đơn nghỉ phép ID: {} bởi user: {}", id, currentUser.getUsername());
         NghiPhep nghiPhep = getNghiPhepById(id);
-        
+
         if (nghiPhep.getTrangThai() != TrangThaiNghiPhep.CHO_DUYET) {
             throw new BadRequestException("Đơn này đã được xử lý");
         }
-        
+
         nghiPhep.reject(currentUser, note);
         NghiPhep saved = nghiPhepRepository.save(nghiPhep);
         log.info("❌ Đã từ chối đơn nghỉ phép cho nhân viên: {}", nghiPhep.getNhanVien().getHoTen());
-        
+
         // 🔔 Gửi notification cho nhân viên
         try {
             if (nghiPhep.getNhanVien().getUser() != null) {
                 hrNotificationService.createLeaveRejectedNotification(
-                    nghiPhep.getNhanVien().getUser().getUserId(),
-                    nghiPhep.getNgayBatDau().toString(),
-                    nghiPhep.getNgayKetThuc().toString(),
-                    note != null ? note : "Không có lý do cụ thể"
-                );
+                        nghiPhep.getNhanVien().getUser().getUserId(),
+                        nghiPhep.getNgayBatDau().toString(),
+                        nghiPhep.getNgayKetThuc().toString(),
+                        note != null ? note : "Không có lý do cụ thể");
             }
         } catch (Exception e) {
             log.warn("Không thể gửi notification: {}", e.getMessage());
         }
-        
+
         return saved;
     }
 
@@ -343,8 +340,8 @@ public class NghiPhepService {
     public int getTotalLeaveDays(Long nhanvienId, int year) {
         List<NghiPhep> nghiPheps = nghiPhepRepository.findApprovedByNhanVienAndYear(nhanvienId, year);
         return nghiPheps.stream()
-            .mapToInt(NghiPhep::getSoNgay)
-            .sum();
+                .mapToInt(NghiPhep::getSoNgay)
+                .sum();
     }
 
     /**

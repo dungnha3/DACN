@@ -126,8 +126,8 @@ export const sectionsConfig = {
     subtitle: 'Tổng quan công việc của bạn',
   },
   profile: {
-    title: 'Hồ sơ cá nhân',
-    pageTitle: 'Hồ sơ cá nhân',
+    title: 'Thông tin & Tài khoản',
+    pageTitle: 'Thông tin & Tài khoản',
     subtitle: 'Xem và cập nhật thông tin cá nhân',
   },
   timesheet: {

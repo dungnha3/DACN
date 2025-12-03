@@ -1,17 +1,79 @@
 import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
 
-// Navigation Item Component
-export function NavItem({ active, onClick, children, icon }) {
+// Navigation Item Component with collapsed state support
+export function NavItem({ active, onClick, children, icon, collapsed }) {
+  const baseStyle = {
+    ...styles.navItem,
+    color: active ? '#64748b' : '#94a3b8',
+    background: active ? '#f1f5f9' : 'transparent',
+    justifyContent: collapsed ? 'center' : 'flex-start',
+    alignItems: 'center',
+    padding: collapsed ? '12px 0' : '12px',
+    width: '100%',
+    position: 'relative',
+    overflow: 'hidden',
+    transition: 'background 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s cubic-bezier(0.4, 0, 0.2, 1), justify-content 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+    borderRadius: 10,
+    marginBottom: 4,
+    display: 'flex',
+    gap: 0,
+    cursor: 'pointer',
+  };
+
+  const iconWrapperStyle = {
+    minWidth: 24,
+    width: 24,
+    height: 24,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    fontSize: 18,
+    color: active ? '#64748b' : '#94a3b8',
+    transition: 'color 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+  };
+
+  const textWrapperStyle = {
+    marginLeft: collapsed ? 0 : 12,
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    transition: 'margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+  };
+
+  const textStyle = {
+    fontSize: 14,
+    fontWeight: active ? 600 : 500,
+    whiteSpace: 'nowrap',
+    display: 'inline-block',
+    transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+    opacity: collapsed ? 0 : 1,
+    transform: collapsed ? 'translateX(-10px)' : 'translateX(0)',
+  };
+
   return (
     <button
       onClick={onClick}
-      style={{
-        ...styles.navItem,
-        ...(active ? styles.navItemActive : {})
-      }}
+      style={baseStyle}
+      title={collapsed ? children : ''}
     >
-      <span style={styles.navIcon}>{icon}</span>
-      <span>{children}</span>
+      <span style={iconWrapperStyle}>{icon}</span>
+      <span style={textWrapperStyle}>
+        <span style={textStyle}>{children}</span>
+      </span>
+      {active && !collapsed && (
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: 3,
+          height: '60%',
+          background: '#64748b',
+          borderTopLeftRadius: 3,
+          borderBottomLeftRadius: 3,
+          transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        }} />
+      )}
     </button>
   )
 }
