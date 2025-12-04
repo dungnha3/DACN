@@ -2,10 +2,13 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { chatRoomApi } from '../api/chatRoomApi'
 import { messageApi } from '../api/messageApi'
+import { meetingApi } from '../api/meetingApi'
 import websocketService from '../services/websocketService'
 import MessageBubble from './MessageBubble'
 import FileUploadModal from './FileUploadModal'
 import RoomSettingsModal from './RoomSettingsModal'
+import CreateMeetingModal from './CreateMeetingModal'
+import VideoMeeting from './VideoMeeting'
 import { colors, typography, spacing } from '@/shared/styles/theme'
 
 export default function ChatRoom({ roomId, wsConnected }) {
@@ -17,6 +20,10 @@ export default function ChatRoom({ roomId, wsConnected }) {
   const [sending, setSending] = useState(false)
   const [showFileModal, setShowFileModal] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showMeetingModal, setShowMeetingModal] = useState(false)
+  const [activeMeetings, setActiveMeetings] = useState([])
+  const [showVideoMeeting, setShowVideoMeeting] = useState(false)
+  const [currentMeeting, setCurrentMeeting] = useState(null)
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
@@ -54,9 +61,35 @@ export default function ChatRoom({ roomId, wsConnected }) {
       setRoomInfo(roomData)
       setMessages(transformedMessages)
       setLoading(false)
+
+      // Load active meetings
+      loadActiveMeetings()
     } catch (error) {
       setLoading(false)
     }
+  }
+
+  const loadActiveMeetings = async () => {
+    try {
+      const meetings = await meetingApi.getMeetingsByRoom(roomId)
+      // Filter only active/in-progress meetings
+      const active = meetings.filter(m => m.status === 'IN_PROGRESS' || m.status === 'SCHEDULED')
+      setActiveMeetings(active)
+    } catch (error) {
+      console.log('Could not load meetings:', error)
+      setActiveMeetings([])
+    }
+  }
+
+  const handleJoinMeeting = async (meeting) => {
+    try {
+      // Call API to join meeting first
+      await meetingApi.joinMeeting(meeting.meetingId)
+    } catch (err) {
+      console.log('Could not join meeting via API:', err)
+    }
+    setCurrentMeeting(meeting)
+    setShowVideoMeeting(true)
   }
 
   const subscribeToRoom = () => {
@@ -149,6 +182,13 @@ export default function ChatRoom({ roomId, wsConnected }) {
             <span style={styles.onlineIndicator} title="Đang kết nối">🟢</span>
           )}
           <button
+            style={styles.meetingBtn}
+            onClick={() => setShowMeetingModal(true)}
+            title="Cuộc họp"
+          >
+            📹
+          </button>
+          <button
             style={styles.moreBtn}
             onClick={() => setShowSettings(true)}
             title="Cài đặt nhóm"
@@ -157,6 +197,29 @@ export default function ChatRoom({ roomId, wsConnected }) {
           </button>
         </div>
       </div>
+
+      {/* Active Meeting Banner */}
+      {activeMeetings.length > 0 && (
+        <div style={styles.activeMeetingBanner}>
+          <div style={styles.activeMeetingInfo}>
+            <span style={styles.activeMeetingIcon}>🔴</span>
+            <span style={styles.activeMeetingText}>
+              <strong>{activeMeetings[0].title || 'Cuộc họp'}</strong> đang diễn ra
+            </span>
+            {activeMeetings[0].createdByName && (
+              <span style={styles.activeMeetingHost}>
+                bởi {activeMeetings[0].createdByName}
+              </span>
+            )}
+          </div>
+          <button
+            style={styles.joinMeetingBtn}
+            onClick={() => handleJoinMeeting(activeMeetings[0])}
+          >
+            🎥 Tham gia
+          </button>
+        </div>
+      )}
 
       {/* Messages Area */}
       <div style={styles.messagesArea}>
@@ -227,6 +290,32 @@ export default function ChatRoom({ roomId, wsConnected }) {
         roomId={roomId}
         roomInfo={roomInfo}
       />
+
+      {/* Meeting Modal */}
+      <CreateMeetingModal
+        isOpen={showMeetingModal}
+        onClose={() => setShowMeetingModal(false)}
+        roomId={roomId}
+        roomInfo={roomInfo}
+        onMeetingCreated={(meeting) => {
+          console.log('Meeting created:', meeting)
+          loadActiveMeetings() // Reload active meetings
+        }}
+      />
+
+      {/* Video Meeting */}
+      {showVideoMeeting && currentMeeting && (
+        <VideoMeeting
+          meetingId={currentMeeting.meetingId}
+          meetingTitle={currentMeeting.title}
+          roomInfo={roomInfo}
+          onClose={() => {
+            setShowVideoMeeting(false)
+            setCurrentMeeting(null)
+            loadActiveMeetings() // Refresh meetings list
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -290,6 +379,62 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center'
+  },
+  meetingBtn: {
+    width: '36px',
+    height: '36px',
+    borderRadius: '50%',
+    border: 'none',
+    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    color: colors.white,
+    fontSize: '18px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+    transition: 'all 0.2s'
+  },
+  activeMeetingBanner: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: `${spacing.md} ${spacing.xl}`,
+    backgroundColor: '#fef3c7',
+    borderBottom: '1px solid #fcd34d',
+    animation: 'pulse 2s infinite'
+  },
+  activeMeetingInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing.md
+  },
+  activeMeetingIcon: {
+    fontSize: '12px',
+    animation: 'blink 1s infinite'
+  },
+  activeMeetingText: {
+    fontSize: typography.sm,
+    color: '#92400e'
+  },
+  activeMeetingHost: {
+    fontSize: typography.xs,
+    color: '#b45309'
+  },
+  joinMeetingBtn: {
+    padding: `${spacing.sm} ${spacing.lg}`,
+    backgroundColor: '#10b981',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: typography.sm,
+    fontWeight: '600',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing.sm,
+    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+    transition: 'all 0.2s'
   },
   messagesArea: {
     flex: 1,
