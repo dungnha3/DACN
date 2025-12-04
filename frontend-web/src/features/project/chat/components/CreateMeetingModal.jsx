@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { meetingApi } from '../api/meetingApi'
 import { colors, typography, spacing } from '@/shared/styles/theme'
-import VideoMeeting from './VideoMeeting'
+import JitsiMeeting from './JitsiMeeting'
 
 export default function CreateMeetingModal({
     isOpen,
@@ -138,7 +138,7 @@ export default function CreateMeetingModal({
     // Show Video Meeting when started
     if (showVideoMeeting) {
         return (
-            <VideoMeeting
+            <JitsiMeeting
                 meetingId={currentMeeting?.meetingId}
                 meetingTitle={currentMeeting?.title || title || `Cuộc họp - ${roomInfo?.name}`}
                 roomInfo={roomInfo}

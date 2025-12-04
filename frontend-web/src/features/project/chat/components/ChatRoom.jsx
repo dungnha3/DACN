@@ -8,7 +8,7 @@ import MessageBubble from './MessageBubble'
 import FileUploadModal from './FileUploadModal'
 import RoomSettingsModal from './RoomSettingsModal'
 import CreateMeetingModal from './CreateMeetingModal'
-import VideoMeeting from './VideoMeeting'
+import JitsiMeeting from './JitsiMeeting'
 import { colors, typography, spacing } from '@/shared/styles/theme'
 
 export default function ChatRoom({ roomId, wsConnected }) {
@@ -305,7 +305,7 @@ export default function ChatRoom({ roomId, wsConnected }) {
 
       {/* Video Meeting */}
       {showVideoMeeting && currentMeeting && (
-        <VideoMeeting
+        <JitsiMeeting
           meetingId={currentMeeting.meetingId}
           meetingTitle={currentMeeting.title}
           roomInfo={roomInfo}
