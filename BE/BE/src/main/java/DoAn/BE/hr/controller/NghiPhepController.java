@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/nghi-phep")
+@RequestMapping("/api/nghi-phep")
 public class NghiPhepController {
 
     private final NghiPhepService nghiPhepService;
@@ -100,9 +100,18 @@ public class NghiPhepController {
      * GET /api/nghi-phep/nhan-vien/{nhanvienId}
      */
     @GetMapping("/nhan-vien/{nhanvienId}")
-    public ResponseEntity<List<NghiPhepDTO>> getNghiPhepByNhanVien(@PathVariable Long nhanvienId) {
-        List<NghiPhep> nghiPheps = nghiPhepService.getNghiPhepByNhanVien(nhanvienId);
-        return ResponseEntity.ok(nghiPhepMapper.toDTOList(nghiPheps));
+    public ResponseEntity<?> getNghiPhepByNhanVien(@PathVariable Long nhanvienId) {
+        try {
+            List<NghiPhep> nghiPheps = nghiPhepService.getNghiPhepByNhanVien(nhanvienId);
+            return ResponseEntity.ok(nghiPhepMapper.toDTOList(nghiPheps));
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Internal Server Error");
+            error.put("message", e.getMessage());
+            error.put("trace", e.toString());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
 
     /**

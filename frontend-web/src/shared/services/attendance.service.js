@@ -2,37 +2,54 @@ import { apiService } from './api.service'
 
 export const attendanceService = {
   getAll: async () => {
-    return await apiService.get('/cham-cong')
+    return await apiService.get('/api/cham-cong')
   },
 
   getByEmployee: async (employeeId) => {
-    return await apiService.get(`/cham-cong/nhan-vien/${employeeId}`)
+    return await apiService.get(`/api/cham-cong/nhan-vien/${employeeId}`)
   },
 
+  // Fixed: Backend uses query params, not path params
   getByMonth: async (employeeId, year, month) => {
-    return await apiService.get(`/cham-cong/nhan-vien/${employeeId}/thang/${month}/nam/${year}`)
+    return await apiService.get(`/api/cham-cong/nhan-vien/${employeeId}/month`, {
+      params: { year, month }
+    })
   },
 
   checkIn: async (employeeId, date) => {
-    return await apiService.post('/cham-cong/check-in', {
-      nhanvienId: employeeId,
-      ngayCham: date
+    return await apiService.post('/api/cham-cong/check-in', null, {
+      params: { nhanvienId: employeeId, ngayCham: date }
     })
   },
 
   checkOut: async (attendanceId) => {
-    return await apiService.patch(`/cham-cong/${attendanceId}/check-out`)
+    return await apiService.patch(`/api/cham-cong/${attendanceId}/check-out`)
   },
 
   getStatus: async (employeeId) => {
-    return await apiService.get(`/cham-cong/nhan-vien/${employeeId}/status`)
+    return await apiService.get(`/api/cham-cong/status/${employeeId}`)
+  },
+
+  // Get statistics (lateDays, earlyLeaveDays, workingDays)
+  getStatistics: async (employeeId, year, month) => {
+    return await apiService.get(`/api/cham-cong/nhan-vien/${employeeId}/statistics`, {
+      params: { year, month }
+    })
+  },
+
+  // Get total hours
+  getTotalHours: async (employeeId, year, month) => {
+    return await apiService.get(`/api/cham-cong/nhan-vien/${employeeId}/total-hours`, {
+      params: { year, month }
+    })
   },
 
   create: async (data) => {
-    return await apiService.post('/cham-cong', data)
+    return await apiService.post('/api/cham-cong', data)
   },
 
   delete: async (id) => {
-    return await apiService.delete(`/cham-cong/${id}`)
+    return await apiService.delete(`/api/cham-cong/${id}`)
   }
 }
+

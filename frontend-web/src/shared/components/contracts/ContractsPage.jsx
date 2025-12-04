@@ -31,7 +31,7 @@ import {
   StatCard
 } from '@/shared/components/ui';
 
-export default function SharedContractsPage({ 
+export default function SharedContractsPage({
   title = "Hợp đồng & Tài liệu",
   breadcrumb = "Cá nhân / Hợp đồng",
   viewMode = "personal" // "personal" | "management"
@@ -41,7 +41,7 @@ export default function SharedContractsPage({
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('HIEU_LUC');
   const [selectedContract, setSelectedContract] = useState(null);
-  
+
   const { user: authUser } = useAuth();
   const { currentUser, isHRManager } = usePermissions();
   const { handleError } = useErrorHandler();
@@ -54,7 +54,7 @@ export default function SharedContractsPage({
     try {
       setLoading(true);
       setError(null);
-      
+
       if (viewMode === "personal" && currentUser?.userId) {
         // Load personal contracts only
         const data = await contractsService.getByEmployee(currentUser.userId);
@@ -155,39 +155,39 @@ export default function SharedContractsPage({
 
       {/* Stats Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 24 }}>
-        <StatCard 
-          title="Tổng hợp đồng" 
-          value={stats.total} 
-          icon="📄" 
-          color="#3b82f6" 
-          bg="#eff6ff" 
+        <StatCard
+          title="Tổng hợp đồng"
+          value={stats.total}
+          icon="📄"
+          color="#3b82f6"
+          bg="#eff6ff"
         />
-        <StatCard 
-          title="Đang hiệu lực" 
-          value={stats.active} 
-          icon="✓" 
-          color="#10b981" 
-          bg="#f0fdf4" 
+        <StatCard
+          title="Đang hiệu lực"
+          value={stats.active}
+          icon="✓"
+          color="#10b981"
+          bg="#f0fdf4"
         />
-        <StatCard 
-          title="Hết hạn" 
-          value={stats.expired} 
-          icon="⏰" 
-          color="#f59e0b" 
-          bg="#fff7ed" 
+        <StatCard
+          title="Hết hạn"
+          value={stats.expired}
+          icon="⏰"
+          color="#f59e0b"
+          bg="#fff7ed"
         />
-        <StatCard 
-          title="Đã chấm dứt" 
-          value={stats.terminated} 
-          icon="✗" 
-          color="#ef4444" 
-          bg="#fef2f2" 
+        <StatCard
+          title="Đã chấm dứt"
+          value={stats.terminated}
+          icon="✗"
+          color="#ef4444"
+          bg="#fef2f2"
         />
       </div>
 
       {/* Filter Tabs */}
-      <div style={{ 
-        display: 'flex', gap: 8, marginBottom: 24, background: '#fff', 
+      <div style={{
+        display: 'flex', gap: 8, marginBottom: 24, background: '#fff',
         padding: 16, borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.03)'
       }}>
         {[
@@ -226,8 +226,8 @@ export default function SharedContractsPage({
         <CardBody style={{ padding: 0 }}>
           {filteredContracts.length === 0 ? (
             <div style={{ padding: 40 }}>
-              <EmptyState 
-                icon="📄" 
+              <EmptyState
+                icon="📄"
                 title="Không có hợp đồng"
                 message={activeTab === 'ALL' ? "Chưa có hợp đồng nào" : `Không có hợp đồng ở trạng thái này`}
               />
@@ -253,7 +253,7 @@ export default function SharedContractsPage({
                         <TableCell>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <div style={{
-                              width: 32, height: 32, borderRadius: 8, 
+                              width: 32, height: 32, borderRadius: 8,
                               background: 'linear-gradient(195deg, #42424a, #191919)',
                               color: '#fff', display: 'grid', placeItems: 'center', fontSize: 14
                             }}>
@@ -324,7 +324,7 @@ export default function SharedContractsPage({
           <ModalHeader onClose={() => setSelectedContract(null)}>
             <ModalTitle>Chi tiết Hợp đồng #{selectedContract.hopdongId}</ModalTitle>
           </ModalHeader>
-          
+
           <ModalBody>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
               <div>
@@ -335,7 +335,7 @@ export default function SharedContractsPage({
                   {selectedContract.soHopDong || 'N/A'}
                 </div>
               </div>
-              
+
               <div>
                 <label style={{ fontSize: 12, color: '#7b809a', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', display: 'block' }}>
                   Loại hợp đồng
@@ -344,7 +344,7 @@ export default function SharedContractsPage({
                   {getContractType(selectedContract.loaiHopDong).label}
                 </div>
               </div>
-              
+
               <div>
                 <label style={{ fontSize: 12, color: '#7b809a', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', display: 'block' }}>
                   Ngày bắt đầu
@@ -353,7 +353,7 @@ export default function SharedContractsPage({
                   {selectedContract.ngayBatDau}
                 </div>
               </div>
-              
+
               <div>
                 <label style={{ fontSize: 12, color: '#7b809a', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', display: 'block' }}>
                   Ngày kết thúc
@@ -362,7 +362,7 @@ export default function SharedContractsPage({
                   {selectedContract.ngayKetThuc || 'Không xác định'}
                 </div>
               </div>
-              
+
               <div>
                 <label style={{ fontSize: 12, color: '#7b809a', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', display: 'block' }}>
                   Lương cơ bản
@@ -371,7 +371,7 @@ export default function SharedContractsPage({
                   {formatCurrency(selectedContract.luongCoBan)}
                 </div>
               </div>
-              
+
               <div>
                 <label style={{ fontSize: 12, color: '#7b809a', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', display: 'block' }}>
                   Trạng thái
@@ -396,8 +396,8 @@ export default function SharedContractsPage({
 
             {/* Action buttons for personal view */}
             {viewMode === "personal" && selectedContract.trangThai === 'CHO_KY' && (
-              <div style={{ 
-                marginTop: 20, padding: 16, background: '#fff7ed', borderRadius: 12, 
+              <div style={{
+                marginTop: 20, padding: 16, background: '#fff7ed', borderRadius: 12,
                 border: '1px solid #ffedd5', textAlign: 'center'
               }}>
                 <div style={{ fontSize: 14, color: '#c2410c', marginBottom: 12, fontWeight: 600 }}>

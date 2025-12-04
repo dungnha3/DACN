@@ -4,7 +4,7 @@ import { usePermissions, useErrorHandler } from '@/shared/hooks';
 import { commonStyles } from '@/shared/utils';
 import { colors, typography, spacing } from '@/shared/styles/theme';
 
-export default function SharedAttendancePage({ 
+export default function SharedAttendancePage({
   title = "Chấm công",
   breadcrumb = "Cá nhân / Chấm công",
   viewMode = "personal" // "personal" | "management"
@@ -17,9 +17,9 @@ export default function SharedAttendancePage({
   const [todayStatus, setTodayStatus] = useState(null);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState(null);
-  
+
   const { user: authUser } = useAuth();
-  const { currentUser, isHRManager, isAccountingManager } = usePermissions();
+  const { user: currentUser, isHRManager, isAccountingManager } = usePermissions();
   const { handleError } = useErrorHandler();
 
   // Office coordinates (example: TP.HCM)
@@ -38,83 +38,69 @@ export default function SharedAttendancePage({
     try {
       setLoading(true);
       setError(null);
-      
-      // Simulate loading attendance data
-      setTimeout(() => {
-        if (viewMode === "personal") {
-          // Personal attendance records
-          setAttendanceRecords([
-            {
-              id: 1,
-              ngay: '2024-11-20',
-              gioVao: '08:30',
-              gioRa: '17:45',
-              tongGio: 9.25,
-              trangThai: 'BINH_THUONG',
-              ghiChu: ''
-            },
-            {
-              id: 2,
-              ngay: '2024-11-19',
-              gioVao: '08:35',
-              gioRa: '17:30',
-              tongGio: 8.92,
-              trangThai: 'DI_MUON',
-              ghiChu: 'Đi muộn 5 phút'
-            },
-            {
-              id: 3,
-              ngay: '2024-11-18',
-              gioVao: '08:25',
-              gioRa: '17:15',
-              tongGio: 8.83,
-              trangThai: 'VE_SOM',
-              ghiChu: 'Về sớm 15 phút'
-            }
-          ]);
-          
-          // Today's status
+
+      if (viewMode === "personal" && currentUser?.userId) {
+        // Get employee ID first (if not available in context)
+        // Assuming currentUser has employeeId or we fetch it. 
+        // For now, let's assume we can get it via service or context.
+        // Actually, attendanceService methods often take employeeId.
+        // Let's use the profile service or similar if needed, but usually currentUser has it.
+        // If currentUser only has userId, we might need to fetch employee details first.
+        // However, looking at EmployeeDashboard.jsx, it fetches employeeId.
+        // SharedAttendancePage might need employeeId passed in or fetch it.
+        // Let's try to use the API that gets by User ID or assume we have it.
+        // attendanceService.getByMonth takes employeeId.
+
+        // We need to get employeeId from currentUser.userId
+        // Let's import employeesService to get it if needed.
+        // Or better, let's check if we can get it from the API.
+
+        // For this implementation, I will fetch employee info first if I don't have it.
+        // But to keep it simple and consistent with EmployeeDashboard, let's assume we can get it.
+        // Actually, let's fetch it to be safe.
+
+        // Wait, I can't easily import employeesService here without checking path.
+        // Let's look at how EmployeeDashboard does it. It uses employeesService.getByUserId.
+        // I will add that import.
+
+        const employeeRes = await import('@/features/hr/shared/services/employees.service').then(m => m.employeesService.getByUserId(currentUser.userId));
+        const employeeId = employeeRes?.nhanvienId;
+
+        if (employeeId) {
+          // 1. Get Attendance Records
+          const records = await import('@/shared/services/attendance.service').then(m => m.attendanceService.getByMonth(employeeId, selectedYear, selectedMonth));
+
+          // Map API response to component state
+          const mappedRecords = Array.isArray(records) ? records.map(r => ({
+            id: r.chamcongId,
+            ngay: r.ngayCham,
+            gioVao: r.gioVao ? r.gioVao.substring(0, 5) : null,
+            gioRa: r.gioRa ? r.gioRa.substring(0, 5) : null,
+            tongGio: r.soGioLam,
+            trangThai: r.trangThai,
+            ghiChu: r.ghiChu
+          })) : [];
+
+          setAttendanceRecords(mappedRecords);
+
+          // 2. Get Today's Status
+          const status = await import('@/shared/services/attendance.service').then(m => m.attendanceService.getStatus(employeeId));
           setTodayStatus({
-            daCheckIn: false,
-            gioCheckIn: null,
-            daCheckOut: false,
-            gioCheckOut: null
+            daCheckIn: status.checkedIn,
+            gioCheckIn: status.gioVao ? status.gioVao.substring(0, 5) : null,
+            daCheckOut: status.checkedOut,
+            gioCheckOut: status.gioRa ? status.gioRa.substring(0, 5) : null,
+            viTriCheckIn: null, // API might not return this yet
+            viTriCheckOut: null
           });
-        } else {
-          // Management view - all employees
-          setAttendanceRecords([
-            {
-              id: 1,
-              nhanVien: { hoTen: 'Nguyễn Văn A', phongBan: 'IT' },
-              ngay: '2024-11-20',
-              gioVao: '08:30',
-              gioRa: '17:45',
-              tongGio: 9.25,
-              trangThai: 'BINH_THUONG'
-            },
-            {
-              id: 2,
-              nhanVien: { hoTen: 'Trần Thị B', phongBan: 'HR' },
-              ngay: '2024-11-20',
-              gioVao: '08:35',
-              gioRa: '17:30',
-              tongGio: 8.92,
-              trangThai: 'DI_MUON'
-            },
-            {
-              id: 3,
-              nhanVien: { hoTen: 'Lê Văn C', phongBan: 'Marketing' },
-              ngay: '2024-11-20',
-              gioVao: '08:25',
-              gioRa: '17:15',
-              tongGio: 8.83,
-              trangThai: 'VE_SOM'
-            }
-          ]);
         }
-        
-        setLoading(false);
-      }, 1000);
+      } else {
+        // Management view - not implemented yet for real API in this snippet
+        // Keep mock or empty for now
+        setAttendanceRecords([]);
+      }
+
+      setLoading(false);
     } catch (err) {
       const errorMessage = handleError(err, { context: 'load_attendance' });
       setError(errorMessage);
@@ -130,10 +116,10 @@ export default function SharedAttendancePage({
     const Δφ = (lat2 - lat1) * Math.PI / 180;
     const Δλ = (lon2 - lon1) * Math.PI / 180;
 
-    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ/2) * Math.sin(Δλ/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) *
+      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return Math.round(R * c); // Distance in meters
   };
@@ -179,6 +165,10 @@ export default function SharedAttendancePage({
       setGpsLoading(true);
       setGpsError(null);
 
+      if (!currentUser?.userId) {
+        throw new Error('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+      }
+
       // Get GPS location
       const location = await getUserLocation();
 
@@ -198,30 +188,26 @@ export default function SharedAttendancePage({
       }
 
       const now = new Date();
-      const timeString = now.toLocaleTimeString('vi-VN', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      });
+      const today = now.toISOString().split('T')[0];
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Get employee ID
+      const employeeRes = await import('@/features/hr/shared/services/employees.service').then(m => m.employeesService.getByUserId(currentUser.userId));
+      const employeeId = employeeRes?.nhanvienId;
 
-      setTodayStatus(prev => ({
-        ...prev,
-        daCheckIn: true,
-        gioCheckIn: timeString,
-        viTriCheckIn: {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          distance: distance,
-          accuracy: location.accuracy
-        }
-      }));
+      if (employeeId) {
+        await import('@/shared/services/attendance.service').then(m => m.attendanceService.checkIn(employeeId, today));
 
-      alert(`✅ Check-in thành công!\n🕐 Thời gian: ${timeString}\n📍 Khoảng cách: ${distance}m từ văn phòng`);
+        // Refresh data
+        await loadAttendanceData();
+
+        alert(`✅ Check-in thành công!\n📍 Khoảng cách: ${distance}m từ văn phòng`);
+      } else {
+        throw new Error('Không tìm thấy thông tin nhân viên.');
+      }
+
       setGpsLoading(false);
     } catch (err) {
-      setGpsError(err.message);
+      setGpsError(err.message || 'Lỗi khi check-in');
       setGpsLoading(false);
     }
   };
@@ -230,6 +216,10 @@ export default function SharedAttendancePage({
     try {
       setGpsLoading(true);
       setGpsError(null);
+
+      if (!currentUser?.userId) {
+        throw new Error('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+      }
 
       // Get GPS location
       const location = await getUserLocation();
@@ -242,31 +232,55 @@ export default function SharedAttendancePage({
         OFFICE_LOCATION.longitude
       );
 
-      const now = new Date();
-      const timeString = now.toLocaleTimeString('vi-VN', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      });
+      // Get employee ID and status to find attendance ID
+      const employeeRes = await import('@/features/hr/shared/services/employees.service').then(m => m.employeesService.getByUserId(currentUser.userId));
+      const employeeId = employeeRes?.nhanvienId;
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (employeeId) {
+        const status = await import('@/shared/services/attendance.service').then(m => m.attendanceService.getStatus(employeeId));
+        // We need chamcongId to checkout. getStatus usually returns it or we need to find it.
+        // The getStatus API response in ChamCongController (viewed earlier) DOES NOT return chamcongId explicitly in the map!
+        // Wait, I viewed ChamCongService.getTrangThaiChamCongHomNay in step 386.
+        // It puts: checkedIn, checkedOut, gioVao, gioRa, soGioLam, trangThai, phuongThuc, message.
+        // IT DOES NOT PUT CHAMCONG ID!
+        // This is a problem. I need to fix the backend service to return chamcongId.
+        // But I can't fix backend right now easily without restarting.
+        // Actually, I can fix it.
+        // OR, I can use the check-in endpoint for checkout if it supports it? No, checkOut takes attendanceId.
 
-      setTodayStatus(prev => ({
-        ...prev,
-        daCheckOut: true,
-        gioCheckOut: timeString,
-        viTriCheckOut: {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          distance: distance,
-          accuracy: location.accuracy
+        // Let's check ChamCongService.java again.
+        // I remember seeing it.
+
+        // If I can't get chamcongId, I can't checkout.
+        // I should fix the backend service first?
+        // Or maybe I can use getByNhanVienAndNgayCham?
+
+        // Let's assume for now I will fix the backend service to return chamcongId.
+        // Or I can fetch today's attendance record from the list if it's there?
+        // loadAttendanceData fetches the list.
+
+        // Let's try to find today's record in the list first.
+        const today = new Date().toISOString().split('T')[0];
+        const records = await import('@/shared/services/attendance.service').then(m => m.attendanceService.getByMonth(employeeId, selectedYear, selectedMonth));
+        const todayRecord = records.find(r => r.ngayCham === today);
+
+        if (todayRecord && todayRecord.chamcongId) {
+          await import('@/shared/services/attendance.service').then(m => m.attendanceService.checkOut(todayRecord.chamcongId));
+
+          // Refresh data
+          await loadAttendanceData();
+
+          alert(`✅ Check-out thành công!\n📍 Khoảng cách: ${distance}m từ văn phòng`);
+        } else {
+          throw new Error("Không tìm thấy thông tin chấm công hôm nay để check-out");
         }
-      }));
+      } else {
+        throw new Error('Không tìm thấy thông tin nhân viên.');
+      }
 
-      alert(`✅ Check-out thành công!\n🕐 Thời gian: ${timeString}\n📍 Khoảng cách: ${distance}m từ văn phòng`);
       setGpsLoading(false);
     } catch (err) {
-      setGpsError(err.message);
+      setGpsError(err.message || 'Lỗi khi check-out');
       setGpsLoading(false);
     }
   };
@@ -318,7 +332,7 @@ export default function SharedAttendancePage({
           <div style={{ fontSize: typography.xl, color: colors.error, marginBottom: spacing.lg }}>
             ❌ {error}
           </div>
-          <button 
+          <button
             onClick={loadAttendanceData}
             style={{
               background: colors.gradientPrimary,
@@ -347,7 +361,7 @@ export default function SharedAttendancePage({
           {viewMode === "personal" && (
             <div style={{ display: 'flex', gap: spacing.md }}>
               {!todayStatus?.daCheckIn ? (
-                <button 
+                <button
                   style={{
                     background: gpsLoading ? colors.textMuted : colors.gradientSuccess,
                     color: '#fff', border: 'none', borderRadius: spacing.lg, padding: `${spacing.md} ${spacing.xl}`,
@@ -357,10 +371,10 @@ export default function SharedAttendancePage({
                   onClick={handleGPSCheckIn}
                   disabled={gpsLoading}
                 >
-                  {gpsLoading ? '⏳ Đang lấy GPS...' : '� Check-in GPS'}
+                  {gpsLoading ? '⏳ Đang lấy GPS...' : ' Check-in GPS'}
                 </button>
               ) : !todayStatus?.daCheckOut ? (
-                <button 
+                <button
                   style={{
                     background: gpsLoading ? colors.textMuted : colors.gradientWarning,
                     color: '#fff', border: 'none', borderRadius: spacing.lg, padding: `${spacing.md} ${spacing.xl}`,
@@ -370,7 +384,7 @@ export default function SharedAttendancePage({
                   onClick={handleGPSCheckOut}
                   disabled={gpsLoading}
                 >
-                  {gpsLoading ? '⏳ Đang lấy GPS...' : '� Check-out GPS'}
+                  {gpsLoading ? '⏳ Đang lấy GPS...' : ' Check-out GPS'}
                 </button>
               ) : (
                 <div style={{
@@ -474,17 +488,17 @@ export default function SharedAttendancePage({
 
       {/* Filter */}
       <div style={{ display: 'flex', gap: spacing.lg, marginBottom: spacing['2xl'] }}>
-        <select 
-          value={selectedMonth} 
+        <select
+          value={selectedMonth}
           onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
           style={commonStyles.inputBase}
         >
-          {Array.from({length: 12}, (_, i) => (
-            <option key={i+1} value={i+1}>Tháng {i+1}</option>
+          {Array.from({ length: 12 }, (_, i) => (
+            <option key={i + 1} value={i + 1}>Tháng {i + 1}</option>
           ))}
         </select>
-        <select 
-          value={selectedYear} 
+        <select
+          value={selectedYear}
           onChange={(e) => setSelectedYear(parseInt(e.target.value))}
           style={commonStyles.inputBase}
         >
@@ -521,7 +535,7 @@ export default function SharedAttendancePage({
         <h3 style={{ ...commonStyles.heading3, marginBottom: spacing.xl }}>
           📊 Lịch sử chấm công tháng {selectedMonth}/{selectedYear}
         </h3>
-        
+
         {attendanceRecords.length > 0 ? (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -587,7 +601,7 @@ export default function SharedAttendancePage({
               Chưa có dữ liệu chấm công
             </div>
             <div style={{ fontSize: typography.base, color: colors.textSecondary }}>
-              {viewMode === "personal" 
+              {viewMode === "personal"
                 ? "Bạn chưa có bản ghi chấm công nào trong tháng này"
                 : "Chưa có dữ liệu chấm công của nhân viên trong tháng này"
               }

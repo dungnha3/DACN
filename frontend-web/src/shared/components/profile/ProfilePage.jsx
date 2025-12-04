@@ -4,6 +4,7 @@ import { formatCurrency, commonStyles } from '@/shared/utils';
 import { colors, typography, spacing } from '@/shared/styles/theme';
 import { profileService } from '@/shared/services/profile.service';
 import { employeesService } from '@/features/hr/shared/services/employees.service';
+import { payrollService } from '@/shared/services/payroll.service';
 
 export default function SharedProfilePage({
   title = "Hồ sơ cá nhân",
@@ -29,6 +30,8 @@ export default function SharedProfilePage({
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({});
   const [showSalary, setShowSalary] = useState(false);
+  const [showEstimatedSalary, setShowEstimatedSalary] = useState(false);
+  const [estimatedSalary, setEstimatedSalary] = useState(null);
   const [error, setError] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -83,6 +86,19 @@ export default function SharedProfilePage({
       };
 
       setEmployee(mergedData);
+
+      // Step 5: Fetch estimated salary (current month)
+      try {
+        const now = new Date();
+        const payrollRes = await payrollService.getByEmployee(mergedData.nhanvienId, now.getMonth() + 1, now.getFullYear());
+        if (payrollRes) {
+          // Could be array or single object
+          const payroll = Array.isArray(payrollRes) ? payrollRes[0] : payrollRes;
+          setEstimatedSalary(payroll?.luongThucNhan || payroll?.luongCoBan || 0);
+        }
+      } catch (payrollErr) {
+        console.warn('Failed to fetch payroll:', payrollErr);
+      }
 
       // Initialize form data for editing
       setFormData({
@@ -604,6 +620,34 @@ export default function SharedProfilePage({
                   </label>
                   <div style={{ fontSize: 15, color: '#16a34a', fontWeight: 700 }}>
                     {showSalary ? (employee.luongCoBan ? formatCurrency(employee.luongCoBan) : 'Chưa cập nhật') : '***'}
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#7b809a', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    Lương ước tính (Tháng {new Date().getMonth() + 1})
+                    <button
+                      onClick={() => setShowEstimatedSalary(!showEstimatedSalary)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: 16,
+                        padding: 4,
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: '#7b809a',
+                        transition: 'color 0.2s'
+                      }}
+                      title={showEstimatedSalary ? 'Ẩn lương' : 'Hiện lương'}
+                      onMouseEnter={(e) => e.currentTarget.style.color = '#344767'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = '#7b809a'}
+                    >
+                      {showEstimatedSalary ? '👁️' : '👁️‍🗨️'}
+                    </button>
+                  </label>
+                  <div style={{ fontSize: 15, color: '#0ea5e9', fontWeight: 700 }}>
+                    {showEstimatedSalary ? (estimatedSalary !== null ? formatCurrency(estimatedSalary) : 'Chưa có dữ liệu') : '***'}
                   </div>
                 </div>
               </div>

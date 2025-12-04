@@ -1,12 +1,27 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
-import { usePermissions, useErrorHandler } from '@/shared/hooks'
 import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
-import { NavItem, RoleBadge, KPICard, StatusBadge, LeaveStatusBar } from './components/EmployeeDashboard.components'
-import { kpiData, attendanceHistory, leaveRequests, notifications, sectionsConfig } from './components/EmployeeDashboard.constants'
+import {
+  NavItem,
+  RoleBadge,
+  StatCard,
+  TodayStatusCard,
+  AttendanceChart,
+  LeaveStatusWidget,
+
+  QuickActionButton
+} from './components/EmployeeDashboard.components'
+import { sectionsConfig } from './components/EmployeeDashboard.constants'
 import { ProfilePage, MyPayrollPage, MyAttendancePage, MyLeavePage, MyDocumentsPage, MyProjectsPage, MyStoragePage } from '@/modules/employee'
 import NotificationBell from '@/shared/components/notification/NotificationBell'
 import { ChatPage } from '@/modules/project'
+
+// Services
+import { profileService } from '@/shared/services/profile.service'
+import { employeesService } from '@/features/hr/shared/services/employees.service'
+import { attendanceService } from '@/shared/services/attendance.service'
+import { leaveService } from '@/shared/services/leave.service'
+import { payrollService } from '@/shared/services/payroll.service'
 
 export default function EmployeeDashboard() {
   const [active, setActive] = useState('dashboard')
@@ -14,31 +29,189 @@ export default function EmployeeDashboard() {
   const username = authUser?.username || localStorage.getItem('username') || 'Employee'
   const user = useMemo(() => ({ name: username || 'Nguyễn Văn A', role: 'Nhân viên' }), [username])
 
+  // Dashboard data states
+  const [loading, setLoading] = useState(true)
+  const [employeeId, setEmployeeId] = useState(null)
+  const [attendanceStatus, setAttendanceStatus] = useState(null)
+  const [attendanceData, setAttendanceData] = useState([])
+  const [leaveStats, setLeaveStats] = useState({ pending: 0, approved: 0, rejected: 0, remaining: 12 })
+  const [payrollData, setPayrollData] = useState(null)
+  const [stats, setStats] = useState({
+    totalHours: 0,
+    lateDays: 0,
+    workingDays: 0
+  })
+  const [checkInLoading, setCheckInLoading] = useState(false)
+
   const sections = useMemo(() => sectionsConfig, [])
   const meta = sections[active] || { title: 'Dashboard', subtitle: 'Employee Portal' }
 
   // State for sidebar hover
-  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
-  const hoverTimeoutRef = useRef(null);
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false)
+  const hoverTimeoutRef = useRef(null)
 
   const handleMouseEnter = () => {
     if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
+      clearTimeout(hoverTimeoutRef.current)
     }
-    setIsSidebarHovered(true);
-  };
+    setIsSidebarHovered(true)
+  }
 
   const handleMouseLeave = () => {
-    // Delay 100ms để tránh flicker khi chuột di chuyển nhanh
     hoverTimeoutRef.current = setTimeout(() => {
-      setIsSidebarHovered(false);
-    }, 100);
-  };
+      setIsSidebarHovered(false)
+    }, 100)
+  }
 
   const handleLogout = async () => {
     await logout()
   }
 
+  // Fetch employee data on mount
+  useEffect(() => {
+    const fetchEmployeeData = async () => {
+      try {
+        // Get user profile first
+        const profile = await profileService.getProfile()
+        if (profile?.userId) {
+          // Get employee by user ID
+          const employee = await employeesService.getByUserId(profile.userId)
+          if (employee?.nhanvienId) {
+            setEmployeeId(employee.nhanvienId)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching employee data:', error)
+      }
+    }
+    fetchEmployeeData()
+  }, [])
+
+  // Fetch dashboard data when employeeId is available
+  useEffect(() => {
+    if (!employeeId || active !== 'dashboard') return
+
+    const fetchDashboardData = async () => {
+      setLoading(true)
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = now.getMonth() + 1
+
+      try {
+        // Fetch all data in parallel
+        const [
+          statusRes,
+          attendanceRes,
+          leaveRes,
+          payrollRes,
+          notifRes
+        ] = await Promise.allSettled([
+          attendanceService.getStatus(employeeId),
+          attendanceService.getByMonth(employeeId, year, month),
+          leaveService.getByEmployee(employeeId),
+          payrollService.getByEmployee(employeeId, month, year)
+        ])
+
+        // Process attendance status
+        if (statusRes.status === 'fulfilled' && statusRes.value) {
+          setAttendanceStatus(statusRes.value)
+        }
+
+        // Process attendance data for chart
+        if (attendanceRes.status === 'fulfilled' && Array.isArray(attendanceRes.value)) {
+          const chartData = attendanceRes.value
+            .slice(-7)
+            .map(item => ({
+              date: item.ngayCham,
+              hours: item.soGioLam || 0,
+              status: item.trangThai
+            }))
+          setAttendanceData(chartData)
+
+          // Calculate stats
+          const totalHours = attendanceRes.value.reduce((sum, item) => sum + (item.soGioLam || 0), 0)
+          const lateDays = attendanceRes.value.filter(item => item.trangThai === 'DI_MUON').length
+          const workingDays = attendanceRes.value.length
+          setStats({ totalHours, lateDays, workingDays })
+        }
+
+        // Process leave data
+        if (leaveRes.status === 'fulfilled' && Array.isArray(leaveRes.value)) {
+          const thisYearLeaves = leaveRes.value.filter(l => {
+            const leaveDate = new Date(l.ngayBatDau)
+            return leaveDate.getFullYear() === year
+          })
+          const pending = thisYearLeaves.filter(l => l.trangThai === 'CHO_DUYET').length
+          const approved = thisYearLeaves.filter(l => l.trangThai === 'DA_DUYET').length
+          const rejected = thisYearLeaves.filter(l => l.trangThai === 'TU_CHOI').length
+          const usedDays = thisYearLeaves
+            .filter(l => l.trangThai === 'DA_DUYET')
+            .reduce((sum, l) => sum + (l.soNgay || 0), 0)
+          setLeaveStats({
+            pending,
+            approved,
+            rejected,
+            remaining: Math.max(12 - usedDays, 0)
+          })
+        }
+
+        // Process payroll data
+        if (payrollRes.status === 'fulfilled' && payrollRes.value) {
+          // Could be array or single object
+          const payroll = Array.isArray(payrollRes.value) ? payrollRes.value[0] : payrollRes.value
+          setPayrollData(payroll)
+        }
+
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDashboardData()
+  }, [employeeId, active])
+
+  // Handle check-in
+  const handleCheckIn = async () => {
+    if (!employeeId) return
+    setCheckInLoading(true)
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      await attendanceService.checkIn(employeeId, today)
+      // Refresh status
+      const status = await attendanceService.getStatus(employeeId)
+      setAttendanceStatus(status)
+    } catch (error) {
+      console.error('Check-in error:', error)
+      alert('Có lỗi khi chấm công: ' + (error.response?.data?.message || error.message))
+    } finally {
+      setCheckInLoading(false)
+    }
+  }
+
+  // Handle check-out
+  const handleCheckOut = async () => {
+    if (!attendanceStatus?.chamcongId) return
+    setCheckInLoading(true)
+    try {
+      await attendanceService.checkOut(attendanceStatus.chamcongId)
+      // Refresh status
+      const status = await attendanceService.getStatus(employeeId)
+      setAttendanceStatus(status)
+    } catch (error) {
+      console.error('Check-out error:', error)
+      alert('Có lỗi khi chấm công ra: ' + (error.response?.data?.message || error.message))
+    } finally {
+      setCheckInLoading(false)
+    }
+  }
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    if (!amount) return '0 ₫'
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
+  }
 
   // Custom Styles for Light/Collapsed Theme
   const customStyles = {
@@ -77,7 +250,6 @@ export default function EmployeeDashboard() {
       overflowY: 'auto',
       overflowX: 'hidden',
     },
-    // User card overrides
     userCard: {
       ...styles.userCard,
       background: 'transparent',
@@ -118,8 +290,6 @@ export default function EmployeeDashboard() {
       background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
       boxShadow: '0 2px 4px rgba(100, 116, 139, 0.2)',
     },
-
-    // Navigation overrides
     navGroup: {
       marginBottom: 24,
     },
@@ -154,8 +324,54 @@ export default function EmployeeDashboard() {
       overflow: 'hidden',
       boxShadow: 'none',
     }
-  };
+  }
 
+  // Local styles for dashboard
+  const dashboardStyles = {
+    container: {
+      padding: 32,
+      maxWidth: 1400,
+      margin: '0 auto'
+    },
+    header: {
+      marginBottom: 32
+    },
+    greeting: {
+      fontSize: 28,
+      fontWeight: 700,
+      color: '#0f172a',
+      margin: 0,
+      marginBottom: 4
+    },
+    subGreeting: {
+      fontSize: 15,
+      color: '#64748b',
+      margin: 0
+    },
+    mainGrid: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 380px',
+      gap: 24,
+      marginBottom: 24
+    },
+    statsGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(3, 1fr)',
+      gap: 16,
+      marginBottom: 24
+    },
+    chartsGrid: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 24
+    },
+    quickActions: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(2, 1fr)',
+      gap: 16,
+      marginTop: 0
+    }
+  }
 
   return (
     <div style={customStyles.appShell}>
@@ -175,10 +391,6 @@ export default function EmployeeDashboard() {
         </div>
 
         <div style={customStyles.divider} />
-
-
-
-
 
         {/* Group 1: Tổng quan */}
         <div style={customStyles.navGroup}>
@@ -265,61 +477,86 @@ export default function EmployeeDashboard() {
           </header>
         )}
 
-        {/* Dashboard Main */}
+        {/* Dashboard Main - NEW DESIGN */}
         {active === 'dashboard' && (
-          <div style={styles.dashboardContent}>
-            {/* KPI Cards Row */}
-            <div style={styles.kpiGrid}>
-              <KPICard title="Lương dự kiến" value={`${kpiData.salary}đ`} icon="💵" color="success" change="+5%" />
-              <KPICard title="Ngày phép còn" value={`${kpiData.leaveDays} ngày`} icon="📅" color="info" change="+3 ngày" />
-              <KPICard title="Số lần đi muộn" value={`${kpiData.lateDays} lần`} icon="⏰" color="warning" change="-2 lần" />
-              <KPICard title="Tổng giờ làm (Tháng)" value={`${kpiData.totalHours}h`} icon="🕐" color="primary" change="+8h" />
-            </div>
-
-            {/* Welcome & Notifications Row */}
-            <div style={styles.cardsRow}>
-              <div style={styles.welcomeCard}>
-                <div style={styles.welcomeContent}>
-                  <h3 style={styles.welcomeTitle}>Chào mừng, {user.name}!</h3>
-                  <p style={styles.welcomeText}>
-                    Hãy bắt đầu ngày làm việc của bạn bằng cách chấm công. Chúc bạn một ngày làm việc hiệu quả!
-                  </p>
-                  <button style={styles.checkInBtn}>
-                    ✓ Chấm công vào
-                  </button>
+          <div style={dashboardStyles.container}>
+            <div style={dashboardStyles.mainGrid}>
+              {/* Left Column */}
+              <div>
+                {/* Stats Grid */}
+                <div style={dashboardStyles.statsGrid}>
+                  <StatCard
+                    title="Ngày phép còn lại"
+                    value={`${leaveStats.remaining} ngày`}
+                    subtext={`Đã sử dụng ${12 - leaveStats.remaining} ngày`}
+                    icon="📅"
+                    accentColor="#3b82f6"
+                    loading={loading}
+                    onClick={() => setActive('leave')}
+                  />
+                  <StatCard
+                    title="Số lần đi muộn"
+                    value={`${stats.lateDays} lần`}
+                    subtext="Trong tháng này"
+                    icon="⏰"
+                    accentColor={stats.lateDays > 3 ? '#ef4444' : '#f59e0b'}
+                    loading={loading}
+                    onClick={() => setActive('timesheet')}
+                  />
+                  <StatCard
+                    title="Tổng giờ làm"
+                    value={`${stats.totalHours.toFixed(1)}h`}
+                    subtext={`${stats.workingDays} ngày công`}
+                    icon="🕐"
+                    accentColor="#8b5cf6"
+                    loading={loading}
+                    onClick={() => setActive('timesheet')}
+                  />
                 </div>
+
+                {/* Charts Row */}
+                <div style={dashboardStyles.chartsGrid}>
+                  <AttendanceChart data={attendanceData} loading={loading} />
+                  <LeaveStatusWidget data={leaveStats} loading={loading} />
+                </div>
+
               </div>
 
-              <div style={styles.notificationCard}>
-                <h4 style={styles.cardTitle}>Thông báo & Sự kiện</h4>
-                <div style={styles.notificationList}>
-                  {notifications.map((notif, idx) => (
-                    <div key={idx} style={styles.notificationItem}>
-                      <div style={styles.notifIcon}>📢</div>
-                      <div style={styles.notifContent}>
-                        <div style={styles.notifTitle}>{notif.title}</div>
-                        <div style={styles.notifDesc}>{notif.desc}</div>
-                        <div style={styles.notifDate}>{notif.date}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+              {/* Right Column */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                <TodayStatusCard
+                  status={attendanceStatus}
+                  onCheckIn={handleCheckIn}
+                  onCheckOut={handleCheckOut}
+                  loading={checkInLoading}
+                />
 
-            {/* Charts Row */}
-            <div style={styles.chartsRow}>
-              <div style={styles.chartCard}>
-                <h4 style={styles.cardTitle}>Biểu đồ giờ làm theo ngày</h4>
-                <div style={styles.chartPlaceholder}>
-                  <div style={styles.chartInfo}>📊 Biểu đồ đang được phát triển</div>
-                </div>
-              </div>
-
-              <div style={styles.chartCard}>
-                <h4 style={styles.cardTitle}>Thống kê nghỉ phép</h4>
-                <div style={styles.chartPlaceholder}>
-                  <div style={styles.chartInfo}>📈 Biểu đồ đang được phát triển</div>
+                {/* Quick Actions - Moved to Right Column */}
+                <div style={dashboardStyles.quickActions}>
+                  <QuickActionButton
+                    icon="🕐"
+                    label="Xem chấm công"
+                    onClick={() => setActive('timesheet')}
+                    color="#3b82f6"
+                  />
+                  <QuickActionButton
+                    icon="📋"
+                    label="Xin nghỉ phép"
+                    onClick={() => setActive('leave')}
+                    color="#10b981"
+                  />
+                  <QuickActionButton
+                    icon="💰"
+                    label="Xem phiếu lương"
+                    onClick={() => setActive('payroll')}
+                    color="#f59e0b"
+                  />
+                  <QuickActionButton
+                    icon="📄"
+                    label="Tài liệu"
+                    onClick={() => setActive('documents')}
+                    color="#8b5cf6"
+                  />
                 </div>
               </div>
             </div>
@@ -328,104 +565,9 @@ export default function EmployeeDashboard() {
 
         {/* Timesheet Page */}
         {active === 'timesheet' && <MyAttendancePage />}
-        {false && (
-          <div style={styles.pageContent}>
-            <div style={styles.tableCard}>
-              <div style={styles.tableHeader}>
-                <h4 style={styles.tableTitle}>Lịch sử chấm công</h4>
-              </div>
-              <div style={styles.tableWrap}>
-                <table style={styles.table}>
-                  <thead>
-                    <tr>
-                      <th style={styles.th}>Ngày</th>
-                      <th style={styles.th}>Giờ vào</th>
-                      <th style={styles.th}>Giờ ra</th>
-                      <th style={styles.th}>Tổng giờ</th>
-                      <th style={styles.th}>Trạng thái</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {attendanceHistory.map((record, idx) => (
-                      <tr key={idx} style={styles.tr}>
-                        <td style={styles.td}>{record.date}</td>
-                        <td style={styles.td}>{record.timeIn}</td>
-                        <td style={styles.td}>{record.timeOut}</td>
-                        <td style={styles.td}>
-                          <div style={styles.hoursCell}>
-                            <div style={styles.hoursBar(record.hours)} />
-                            <span style={styles.hoursText}>{record.hours}h</span>
-                          </div>
-                        </td>
-                        <td style={styles.td}>
-                          <StatusBadge status={record.status} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Leave Page */}
         {active === 'leave' && <MyLeavePage />}
-        {false && (
-          <div style={styles.pageContent}>
-            <div style={styles.leaveLayout}>
-              <div style={styles.tableCard}>
-                <div style={styles.tableHeader}>
-                  <h4 style={styles.tableTitle}>Lịch sử đơn từ</h4>
-                  <button style={styles.addBtn}>+ Đăng ký nghỉ phép</button>
-                </div>
-                <div style={styles.tableWrap}>
-                  <table style={styles.table}>
-                    <thead>
-                      <tr>
-                        <th style={styles.th}>Loại đơn</th>
-                        <th style={styles.th}>Ngày gửi</th>
-                        <th style={styles.th}>Người duyệt</th>
-                        <th style={styles.th}>Trạng thái</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {leaveRequests.map((req) => (
-                        <tr key={req.id} style={styles.tr}>
-                          <td style={styles.td}>{req.type}</td>
-                          <td style={styles.td}>{req.date}</td>
-                          <td style={styles.td}>{req.approver}</td>
-                          <td style={styles.td}>
-                            <LeaveStatusBar status={req.status} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div style={styles.orderOverview}>
-                <h4 style={styles.cardTitle}>Thông báo của tôi</h4>
-                <div style={styles.orderList}>
-                  {leaveRequests.map((req) => (
-                    <div key={req.id} style={styles.orderItem}>
-                      <div style={styles.orderIcon(req.status)}>
-                        {req.status === 'approved' ? '✓' : req.status === 'pending' ? '⏳' : '✗'}
-                      </div>
-                      <div style={styles.orderContent}>
-                        <div style={styles.orderTitle}>{req.type} {req.date}</div>
-                        <div style={styles.orderStatus}>
-                          {req.status === 'approved' ? 'Đã duyệt' : req.status === 'pending' ? 'Chờ duyệt' : 'Từ chối'}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Chat Page */}
         {active === 'chat' && <ChatPage />}
@@ -448,4 +590,3 @@ export default function EmployeeDashboard() {
     </div>
   )
 }
-
