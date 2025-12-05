@@ -1,9 +1,16 @@
-import { useMemo, useState, useRef } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
-import { usePermissions, useErrorHandler } from '@/shared/hooks'
 import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
-import { NavItem, RoleBadge, KPICard } from './components/ProjectManagerDashboard.components'
-import { kpiData, notifications, sectionsConfig } from './components/ProjectManagerDashboard.constants'
+import {
+  NavItem,
+  RoleBadge,
+  StatCard,
+  ProjectStatsCard,
+  PendingApprovalsWidget,
+  QuickActionButton
+} from './components/ProjectManagerDashboard.components'
+import { sectionsConfig } from './components/ProjectManagerDashboard.constants'
+import { pmDashboardService } from './services/pmDashboard.service'
 
 // Import các module tính năng đã tách riêng
 import { ProfilePage, LeavePage, ApprovalsPage, ChatPage, ProjectsPage, PMStoragePage } from '@modules/project';
@@ -284,87 +291,206 @@ export default function ProjectManagerDashboard() {
 
 // Component Dashboard Overview - Chỉ hiển thị tổng quan, KPIs, charts
 function DashboardOverview({ user, setActive }) {
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(null);
+
+  // Fetch dashboard data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const data = await pmDashboardService.getOverviewStats();
+        setStats(data);
+      } catch (error) {
+        console.error('Error loading PM dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Handle leave approval
+  const handleApproveLeave = async (leaveId) => {
+    try {
+      await pmDashboardService.approveLeave(leaveId);
+      // Refresh data
+      const data = await pmDashboardService.getOverviewStats();
+      setStats(data);
+    } catch (error) {
+      console.error('Error approving leave:', error);
+      alert('Có lỗi khi duyệt đơn: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  // Handle leave rejection
+  const handleRejectLeave = async (leaveId) => {
+    const reason = prompt('Nhập lý do từ chối:');
+    if (!reason) return;
+
+    try {
+      await pmDashboardService.rejectLeave(leaveId, reason);
+      // Refresh data
+      const data = await pmDashboardService.getOverviewStats();
+      setStats(data);
+    } catch (error) {
+      console.error('Error rejecting leave:', error);
+      alert('Có lỗi khi từ chối đơn: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  // Dashboard local styles
+  const dashboardStyles = {
+    container: {
+      padding: 32,
+      maxWidth: 1400,
+      margin: '0 auto'
+    },
+    statsGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+      gap: 20,
+      marginBottom: 24
+    },
+    mainGrid: {
+      display: 'grid',
+      gridTemplateColumns: '1.5fr 1fr',
+      gap: 24,
+      marginBottom: 24
+    },
+    quickActions: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(4, 1fr)',
+      gap: 16
+    }
+  };
+
   return (
-    <div style={styles.dashboardContent}>
-      {/* KPI Cards Row */}
-      <div style={styles.kpiGrid}>
-        <KPICard
-          title="Số nhân viên"
-          value={`${kpiData.teamSize} người`}
-          icon="👥"
-          color="success"
-          change="+2 người"
+    <div style={dashboardStyles.container}>
+      {/* Welcome Banner */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+        borderRadius: 16,
+        padding: 24,
+        marginBottom: 24,
+        color: '#fff',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700, marginBottom: 8 }}>
+            Chào mừng, {user.name}!
+          </h2>
+          <p style={{ margin: 0, opacity: 0.9, fontSize: 14 }}>
+            {stats?.pendingLeaveCount > 0
+              ? `Bạn có ${stats.pendingLeaveCount} đơn nghỉ phép cần duyệt.`
+              : 'Tất cả đơn đã được xử lý. Hãy kiểm tra tiến độ dự án.'}
+          </p>
+        </div>
+        <button
+          onClick={() => setActive('projects')}
+          style={{
+            background: '#fff',
+            color: '#1e3a8a',
+            border: 'none',
+            padding: '12px 24px',
+            borderRadius: 10,
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+          }}
+        >
+          🏗️ Xem dự án
+        </button>
+      </div>
+
+      {/* Stats Grid */}
+      <div style={dashboardStyles.statsGrid}>
+        <StatCard
+          title="Tổng dự án"
+          value={loading ? '...' : stats?.totalProjects || 0}
+          subtext="Dự án đang quản lý"
+          icon="🏗️"
+          accentColor="#3b82f6"
+          loading={loading}
+          onClick={() => setActive('projects')}
         />
-        <KPICard
+        <StatCard
+          title="Issues đang xử lý"
+          value={loading ? '...' : stats?.inProgressIssues || 0}
+          subtext={`${stats?.completedIssues || 0} đã hoàn thành`}
+          icon="🔄"
+          accentColor="#8b5cf6"
+          loading={loading}
+          onClick={() => setActive('projects')}
+        />
+        <StatCard
           title="Đơn chờ duyệt"
-          value={`${kpiData.pendingLeaves} đơn`}
-          icon="⏳"
-          color="warning"
-          change="Cần xử lý"
+          value={loading ? '...' : stats?.pendingLeaveCount || 0}
+          subtext="Cần xử lý"
+          icon="📋"
+          accentColor="#f59e0b"
+          loading={loading}
+          onClick={() => setActive('team-leaves')}
+          highlight={(stats?.pendingLeaveCount || 0) > 0}
         />
-        <KPICard
-          title="Đã duyệt hôm nay"
-          value={`${kpiData.approvedToday} đơn`}
-          icon="✓"
-          color="info"
-          change="+2 đơn"
-        />
-        <KPICard
-          title="Tổng đơn tháng"
-          value={`${kpiData.totalRequests} đơn`}
-          icon="📊"
-          color="primary"
-          change="+5 đơn"
+        <StatCard
+          title="Thành viên"
+          value={loading ? '...' : stats?.totalMembers || 0}
+          subtext="Trong các dự án"
+          icon="👥"
+          accentColor="#10b981"
+          loading={loading}
         />
       </div>
 
-      {/* Welcome & Notifications Row */}
-      <div style={styles.cardsRow}>
-        <div style={styles.welcomeCard}>
-          <div style={styles.welcomeContent}>
-            <h3 style={styles.welcomeTitle}>Chào mừng, {user.name}!</h3>
-            <p style={styles.welcomeText}>
-              Bạn có {kpiData.pendingLeaves} đơn nghỉ phép đang chờ duyệt.
-              Hãy xem xét và phê duyệt để nhân viên có thể sắp xếp công việc.
-            </p>
-            <button style={styles.checkInBtn} onClick={() => setActive('approvals')}>
-              ✓ Xem đơn chờ duyệt
-            </button>
-          </div>
-        </div>
+      {/* Main Content Grid */}
+      <div style={dashboardStyles.mainGrid}>
+        {/* Project Stats Card */}
+        <ProjectStatsCard
+          projects={stats?.projects || []}
+          loading={loading}
+          onViewAll={() => setActive('projects')}
+        />
 
-        <div style={styles.notificationCard}>
-          <h4 style={styles.cardTitle}>Thông báo & Sự kiện</h4>
-          <div style={styles.notificationList}>
-            {notifications.map((notif, idx) => (
-              <div key={idx} style={styles.notificationItem}>
-                <div style={styles.notifIcon}>📢</div>
-                <div style={styles.notifContent}>
-                  <div style={styles.notifTitle}>{notif.title}</div>
-                  <div style={styles.notifDesc}>{notif.desc}</div>
-                  <div style={styles.notifDate}>{notif.date}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Pending Approvals Widget */}
+        <PendingApprovalsWidget
+          leaves={stats?.pendingLeavesList || []}
+          loading={loading}
+          onApprove={handleApproveLeave}
+          onReject={handleRejectLeave}
+          onViewAll={() => setActive('team-leaves')}
+        />
       </div>
 
-      {/* Charts Row */}
-      <div style={styles.chartsRow}>
-        <div style={styles.chartCard}>
-          <h4 style={styles.cardTitle}>Biểu đồ chấm công nhóm</h4>
-          <div style={styles.chartPlaceholder}>
-            <div style={styles.chartInfo}>📊 Biểu đồ đang được phát triển</div>
-          </div>
-        </div>
-
-        <div style={styles.chartCard}>
-          <h4 style={styles.cardTitle}>Thống kê nghỉ phép</h4>
-          <div style={styles.chartPlaceholder}>
-            <div style={styles.chartInfo}>📈 Biểu đồ đang được phát triển</div>
-          </div>
-        </div>
+      {/* Quick Actions */}
+      <div style={dashboardStyles.quickActions}>
+        <QuickActionButton
+          icon="🏗️"
+          label="Xem dự án"
+          onClick={() => setActive('projects')}
+          color="#3b82f6"
+        />
+        <QuickActionButton
+          icon="✅"
+          label="Duyệt nghỉ phép"
+          onClick={() => setActive('team-leaves')}
+          color="#10b981"
+        />
+        <QuickActionButton
+          icon="📋"
+          label="Đơn của tôi"
+          onClick={() => setActive('leave')}
+          color="#f59e0b"
+        />
+        <QuickActionButton
+          icon="💬"
+          label="Trò chuyện"
+          onClick={() => setActive('chat')}
+          color="#8b5cf6"
+        />
       </div>
     </div>
   )
