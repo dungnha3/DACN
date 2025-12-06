@@ -5,6 +5,9 @@ import { aiApi } from './aiApi';
  * AI ChatBot Component - Giống Notion AI
  * Floating button ở góc dưới bên phải, click để mở chat
  */
+// Chat history storage key
+const CHAT_HISTORY_KEY = 'ai_chatbot_history';
+
 export default function AIChatBot({ projectId = null }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -13,10 +16,14 @@ export default function AIChatBot({ projectId = null }) {
   const [conversationId, setConversationId] = useState(null);
   const [aiStatus, setAiStatus] = useState({ available: false, message: '' });
   const [pendingActions, setPendingActions] = useState([]);
+  const [pendingActionType, setPendingActionType] = useState(null);
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [showProjectSelector, setShowProjectSelector] = useState(false);
   const [suggestedTasks, setSuggestedTasks] = useState(null);
+  const [chatHistory, setChatHistory] = useState([]);
+  const [currentChatId, setCurrentChatId] = useState(null);
+  const [showChatHistory, setShowChatHistory] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -33,7 +40,85 @@ export default function AIChatBot({ projectId = null }) {
   useEffect(() => {
     checkAiStatus();
     fetchProjects();
+    loadChatHistory();
   }, []);
+
+  // Load chat history from localStorage
+  const loadChatHistory = () => {
+    try {
+      const saved = localStorage.getItem(CHAT_HISTORY_KEY);
+      if (saved) {
+        const history = JSON.parse(saved);
+        setChatHistory(history);
+      }
+    } catch (error) {
+      console.error('Error loading chat history:', error);
+    }
+  };
+
+  // Save chat to history
+  const saveChatToHistory = (chatId, chatMessages, title = null) => {
+    if (!chatMessages || chatMessages.length === 0) return;
+
+    const chatTitle = title || getChatTitle(chatMessages);
+    const updatedHistory = [...chatHistory];
+    const existingIndex = updatedHistory.findIndex(chat => chat.id === chatId);
+
+    const chatData = {
+      id: chatId,
+      title: chatTitle,
+      messages: chatMessages,
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (existingIndex >= 0) {
+      updatedHistory[existingIndex] = chatData;
+    } else {
+      updatedHistory.unshift(chatData);
+    }
+
+    // Keep only last 20 chats
+    const limitedHistory = updatedHistory.slice(0, 20);
+    setChatHistory(limitedHistory);
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(limitedHistory));
+  };
+
+  // Get chat title from first user message
+  const getChatTitle = (chatMessages) => {
+    const firstUserMessage = chatMessages.find(m => m.role === 'user');
+    if (firstUserMessage) {
+      return firstUserMessage.content.slice(0, 40) + (firstUserMessage.content.length > 40 ? '...' : '');
+    }
+    return 'Cuộc chat mới';
+  };
+
+  // Switch to a chat from history
+  const handleSwitchChat = (chat) => {
+    // Save current chat before switching
+    if (currentChatId && messages.length > 0) {
+      saveChatToHistory(currentChatId, messages);
+    }
+
+    setMessages(chat.messages);
+    setCurrentChatId(chat.id);
+    setConversationId(null); // Reset conversation ID
+    setShowChatHistory(false);
+    setPendingActions([]);
+    setPendingActionType(null);
+  };
+
+  // Delete a chat from history
+  const handleDeleteChat = (chatId, e) => {
+    e.stopPropagation();
+    const updatedHistory = chatHistory.filter(chat => chat.id !== chatId);
+    setChatHistory(updatedHistory);
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(updatedHistory));
+
+    // If deleting current chat, reset to new chat
+    if (chatId === currentChatId) {
+      handleNewChat();
+    }
+  };
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -80,16 +165,23 @@ export default function AIChatBot({ projectId = null }) {
     if (!message.trim() && actionType === 'CHAT') return;
 
     const userMessage = message.trim() || getActionLabel(actionType);
-    
+
+    // Generate chat ID if not exists
+    const chatId = currentChatId || `chat_${Date.now()}`;
+    if (!currentChatId) {
+      setCurrentChatId(chatId);
+    }
+
     // Add user message to UI
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    const newMessages = [...messages, { role: 'user', content: userMessage }];
+    setMessages(newMessages);
     setInputValue('');
     setIsLoading(true);
 
     try {
       // Use selected project or prop projectId
       const currentProjectId = selectedProject?.projectId || projectId;
-      
+
       const response = await aiApi.chat({
         message: userMessage,
         conversationId,
@@ -103,20 +195,25 @@ export default function AIChatBot({ projectId = null }) {
       }
 
       // Add AI response
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
+      const updatedMessages = [...newMessages, {
+        role: 'assistant',
         content: response.message,
         suggestedActions: response.suggestedActions,
         executableActions: response.executableActions
-      }]);
+      }];
+      setMessages(updatedMessages);
 
-      // Set pending actions if any
-      if (response.executableActions && response.executableActions.length > 0) {
+      // Save to chat history
+      saveChatToHistory(chatId, updatedMessages);
+
+      // Set pending actions if any - only for SUGGEST_TASKS
+      if (response.executableActions && response.executableActions.length > 0 && actionType === 'SUGGEST_TASKS') {
         setPendingActions(response.executableActions);
+        setPendingActionType(actionType);
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      
+
       // Get error message from response
       let errorMessage = 'Xin lỗi, có lỗi xảy ra. Vui lòng thử lại sau.';
       if (error.response?.data?.message) {
@@ -124,12 +221,16 @@ export default function AIChatBot({ projectId = null }) {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
+
+      const errorMessages = [...newMessages, {
+        role: 'assistant',
         content: errorMessage,
-        isError: true 
-      }]);
+        isError: true
+      }];
+      setMessages(errorMessages);
+
+      // Save error chat to history too
+      saveChatToHistory(chatId, errorMessages);
     } finally {
       setIsLoading(false);
     }
@@ -138,7 +239,7 @@ export default function AIChatBot({ projectId = null }) {
   const handleQuickAction = (actionConfig) => {
     const action = typeof actionConfig === 'string' ? actionConfig : actionConfig.action;
     const needProject = typeof actionConfig === 'object' ? actionConfig.needProject : true;
-    
+
     // Check if project is needed but not selected
     if (needProject && !selectedProject && !projectId) {
       setMessages(prev => [...prev, {
@@ -148,7 +249,7 @@ export default function AIChatBot({ projectId = null }) {
       }]);
       return;
     }
-    
+
     const actionMessages = {
       SUMMARIZE_PROJECT: 'Hãy tóm tắt tình trạng dự án này',
       SUMMARIZE_SPRINT: 'Hãy tóm tắt tiến độ sprint hiện tại',
@@ -183,7 +284,7 @@ export default function AIChatBot({ projectId = null }) {
     setIsLoading(true);
     try {
       const result = await aiApi.executeAction(action);
-      
+
       // Add result message
       setMessages(prev => [...prev, {
         role: 'assistant',
@@ -191,10 +292,10 @@ export default function AIChatBot({ projectId = null }) {
         isActionResult: true,
         actionStatus: result.status
       }]);
-      
+
       // Clear pending actions
       setPendingActions(prev => prev.filter(a => a !== action));
-      
+
     } catch (error) {
       console.error('Error executing action:', error);
       setMessages(prev => [...prev, {
@@ -223,36 +324,37 @@ export default function AIChatBot({ projectId = null }) {
   // Approve all suggested tasks and create them
   const handleApproveAllTasks = async (actions) => {
     if (!actions || actions.length === 0) return;
-    
+
     setIsLoading(true);
     try {
       const results = await aiApi.executeBatchActions(actions);
-      
+
       // Count successes
       const successCount = results.filter(r => r.status === 'EXECUTED').length;
       const failCount = results.length - successCount;
-      
+
       let resultMessage = `✅ Đã tạo thành công ${successCount} công việc`;
       if (failCount > 0) {
         resultMessage += `\n⚠️ ${failCount} công việc không thể tạo`;
       }
-      
+
       // Show individual results
       results.forEach(r => {
         if (r.message) {
           resultMessage += `\n${r.message}`;
         }
       });
-      
+
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: resultMessage,
         isActionResult: true
       }]);
-      
+
       // Clear pending actions
       setPendingActions([]);
-      
+      setPendingActionType(null);
+
     } catch (error) {
       console.error('Error creating tasks:', error);
       setMessages(prev => [...prev, {
@@ -268,6 +370,7 @@ export default function AIChatBot({ projectId = null }) {
   // Reject suggested tasks
   const handleRejectTasks = () => {
     setPendingActions([]);
+    setPendingActionType(null);
     setMessages(prev => [...prev, {
       role: 'assistant',
       content: '👍 Đã hủy. Bạn có thể yêu cầu AI gợi ý lại hoặc tiếp tục chat.',
@@ -276,10 +379,18 @@ export default function AIChatBot({ projectId = null }) {
   };
 
   const handleNewChat = () => {
+    // Save current chat before creating new one
+    if (currentChatId && messages.length > 0) {
+      saveChatToHistory(currentChatId, messages);
+    }
+
     setMessages([]);
     setConversationId(null);
+    setCurrentChatId(null);
     setInputValue('');
     setPendingActions([]);
+    setPendingActionType(null);
+    setShowChatHistory(false);
   };
 
   const handleKeyDown = (e) => {
@@ -312,9 +423,21 @@ export default function AIChatBot({ projectId = null }) {
               <span style={styles.headerIcon}>🤖</span>
               <div style={styles.headerTitle}>
                 <span style={styles.titleText}>AI Assistant</span>
-                <button style={styles.newChatBtn} onClick={handleNewChat}>
-                  New chat ▾
-                </button>
+                <div style={styles.chatActionsRow}>
+                  <button
+                    style={styles.newChatBtnDropdown}
+                    onClick={() => setShowChatHistory(!showChatHistory)}
+                  >
+                    {messages.length > 0 ? getChatTitle(messages) : 'New chat'} ▾
+                  </button>
+                  <button
+                    style={styles.newChatPlusBtn}
+                    onClick={handleNewChat}
+                    title="Tạo cuộc chat mới"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
             </div>
             <div style={styles.headerActions}>
@@ -322,6 +445,51 @@ export default function AIChatBot({ projectId = null }) {
               <button style={styles.iconBtn} onClick={() => setIsOpen(false)} title="Đóng">—</button>
             </div>
           </div>
+
+          {/* Chat History Dropdown */}
+          {showChatHistory && (
+            <div style={styles.chatHistoryDropdown}>
+              <div style={styles.chatHistoryHeader}>
+                <span>📜 Lịch sử chat</span>
+                <button
+                  style={styles.closeHistoryBtn}
+                  onClick={() => setShowChatHistory(false)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div style={styles.chatHistoryList}>
+                {chatHistory.length === 0 ? (
+                  <div style={styles.noHistory}>Chưa có lịch sử chat</div>
+                ) : (
+                  chatHistory.map((chat) => (
+                    <div
+                      key={chat.id}
+                      style={{
+                        ...styles.chatHistoryItem,
+                        ...(chat.id === currentChatId && styles.chatHistoryItemActive)
+                      }}
+                      onClick={() => handleSwitchChat(chat)}
+                    >
+                      <div style={styles.chatHistoryItemContent}>
+                        <span style={styles.chatHistoryTitle}>{chat.title}</span>
+                        <span style={styles.chatHistoryDate}>
+                          {new Date(chat.updatedAt).toLocaleDateString('vi-VN')}
+                        </span>
+                      </div>
+                      <button
+                        style={styles.deleteChatBtn}
+                        onClick={(e) => handleDeleteChat(chat.id, e)}
+                        title="Xóa cuộc chat"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Chat Content */}
           <div style={styles.chatContent}>
@@ -333,14 +501,14 @@ export default function AIChatBot({ projectId = null }) {
                   <div style={styles.statusDot} />
                 </div>
                 <h3 style={styles.welcomeTitle}>Tôi có thể giúp gì cho bạn?</h3>
-                
+
                 {/* Selected Project Badge */}
                 {selectedProject && (
                   <div style={styles.selectedProjectBadge}>
                     📊 {selectedProject.name}
                   </div>
                 )}
-                
+
                 {/* Quick Actions */}
                 <div style={styles.quickActions}>
                   {quickActions.map((actionConfig, idx) => (
@@ -392,7 +560,7 @@ export default function AIChatBot({ projectId = null }) {
                           <p key={i} style={{ margin: line ? '4px 0' : '8px 0' }}>{line}</p>
                         ))}
                       </div>
-                      
+
                       {/* Action buttons for executable actions */}
                       {msg.executableActions && msg.executableActions.length > 0 && (
                         <div style={styles.actionButtons}>
@@ -413,7 +581,7 @@ export default function AIChatBot({ projectId = null }) {
                     </div>
                   </div>
                 ))}
-                
+
                 {isLoading && (
                   <div style={styles.messageWrapper}>
                     <div style={styles.assistantAvatar}>🤖</div>
@@ -431,8 +599,8 @@ export default function AIChatBot({ projectId = null }) {
             )}
           </div>
 
-          {/* Approve/Reject buttons for pending actions */}
-          {pendingActions.length > 0 && (
+          {/* Approve/Reject buttons for pending actions - Only show for SUGGEST_TASKS */}
+          {pendingActions.length > 0 && pendingActionType === 'SUGGEST_TASKS' && (
             <div style={styles.pendingActionsBar}>
               <span style={styles.pendingActionsText}>
                 📋 {pendingActions.length} công việc được gợi ý
@@ -463,7 +631,7 @@ export default function AIChatBot({ projectId = null }) {
               <div style={styles.projectSelector}>
                 <div style={styles.projectSelectorHeader}>
                   <span>📁 Chọn dự án</span>
-                  <button 
+                  <button
                     style={styles.closeSelectorBtn}
                     onClick={() => setShowProjectSelector(false)}
                   >
@@ -496,7 +664,7 @@ export default function AIChatBot({ projectId = null }) {
             )}
 
             <div style={styles.inputContainer}>
-              <button 
+              <button
                 type="button"
                 className="context-btn"
                 style={{
@@ -514,7 +682,7 @@ export default function AIChatBot({ projectId = null }) {
                 {selectedProject ? (
                   <>
                     <span>📊</span> {selectedProject.name}
-                    <span 
+                    <span
                       style={styles.clearProjectBtn}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1055,5 +1223,125 @@ const styles = {
     color: 'white',
     cursor: 'pointer',
     transition: 'all 0.2s',
+  },
+  // Chat history styles
+  chatActionsRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+  newChatBtnDropdown: {
+    background: 'none',
+    border: 'none',
+    fontSize: '12px',
+    color: '#666',
+    cursor: 'pointer',
+    padding: '2px 0',
+    textAlign: 'left',
+    maxWidth: '150px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  newChatPlusBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '22px',
+    height: '22px',
+    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+    border: 'none',
+    borderRadius: '6px',
+    fontSize: '16px',
+    fontWeight: '500',
+    color: 'white',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 2px 4px rgba(59, 130, 246, 0.25)',
+  },
+  chatHistoryDropdown: {
+    position: 'absolute',
+    top: '56px',
+    left: '16px',
+    right: '16px',
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+    zIndex: 100,
+    maxHeight: '350px',
+    overflow: 'hidden',
+    border: '1px solid #e5e7eb',
+  },
+  chatHistoryHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '12px 16px',
+    borderBottom: '1px solid #f0f0f0',
+    fontWeight: '600',
+    fontSize: '14px',
+    color: '#374151',
+    backgroundColor: '#f9fafb',
+  },
+  closeHistoryBtn: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '16px',
+    color: '#666',
+    padding: '4px',
+    borderRadius: '4px',
+    transition: 'background 0.2s',
+  },
+  chatHistoryList: {
+    maxHeight: '280px',
+    overflowY: 'auto',
+  },
+  noHistory: {
+    padding: '24px',
+    textAlign: 'center',
+    color: '#9ca3af',
+    fontSize: '14px',
+  },
+  chatHistoryItem: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px 16px',
+    cursor: 'pointer',
+    transition: 'background 0.2s',
+    borderBottom: '1px solid #f5f5f5',
+  },
+  chatHistoryItemActive: {
+    backgroundColor: '#eff6ff',
+  },
+  chatHistoryItemContent: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    overflow: 'hidden',
+  },
+  chatHistoryTitle: {
+    fontSize: '13px',
+    fontWeight: '500',
+    color: '#1a1a1a',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  chatHistoryDate: {
+    fontSize: '11px',
+    color: '#9ca3af',
+  },
+  deleteChatBtn: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '14px',
+    padding: '4px 8px',
+    borderRadius: '4px',
+    opacity: 0.5,
+    transition: 'opacity 0.2s, background 0.2s',
   },
 };
