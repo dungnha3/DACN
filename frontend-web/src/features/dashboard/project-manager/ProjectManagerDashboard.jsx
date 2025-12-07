@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
+import { profileService } from '@/shared/services/profile.service'
 import {
   NavItem,
   RoleBadge,
@@ -24,6 +25,20 @@ export default function ProjectManagerDashboard() {
   const { logout, user: authUser } = useAuth()
   const username = authUser?.username || localStorage.getItem('username') || 'Project Manager'
   const user = useMemo(() => ({ name: username || 'Trần Thị B', role: 'Quản lý dự án' }), [username])
+  const [userAvatar, setUserAvatar] = useState(null)
+
+  // Fetch user avatar on mount
+  useEffect(() => {
+    const loadAvatar = async () => {
+      try {
+        const profile = await profileService.getProfile();
+        setUserAvatar(profile?.avatarUrl);
+      } catch (error) {
+        console.error('Failed to load user avatar:', error);
+      }
+    };
+    loadAvatar();
+  }, []);
 
   const sections = useMemo(() => sectionsConfig, [])
   const meta = sections[active]
@@ -275,7 +290,7 @@ export default function ProjectManagerDashboard() {
 
           <div style={styles.rightCluster}>
             <NotificationBell />
-            <RoleBadge role={user.role} />
+            <RoleBadge role={user.role} avatarUrl={userAvatar} />
           </div>
         </header>
 

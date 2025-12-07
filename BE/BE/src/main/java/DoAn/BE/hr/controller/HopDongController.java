@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/hop-dong")
+@RequestMapping("/api/hop-dong")
 public class HopDongController {
 
     private final HopDongService hopDongService;

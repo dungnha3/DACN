@@ -216,18 +216,13 @@ public class BangLuongService {
     /**
      * Lấy bảng lương theo nhân viên
      * - Accounting: xem tất cả
-     * - Employee: chỉ xem của mình
-     * - HR: KHÔNG có quyền
+     * - Employee/HR/PM: chỉ xem của mình
+     * - Admin: KHÔNG có quyền
      */
     public List<BangLuong> getBangLuongByNhanVien(Long nhanvienId, User currentUser) {
-        // Admin không có quyền
+        // Admin không có quyền (không phải nhân viên)
         if (currentUser.isAdmin()) {
             throw new ForbiddenException("🚫 Admin không có quyền truy cập dữ liệu bảng lương");
-        }
-
-        // HR không có quyền
-        if (currentUser.isManagerHR()) {
-            throw new ForbiddenException("🚫 HR không có quyền truy cập dữ liệu lương nhạy cảm");
         }
 
         // Accounting xem tất cả
@@ -235,10 +230,13 @@ public class BangLuongService {
             return bangLuongRepository.findByNhanVien_NhanvienId(nhanvienId);
         }
 
-        // Employee chỉ xem của mình
+        // Tất cả role khác (Employee, HR, PM) chỉ xem của mình
         NhanVien nhanVien = nhanVienRepository.findById(nhanvienId)
                 .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
         if (nhanVien.getUser() == null || !nhanVien.getUser().getUserId().equals(currentUser.getUserId())) {
+            if (currentUser.isManagerHR()) {
+                throw new ForbiddenException("🚫 HR không có quyền truy cập dữ liệu lương của nhân viên khác");
+            }
             throw new ForbiddenException("Bạn chỉ có thể xem bảng lương của chính mình");
         }
 
@@ -258,17 +256,14 @@ public class BangLuongService {
      * Lấy bảng lương theo nhân viên và kỳ
      * - Accounting: xem tất cả
      * - Employee: chỉ xem của mình
-     * - HR/Admin: BỊ CHẶN
+     * - HR/Project Manager: chỉ xem của mình (không xem được lương người khác)
+     * - Admin: BỊ CHẶN (không phải nhân viên)
      * Returns null nếu không có bảng lương (thay vì throw exception gây 500)
      */
     public BangLuong getBangLuongByNhanVienAndPeriod(Long nhanvienId, Integer thang, Integer nam, User currentUser) {
-        // Admin bị chặn
+        // Admin bị chặn hoàn toàn (không phải nhân viên)
         if (currentUser.isAdmin()) {
             throw new ForbiddenException("🚫 Admin không có quyền truy cập dữ liệu lương");
-        }
-        // HR bị chặn
-        if (currentUser.isManagerHR()) {
-            throw new ForbiddenException("🚫 HR không có quyền truy cập dữ liệu lương nhạy cảm");
         }
 
         // Tìm bảng lương - trả về Optional
@@ -287,9 +282,14 @@ public class BangLuongService {
             return bangLuong;
         }
 
-        // Employee chỉ xem của mình
+        // Tất cả role khác (Employee, HR, Project Manager) chỉ được xem lương của CHÍNH
+        // MÌNH
         if (bangLuong.getNhanVien().getUser() == null ||
                 !bangLuong.getNhanVien().getUser().getUserId().equals(currentUser.getUserId())) {
+            // HR xem lương người khác -> block với message riêng
+            if (currentUser.isManagerHR()) {
+                throw new ForbiddenException("🚫 HR không có quyền truy cập dữ liệu lương của nhân viên khác");
+            }
             throw new ForbiddenException("Bạn chỉ có thể xem bảng lương của chính mình");
         }
 

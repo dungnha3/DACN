@@ -78,11 +78,42 @@ export function NavItem({ active, onClick, children, icon, collapsed }) {
   )
 }
 
-// Role Badge Component
-export function RoleBadge({ role }) {
+// Role Badge Component with Avatar
+export function RoleBadge({ role, avatarUrl }) {
   return (
-    <div style={styles.roleBadge}>
-      <span>👔 {role}</span>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '6px 14px',
+        background: '#f1f5f9',
+        borderRadius: 20,
+        fontSize: 14,
+        fontWeight: 500,
+        color: '#475569',
+      }}>
+        <span>👔</span>
+        <span>{role}</span>
+      </div>
+      {avatarUrl && (
+        <img
+          src={avatarUrl}
+          alt="Avatar"
+          style={{
+            width: 60,
+            height: 60,
+            borderRadius: '50%',
+            objectFit: 'cover',
+            border: '3px solid #e2e8f0',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          }}
+        />
+      )}
     </div>
   )
 }

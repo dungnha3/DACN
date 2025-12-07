@@ -25,7 +25,7 @@ public class CreateChatRoomRequest {
     private Long projectId;
 
     @NotNull(message = "Danh sách thành viên không được để trống")
-    @Size(min = 2, message = "Phòng chat phải có ít nhất 2 thành viên")
+    @Size(min = 1, message = "Phòng chat phải có ít nhất 1 thành viên (ngoài bạn)")
     private List<Long> memberIds;
 
     @NotNull(message = "Loại phòng chat không được để trống")
