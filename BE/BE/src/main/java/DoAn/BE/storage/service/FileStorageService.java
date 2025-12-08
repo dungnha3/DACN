@@ -15,6 +15,7 @@ import DoAn.BE.notification.service.StorageNotificationService;
 import DoAn.BE.storage.validator.FileValidator;
 import DoAn.BE.audit.service.AuditLogService;
 import DoAn.BE.audit.entity.AuditLog;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -218,10 +219,123 @@ public class FileStorageService {
 
     @Transactional(readOnly = true)
     public List<FileDTO> getUserFiles(Long userId) {
-        List<File> files = fileRepository.findByOwner_UserId(userId);
+        return getFiles(userId, "personal");
+    }
+
+    @Transactional(readOnly = true)
+    public List<FileDTO> getFiles(Long userId, String filter) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
+
+        List<File> files;
+
+        switch (filter.toLowerCase()) {
+            case "company":
+                // Get files in COMPANY folders
+                files = fileRepository.findByFolder_FolderType(Folder.FolderType.COMPANY);
+                break;
+
+            case "project":
+                // Get project folders where user is a member
+                List<Long> userProjectIds = projectMemberRepository.findByUser_UserId(userId)
+                        .stream()
+                        .map(pm -> pm.getProject().getProjectId())
+                        .collect(Collectors.toList());
+
+                if (userProjectIds.isEmpty()) {
+                    files = List.of();
+                } else {
+                    List<Folder> projectFolders = userProjectIds.stream()
+                            .flatMap(projectId -> folderRepository.findByProject_ProjectId(projectId).stream())
+                            .collect(Collectors.toList());
+
+                    files = projectFolders.stream()
+                            .flatMap(folder -> fileRepository.findByFolder_FolderId(folder.getFolderId()).stream())
+                            .filter(f -> !f.getIsDeleted())
+                            .distinct()
+                            .collect(Collectors.toList());
+                }
+                break;
+
+            case "trash":
+                // 1. Personal files (owned by user)
+                List<File> myDeletedFiles = fileRepository.findByOwner_UserId(userId);
+
+                // 2. Project files (user is member of)
+                List<Long> myProjectIds = projectMemberRepository.findByUser_UserId(userId)
+                        .stream()
+                        .map(pm -> pm.getProject().getProjectId())
+                        .collect(Collectors.toList());
+
+                List<File> myProjectFiles = List.of();
+                if (!myProjectIds.isEmpty()) {
+                    List<Folder> projectsFolders = myProjectIds.stream()
+                            .flatMap(pid -> folderRepository.findByProject_ProjectId(pid).stream())
+                            .collect(Collectors.toList());
+
+                    myProjectFiles = projectsFolders.stream()
+                            .flatMap(f -> fileRepository.findByFolder_FolderId(f.getFolderId()).stream())
+                            .collect(Collectors.toList());
+                }
+
+                // Combine and filter
+                java.util.Set<File> allDeleted = new java.util.HashSet<>();
+                allDeleted.addAll(myDeletedFiles);
+                allDeleted.addAll(myProjectFiles);
+
+                return allDeleted.stream()
+                        .filter(File::getIsDeleted)
+                        .map(this::convertToDTO)
+                        .sorted((f1, f2) -> f2.getUpdatedAt().compareTo(f1.getUpdatedAt()))
+                        .collect(Collectors.toList());
+
+            case "all":
+                // 1. Personal files
+                List<File> personalFiles = fileRepository.findByOwner_UserId(userId);
+
+                // 2. Company files
+                List<File> companyFiles = fileRepository.findByFolder_FolderType(Folder.FolderType.COMPANY);
+
+                // 3. Project files
+                List<Long> projectIds = projectMemberRepository.findByUser_UserId(userId)
+                        .stream()
+                        .map(pm -> pm.getProject().getProjectId())
+                        .collect(Collectors.toList());
+
+                List<File> projFiles = List.of();
+                if (!projectIds.isEmpty()) {
+                    List<Folder> projFolders = projectIds.stream()
+                            .flatMap(projectId -> folderRepository.findByProject_ProjectId(projectId).stream())
+                            .collect(Collectors.toList());
+
+                    projFiles = projFolders.stream()
+                            .flatMap(folder -> fileRepository.findByFolder_FolderId(folder.getFolderId()).stream())
+                            .filter(f -> !f.getIsDeleted())
+                            .collect(Collectors.toList());
+                }
+
+                // Combine all
+                java.util.Set<File> allFilesSet = new java.util.HashSet<>();
+                allFilesSet.addAll(personalFiles);
+                allFilesSet.addAll(companyFiles);
+                allFilesSet.addAll(projFiles);
+
+                return allFilesSet.stream()
+                        .filter(f -> !f.getIsDeleted())
+                        .map(this::convertToDTO)
+                        .sorted((f1, f2) -> f2.getCreatedAt().compareTo(f1.getCreatedAt()))
+                        .collect(Collectors.toList());
+
+            case "personal":
+            default:
+                files = fileRepository.findByOwner_UserId(userId);
+                break;
+        }
+
         return files.stream()
                 .filter(f -> !f.getIsDeleted())
                 .map(this::convertToDTO)
+                .sorted((f1, f2) -> f2.getCreatedAt().compareTo(f1.getCreatedAt()))
                 .collect(Collectors.toList());
     }
 
@@ -277,6 +391,37 @@ public class FileStorageService {
         } catch (IOException ex) {
             throw new FileStorageException("Không thể xóa file vật lý", ex);
         }
+    }
+
+    @Transactional
+    public FileDTO renameFile(Long fileId, String newName, Long userId) {
+        File file = fileRepository.findById(fileId)
+                .orElseThrow(() -> new StorageFileNotFoundException("Không tìm thấy file"));
+
+        // Check permission
+        if (!canAccessFile(file, userId)) {
+            throw new ForbiddenException("Bạn không có quyền đổi tên file này");
+        }
+
+        // Update name
+        file.setOriginalFilename(newName);
+        file = fileRepository.save(file);
+
+        return convertToDTO(file);
+    }
+
+    @Transactional
+    public void restoreFile(Long fileId, Long userId) {
+        File file = fileRepository.findById(fileId)
+                .orElseThrow(() -> new StorageFileNotFoundException("Không tìm thấy file"));
+
+        // Check permission
+        if (!canAccessFile(file, userId)) {
+            throw new ForbiddenException("Bạn không có quyền khôi phục file này");
+        }
+
+        file.setIsDeleted(false);
+        fileRepository.save(file);
     }
 
     @Transactional(readOnly = true)
@@ -426,6 +571,11 @@ public class FileStorageService {
     private boolean canAccessFolder(Folder folder, Long userId) {
         // Owner can always access
         if (folder.getOwner().getUserId().equals(userId)) {
+            return true;
+        }
+
+        // Company folder is accessible by everyone
+        if (folder.isCompanyFolder()) {
             return true;
         }
 

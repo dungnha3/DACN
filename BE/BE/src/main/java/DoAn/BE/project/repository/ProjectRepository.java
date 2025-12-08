@@ -9,8 +9,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     Optional<Project> findByKeyProject(String keyProject);
+
     List<Project> findByCreatedBy_UserId(Long userId);
+
     List<Project> findByIsActiveTrue();
+
+    List<Project> findByStatus(Project.ProjectStatus status);
 }
-
-

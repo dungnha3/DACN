@@ -33,6 +33,12 @@ export default function SharedStoragePage({
         fileTypes: 0
     });
 
+    const [filter, setFilter] = useState('all'); // 'all' | 'project' | 'personal' | 'company'
+
+    const [showRenameModal, setShowRenameModal] = useState(false);
+    const [renameData, setRenameData] = useState({ id: null, name: '', type: '' }); // type: 'file' | 'folder'
+    const [newName, setNewName] = useState('');
+
     const { user: authUser } = useAuth();
 
     useEffect(() => {
@@ -40,7 +46,7 @@ export default function SharedStoragePage({
         loadStorageStats();
         setSelectedItems([]);
         setCurrentPage(1); // Reset to first page when folder changes
-    }, [currentFolderId, viewMode, projectId]);
+    }, [currentFolderId, viewMode, projectId, filter]);
 
     // Reset to page 1 when search term changes
     useEffect(() => {
@@ -73,8 +79,6 @@ export default function SharedStoragePage({
                 setStorageStats({
                     totalFiles: stats.totalFiles || 0,
                     totalFolders: stats.totalFolders || 0,
-                    totalSize: stats.totalSize || 0,
-                    quotaLimit: stats.quotaLimit || 5 * 1024 * 1024 * 1024,
                     usagePercentage: stats.usagePercentage || 0,
                     fileTypes: stats.fileTypes || 0
                 });
@@ -102,7 +106,8 @@ export default function SharedStoragePage({
                     folderId: f.folderId,
                     folderName: f.name,
                     fileCount: f.fileCount || 0,
-                    createdDate: f.createdAt
+                    createdDate: f.createdAt,
+                    ownerName: f.ownerName
                 }));
 
                 loadedFiles = filesRes;
@@ -110,28 +115,31 @@ export default function SharedStoragePage({
                 if (viewMode === "project" && projectId) {
                     const [foldersRes, filesRes] = await Promise.all([
                         storageApi.getProjectFolders(projectId),
-                        storageApi.getMyFiles()
+                        storageApi.getMyFiles('project')
                     ]);
 
                     loadedFolders = foldersRes.map(f => ({
                         folderId: f.folderId,
                         folderName: f.name,
                         fileCount: f.fileCount || 0,
-                        createdDate: f.createdAt
+                        createdDate: f.createdAt,
+                        ownerName: f.ownerName
                     }));
 
                     loadedFiles = filesRes.filter(file => !file.folderId && file.projectId === projectId);
                 } else {
+                    // Use Selected Filter
                     const [foldersRes, filesRes] = await Promise.all([
-                        storageApi.getMyFolders(),
-                        storageApi.getMyFiles()
+                        storageApi.getMyFolders(filter),
+                        storageApi.getMyFiles(filter)
                     ]);
 
                     loadedFolders = foldersRes.map(f => ({
                         folderId: f.folderId,
                         folderName: f.name,
                         fileCount: f.fileCount || 0,
-                        createdDate: f.createdAt
+                        createdDate: f.createdAt,
+                        ownerName: f.ownerName
                     }));
 
                     loadedFiles = filesRes.filter(file => !file.folderId);
@@ -191,6 +199,44 @@ export default function SharedStoragePage({
         }
     };
 
+    const handleOpenRename = (id, currentName, type) => {
+        setRenameData({ id, name: currentName, type });
+        setNewName(currentName);
+        setShowRenameModal(true);
+    };
+
+    const handleRename = async () => {
+        if (!newName.trim()) {
+            alert('⚠️ Vui lòng nhập tên mới');
+            return;
+        }
+
+        try {
+            if (renameData.type === 'folder') {
+                await storageApi.updateFolder(renameData.id, newName);
+            } else {
+                await storageApi.renameFile(renameData.id, newName);
+            }
+
+            alert('✅ Đổi tên thành công!');
+            setShowRenameModal(false);
+            loadStorageData();
+        } catch (err) {
+            alert('❌ Lỗi đổi tên: ' + (err.response?.data?.message || err.message));
+        }
+    };
+
+    const handleRestore = async (fileId) => {
+        try {
+            await storageApi.restoreFile(fileId);
+            alert('✅ Khôi phục thành công!');
+            loadStorageData();
+            loadStorageStats();
+        } catch (err) {
+            alert('❌ Lỗi khôi phục: ' + (err.response?.data?.message || err.message));
+        }
+    };
+
     const handleDownload = async (fileId, filename) => {
         try {
             const blob = await storageApi.downloadFile(fileId);
@@ -207,11 +253,11 @@ export default function SharedStoragePage({
         }
     };
 
-    const handleDelete = async (fileId, filename) => {
-        if (!window.confirm(`Bạn có chắc muốn xóa file "${filename}"?`)) return;
+    const handleDelete = async (fileId, filename, permanent = false) => {
+        if (!window.confirm(permanent ? `⚠️ CẢNH BÁO: Bạn có chắc muốn xóa VĨNH VIỄN file "${filename}"? Hành động này không thể hoàn tác!` : `Bạn có chắc muốn xóa file "${filename}"?`)) return;
 
         try {
-            await storageApi.deleteFile(fileId, false);
+            await storageApi.deleteFile(fileId, permanent);
             loadStorageData();
             loadStorageStats();
         } catch (err) {
@@ -220,7 +266,15 @@ export default function SharedStoragePage({
     };
 
     const handleDeleteFolder = async (folderId, folderName) => {
-        if (!window.confirm(`Bạn có chắc muốn xóa thư mục "${folderName}"?`)) return;
+        if (!window.confirm(`Bạn có chắc muốn xóa thư mục "${folderName}"` + (filter === 'trash' ? " vĩnh viễn?" : "?"))) return;
+        // NOTE: Folder API currently doesn't allow explicit permanent delete param in this setup, or does it?
+        // Checking StorageController: deleteFolder -> folderService.deleteFolder -> repository.delete calls.
+        // It seems deleteFolder is always PERMANENT in current backend because Folder doesn't have isDeleted?
+        // Wait, Folder entity typically should have Soft Delete too.
+        // Checking Folder Entity? Not available here.
+        // StorageController:
+        // @DeleteMapping("/folders/{folderId}") ... folderService.deleteFolder(folderId, userId);
+        // It seems Folder deletion is direct in current BE.
 
         try {
             await storageApi.deleteFolder(folderId);
@@ -504,7 +558,7 @@ export default function SharedStoragePage({
         },
         tableHeader: {
             display: 'grid',
-            gridTemplateColumns: '48px 48px 1fr 180px 120px 140px',
+            gridTemplateColumns: filter === 'trash' ? '48px 48px 1fr 100px 120px' : '48px 48px 1fr 150px 120px 100px 120px',
             padding: '14px 20px',
             background: '#fafafa',
             borderBottom: '1px solid #f1f5f9',
@@ -516,7 +570,7 @@ export default function SharedStoragePage({
         },
         tableRow: {
             display: 'grid',
-            gridTemplateColumns: '48px 48px 1fr 180px 120px 140px',
+            gridTemplateColumns: filter === 'trash' ? '48px 48px 1fr 100px 120px' : '48px 48px 1fr 150px 120px 100px 120px',
             padding: '16px 20px',
             borderBottom: '1px solid #f8fafc',
             alignItems: 'center',
@@ -563,7 +617,7 @@ export default function SharedStoragePage({
         actionBtns: {
             display: 'flex',
             gap: '8px',
-            opacity: 0,
+            opacity: 1, // Always visible
             transition: 'opacity 0.15s ease'
         },
         actionBtnsVisible: {
@@ -724,6 +778,34 @@ export default function SharedStoragePage({
                 </div>
             </div>
 
+            {/* Breadcrumb Navigation */}
+            {
+                folderPath.length > 0 && (
+                    <div style={styles.pathNav}>
+                        <button
+                            style={styles.pathBtn}
+                            onClick={() => navigateToPath(-1)}
+                        >
+                            🏠 Thư mục gốc
+                        </button>
+                        {folderPath.map((folder, index) => (
+                            <div key={folder.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ color: '#cbd5e1' }}>→</span>
+                                <button
+                                    onClick={() => navigateToPath(index)}
+                                    style={{
+                                        ...styles.pathBtn,
+                                        ...(index === folderPath.length - 1 ? styles.pathBtnActive : {})
+                                    }}
+                                >
+                                    📁 {folder.name}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )
+            }
+
             {/* Stats Cards */}
             <div style={styles.statsGrid}>
                 <div style={styles.statCard}>
@@ -775,6 +857,32 @@ export default function SharedStoragePage({
 
             {/* Toolbar */}
             <div style={styles.toolbar}>
+                {!currentFolderId && viewMode !== 'project' && (
+                    <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px' }}>
+                        {['all', 'project', 'personal', 'company', 'trash'].map(f => (
+                            <button
+                                key={f}
+                                onClick={() => setFilter(f)}
+                                style={{
+                                    padding: '8px 16px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    background: filter === f ? '#6366f1' : '#f1f5f9',
+                                    color: filter === f ? '#fff' : '#64748b',
+                                    fontWeight: 600,
+                                    fontSize: '13px',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    textTransform: 'capitalize',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                {f === 'all' ? 'Tất cả' : f === 'project' ? 'Project' : f === 'personal' ? 'Cá nhân' : f === 'company' ? 'Công ty' : 'Thùng rác'}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 <div style={styles.searchWrapper}>
                     <span style={styles.searchIcon}>🔍</span>
                     <input
@@ -787,142 +895,66 @@ export default function SharedStoragePage({
                 </div>
             </div>
 
-            {/* Breadcrumb Navigation */}
-            {folderPath.length > 0 && (
-                <div style={styles.pathNav}>
-                    <button
-                        style={styles.pathBtn}
-                        onClick={() => navigateToPath(-1)}
-                    >
-                        🏠 Thư mục gốc
-                    </button>
-                    {folderPath.map((folder, index) => (
-                        <div key={folder.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ color: '#cbd5e1' }}>→</span>
-                            <button
-                                onClick={() => navigateToPath(index)}
-                                style={{
-                                    ...styles.pathBtn,
-                                    ...(index === folderPath.length - 1 ? styles.pathBtnActive : {})
-                                }}
-                            >
-                                📁 {folder.name}
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Bulk Action Bar */}
-            {selectedItems.length > 0 && (
-                <div style={styles.bulkBar}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <span style={{ fontWeight: 600 }}>Đã chọn: {selectedItems.length}</span>
-                        <button
-                            onClick={() => setSelectedItems([])}
-                            style={{ ...styles.bulkBtn, background: 'transparent', padding: '4px 8px' }}
-                        >
-                            ✕
-                        </button>
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                            onClick={async () => {
-                                const fileIds = selectedItems.filter(i => i.startsWith('file-')).map(i => parseInt(i.replace('file-', '')));
-                                for (const id of fileIds) {
-                                    const file = files.find(f => f.fileId === id);
-                                    if (file) await handleDownload(id, file.originalFilename);
-                                }
-                            }}
-                            style={styles.bulkBtn}
-                        >
-                            ⬇️ Tải về
-                        </button>
-                        <button
-                            onClick={async () => {
-                                if (!window.confirm(`Xóa ${selectedItems.length} item?`)) return;
-                                const fileIds = selectedItems.filter(i => i.startsWith('file-')).map(i => parseInt(i.replace('file-', '')));
-                                const folderIds = selectedItems.filter(i => i.startsWith('folder-')).map(i => parseInt(i.replace('folder-', '')));
-                                for (const id of fileIds) await storageApi.deleteFile(id, false);
-                                for (const id of folderIds) await storageApi.deleteFolder(id);
-                                setSelectedItems([]);
-                                loadStorageData();
-                            }}
-                            style={{ ...styles.bulkBtn, background: '#dc2626' }}
-                        >
-                            🗑️ Xóa
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Files Table */}
+            {/* Content Table */}
             <div style={styles.table}>
                 <div style={styles.tableHeader}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <input
-                            type="checkbox"
-                            style={styles.checkbox}
-                            checked={isAllSelected}
-                            onChange={(e) => handleSelectAll(e.target.checked)}
-                        />
-                    </div>
                     <div></div>
+                    <div>Loại</div>
                     <div>Tên</div>
-                    <div>Ngày sửa đổi</div>
+                    {filter !== 'trash' && <div>Người tạo</div>}
+                    {filter !== 'trash' && <div>Ngày tạo</div>}
                     <div>Kích thước</div>
                     <div>Thao tác</div>
                 </div>
 
-                {/* Empty State */}
-                {allItems.length === 0 && (
-                    <div style={styles.emptyState}>
-                        <div style={styles.emptyIcon}>📂</div>
-                        <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>Chưa có file nào</div>
-                        <div style={{ fontSize: '14px' }}>Hãy upload file hoặc tạo thư mục mới</div>
-                    </div>
-                )}
-
-                {/* Paginated Items (Folders & Files) */}
                 {paginatedItems.map(item => {
-                    if (item.type === 'folder') {
-                        const folder = item.data;
+                    const isFolder = item.type === 'folder';
+                    const data = item.data;
+                    const id = isFolder ? data.folderId : data.fileId;
+                    const isSelected = selectedItems.includes(`${item.type}-${id}`);
+
+                    if (isFolder) {
                         return (
                             <div
-                                key={`folder-${folder.folderId}`}
-                                style={{
-                                    ...styles.tableRow,
-                                    ...(hoveredRow === `folder-${folder.folderId}` ? styles.tableRowHover : {})
-                                }}
-                                onMouseEnter={() => setHoveredRow(`folder-${folder.folderId}`)}
+                                key={`folder-${data.folderId}`}
+                                style={{ ...styles.tableRow, ...(hoveredRow === `folder-${data.folderId}` ? styles.tableRowHover : {}) }}
+                                onMouseEnter={() => setHoveredRow(`folder-${data.folderId}`)}
                                 onMouseLeave={() => setHoveredRow(null)}
-                                onClick={() => navigateToFolder(folder.folderId, folder.folderName)}
+                                onClick={() => navigateToFolder(data.folderId, data.folderName)}
                             >
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <div onClick={(e) => e.stopPropagation()}>
                                     <input
                                         type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => handleToggleItem('folder', data.folderId)}
                                         style={styles.checkbox}
-                                        checked={selectedItems.includes(`folder-${folder.folderId}`)}
-                                        onChange={() => handleToggleItem('folder', folder.folderId)}
-                                        onClick={(e) => e.stopPropagation()}
                                     />
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <div style={styles.folderIcon}>📁</div>
-                                </div>
-                                <div style={styles.fileName}>{folder.folderName}</div>
-                                <div style={styles.fileMeta}>
-                                    {folder.createdDate ? new Date(folder.createdDate).toLocaleDateString('vi-VN') : '—'}
-                                </div>
-                                <div style={styles.fileMeta}>{folder.fileCount} file</div>
-                                <div style={{
-                                    ...styles.actionBtns,
-                                    ...(hoveredRow === `folder-${folder.folderId}` ? styles.actionBtnsVisible : {})
-                                }}>
+                                <div style={styles.folderIcon}>📁</div>
+                                <div style={styles.fileName}>{data.folderName}</div>
+                                {filter !== 'trash' && <div style={{ fontSize: '13px', color: '#64748b' }}>{data.ownerName || 'Tôi'}</div>}
+                                {filter !== 'trash' && <div style={{ fontSize: '13px', color: '#64748b' }}>{new Date(data.createdDate).toLocaleDateString('vi-VN')}</div>}
+                                <div style={styles.fileMeta}>{data.fileCount} mục</div>
+                                <div
+                                    style={{
+                                        ...styles.actionBtns,
+                                        ...(hoveredRow === `folder-${data.folderId}` ? styles.actionBtnsVisible : {})
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    {filter !== 'trash' && (
+                                        <button
+                                            style={styles.actionBtn}
+                                            title="Đổi tên"
+                                            onClick={() => handleOpenRename(data.folderId, data.folderName, 'folder')}
+                                        >
+                                            ✏️
+                                        </button>
+                                    )}
                                     <button
                                         style={{ ...styles.actionBtn, ...styles.actionBtnDanger }}
-                                        onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.folderId, folder.folderName); }}
-                                        title="Xóa"
+                                        title={filter === 'trash' ? "Xóa vĩnh viễn" : "Xóa"}
+                                        onClick={() => handleDeleteFolder(data.folderId, data.folderName, filter === 'trash')}
                                     >
                                         🗑️
                                     </button>
@@ -930,211 +962,338 @@ export default function SharedStoragePage({
                             </div>
                         );
                     } else {
-                        const file = item.data;
-                        const color = getFileColor(file.mimeType);
+                        const color = getFileColor(data.mimeType);
                         return (
                             <div
-                                key={`file-${file.fileId}`}
-                                style={{
-                                    ...styles.tableRow,
-                                    ...(hoveredRow === `file-${file.fileId}` ? styles.tableRowHover : {})
-                                }}
-                                onMouseEnter={() => setHoveredRow(`file-${file.fileId}`)}
+                                key={`file-${data.fileId}`}
+                                style={{ ...styles.tableRow, ...(hoveredRow === `file-${data.fileId}` ? styles.tableRowHover : {}) }}
+                                onMouseEnter={() => setHoveredRow(`file-${data.fileId}`)}
                                 onMouseLeave={() => setHoveredRow(null)}
+                                onDoubleClick={() => filter !== 'trash' && handleDownload(data.fileId, data.originalFilename)}
                             >
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <div onClick={(e) => e.stopPropagation()}>
                                     <input
                                         type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => handleToggleItem('file', data.fileId)}
                                         style={styles.checkbox}
-                                        checked={selectedItems.includes(`file-${file.fileId}`)}
-                                        onChange={() => handleToggleItem('file', file.fileId)}
-                                        onClick={(e) => e.stopPropagation()}
                                     />
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <div style={{ ...styles.fileIcon, background: color.bg }}>
-                                        {getFileExtension(file.originalFilename)}
+                                        {getFileExtension(data.originalFilename)}
                                     </div>
                                 </div>
-                                <div style={styles.fileName}>{file.originalFilename}</div>
-                                <div style={styles.fileMeta}>
-                                    {file.createdAt ? new Date(file.createdAt).toLocaleDateString('vi-VN') : '—'}
+                                <div>
+                                    <div style={styles.fileName}>{data.originalFilename}</div>
+                                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>{getFileExtension(data.originalFilename)}</div>
                                 </div>
-                                <div style={styles.fileMeta}>{formatFileSize(file.fileSize)}</div>
-                                <div style={{
-                                    ...styles.actionBtns,
-                                    ...(hoveredRow === `file-${file.fileId}` ? styles.actionBtnsVisible : {})
-                                }}>
-                                    <button
-                                        style={styles.actionBtn}
-                                        onClick={(e) => { e.stopPropagation(); handleDownload(file.fileId, file.originalFilename); }}
-                                        title="Tải về"
-                                    >
-                                        ⬇️
-                                    </button>
-                                    <button
-                                        style={{ ...styles.actionBtn, ...styles.actionBtnDanger }}
-                                        onClick={(e) => { e.stopPropagation(); handleDelete(file.fileId, file.originalFilename); }}
-                                        title="Xóa"
-                                    >
-                                        🗑️
-                                    </button>
+                                {filter !== 'trash' && <div style={{ fontSize: '13px', color: '#64748b' }}>{data.ownerName || 'Tôi'}</div>}
+                                {filter !== 'trash' && <div style={{ fontSize: '13px', color: '#64748b' }}>{new Date(data.createdAt).toLocaleDateString('vi-VN')}</div>}
+                                <div style={styles.fileMeta}>{formatFileSize(data.fileSize)}</div>
+                                <div
+                                    style={{
+                                        ...styles.actionBtns,
+                                        ...(hoveredRow === `file-${data.fileId}` ? styles.actionBtnsVisible : {})
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    {filter !== 'trash' ? (
+                                        <>
+                                            <button
+                                                style={styles.actionBtn}
+                                                title="Đổi tên"
+                                                onClick={() => handleOpenRename(data.fileId, data.originalFilename, 'file')}
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                style={styles.actionBtn}
+                                                title="Tải xuống"
+                                                onClick={() => handleDownload(data.fileId, data.originalFilename)}
+                                            >
+                                                ⬇️
+                                            </button>
+                                            <button
+                                                style={{ ...styles.actionBtn, ...styles.actionBtnDanger }}
+                                                title="Xóa"
+                                                onClick={() => handleDelete(data.fileId, data.originalFilename, false)}
+                                            >
+                                                🗑️
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button
+                                                style={{ ...styles.actionBtn, background: '#dcfce7', color: '#16a34a' }}
+                                                title="Khôi phục"
+                                                onClick={() => handleRestore(data.fileId)}
+                                            >
+                                                ♻️
+                                            </button>
+                                            <button
+                                                style={{ ...styles.actionBtn, ...styles.actionBtnDanger }}
+                                                title="Xóa vĩnh viễn"
+                                                onClick={() => handleDelete(data.fileId, data.originalFilename, true)}
+                                            >
+                                                🗑️
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         );
                     }
                 })}
+
+                {paginatedItems.length === 0 && (
+                    <div style={styles.emptyState}>
+                        <div style={styles.emptyIcon}>{filter === 'trash' ? '🗑️' : '📂'}</div>
+                        <div style={{ fontSize: '16px', fontWeight: 500, color: '#0f172a' }}>
+                            {filter === 'trash' ? 'Thùng rác trống' : 'Thư mục trống'}
+                        </div>
+                        <div style={{ fontSize: '14px', marginTop: '8px' }}>
+                            {filter === 'trash' ? 'Các file đã xóa sẽ xuất hiện ở đây' : 'Chưa có file hoặc thư mục nào được tạo'}
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginTop: '20px',
-                    padding: '16px 20px',
-                    background: '#fff',
-                    borderRadius: '12px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
-                }}>
-                    <div style={{ fontSize: '14px', color: '#64748b' }}>
-                        Hiển thị {startIndex + 1} - {Math.min(endIndex, totalItems)} trong tổng số {totalItems} mục
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <button
-                            onClick={() => setCurrentPage(1)}
-                            disabled={currentPage === 1}
-                            style={{
-                                padding: '8px 12px',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '8px',
-                                background: currentPage === 1 ? '#f1f5f9' : '#fff',
-                                color: currentPage === 1 ? '#94a3b8' : '#475569',
-                                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                                fontSize: '13px',
-                                fontWeight: 500
-                            }}
-                        >
-                            ⏮️
-                        </button>
-                        <button
-                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                            disabled={currentPage === 1}
-                            style={{
-                                padding: '8px 14px',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '8px',
-                                background: currentPage === 1 ? '#f1f5f9' : '#fff',
-                                color: currentPage === 1 ? '#94a3b8' : '#475569',
-                                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                                fontSize: '13px',
-                                fontWeight: 500
-                            }}
-                        >
-                            ◀ Trước
-                        </button>
 
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                            {Array.from({ length: totalPages }, (_, i) => i + 1)
-                                .filter(page =>
-                                    page === 1 ||
-                                    page === totalPages ||
-                                    Math.abs(page - currentPage) <= 1
-                                )
-                                .map((page, idx, arr) => (
-                                    <div key={page} style={{ display: 'flex', alignItems: 'center' }}>
-                                        {idx > 0 && arr[idx - 1] !== page - 1 && (
-                                            <span style={{ padding: '0 8px', color: '#94a3b8' }}>...</span>
-                                        )}
-                                        <button
-                                            onClick={() => setCurrentPage(page)}
-                                            style={{
-                                                width: '36px',
-                                                height: '36px',
-                                                border: page === currentPage ? '2px solid #6366f1' : '1px solid #e2e8f0',
-                                                borderRadius: '8px',
-                                                background: page === currentPage ? '#6366f1' : '#fff',
-                                                color: page === currentPage ? '#fff' : '#475569',
-                                                cursor: 'pointer',
-                                                fontSize: '14px',
-                                                fontWeight: page === currentPage ? 600 : 500
-                                            }}
-                                        >
-                                            {page}
-                                        </button>
-                                    </div>
-                                ))
-                            }
+
+            {/* Bulk Action Bar */}
+            {
+                selectedItems.length > 0 && (
+                    <div style={styles.bulkBar}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <span style={{ fontWeight: 600 }}>Đã chọn: {selectedItems.length}</span>
+                            <button
+                                onClick={() => setSelectedItems([])}
+                                style={{ ...styles.bulkBtn, background: 'transparent', padding: '4px 8px' }}
+                            >
+                                ✕
+                            </button>
                         </div>
-
-                        <button
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages}
-                            style={{
-                                padding: '8px 14px',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '8px',
-                                background: currentPage === totalPages ? '#f1f5f9' : '#fff',
-                                color: currentPage === totalPages ? '#94a3b8' : '#475569',
-                                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                                fontSize: '13px',
-                                fontWeight: 500
-                            }}
-                        >
-                            Sau ▶
-                        </button>
-                        <button
-                            onClick={() => setCurrentPage(totalPages)}
-                            disabled={currentPage === totalPages}
-                            style={{
-                                padding: '8px 12px',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '8px',
-                                background: currentPage === totalPages ? '#f1f5f9' : '#fff',
-                                color: currentPage === totalPages ? '#94a3b8' : '#475569',
-                                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                                fontSize: '13px',
-                                fontWeight: 500
-                            }}
-                        >
-                            ⏭️
-                        </button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                                onClick={async () => {
+                                    const fileIds = selectedItems.filter(i => i.startsWith('file-')).map(i => parseInt(i.replace('file-', '')));
+                                    for (const id of fileIds) {
+                                        const file = files.find(f => f.fileId === id);
+                                        if (file) await handleDownload(id, file.originalFilename);
+                                    }
+                                }}
+                                style={styles.bulkBtn}
+                            >
+                                ⬇️ Tải về
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    if (!window.confirm(`Xóa ${selectedItems.length} item?`)) return;
+                                    const fileIds = selectedItems.filter(i => i.startsWith('file-')).map(i => parseInt(i.replace('file-', '')));
+                                    const folderIds = selectedItems.filter(i => i.startsWith('folder-')).map(i => parseInt(i.replace('folder-', '')));
+                                    for (const id of fileIds) await storageApi.deleteFile(id, false);
+                                    for (const id of folderIds) await storageApi.deleteFolder(id);
+                                    setSelectedItems([]);
+                                    loadStorageData();
+                                }}
+                                style={{ ...styles.bulkBtn, background: '#dc2626' }}
+                            >
+                                🗑️ Xóa
+                            </button>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
+
+
+            {/* Pagination Controls */}
+            {
+                totalPages > 1 && (
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginTop: '20px',
+                        padding: '16px 20px',
+                        background: '#fff',
+                        borderRadius: '12px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                    }}>
+                        <div style={{ fontSize: '14px', color: '#64748b' }}>
+                            Hiển thị {startIndex + 1} - {Math.min(endIndex, totalItems)} trong tổng số {totalItems} mục
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button
+                                onClick={() => setCurrentPage(1)}
+                                disabled={currentPage === 1}
+                                style={{
+                                    padding: '8px 12px',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    background: currentPage === 1 ? '#f1f5f9' : '#fff',
+                                    color: currentPage === 1 ? '#94a3b8' : '#475569',
+                                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                                    fontSize: '13px',
+                                    fontWeight: 500
+                                }}
+                            >
+                                ⏮️
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                style={{
+                                    padding: '8px 14px',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    background: currentPage === 1 ? '#f1f5f9' : '#fff',
+                                    color: currentPage === 1 ? '#94a3b8' : '#475569',
+                                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                                    fontSize: '13px',
+                                    fontWeight: 500
+                                }}
+                            >
+                                ◀ Trước
+                            </button>
+
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                    .filter(page =>
+                                        page === 1 ||
+                                        page === totalPages ||
+                                        Math.abs(page - currentPage) <= 1
+                                    )
+                                    .map((page, idx, arr) => (
+                                        <div key={page} style={{ display: 'flex', alignItems: 'center' }}>
+                                            {idx > 0 && arr[idx - 1] !== page - 1 && (
+                                                <span style={{ padding: '0 8px', color: '#94a3b8' }}>...</span>
+                                            )}
+                                            <button
+                                                onClick={() => setCurrentPage(page)}
+                                                style={{
+                                                    width: '36px',
+                                                    height: '36px',
+                                                    border: page === currentPage ? '2px solid #6366f1' : '1px solid #e2e8f0',
+                                                    borderRadius: '8px',
+                                                    background: page === currentPage ? '#6366f1' : '#fff',
+                                                    color: page === currentPage ? '#fff' : '#475569',
+                                                    cursor: 'pointer',
+                                                    fontSize: '14px',
+                                                    fontWeight: page === currentPage ? 600 : 500
+                                                }}
+                                            >
+                                                {page}
+                                            </button>
+                                        </div>
+                                    ))
+                                }
+                            </div>
+
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                style={{
+                                    padding: '8px 14px',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    background: currentPage === totalPages ? '#f1f5f9' : '#fff',
+                                    color: currentPage === totalPages ? '#94a3b8' : '#475569',
+                                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                                    fontSize: '13px',
+                                    fontWeight: 500
+                                }}
+                            >
+                                Sau ▶
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage(totalPages)}
+                                disabled={currentPage === totalPages}
+                                style={{
+                                    padding: '8px 12px',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    background: currentPage === totalPages ? '#f1f5f9' : '#fff',
+                                    color: currentPage === totalPages ? '#94a3b8' : '#475569',
+                                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                                    fontSize: '13px',
+                                    fontWeight: 500
+                                }}
+                            >
+                                ⏭️
+                            </button>
+                        </div>
+                    </div>
+                )
+            }
 
             {/* Create Folder Modal */}
-            {showCreateFolderModal && (
-                <div style={styles.modal} onClick={() => setShowCreateFolderModal(false)}>
-                    <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                        <h3 style={styles.modalTitle}>📁 Tạo thư mục mới</h3>
-                        <input
-                            type="text"
-                            placeholder="Nhập tên thư mục..."
-                            value={newFolderName}
-                            onChange={(e) => setNewFolderName(e.target.value)}
-                            style={styles.modalInput}
-                            autoFocus
-                            onKeyDown={(e) => e.key === 'Enter' && handleCreateFolder()}
-                        />
-                        <div style={styles.modalBtns}>
-                            <button
-                                style={styles.secondaryBtn}
-                                onClick={() => { setShowCreateFolderModal(false); setNewFolderName(''); }}
-                            >
-                                Hủy
-                            </button>
-                            <button
-                                style={styles.primaryBtn}
-                                onClick={handleCreateFolder}
-                            >
-                                ✓ Tạo thư mục
-                            </button>
+            {
+                showCreateFolderModal && (
+                    <div style={styles.modal} onClick={() => setShowCreateFolderModal(false)}>
+                        <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+                            <h3 style={styles.modalTitle}>📁 Tạo thư mục mới</h3>
+                            <input
+                                type="text"
+                                placeholder="Nhập tên thư mục..."
+                                value={newFolderName}
+                                onChange={(e) => setNewFolderName(e.target.value)}
+                                style={styles.modalInput}
+                                autoFocus
+                                onKeyDown={(e) => e.key === 'Enter' && handleCreateFolder()}
+                            />
+                            <div style={styles.modalBtns}>
+                                <button
+                                    style={styles.secondaryBtn}
+                                    onClick={() => { setShowCreateFolderModal(false); setNewFolderName(''); }}
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    style={styles.primaryBtn}
+                                    onClick={handleCreateFolder}
+                                >
+                                    ✓ Tạo thư mục
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
+
+            {/* Rename Modal */}
+            {
+                showRenameModal && (
+                    <div style={styles.modal} onClick={() => setShowRenameModal(false)}>
+                        <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+                            <h3 style={styles.modalTitle}>✏️ Đổi tên {renameData.type === 'folder' ? 'thư mục' : 'file'}</h3>
+                            <input
+                                type="text"
+                                placeholder="Nhập tên mới..."
+                                value={newName}
+                                onChange={(e) => setNewName(e.target.value)}
+                                style={styles.modalInput}
+                                autoFocus
+                                onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+                            />
+                            <div style={styles.modalBtns}>
+                                <button
+                                    style={styles.secondaryBtn}
+                                    onClick={() => { setShowRenameModal(false); setNewName(''); }}
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    style={styles.primaryBtn}
+                                    onClick={handleRename}
+                                >
+                                    ✓ Lưu thay đổi
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
         </div>
     );
 }

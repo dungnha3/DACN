@@ -3,7 +3,7 @@ import { apiService } from '@/shared/services/api.service'
 // Storage API for file and folder management
 export const storageApi = {
   // ==================== FOLDER APIs ====================
-  
+
   // Create folder
   createFolder: (folderData) => {
     return apiService.post('/api/storage/folders', folderData)
@@ -15,8 +15,8 @@ export const storageApi = {
   },
 
   // Get my folders
-  getMyFolders: () => {
-    return apiService.get('/api/storage/folders/my-folders')
+  getMyFolders: (filter = 'personal') => {
+    return apiService.get(`/api/storage/folders/my-folders?filter=${filter}`)
   },
 
   // Get subfolders
@@ -40,7 +40,17 @@ export const storageApi = {
   },
 
   // ==================== FILE APIs ====================
-  
+
+  // Rename file
+  renameFile: (fileId, newName) => {
+    return apiService.put(`/api/storage/files/${fileId}?name=${encodeURIComponent(newName)}`)
+  },
+
+  // Restore file
+  restoreFile: (fileId) => {
+    return apiService.put(`/api/storage/files/${fileId}/restore`)
+  },
+
   // Upload file
   uploadFile: (file, folderId = null) => {
     const formData = new FormData()
@@ -68,8 +78,8 @@ export const storageApi = {
   },
 
   // Get my files
-  getMyFiles: () => {
-    return apiService.get('/api/storage/files/my-files')
+  getMyFiles: (filter = 'personal') => {
+    return apiService.get(`/api/storage/files/my-files?filter=${filter}`)
   },
 
   // Get folder files
