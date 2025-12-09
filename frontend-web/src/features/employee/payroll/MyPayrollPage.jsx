@@ -1,11 +1,12 @@
 import { SharedPayrollPage } from '@/shared/components/payroll';
 
-export default function MyPayrollPage() {
+export default function MyPayrollPage({ glassMode }) {
   return (
-    <SharedPayrollPage 
+    <SharedPayrollPage
       title="Phiếu lương"
       breadcrumb="Cá nhân / Phiếu lương"
       viewMode="personal"
+      glassMode={glassMode}
     />
   );
 }

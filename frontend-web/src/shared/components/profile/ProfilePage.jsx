@@ -10,10 +10,34 @@ export default function SharedProfilePage({
   title = "Hồ sơ cá nhân",
   breadcrumb = "Cá nhân / Hồ sơ cá nhân",
   allowEdit = true,
-  userRole = "User"
+  userRole = "User",
+  onProfileUpdate,
+  glassMode = false
 }) {
   const { user: authUser } = useAuth();
   const username = authUser?.username || localStorage.getItem('username') || 'User';
+
+  const glassStyles = {
+    card: {
+      background: 'rgba(255, 255, 255, 0.25)',
+      backdropFilter: 'blur(12px)',
+      border: '1px solid rgba(255, 255, 255, 0.3)',
+      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+      color: '#2d3436'
+    },
+    input: {
+      background: 'rgba(255, 255, 255, 0.5)',
+      border: '1px solid rgba(255, 255, 255, 0.3)',
+      color: '#2d3436'
+    },
+    heading: {
+      color: '#2d3436',
+      textShadow: '0 1px 1px rgba(255,255,255,0.5)'
+    },
+    label: {
+      color: '#2d3436'
+    }
+  };
 
   // Basic auth check
   if (!authUser && !username) {
@@ -129,6 +153,10 @@ export default function SharedProfilePage({
       await profileService.updateProfile(formData);
       alert('✅ Cập nhật thông tin thành công!');
       setEditing(false);
+      // Callback to parent
+      if (onProfileUpdate) {
+        onProfileUpdate(formData);
+      }
       // Reload profile to get updated data
       await loadProfile();
     } catch (err) {
@@ -201,6 +229,12 @@ export default function SharedProfilePage({
 
       // Update profile with compressed avatar
       await profileService.updateProfile({ avatarUrl: compressedDataUrl });
+
+      // Callback to parent to update dashboard header immediately
+      if (onProfileUpdate) {
+        onProfileUpdate({ avatarUrl: compressedDataUrl });
+      }
+
       alert('✅ Cập nhật avatar thành công!');
 
       // Reload to get latest data
@@ -277,7 +311,10 @@ export default function SharedProfilePage({
   }
 
   return (
-    <div style={commonStyles.pageContainer}>
+    <div style={{
+      ...commonStyles.pageContainer,
+      background: glassMode ? 'transparent' : (commonStyles.pageContainer?.background || '#f0f2f5')
+    }}>
       <div style={{ maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
         {/* Header */}
         <div style={{ marginBottom: spacing['2xl'] }}>
@@ -372,8 +409,11 @@ export default function SharedProfilePage({
           <div style={{ display: 'grid', gap: 24, gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
             {/* Avatar & Basic Info */}
             <div style={{
-              background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-              border: '1px solid rgba(0,0,0,0.02)', gridColumn: '1/-1'
+              ...(glassMode ? glassStyles.card : {
+                background: '#fff', boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                border: '1px solid rgba(0,0,0,0.02)'
+              }),
+              borderRadius: 16, padding: 24, gridColumn: '1/-1'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
                 <div style={{ position: 'relative' }}>
@@ -447,10 +487,10 @@ export default function SharedProfilePage({
                   )}
                 </div>
                 <div>
-                  <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: '#344767' }}>
+                  <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: glassMode ? glassStyles.heading.color : '#344767' }}>
                     {employee.hoTen}
                   </h2>
-                  <div style={{ fontSize: 14, color: '#7b809a', marginTop: 4 }}>
+                  <div style={{ fontSize: 14, color: glassMode ? '#2d3436' : '#7b809a', marginTop: 4 }}>
                     {userRole}
                   </div>
                   <div style={{ marginTop: 12 }}>
@@ -467,8 +507,11 @@ export default function SharedProfilePage({
 
             {/* Personal Information */}
             <div style={{
-              background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-              border: '1px solid rgba(0,0,0,0.02)'
+              ...(glassMode ? glassStyles.card : {
+                background: '#fff', boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                border: '1px solid rgba(0,0,0,0.02)'
+              }),
+              borderRadius: 16, padding: 24
             }}>
               <h3 style={{ fontSize: 18, fontWeight: 700, color: '#344767', marginBottom: 20 }}>
                 Thông tin cá nhân
@@ -476,7 +519,7 @@ export default function SharedProfilePage({
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: '#7b809a', marginBottom: 6, display: 'block' }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: glassMode ? glassStyles.label.color : '#7b809a', marginBottom: 6, display: 'block' }}>
                     Họ và tên
                   </label>
                   {editing ? (
@@ -486,11 +529,12 @@ export default function SharedProfilePage({
                       onChange={handleInputChange}
                       style={{
                         width: '100%', padding: 12, border: '1px solid #d2d6da', borderRadius: 8,
-                        outline: 'none', fontSize: 14, boxSizing: 'border-box', color: '#344767'
+                        outline: 'none', fontSize: 14, boxSizing: 'border-box', color: '#344767',
+                        ...(glassMode ? glassStyles.input : {})
                       }}
                     />
                   ) : (
-                    <div style={{ fontSize: 15, color: '#344767', fontWeight: 500 }}>
+                    <div style={{ fontSize: 15, color: glassMode ? '#2d3436' : '#344767', fontWeight: 500 }}>
                       {employee.hoTen}
                     </div>
                   )}
@@ -564,8 +608,11 @@ export default function SharedProfilePage({
 
             {/* Work Information */}
             <div style={{
-              background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-              border: '1px solid rgba(0,0,0,0.02)'
+              ...(glassMode ? glassStyles.card : {
+                background: '#fff', boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                border: '1px solid rgba(0,0,0,0.02)'
+              }),
+              borderRadius: 16, padding: 24
             }}>
               <h3 style={{ fontSize: 18, fontWeight: 700, color: '#344767', marginBottom: 20 }}>
                 Thông tin công việc
@@ -573,34 +620,34 @@ export default function SharedProfilePage({
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: '#7b809a', marginBottom: 6, display: 'block' }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: glassMode ? glassStyles.label.color : '#7b809a', marginBottom: 6, display: 'block' }}>
                     Phòng ban
                   </label>
-                  <div style={{ fontSize: 15, color: '#344767', fontWeight: 500 }}>
+                  <div style={{ fontSize: 15, color: glassMode ? '#2d3436' : '#344767', fontWeight: 500 }}>
                     {employee.tenPhongBan || 'Chưa cập nhật'}
                   </div>
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: '#7b809a', marginBottom: 6, display: 'block' }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: glassMode ? glassStyles.label.color : '#7b809a', marginBottom: 6, display: 'block' }}>
                     Chức vụ
                   </label>
-                  <div style={{ fontSize: 15, color: '#344767', fontWeight: 500 }}>
+                  <div style={{ fontSize: 15, color: glassMode ? '#2d3436' : '#344767', fontWeight: 500 }}>
                     {employee.tenChucVu || 'Chưa cập nhật'}
                   </div>
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: '#7b809a', marginBottom: 6, display: 'block' }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: glassMode ? glassStyles.label.color : '#7b809a', marginBottom: 6, display: 'block' }}>
                     Ngày vào làm
                   </label>
-                  <div style={{ fontSize: 15, color: '#344767', fontWeight: 500 }}>
+                  <div style={{ fontSize: 15, color: glassMode ? '#2d3436' : '#344767', fontWeight: 500 }}>
                     {employee.ngayVaoLam || 'Chưa cập nhật'}
                   </div>
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: '#7b809a', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: glassMode ? glassStyles.label.color : '#7b809a', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
                     Lương cơ bản
                     <button
                       onClick={() => setShowSalary(!showSalary)}
@@ -612,12 +659,12 @@ export default function SharedProfilePage({
                         padding: 4,
                         display: 'flex',
                         alignItems: 'center',
-                        color: '#7b809a',
+                        color: glassMode ? '#2d3436' : '#7b809a',
                         transition: 'color 0.2s'
                       }}
                       title={showSalary ? 'Ẩn lương' : 'Hiện lương'}
                       onMouseEnter={(e) => e.currentTarget.style.color = '#344767'}
-                      onMouseLeave={(e) => e.currentTarget.style.color = '#7b809a'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = glassMode ? '#2d3436' : '#7b809a'}
                     >
                       {showSalary ? '👁️' : '👁️‍🗨️'}
                     </button>
@@ -628,7 +675,7 @@ export default function SharedProfilePage({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: '#7b809a', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: glassMode ? glassStyles.label.color : '#7b809a', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
                     Lương ước tính (Tháng {new Date().getMonth() + 1})
                     <button
                       onClick={() => setShowEstimatedSalary(!showEstimatedSalary)}
@@ -640,12 +687,12 @@ export default function SharedProfilePage({
                         padding: 4,
                         display: 'flex',
                         alignItems: 'center',
-                        color: '#7b809a',
+                        color: glassMode ? '#2d3436' : '#7b809a',
                         transition: 'color 0.2s'
                       }}
                       title={showEstimatedSalary ? 'Ẩn lương' : 'Hiện lương'}
                       onMouseEnter={(e) => e.currentTarget.style.color = '#344767'}
-                      onMouseLeave={(e) => e.currentTarget.style.color = '#7b809a'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = glassMode ? '#2d3436' : '#7b809a'}
                     >
                       {showEstimatedSalary ? '👁️' : '👁️‍🗨️'}
                     </button>

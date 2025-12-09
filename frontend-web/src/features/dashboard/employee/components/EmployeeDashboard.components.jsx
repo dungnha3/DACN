@@ -219,11 +219,11 @@ export function TodayStatusCard({ status, onCheckIn, onCheckOut, loading }) {
   const isCheckedOut = status?.checkedOut;
 
   const cardStyle = {
-    background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+    background: 'linear-gradient(135deg, #5b21b6 0%, #8b5cf6 100%)',
     padding: 28,
     borderRadius: 20,
     color: '#fff',
-    boxShadow: '0 10px 40px rgba(59, 130, 246, 0.3)',
+    boxShadow: '0 10px 40px rgba(139, 92, 246, 0.3)',
   };
 
   const headerStyle = {
@@ -260,7 +260,7 @@ export function TodayStatusCard({ status, onCheckIn, onCheckOut, loading }) {
 
   const buttonStyle = {
     background: isCheckedIn && !isCheckedOut ? '#fff' : 'rgba(255,255,255,0.2)',
-    color: isCheckedIn && !isCheckedOut ? '#1e3a8a' : '#fff',
+    color: isCheckedIn && !isCheckedOut ? '#5b21b6' : '#fff',
     border: 'none',
     padding: '14px 28px',
     borderRadius: 12,
