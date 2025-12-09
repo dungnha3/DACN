@@ -62,14 +62,14 @@ export function NavItem({ active, onClick, children, icon, collapsed }) {
       </span>
       {active && !collapsed && (
         <div style={{
-          position: 'absolute', 
-          right: 0, 
-          top: '50%', 
+          position: 'absolute',
+          right: 0,
+          top: '50%',
           transform: 'translateY(-50%)',
-          width: 3, 
-          height: '60%', 
-          background: '#3b82f6', 
-          borderTopLeftRadius: 3, 
+          width: 3,
+          height: '60%',
+          background: '#3b82f6',
+          borderTopLeftRadius: 3,
           borderBottomLeftRadius: 3,
           transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
         }} />
@@ -78,14 +78,441 @@ export function NavItem({ active, onClick, children, icon, collapsed }) {
   )
 }
 
-// Role Badge Component
-export function RoleBadge({ role }) {
+// Role Badge Component with Avatar
+export function RoleBadge({ role, avatarUrl }) {
   return (
-    <div style={styles.roleBadge}>
-      <span>👔 {role}</span>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '6px 14px',
+        background: '#f1f5f9',
+        borderRadius: 20,
+        fontSize: 14,
+        fontWeight: 500,
+        color: '#475569',
+      }}>
+        <span>👔</span>
+        <span>{role}</span>
+      </div>
+      {avatarUrl && (
+        <img
+          src={avatarUrl}
+          alt="Avatar"
+          style={{
+            width: 60,
+            height: 60,
+            borderRadius: '50%',
+            objectFit: 'cover',
+            border: '3px solid #e2e8f0',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          }}
+        />
+      )}
     </div>
   )
 }
+
+// ========== NEW MODERN COMPONENTS ==========
+
+// Modern Stat Card Component (matching Employee Dashboard)
+export function StatCard({ title, value, subtext, icon, accentColor = '#3b82f6', onClick, loading = false, highlight = false }) {
+  const cardStyle = {
+    background: '#fff',
+    padding: 24,
+    borderRadius: 16,
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+    transition: 'transform 0.2s, box-shadow 0.2s',
+    display: 'flex',
+    flexDirection: 'column',
+    cursor: onClick ? 'pointer' : 'default',
+    border: '1px solid #f1f5f9',
+    borderLeft: highlight ? `4px solid ${accentColor}` : '1px solid #f1f5f9',
+  };
+
+  const headerStyle = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16
+  };
+
+  const iconStyle = {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 24,
+    background: `${accentColor}15`,
+    color: accentColor
+  };
+
+  if (loading) {
+    return (
+      <div style={cardStyle}>
+        <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ color: '#94a3b8' }}>Đang tải...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={cardStyle} onClick={onClick}>
+      <div style={headerStyle}>
+        <div style={iconStyle}>{icon}</div>
+        {highlight && (
+          <div style={{
+            padding: '2px 8px',
+            background: '#fee2e2',
+            color: '#ef4444',
+            borderRadius: 100,
+            fontSize: 11,
+            fontWeight: 600
+          }}>Cần xử lý</div>
+        )}
+      </div>
+      <div style={{ fontSize: 28, fontWeight: 700, color: '#0f172a', lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: '#64748b', marginTop: 8 }}>{title}</div>
+      {subtext && <div style={{ fontSize: 13, color: highlight ? accentColor : '#94a3b8', marginTop: 4 }}>{subtext}</div>}
+    </div>
+  );
+}
+
+// Project Stats Card - Shows project progress
+export function ProjectStatsCard({ projects = [], loading = false, onViewAll }) {
+  const cardStyle = {
+    background: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+    border: '1px solid #f1f5f9'
+  };
+
+  const headerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20
+  };
+
+  const iconBgStyle = {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    background: '#eff6ff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 18
+  };
+
+  if (loading) {
+    return (
+      <div style={cardStyle}>
+        <div style={headerStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={iconBgStyle}>🏗️</div>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Tiến độ dự án</h3>
+          </div>
+        </div>
+        <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+          Đang tải...
+        </div>
+      </div>
+    );
+  }
+
+  if (!projects.length) {
+    return (
+      <div style={cardStyle}>
+        <div style={headerStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={iconBgStyle}>🏗️</div>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Tiến độ dự án</h3>
+          </div>
+        </div>
+        <EmptyState message="Chưa có dự án nào" icon="📁" />
+      </div>
+    );
+  }
+
+  return (
+    <div style={cardStyle}>
+      <div style={headerStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={iconBgStyle}>🏗️</div>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Tiến độ dự án</h3>
+        </div>
+        {onViewAll && (
+          <button
+            onClick={onViewAll}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#3b82f6',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            Xem tất cả →
+          </button>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {projects.slice(0, 4).map((project, idx) => {
+          const completionRate = project.totalIssues > 0
+            ? Math.round((project.completedIssues / project.totalIssues) * 100)
+            : 0;
+
+          return (
+            <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: '#334155' }}>
+                  {project.projectName || project.name || `Project ${idx + 1}`}
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#3b82f6' }}>
+                  {completionRate}%
+                </span>
+              </div>
+              <div style={{ height: 8, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%',
+                  width: `${completionRate}%`,
+                  background: completionRate === 100 ? '#10b981' : 'linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)',
+                  borderRadius: 4,
+                  transition: 'width 0.3s ease'
+                }} />
+              </div>
+              <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#64748b' }}>
+                <span>✅ {project.completedIssues || 0} hoàn thành</span>
+                <span>🔄 {project.inProgressIssues || 0} đang làm</span>
+                <span>📋 {project.todoIssues || 0} chờ</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Pending Approvals Widget
+export function PendingApprovalsWidget({ leaves = [], loading = false, onApprove, onReject, onViewAll }) {
+  const cardStyle = {
+    background: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+    border: '1px solid #f1f5f9',
+    height: '100%'
+  };
+
+  const headerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20
+  };
+
+  const iconBgStyle = {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    background: '#fef3c7',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 18
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+  };
+
+  if (loading) {
+    return (
+      <div style={cardStyle}>
+        <div style={headerStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={iconBgStyle}>📋</div>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Đơn chờ duyệt</h3>
+          </div>
+        </div>
+        <div style={{ height: 150, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+          Đang tải...
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={cardStyle}>
+      <div style={headerStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={iconBgStyle}>📋</div>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Đơn chờ duyệt</h3>
+        </div>
+        {leaves.length > 0 && (
+          <span style={{
+            background: '#fee2e2',
+            color: '#dc2626',
+            padding: '4px 10px',
+            borderRadius: 100,
+            fontSize: 12,
+            fontWeight: 600
+          }}>
+            {leaves.length} đơn
+          </span>
+        )}
+      </div>
+
+      {leaves.length === 0 ? (
+        <EmptyState message="Không có đơn chờ duyệt" icon="✅" />
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {leaves.slice(0, 3).map((leave, idx) => (
+            <div key={idx} style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: 12,
+              background: '#fefce8',
+              borderRadius: 10,
+              border: '1px solid #fef08a'
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', marginBottom: 4 }}>
+                  {leave.nhanVien?.hoTen || leave.tenNhanVien || 'Nhân viên'}
+                </div>
+                <div style={{ fontSize: 12, color: '#64748b' }}>
+                  {leave.loaiNghiPhep || 'Nghỉ phép'} • {formatDate(leave.ngayBatDau)} - {formatDate(leave.ngayKetThuc)}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => onApprove && onApprove(leave.nghiphepId)}
+                  style={{
+                    background: '#dcfce7',
+                    color: '#16a34a',
+                    border: 'none',
+                    padding: '6px 12px',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ✓
+                </button>
+                <button
+                  onClick={() => onReject && onReject(leave.nghiphepId)}
+                  style={{
+                    background: '#fee2e2',
+                    color: '#dc2626',
+                    border: 'none',
+                    padding: '6px 12px',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ✗
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {leaves.length > 3 && onViewAll && (
+            <button
+              onClick={onViewAll}
+              style={{
+                background: '#f1f5f9',
+                border: 'none',
+                padding: '10px',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 600,
+                color: '#3b82f6',
+                cursor: 'pointer'
+              }}
+            >
+              Xem thêm {leaves.length - 3} đơn →
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Quick Action Button
+export function QuickActionButton({ icon, label, onClick, color = '#3b82f6' }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 8,
+        padding: 16,
+        background: '#fff',
+        border: '1px solid #e2e8f0',
+        borderRadius: 12,
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        flex: 1
+      }}
+    >
+      <div style={{
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        background: `${color}15`,
+        color: color,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 20
+      }}>
+        {icon}
+      </div>
+      <span style={{ fontSize: 13, fontWeight: 500, color: '#475569' }}>{label}</span>
+    </button>
+  );
+}
+
+// Empty State Component
+export function EmptyState({ message, icon }) {
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 32,
+      color: '#94a3b8'
+    }}>
+      <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.5 }}>{icon}</div>
+      <div style={{ fontSize: 14 }}>{message}</div>
+    </div>
+  );
+}
+
+// ========== LEGACY COMPONENTS (kept for compatibility) ==========
 
 // KPI Card Component - Updated for Project Manager theme
 export function KPICard({ title, value, icon, color, change }) {
@@ -111,15 +538,15 @@ export function KPICard({ title, value, icon, color, change }) {
     <div style={cardStyle}>
       <div style={styles.kpiHeader}>
         <div style={styles.kpiTitle}>{title}</div>
-        <div style={{ 
-          ...styles.kpiIcon, 
-          width: 40, 
-          height: 40, 
-          borderRadius: 12, 
-          display: 'flex', 
-          alignItems: 'center', 
+        <div style={{
+          ...styles.kpiIcon,
+          width: 40,
+          height: 40,
+          borderRadius: 12,
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
-          background: `${accentColor}20`, 
+          background: `${accentColor}20`,
           color: accentColor,
           fontSize: 20
         }}>{icon}</div>
@@ -130,7 +557,7 @@ export function KPICard({ title, value, icon, color, change }) {
   )
 }
 
-// Status Badge Component for Attendance - Simplified colors
+// Status Badge Component for Attendance
 export function StatusBadge({ status }) {
   const statuses = {
     normal: { label: '✓ Đúng giờ', bg: '#dbeafe', color: '#1e3a8a', border: '#93c5fd' },
@@ -146,7 +573,7 @@ export function StatusBadge({ status }) {
   )
 }
 
-// Leave Status Bar Component - Simplified to blue/red only
+// Leave Status Bar Component
 export function LeaveStatusBar({ status }) {
   const statuses = {
     approved: { width: '100%', bg: '#1e3a8a', label: '100% - Đã duyệt' },
@@ -199,12 +626,12 @@ export function MemberAvatar({ color = '#65B741' }) {
   )
 }
 
-// Role Badge Component
+// Role Badge for Project
 export function RoleBadgeProject({ role }) {
-  const roleStyle = role.includes('Người quản lý') 
+  const roleStyle = role.includes('Người quản lý')
     ? { bg: '#d4edda', color: '#155724', text: role }
     : { bg: '#e2e3e5', color: '#383d41', text: role }
-  
+
   return (
     <div style={{
       display: 'inline-block',

@@ -96,12 +96,20 @@ export const API_ENDPOINTS = {
     EVALUATION_APPROVE: (id) => `/api/danh-gia/${id}/approve`,
     EVALUATION_REJECT: (id) => `/api/danh-gia/${id}/reject`,
 
-    // Bảng lương
+    // Bảng lương - Full API matching BangLuongController
     PAYROLLS: '/api/bang-luong',
+    PAYROLL_PAGE: '/api/bang-luong/page',
     PAYROLL_BY_ID: (id) => `/api/bang-luong/${id}`,
     PAYROLL_BY_EMPLOYEE: (empId) => `/api/bang-luong/nhan-vien/${empId}`,
-    PAYROLL_BY_MONTH: '/api/bang-luong/thang',
-    PAYROLL_CALCULATE: '/api/bang-luong/tinh-luong',
+    PAYROLL_BY_PERIOD: '/api/bang-luong/period',
+    PAYROLL_EMPLOYEE_PERIOD: (empId) => `/api/bang-luong/nhan-vien/${empId}/period`,
+    PAYROLL_BY_STATUS: (status) => `/api/bang-luong/trang-thai/${status}`,
+    PAYROLL_MARK_PAID: (id) => `/api/bang-luong/${id}/mark-paid`,
+    PAYROLL_CANCEL: (id) => `/api/bang-luong/${id}/cancel`,
+    PAYROLL_TOTAL_PERIOD: '/api/bang-luong/total/period',
+    PAYROLL_TOTAL_EMPLOYEE_YEAR: (empId, year) => `/api/bang-luong/total/nhan-vien/${empId}/year/${year}`,
+    PAYROLL_AUTO_CALCULATE: (empId) => `/api/bang-luong/tinh-tu-dong/${empId}`,
+    PAYROLL_AUTO_CALCULATE_ALL: '/api/bang-luong/tinh-tu-dong-tat-ca',
   },
 
   // Projects

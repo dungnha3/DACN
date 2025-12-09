@@ -14,6 +14,9 @@ import DoAn.BE.chat.entity.Message;
 public interface MessageRepository extends JpaRepository<Message, Long> {
        List<Message> findByChatRoom_RoomIdOrderBySentAtAsc(Long roomId);
 
+       // Get the last message in a room
+       Message findTopByChatRoom_RoomIdOrderBySentAtDesc(Long roomId);
+
        List<Message> findBySender_UserId(Long userId);
 
        @Query("SELECT COUNT(m) FROM Message m " +

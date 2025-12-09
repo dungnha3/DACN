@@ -78,11 +78,42 @@ export function NavItem({ active, onClick, children, icon, collapsed }) {
   )
 }
 
-// Role Badge Component
-export function RoleBadge({ role }) {
+// Role Badge Component with Avatar
+export function RoleBadge({ role, avatarUrl }) {
   return (
-    <div style={styles.roleBadge}>
-      <span>👔 {role}</span>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '6px 14px',
+        background: '#f1f5f9',
+        borderRadius: 20,
+        fontSize: 14,
+        fontWeight: 500,
+        color: '#475569',
+      }}>
+        <span>👔</span>
+        <span>{role}</span>
+      </div>
+      {avatarUrl && (
+        <img
+          src={avatarUrl}
+          alt="Avatar"
+          style={{
+            width: 60,
+            height: 60,
+            borderRadius: '50%',
+            objectFit: 'cover',
+            border: '3px solid #e2e8f0',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -220,11 +251,11 @@ export function TodayStatusCard({ status, onCheckIn, onCheckOut, loading }) {
     return timeString.substring(0, 5);
   };
 
-  const today = new Date().toLocaleDateString('vi-VN', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+  const today = new Date().toLocaleDateString('vi-VN', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   });
 
   const buttonStyle = {
@@ -250,9 +281,9 @@ export function TodayStatusCard({ status, onCheckIn, onCheckOut, loading }) {
           <div style={dateStyle}>{today}</div>
           <h2 style={{ margin: 0, fontSize: 26, fontWeight: 700 }}>{greeting()}!</h2>
         </div>
-        <div style={{ 
-          background: 'rgba(255,255,255,0.2)', 
-          padding: '8px 16px', 
+        <div style={{
+          background: 'rgba(255,255,255,0.2)',
+          padding: '8px 16px',
           borderRadius: 100,
           fontSize: 13,
           fontWeight: 500
@@ -261,10 +292,10 @@ export function TodayStatusCard({ status, onCheckIn, onCheckOut, loading }) {
         </div>
       </div>
 
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '1fr 1fr', 
-        gap: 16, 
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 16,
         marginBottom: 24,
         background: 'rgba(255,255,255,0.1)',
         padding: 16,
@@ -280,7 +311,7 @@ export function TodayStatusCard({ status, onCheckIn, onCheckOut, loading }) {
         </div>
       </div>
 
-      <button 
+      <button
         style={buttonStyle}
         onClick={isCheckedIn ? onCheckOut : onCheckIn}
         disabled={loading || (isCheckedIn && isCheckedOut)}
@@ -349,7 +380,7 @@ export function AttendanceChart({ data = [], loading }) {
         <div style={iconBgStyle}>📊</div>
         <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Giờ làm 7 ngày gần nhất</h3>
       </div>
-      
+
       {data.length === 0 ? (
         <EmptyState message="Chưa có dữ liệu chấm công" icon="📅" />
       ) : (
@@ -497,7 +528,7 @@ export function NotificationsList({ notifications = [], loading }) {
     const date = new Date(dateString);
     const now = new Date();
     const diff = Math.floor((now - date) / 1000);
-    
+
     if (diff < 60) return 'Vừa xong';
     if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
     if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
@@ -529,13 +560,13 @@ export function NotificationsList({ notifications = [], loading }) {
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Thông báo</h3>
         </div>
         {notifications.length > 0 && (
-          <span style={{ 
-            background: '#fee2e2', 
-            color: '#dc2626', 
-            padding: '4px 10px', 
-            borderRadius: 100, 
-            fontSize: 12, 
-            fontWeight: 600 
+          <span style={{
+            background: '#fee2e2',
+            color: '#dc2626',
+            padding: '4px 10px',
+            borderRadius: 100,
+            fontSize: 12,
+            fontWeight: 600
           }}>
             {notifications.filter(n => !n.isRead).length} mới
           </span>
@@ -569,9 +600,9 @@ export function NotificationsList({ notifications = [], loading }) {
                 {notif.type === 'NGHI_PHEP' ? '📋' : notif.type === 'CHAM_CONG' ? '⏰' : '📢'}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ 
-                  fontSize: 14, 
-                  fontWeight: notif.isRead ? 500 : 600, 
+                <div style={{
+                  fontSize: 14,
+                  fontWeight: notif.isRead ? 500 : 600,
                   color: '#0f172a',
                   marginBottom: 2,
                   whiteSpace: 'nowrap',
@@ -580,8 +611,8 @@ export function NotificationsList({ notifications = [], loading }) {
                 }}>
                   {notif.title}
                 </div>
-                <div style={{ 
-                  fontSize: 12, 
+                <div style={{
+                  fontSize: 12,
                   color: '#64748b',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
@@ -686,11 +717,11 @@ export function StatusBadge({ status }) {
   const s = statuses[status] || statuses.normal
 
   return (
-    <div style={{ 
+    <div style={{
       display: 'inline-block',
-      padding: '4px 12px', 
-      background: s.bg, 
-      color: s.color, 
+      padding: '4px 12px',
+      background: s.bg,
+      color: s.color,
       border: `1px solid ${s.border}`,
       borderRadius: 100,
       fontSize: 12,

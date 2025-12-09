@@ -83,6 +83,7 @@ export default function SharedProfilePage({
         username: userProfile.username,
         email: userProfile.email || employeeData.email,
         userId: userProfile.userId,
+        avatarUrl: userProfile.avatarUrl, // Use avatarUrl from User, not NhanVien
       };
 
       setEmployee(mergedData);
@@ -90,14 +91,17 @@ export default function SharedProfilePage({
       // Step 5: Fetch estimated salary (current month)
       try {
         const now = new Date();
-        const payrollRes = await payrollService.getByEmployee(mergedData.nhanvienId, now.getMonth() + 1, now.getFullYear());
+        // Use getByEmployeePeriod to get payroll for specific month/year
+        const payrollRes = await payrollService.getByEmployeePeriod(mergedData.nhanvienId, now.getMonth() + 1, now.getFullYear());
         if (payrollRes) {
-          // Could be array or single object
-          const payroll = Array.isArray(payrollRes) ? payrollRes[0] : payrollRes;
-          setEstimatedSalary(payroll?.luongThucNhan || payroll?.luongCoBan || 0);
+          // Response is a single payroll object for the specified period
+          setEstimatedSalary(payrollRes?.luongThucNhan || payrollRes?.luongCoBan || 0);
         }
       } catch (payrollErr) {
-        console.warn('Failed to fetch payroll:', payrollErr);
+        // 403/404/204 are expected when no payroll data exists for the current period
+        if (payrollErr?.response?.status !== 403 && payrollErr?.response?.status !== 404) {
+          console.warn('Failed to fetch payroll:', payrollErr);
+        }
       }
 
       // Initialize form data for editing

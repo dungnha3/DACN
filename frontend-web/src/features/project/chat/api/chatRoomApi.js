@@ -26,13 +26,17 @@ export const chatRoomApi = {
   createGroupChat: async (data) => {
     try {
       // data: { name, memberIds: [userId1, userId2, ...] }
-      const response = await apiService.post('/api/chat/rooms', {
+      const requestBody = {
         name: data.name,
-        type: 'GROUP',
+        roomType: 'GROUP',
         memberIds: data.memberIds
-      })
+      }
+      console.log('=== CREATE GROUP CHAT REQUEST ===', requestBody)
+      const response = await apiService.post('/api/chat/rooms', requestBody)
+      console.log('=== CREATE GROUP CHAT RESPONSE ===', response)
       return response
     } catch (error) {
+      console.error('=== CREATE GROUP CHAT ERROR ===', error.response?.data || error.message)
       throw error
     }
   },

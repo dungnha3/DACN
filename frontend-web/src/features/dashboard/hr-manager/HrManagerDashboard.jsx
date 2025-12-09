@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { usePermissions, useErrorHandler } from '@/shared/hooks'
 import { dashboardService } from '@/features/hr/shared/services'
+import { profileService } from '@/shared/services/profile.service'
 import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
 import { NavItem, RoleBadge } from './components/HrManagerDashboard.components'
 import { sectionsConfig } from './components/HrManagerDashboard.constants'
@@ -29,10 +30,24 @@ export default function HrManagerDashboard() {
   // Dashboard Data State
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [userAvatar, setUserAvatar] = useState(null);
 
   const { logout, user: authUser } = useAuth()
   const username = authUser?.username || localStorage.getItem('username') || 'HR Manager'
   const user = useMemo(() => ({ name: username || 'Nguyễn Thị C', role: 'Quản lý nhân sự' }), [username])
+
+  // Fetch user avatar
+  useEffect(() => {
+    const loadAvatar = async () => {
+      try {
+        const profile = await profileService.getProfile();
+        setUserAvatar(profile?.avatarUrl);
+      } catch (error) {
+        console.error('Failed to load user avatar:', error);
+      }
+    };
+    loadAvatar();
+  }, []);
 
   // Fetch Dashboard Data
   useEffect(() => {
@@ -316,7 +331,7 @@ export default function HrManagerDashboard() {
             </div>
             <div style={styles.rightCluster}>
               <NotificationBell />
-              <RoleBadge role={user.role} />
+              <RoleBadge role={user.role} avatarUrl={userAvatar} />
             </div>
           </header>
         )}

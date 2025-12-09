@@ -83,7 +83,7 @@ public class SecurityConfig {
                         // Admin KHÔNG có quyền chat
                         .requestMatchers("/api/chat/**")
                         .hasAnyRole("EMPLOYEE", "MANAGER_HR", "MANAGER_ACCOUNTING", "MANAGER_PROJECT")
-                        .requestMatchers("/api/storage/**").hasAnyRole("EMPLOYEE", "MANAGER_PROJECT")
+                        .requestMatchers("/api/storage/**").authenticated()
 
                         // ===== AI CHATBOT =====
                         // AI Assistant cho quản lý dự án - tất cả authenticated users (trừ ADMIN)

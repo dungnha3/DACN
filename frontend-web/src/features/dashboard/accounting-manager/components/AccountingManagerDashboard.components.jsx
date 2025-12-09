@@ -1,17 +1,79 @@
 import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
 
-// Navigation Item Component
-export function NavItem({ active, onClick, children, icon }) {
+// Navigation Item Component with collapsed state support (synchronized with EmployeeDashboard)
+export function NavItem({ active, onClick, children, icon, collapsed }) {
+  const baseStyle = {
+    ...styles.navItem,
+    color: active ? '#64748b' : '#94a3b8',
+    background: active ? '#f1f5f9' : 'transparent',
+    justifyContent: collapsed ? 'center' : 'flex-start',
+    alignItems: 'center',
+    padding: collapsed ? '12px 0' : '12px',
+    width: '100%',
+    position: 'relative',
+    overflow: 'hidden',
+    transition: 'background 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s cubic-bezier(0.4, 0, 0.2, 1), justify-content 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+    borderRadius: 10,
+    marginBottom: 4,
+    display: 'flex',
+    gap: 0,
+    cursor: 'pointer',
+  };
+
+  const iconWrapperStyle = {
+    minWidth: 24,
+    width: 24,
+    height: 24,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    fontSize: 18,
+    color: active ? '#64748b' : '#94a3b8',
+    transition: 'color 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+  };
+
+  const textWrapperStyle = {
+    marginLeft: collapsed ? 0 : 12,
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    transition: 'margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+  };
+
+  const textStyle = {
+    fontSize: 14,
+    fontWeight: active ? 600 : 500,
+    whiteSpace: 'nowrap',
+    display: 'inline-block',
+    transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+    opacity: collapsed ? 0 : 1,
+    transform: collapsed ? 'translateX(-10px)' : 'translateX(0)',
+  };
+
   return (
     <button
       onClick={onClick}
-      style={{
-        ...styles.navItem,
-        ...(active ? styles.navItemActive : {})
-      }}
+      style={baseStyle}
+      title={collapsed ? children : ''}
     >
-      <span style={styles.navIcon}>{icon}</span>
-      <span>{children}</span>
+      <span style={iconWrapperStyle}>{icon}</span>
+      <span style={textWrapperStyle}>
+        <span style={textStyle}>{children}</span>
+      </span>
+      {active && !collapsed && (
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: 3,
+          height: '60%',
+          background: '#64748b',
+          borderTopLeftRadius: 3,
+          borderBottomLeftRadius: 3,
+          transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        }} />
+      )}
     </button>
   )
 }
@@ -20,45 +82,155 @@ export function NavItem({ active, onClick, children, icon }) {
 export function RoleBadge({ role }) {
   return (
     <div style={styles.roleBadge}>
-      {role}
+      <span>💼 {role}</span>
     </div>
   )
 }
 
-// KPI Card Component
+// Modern Stat Card Component (synchronized with EmployeeDashboard)
+export function StatCard({ title, value, subtext, icon, accentColor = '#3b82f6', onClick, loading = false, trend }) {
+  const cardStyle = {
+    background: '#fff',
+    padding: 24,
+    borderRadius: 16,
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+    transition: 'transform 0.2s, box-shadow 0.2s',
+    display: 'flex',
+    flexDirection: 'column',
+    cursor: onClick ? 'pointer' : 'default',
+    border: '1px solid #f1f5f9',
+  };
+
+  const headerStyle = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16
+  };
+
+  const iconStyle = {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 24,
+    background: `${accentColor}15`,
+    color: accentColor
+  };
+
+  const valueStyle = {
+    fontSize: 28,
+    fontWeight: 700,
+    color: '#0f172a',
+    lineHeight: 1,
+    marginBottom: 4
+  };
+
+  const titleStyle = {
+    fontSize: 14,
+    fontWeight: 600,
+    color: '#64748b',
+    marginTop: 8
+  };
+
+  const subtextStyle = {
+    fontSize: 13,
+    color: '#94a3b8',
+    marginTop: 4
+  };
+
+  const trendStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '2px 8px',
+    borderRadius: 100,
+    fontSize: 12,
+    fontWeight: 600,
+    background: trend?.type === 'up' ? '#dcfce7' : trend?.type === 'down' ? '#fee2e2' : '#f1f5f9',
+    color: trend?.type === 'up' ? '#16a34a' : trend?.type === 'down' ? '#dc2626' : '#64748b'
+  };
+
+  if (loading) {
+    return (
+      <div style={cardStyle}>
+        <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ color: '#94a3b8' }}>Đang tải...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={cardStyle} onClick={onClick}>
+      <div style={headerStyle}>
+        <div style={iconStyle}>{icon}</div>
+        {trend && (
+          <div style={trendStyle}>
+            {trend.type === 'up' ? '↑' : trend.type === 'down' ? '↓' : '→'} {trend.value}
+          </div>
+        )}
+      </div>
+      <div style={valueStyle}>{value}</div>
+      <div style={titleStyle}>{title}</div>
+      {subtext && <div style={subtextStyle}>{subtext}</div>}
+    </div>
+  );
+}
+
+// Quick Action Button (synchronized with EmployeeDashboard)
+export function QuickActionButton({ icon, label, onClick, color = '#3b82f6' }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 8,
+        padding: 16,
+        background: '#fff',
+        border: '1px solid #e2e8f0',
+        borderRadius: 12,
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        flex: 1
+      }}
+    >
+      <div style={{
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        background: `${color}15`,
+        color: color,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 20
+      }}>
+        {icon}
+      </div>
+      <span style={{ fontSize: 13, fontWeight: 500, color: '#475569' }}>{label}</span>
+    </button>
+  );
+}
+
+// KPI Card Component (legacy)
 export function KPICard({ title, value, icon, color, change }) {
   const getColorStyle = (color) => {
     switch (color) {
       case 'success':
-        return {
-          background: 'linear-gradient(145deg, #10b981, #059669)',
-          iconBg: 'rgba(16, 185, 129, 0.2)',
-          iconColor: '#10b981'
-        }
+        return { iconBg: 'rgba(16, 185, 129, 0.15)', iconColor: '#10b981' }
       case 'warning':
-        return {
-          background: 'linear-gradient(145deg, #f59e0b, #d97706)',
-          iconBg: 'rgba(245, 158, 11, 0.2)',
-          iconColor: '#f59e0b'
-        }
+        return { iconBg: 'rgba(245, 158, 11, 0.15)', iconColor: '#f59e0b' }
       case 'info':
-        return {
-          background: 'linear-gradient(145deg, #3b82f6, #2563eb)',
-          iconBg: 'rgba(59, 130, 246, 0.2)',
-          iconColor: '#3b82f6'
-        }
+        return { iconBg: 'rgba(59, 130, 246, 0.15)', iconColor: '#3b82f6' }
       case 'primary':
-        return {
-          background: 'linear-gradient(145deg, #059669, #047857)',
-          iconBg: 'rgba(5, 150, 105, 0.2)',
-          iconColor: '#059669'
-        }
+        return { iconBg: 'rgba(5, 150, 105, 0.15)', iconColor: '#059669' }
       default:
-        return {
-          background: 'linear-gradient(145deg, #059669, #047857)',
-          iconBg: 'rgba(5, 150, 105, 0.2)',
-          iconColor: '#059669'
-        }
+        return { iconBg: 'rgba(5, 150, 105, 0.15)', iconColor: '#059669' }
     }
   }
 
@@ -67,39 +239,20 @@ export function KPICard({ title, value, icon, color, change }) {
   return (
     <div style={{
       background: '#ffffff',
-      borderRadius: 20,
+      borderRadius: 16,
       padding: 24,
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-      position: 'relative',
-      overflow: 'hidden'
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+      border: '1px solid #f1f5f9'
     }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 16
-      }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
         <div>
-          <div style={{
-            fontSize: 14,
-            color: '#7b809a',
-            fontWeight: 500,
-            marginBottom: 8
-          }}>
-            {title}
-          </div>
-          <div style={{
-            fontSize: 24,
-            fontWeight: 700,
-            color: '#344767'
-          }}>
-            {value}
-          </div>
+          <div style={{ fontSize: 14, color: '#64748b', fontWeight: 500, marginBottom: 8 }}>{title}</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#0f172a' }}>{value}</div>
         </div>
         <div style={{
-          width: 56,
-          height: 56,
-          borderRadius: 16,
+          width: 48,
+          height: 48,
+          borderRadius: 12,
           background: colorStyle.iconBg,
           display: 'grid',
           placeItems: 'center',
@@ -109,90 +262,9 @@ export function KPICard({ title, value, icon, color, change }) {
           {icon}
         </div>
       </div>
-      <div style={{
-        fontSize: 13,
-        color: change.startsWith('+') ? '#10b981' : '#dc2626',
-        fontWeight: 600
-      }}>
+      <div style={{ fontSize: 13, color: change?.startsWith('+') ? '#10b981' : '#dc2626', fontWeight: 600 }}>
         {change} so với tháng trước
       </div>
-    </div>
-  )
-}
-
-// Status Badge Component
-export function StatusBadge({ status }) {
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case 'normal':
-        return { bg: '#10b981', text: 'Bình thường' }
-      case 'late':
-        return { bg: '#f59e0b', text: 'Đi muộn' }
-      case 'early':
-        return { bg: '#3b82f6', text: 'Về sớm' }
-      default:
-        return { bg: '#6b7280', text: 'Không xác định' }
-    }
-  }
-
-  const statusStyle = getStatusStyle(status)
-
-  return (
-    <span style={{
-      padding: '4px 12px',
-      borderRadius: 20,
-      fontSize: 12,
-      fontWeight: 600,
-      color: '#ffffff',
-      background: statusStyle.bg
-    }}>
-      {statusStyle.text}
-    </span>
-  )
-}
-
-// Leave Status Bar Component
-export function LeaveStatusBar({ status }) {
-  const getStatusConfig = (status) => {
-    switch (status) {
-      case 'approved':
-        return { color: '#10b981', text: 'Đã duyệt', width: '100%' }
-      case 'pending':
-        return { color: '#f59e0b', text: 'Chờ duyệt', width: '60%' }
-      case 'rejected':
-        return { color: '#dc2626', text: 'Từ chối', width: '100%' }
-      default:
-        return { color: '#6b7280', text: 'Không xác định', width: '0%' }
-    }
-  }
-
-  const config = getStatusConfig(status)
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <div style={{
-        flex: 1,
-        height: 6,
-        background: '#f1f5f9',
-        borderRadius: 3,
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          width: config.width,
-          height: '100%',
-          background: config.color,
-          borderRadius: 3,
-          transition: 'width 0.3s ease'
-        }} />
-      </div>
-      <span style={{
-        fontSize: 12,
-        fontWeight: 600,
-        color: config.color,
-        minWidth: 70
-      }}>
-        {config.text}
-      </span>
     </div>
   )
 }
@@ -202,29 +274,13 @@ export function ApprovalStatusBadge({ status }) {
   const getStatusStyle = (status) => {
     switch (status) {
       case 'approved':
-        return { 
-          bg: 'linear-gradient(145deg, #10b981, #059669)', 
-          text: 'Đã duyệt',
-          shadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
-        }
+        return { bg: '#dcfce7', color: '#16a34a', text: 'Đã duyệt' }
       case 'pending':
-        return { 
-          bg: 'linear-gradient(145deg, #f59e0b, #d97706)', 
-          text: 'Chờ duyệt',
-          shadow: '0 2px 8px rgba(245, 158, 11, 0.3)'
-        }
+        return { bg: '#fef3c7', color: '#d97706', text: 'Chờ duyệt' }
       case 'rejected':
-        return { 
-          bg: 'linear-gradient(145deg, #dc2626, #991b1b)', 
-          text: 'Từ chối',
-          shadow: '0 2px 8px rgba(220, 38, 38, 0.3)'
-        }
+        return { bg: '#fee2e2', color: '#dc2626', text: 'Từ chối' }
       default:
-        return { 
-          bg: 'linear-gradient(145deg, #6b7280, #4b5563)', 
-          text: 'Không xác định',
-          shadow: '0 2px 8px rgba(107, 114, 128, 0.3)'
-        }
+        return { bg: '#f1f5f9', color: '#64748b', text: 'Không xác định' }
     }
   }
 
@@ -232,14 +288,12 @@ export function ApprovalStatusBadge({ status }) {
 
   return (
     <span style={{
-      padding: '6px 14px',
-      borderRadius: 12,
+      padding: '4px 12px',
+      borderRadius: 100,
       fontSize: 12,
       fontWeight: 600,
-      color: '#ffffff',
-      background: statusStyle.bg,
-      boxShadow: statusStyle.shadow,
-      border: 'none'
+      color: statusStyle.color,
+      background: statusStyle.bg
     }}>
       {statusStyle.text}
     </span>

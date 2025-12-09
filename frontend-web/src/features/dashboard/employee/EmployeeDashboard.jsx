@@ -42,6 +42,7 @@ export default function EmployeeDashboard() {
     workingDays: 0
   })
   const [checkInLoading, setCheckInLoading] = useState(false)
+  const [userAvatar, setUserAvatar] = useState(null)
 
   const sections = useMemo(() => sectionsConfig, [])
   const meta = sections[active] || { title: 'Dashboard', subtitle: 'Employee Portal' }
@@ -74,6 +75,8 @@ export default function EmployeeDashboard() {
         // Get user profile first
         const profile = await profileService.getProfile()
         if (profile?.userId) {
+          // Set avatar from profile
+          setUserAvatar(profile.avatarUrl)
           // Get employee by user ID
           const employee = await employeesService.getByUserId(profile.userId)
           if (employee?.nhanvienId) {
@@ -103,13 +106,13 @@ export default function EmployeeDashboard() {
           statusRes,
           attendanceRes,
           leaveRes,
-          payrollRes,
-          notifRes
+          payrollRes
         ] = await Promise.allSettled([
           attendanceService.getStatus(employeeId),
           attendanceService.getByMonth(employeeId, year, month),
           leaveService.getByEmployee(employeeId),
-          payrollService.getByEmployee(employeeId, month, year)
+          // Use getByEmployeePeriod to get payroll for specific month/year
+          payrollService.getByEmployeePeriod(employeeId, month, year)
         ])
 
         // Process attendance status
@@ -155,11 +158,10 @@ export default function EmployeeDashboard() {
           })
         }
 
-        // Process payroll data
+        // Process payroll data - handle gracefully (may return 204/403/404 when no data)
         if (payrollRes.status === 'fulfilled' && payrollRes.value) {
-          // Could be array or single object
-          const payroll = Array.isArray(payrollRes.value) ? payrollRes.value[0] : payrollRes.value
-          setPayrollData(payroll)
+          // Response is single object for the specified period
+          setPayrollData(payrollRes.value)
         }
 
       } catch (error) {
@@ -472,7 +474,7 @@ export default function EmployeeDashboard() {
 
             <div style={styles.rightCluster}>
               <NotificationBell />
-              <RoleBadge role={user.role} />
+              <RoleBadge role={user.role} avatarUrl={userAvatar} />
             </div>
           </header>
         )}

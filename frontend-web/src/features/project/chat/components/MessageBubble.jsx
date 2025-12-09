@@ -1,92 +1,118 @@
-import { colors, typography, spacing } from '@/shared/styles/theme'
-
 export default function MessageBubble({ message, isOwn }) {
   const formatTime = (timestamp) => {
     if (!timestamp) return ''
     const date = new Date(timestamp)
-    return date.toLocaleTimeString('vi-VN', {
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  const getInitial = (name) => {
+    return name?.charAt(0)?.toUpperCase() || '?'
   }
 
   const renderMessageContent = () => {
+    // File message
     if (message.messageType === 'FILE' && message.file) {
       return (
-        <div style={styles.fileMessage}>
+        <div style={styles.fileContent}>
           <div style={styles.fileIcon}>📄</div>
-          <div style={styles.fileInfo}>
-            <div style={styles.fileName}>{message.file.originalFilename}</div>
-            <div style={styles.fileSize}>
-              {(message.file.fileSize / 1024).toFixed(0)} KB
-            </div>
+          <div style={styles.fileDetails}>
+            <div style={{
+              ...styles.fileName,
+              color: isOwn ? '#FFFFFF' : '#1f2937'
+            }}>{message.file.originalFilename}</div>
+            <div style={{
+              ...styles.fileSize,
+              color: isOwn ? 'rgba(255,255,255,0.8)' : '#6b7280'
+            }}>{(message.file.fileSize / 1024).toFixed(0)} KB</div>
           </div>
         </div>
       )
     }
 
+    // Image message
     if (message.messageType === 'IMAGE' && message.file) {
       return (
-        <div style={styles.imageMessage}>
-          <img
-            src={message.file.fileUrl || `/api/storage/files/${message.file.fileId}`}
-            alt={message.file.originalFilename}
-            style={styles.messageImage}
-          />
-        </div>
+        <img
+          src={message.file.fileUrl || `/api/storage/files/${message.file.fileId}`}
+          alt={message.file.originalFilename}
+          style={styles.imageContent}
+        />
       )
     }
 
-    // Default text message
-    return <div style={styles.messageText}>{message.content}</div>
+    // Text message - Default
+    return (
+      <div style={styles.textContent}>
+        {message.content || 'Tin nhắn trống'}
+      </div>
+    )
   }
 
   return (
     <div style={{
-      ...styles.container,
-      ...(isOwn ? styles.containerOwn : styles.containerOther)
+      ...styles.messageRow,
+      justifyContent: isOwn ? 'flex-end' : 'flex-start',
     }}>
+      {/* Avatar for other's messages */}
       {!isOwn && (
-        <div style={styles.avatar}>
-          {message.senderName?.charAt(0).toUpperCase() || '?'}
+        <div style={styles.avatarOther}>
+          {getInitial(message.senderName)}
         </div>
       )}
 
-      <div style={styles.bubble}>
+      {/* Message Content */}
+      <div style={{
+        ...styles.messageWrapper,
+        alignItems: isOwn ? 'flex-end' : 'flex-start',
+      }}>
+        {/* Sender name for group chats */}
         {!isOwn && message.senderName && (
           <div style={styles.senderName}>{message.senderName}</div>
         )}
 
+        {/* Bubble */}
         <div style={{
-          ...styles.content,
-          ...(isOwn ? styles.contentOwn : styles.contentOther)
+          ...styles.bubble,
+          background: isOwn
+            ? 'linear-gradient(135deg, #0084ff 0%, #0066cc 100%)'
+            : '#FFFFFF',
+          color: isOwn ? '#FFFFFF' : '#1f2937',
+          borderRadius: isOwn
+            ? '20px 20px 4px 20px'
+            : '20px 20px 20px 4px',
+          boxShadow: isOwn
+            ? '0 2px 12px rgba(0, 132, 255, 0.3)'
+            : '0 1px 8px rgba(0, 0, 0, 0.06)',
+          border: isOwn ? 'none' : '1px solid #e5e7eb',
         }}>
           {renderMessageContent()}
 
           {message.isDeleted && (
-            <div style={styles.deletedMessage}>
+            <div style={styles.deletedText}>
               <em>Tin nhắn đã bị xóa</em>
             </div>
           )}
         </div>
 
+        {/* Time and status */}
         <div style={{
-          ...styles.meta,
-          ...(isOwn ? styles.metaOwn : styles.metaOther)
+          ...styles.metaInfo,
+          justifyContent: isOwn ? 'flex-end' : 'flex-start',
         }}>
-          <span style={styles.time}>{formatTime(message.sentAt)}</span>
+          <span style={styles.timeText}>{formatTime(message.sentAt)}</span>
           {message.editedAt && (
-            <span style={styles.edited}> • Đã chỉnh sửa</span>
+            <span style={styles.editedText}> • Đã sửa</span>
           )}
           {isOwn && message.seen && (
-            <span style={styles.seenIcon} title="Đã xem">✓✓</span>
+            <span style={styles.seenIndicator}>✓✓</span>
           )}
         </div>
       </div>
 
+      {/* Avatar for own messages */}
       {isOwn && (
-        <div style={{ ...styles.avatar, ...styles.avatarOwn }}>
-          {message.senderName?.charAt(0).toUpperCase() || 'B'}
+        <div style={styles.avatarOwn}>
+          {getInitial(message.senderName)}
         </div>
       )}
     </div>
@@ -94,127 +120,111 @@ export default function MessageBubble({ message, isOwn }) {
 }
 
 const styles = {
-  container: {
+  messageRow: {
     display: 'flex',
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
-    maxWidth: '70%'
+    alignItems: 'flex-end',
+    gap: '10px',
+    marginBottom: '12px',
+    paddingLeft: '16px',
+    paddingRight: '16px',
   },
-  containerOwn: {
-    alignSelf: 'flex-end',
-    marginLeft: 'auto',
-    flexDirection: 'row-reverse'
-  },
-  containerOther: {
-    alignSelf: 'flex-start',
-    marginRight: 'auto'
-  },
-  avatar: {
-    width: '32px',
-    height: '32px',
+  avatarOther: {
+    width: '36px',
+    height: '36px',
     borderRadius: '50%',
-    backgroundColor: colors.primary + '30',
-    color: colors.primary,
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    color: '#FFFFFF',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: typography.sm,
-    fontWeight: typography.bold,
-    flexShrink: 0
+    fontSize: '14px',
+    fontWeight: '600',
+    flexShrink: 0,
   },
   avatarOwn: {
-    backgroundColor: colors.success + '30',
-    color: colors.success
+    width: '36px',
+    height: '36px',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+    color: '#FFFFFF',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '14px',
+    fontWeight: '600',
+    flexShrink: 0,
   },
-  bubble: {
+  messageWrapper: {
     display: 'flex',
     flexDirection: 'column',
-    gap: spacing.xs,
-    maxWidth: '100%'
+    maxWidth: '65%',
   },
   senderName: {
-    fontSize: typography.xs,
-    color: colors.textSecondary,
-    fontWeight: typography.semibold,
-    marginBottom: spacing.xs
+    fontSize: '12px',
+    color: '#6b7280',
+    fontWeight: '600',
+    marginBottom: '4px',
+    marginLeft: '4px',
   },
-  content: {
-    padding: spacing.md,
-    borderRadius: spacing.lg,
+  bubble: {
+    padding: '12px 16px',
+    maxWidth: '100%',
     wordWrap: 'break-word',
-    wordBreak: 'break-word'
+    wordBreak: 'break-word',
   },
-  contentOwn: {
-    backgroundColor: colors.primary,
-    color: colors.white,
-    borderBottomRightRadius: spacing.xs
+  textContent: {
+    fontSize: '15px',
+    lineHeight: '1.5',
+    whiteSpace: 'pre-wrap',
   },
-  contentOther: {
-    backgroundColor: colors.white,
-    color: colors.textPrimary,
-    border: `1px solid ${colors.border}`,
-    borderBottomLeftRadius: spacing.xs
-  },
-  messageText: {
-    fontSize: typography.base,
-    lineHeight: '1.5'
-  },
-  fileMessage: {
+  fileContent: {
     display: 'flex',
     alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.sm
+    gap: '12px',
   },
   fileIcon: {
-    fontSize: '24px'
+    fontSize: '28px',
   },
-  fileInfo: {
-    flex: 1
+  fileDetails: {
+    flex: 1,
   },
   fileName: {
-    fontSize: typography.sm,
-    fontWeight: typography.semibold,
-    marginBottom: spacing.xs
+    fontSize: '14px',
+    fontWeight: '600',
+    marginBottom: '2px',
   },
   fileSize: {
-    fontSize: typography.xs,
-    opacity: 0.8
+    fontSize: '12px',
   },
-  imageMessage: {
-    maxWidth: '300px'
+  imageContent: {
+    maxWidth: '280px',
+    borderRadius: '12px',
+    display: 'block',
   },
-  messageImage: {
-    width: '100%',
-    borderRadius: spacing.md,
-    display: 'block'
+  deletedText: {
+    fontSize: '14px',
+    opacity: 0.7,
   },
-  deletedMessage: {
-    fontSize: typography.sm,
-    opacity: 0.6,
-    fontStyle: 'italic'
-  },
-  meta: {
+  metaInfo: {
     display: 'flex',
     alignItems: 'center',
-    gap: spacing.xs,
-    fontSize: typography.xs,
-    color: colors.textMuted
+    gap: '4px',
+    marginTop: '4px',
+    marginLeft: '4px',
+    marginRight: '4px',
   },
-  metaOwn: {
-    justifyContent: 'flex-end'
+  timeText: {
+    fontSize: '11px',
+    color: '#9ca3af',
   },
-  metaOther: {
-    justifyContent: 'flex-start'
+  editedText: {
+    fontSize: '11px',
+    color: '#9ca3af',
+    fontStyle: 'italic',
   },
-  time: {
-    fontSize: typography.xs
+  seenIndicator: {
+    fontSize: '12px',
+    color: '#0084ff',
+    marginLeft: '4px',
   },
-  edited: {
-    fontSize: typography.xs,
-    fontStyle: 'italic'
-  },
-  seenIcon: {
-    fontSize: typography.sm,
-    color: colors.success
-  }
 }

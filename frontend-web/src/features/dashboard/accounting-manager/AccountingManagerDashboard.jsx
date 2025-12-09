@@ -1,11 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
-import { usePermissions, useErrorHandler } from '@/shared/hooks'
-import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
-import { NavItem, RoleBadge, KPICard, ApprovalStatusBadge } from './components/AccountingManagerDashboard.components'
-import { kpiData, notifications, sectionsConfig, chatContacts, chatMessages } from './components/AccountingManagerDashboard.constants'
-import { leavesService } from '@/features/hr/shared/services/leaves.service'
-import { PayrollManagementPage, AttendanceManagementPage, AccountingStoragePage } from '@/modules/accounting'
+import './AccountingManagerDashboard.css' // Import custom CSS
+import { dashboardService } from '@/features/hr/shared/services/dashboard.service'
+import { payrollService } from '@/shared/services/payroll.service'
+import { apiService } from '@/shared/services/api.service' // For direct API calls if needed
+
+// Feature Pages (We will implement these next)
+import { PayrollPage } from '@/features/accounting/payroll/PayrollPage'
+import { AttendancePage } from '@/features/accounting/attendance/AttendancePage'
+import AccountingStoragePage from '@/features/accounting/storage/AccountingStoragePage'
+
+// Shared Components
 import { SharedProfilePage } from '@/shared/components/profile'
 import { SharedPayrollPage } from '@/shared/components/payroll'
 import { ChatPage } from '@/modules/project'
@@ -13,231 +18,311 @@ import NotificationBell from '@/shared/components/notification/NotificationBell'
 
 export default function AccountingManagerDashboard() {
   const [active, setActive] = useState('dashboard')
-  const [approvals, setApprovals] = useState([])
-  const [selectedContact, setSelectedContact] = useState(chatContacts[0])
-  const [messageInput, setMessageInput] = useState('')
   const { logout, user: authUser } = useAuth()
-  const username = authUser?.username || localStorage.getItem('username') || 'Accounting Manager'
-  const user = useMemo(() => ({ name: username || 'Nguyễn Thị F', role: 'Quản lý kế toán' }), [username])
 
-  const sections = useMemo(() => sectionsConfig, [])
-  const meta = sections[active] || { title: 'Dashboard', subtitle: 'Quản lý tài chính' }
-  const pendingApprovals = useMemo(() => approvals.filter(a => a.status === 'pending'), [approvals])
+  // Real Data State
+  const [stats, setStats] = useState({
+    revenue: 0,
+    expenses: 0,
+    profit: 0,
+    pendingTasks: 0,
+    notifs: 0
+  })
+  const [loading, setLoading] = useState(true)
+  const [welcomeText, setWelcomeText] = useState('')
+
+  const username = authUser?.username || localStorage.getItem('username') || 'Accounting'
+  const user = useMemo(() => ({
+    name: username,
+    role: 'Quản lý kế toán',
+    initial: username.charAt(0).toUpperCase()
+  }), [username])
+
+  // Fetch Dashboard Data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true)
+        // Fetch HR/Accounting stats
+        const data = await dashboardService.getStats()
+
+        // Map data to UI
+        // Handle both wrapped { tongQuan: ... } and flat structure
+        const statsData = data?.tongQuan || data || {}
+        console.log("Dashboard Stats Data:", statsData)
+
+        // Note: Backend currently supports "Total Salary Cost" as expenses. 
+        // Revenue/Profit are not yet tracked, so we default to 0.
+        // Use tongChiPhiLuongThang from DashboardStatsDTO
+        const totalSalary = statsData.tongChiPhiLuongThang || statsData.tongLuongThangNay || 0
+
+        // Aggregate all pending tasks
+        const pendingPayrolls = statsData.bangLuongChoDuyet || 0
+        const pendingLeaves = statsData.donNghiPhepChoDuyet || 0
+        const expiringContracts = statsData.hopDongHetHan30Ngay || 0
+        const totalPending = pendingPayrolls + pendingLeaves + expiringContracts
+
+        const unreadNotifs = statsData.thongBaoChuaDoc || 0
+
+        setStats({
+          revenue: 0, // Backend does not track Revenue yet
+          expenses: totalSalary,
+          profit: 0, // Backend does not track Profit yet
+          pendingTasks: totalPending, // Sum of Payrolls + Leaves + Expiring Contracts
+          notifs: unreadNotifs
+        })
+
+        setWelcomeText(`Hôm nay bạn có ${pendingPayrolls} bảng lương cần duyệt.`)
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (active === 'dashboard') {
+      fetchDashboardData()
+    }
+  }, [active])
 
   const handleLogout = async () => {
     await logout()
   }
 
-  const mapLeaveStatus = (s) => {
-    const m = { CHO_DUYET: 'pending', DA_DUYET: 'approved', BI_TU_CHOI: 'rejected' }
-    return m[s] || s || 'pending'
-  }
+  // --- Render Helpers ---
 
-  const loadApprovals = async () => {
-    try {
-      const data = await leavesService.getPending()
-      const mapped = (data || []).map((item) => ({
-        id: item.nghiphepId || item.id,
-        employee: item.hoTenNhanVien || item.employee || item.tenNhanVien || 'N/A',
-        type: item.loaiPhepLabel || item.type || 'Nghỉ phép',
-        fromDate: item.ngayBatDau || item.fromDate,
-        toDate: item.ngayKetThuc || item.toDate,
-        days: item.soNgay ?? item.days ?? 0,
-        submitDate: item.ngayTao || item.submitDate || '',
-        reason: item.lyDo || item.reason || '',
-        status: mapLeaveStatus(item.trangThai || item.status)
-      }))
-      setApprovals(mapped)
-    } catch (err) {
-      // Don't show alert on initial load
-    }
-  }
+  // --- Render Helpers ---
 
-  // ❌ Removed: loadAttendance, loadPayroll - Không cần nữa
+  const renderSidebar = () => (
+    <aside className="sidebar">
+      <div className="user-profile">
+        <div className="avatar">{user.initial}</div>
+        <div className="user-info">
+          <h4>{user.name}</h4>
+          <p>{user.role}</p>
+        </div>
+      </div>
 
-  useEffect(() => {
-    loadApprovals()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+      <div className="menu-section">
+        <div className="menu-title">Tổng quan</div>
+        <div className={`menu-item ${active === 'dashboard' ? 'active' : ''}`} onClick={() => setActive('dashboard')}>
+          <i className="fa-solid fa-house"></i>
+          <span>Dashboard</span>
+        </div>
 
-  // ❌ Removed: handleCheckInOut, handleAutoCalculateSalary, handleExportPayrollReport, formatCurrency
+        <div className="menu-title" style={{ marginTop: '15px' }}>Cá nhân</div>
+        <div className={`menu-item ${active === 'my-payroll' ? 'active' : ''}`} onClick={() => setActive('my-payroll')}>
+          <i className="fa-solid fa-money-check-dollar"></i>
+          <span>Phiếu lương cá nhân</span>
+        </div>
+        <div className={`menu-item ${active === 'storage' ? 'active' : ''}`} onClick={() => setActive('storage')}>
+          <i className="fa-solid fa-folder-open"></i>
+          <span>File của tôi</span>
+        </div>
 
-  return (
-    <div style={styles.appShell}>
-      <aside style={styles.sidebar}>
-        <div style={styles.brand}>
-          <div style={styles.brandIcon}>💰</div>
+        <div className="menu-title" style={{ marginTop: '15px' }}>Quản lý tài chính</div>
+        <div className={`menu-item ${active === 'payroll' ? 'active' : ''}`} onClick={() => setActive('payroll')}>
+          <i className="fa-solid fa-coins"></i>
+          <span>Bảng lương</span>
+        </div>
+        <div className={`menu-item ${active === 'attendance' ? 'active' : ''}`} onClick={() => setActive('attendance')}>
+          <i className="fa-regular fa-clock"></i>
+          <span>Quản lý chấm công</span>
+        </div>
+
+        <div className="menu-title" style={{ marginTop: '15px' }}>Hệ thống</div>
+        <div className={`menu-item ${active === 'profile' ? 'active' : ''}`} onClick={() => setActive('profile')}>
+          <i className="fa-solid fa-gear"></i>
+          <span>Cài đặt</span>
+        </div>
+
+        <div style={{ flex: 1 }}></div>
+        <div className="menu-item" onClick={handleLogout} style={{ color: '#ef4444', borderColor: '#fecaca', background: '#fff' }}>
+          <i className="fa-solid fa-right-from-bracket"></i>
+          <span>Đăng xuất</span>
+        </div>
+      </div>
+    </aside>
+  )
+
+  const renderDashboardContent = () => (
+    <>
+      <div className="stats-grid">
+        <div className="card stat-card">
+          <div className="stat-header">
+            <div className="stat-icon bg-green">
+              <i className="fa-solid fa-money-bill-wave"></i>
+            </div>
+            <span className="badge text-green">+0%</span>
+          </div>
           <div>
-            <div style={styles.brandName}>QLNS Accounting Manager</div>
-            <div style={styles.brandSubtitle}>Portal</div>
+            <div className="stat-value">{stats.revenue.toLocaleString('vi-VN')}</div>
+            <div className="stat-label">Tổng doanh thu</div>
+            <div style={{ fontSize: '0.7rem', color: '#999', marginTop: '4px' }}>(Chưa cập nhật)</div>
           </div>
         </div>
 
-        <div style={styles.divider} />
-
-        <div style={styles.userCard}>
-          <div style={styles.userAvatar}>{user.name.slice(0, 1).toUpperCase()}</div>
-          <div style={styles.userInfo}>
-            <div style={styles.userName}>{user.name}</div>
-            <div style={styles.userRole}>💼 {user.role}</div>
+        <div className="card stat-card">
+          <div className="stat-header">
+            <div className="stat-icon bg-purple">
+              <i className="fa-solid fa-chart-simple"></i>
+            </div>
+            <span className="badge text-purple">Tháng này</span>
+          </div>
+          <div>
+            <div className="stat-value">{stats.expenses.toLocaleString('vi-VN')}</div>
+            <div className="stat-label">Chi phí lương</div>
           </div>
         </div>
 
-        <div style={styles.divider} />
-
-        <div style={styles.navGroup}>
-          <div style={styles.navGroupLabel}>Tổng quan</div>
-          <NavItem active={active === 'dashboard'} onClick={() => setActive('dashboard')} icon="🏠">
-            Dashboard
-          </NavItem>
-          <NavItem active={active === 'profile'} onClick={() => setActive('profile')} icon="👤">
-            Hồ sơ cá nhân
-          </NavItem>
+        <div className="card stat-card">
+          <div className="stat-header">
+            <div className="stat-icon bg-blue">
+              <i className="fa-solid fa-arrow-trend-up"></i>
+            </div>
+            <span className="badge text-blue">+0%</span>
+          </div>
+          <div>
+            <div className="stat-value">{stats.profit.toLocaleString('vi-VN')}</div>
+            <div className="stat-label">Lợi nhuận</div>
+            <div style={{ fontSize: '0.7rem', color: '#999', marginTop: '4px' }}>(Chưa cập nhật)</div>
+          </div>
         </div>
 
-        <div style={styles.navGroup}>
-          <div style={styles.navGroupLabel}>Cá nhân</div>
-          <NavItem active={active === 'my-payroll'} onClick={() => setActive('my-payroll')} icon="💰">
-            Phiếu lương cá nhân
-          </NavItem>
-          <NavItem active={active === 'storage'} onClick={() => setActive('storage')} icon="💾">
-            File của tôi
-          </NavItem>
+        <div className="card stat-card">
+          <div className="stat-header">
+            <div className="stat-icon bg-yellow">
+              <i className="fa-solid fa-hourglass-half"></i>
+            </div>
+            <span className="badge text-yellow">Cần xử lý</span>
+          </div>
+          <div>
+            <div className="stat-value">{stats.pendingTasks}</div>
+            <div className="stat-label">Đơn chờ duyệt</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="dashboard-grid">
+
+        <div className="card welcome-card">
+          <h2>Chào mừng, {user.name}!</h2>
+          <p>Hôm nay bạn có <strong>{stats.pendingTasks} đơn cần duyệt</strong>. Hãy xem xét và phê duyệt để đảm bảo quy trình kế toán diễn ra suôn sẻ.</p>
+          <button className="btn-primary" onClick={() => setActive('payroll')}>
+            <i className="fa-solid fa-file-invoice-dollar"></i>
+            Xem bảng lương
+          </button>
         </div>
 
-        <div style={styles.navGroup}>
-          <div style={styles.navGroupLabel}>Quản lý tài chính</div>
-          <NavItem active={active === 'payroll'} onClick={() => setActive('payroll')} icon="💰">
-            Bảng lương
-          </NavItem>
-          <NavItem active={active === 'timesheet'} onClick={() => setActive('timesheet')} icon="🕐">
-            Quản lý chấm công
-          </NavItem>
-        </div>
-
-        <div style={styles.navGroup}>
-          <div style={styles.navGroupLabel}>Giao tiếp</div>
-          <NavItem active={active === 'chat'} onClick={() => setActive('chat')} icon="💬">
-            Chat
-          </NavItem>
-        </div>
-
-        <button style={styles.logoutBtn} onClick={handleLogout}>
-          🚪 Đăng xuất
-        </button>
-      </aside>
-
-      <main style={styles.content}>
-        {/* Hide header for shared component pages */}
-        {!['profile', 'my-payroll', 'storage'].includes(active) && (
-          <header style={styles.header}>
-            <div>
-              <div style={styles.pageHeading}>{meta.title}</div>
-              {active !== 'chat' && <div style={styles.subHeading}>Xin chào, {user.name}</div>}
+        <div className="card">
+          <div className="notif-header">
+            <i className="fa-regular fa-bell"></i>
+            Thông báo & Sự kiện
+          </div>
+          <div className="notif-list">
+            {/* Mock notifications matching layout */}
+            <div className="notif-item">
+              <div className="notif-icon">
+                <i className="fa-solid fa-file-contract"></i>
+              </div>
+              <div className="notif-content">
+                <h5>Báo cáo tài chính Q4</h5>
+                <p>Cần hoàn thành báo cáo trước 15/12</p>
+                <span className="notif-time">
+                  <i className="fa-regular fa-clock" style={{ marginRight: '5px', fontSize: '0.7rem' }}></i>1 giờ trước
+                </span>
+              </div>
             </div>
 
-            <div style={styles.rightCluster}>
-              <NotificationBell />
-              <RoleBadge role={user.role} />
+            <div className="notif-item">
+              <div className="notif-icon">
+                <i className="fa-solid fa-magnifying-glass-dollar"></i>
+              </div>
+              <div className="notif-content">
+                <h5>Kiểm toán nội bộ</h5>
+                <p>Lịch kiểm toán sắp tới</p>
+                <span className="notif-time">
+                  <i className="fa-regular fa-clock" style={{ marginRight: '5px', fontSize: '0.7rem' }}></i>2 giờ trước
+                </span>
+              </div>
+            </div>
+
+            <div className="notif-item">
+              <div className="notif-icon">
+                <i className="fa-solid fa-money-check"></i>
+              </div>
+              <div className="notif-content">
+                <h5>Thanh toán lương</h5>
+                <p>Đã hoàn thành thanh toán lương tháng 11</p>
+                <span className="notif-time">
+                  <i className="fa-regular fa-clock" style={{ marginRight: '5px', fontSize: '0.7rem' }}></i>1 ngày trước
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </>
+  )
+
+  return (
+    <div className="accounting-dashboard-container">
+      {renderSidebar()}
+
+      <main className="main-content">
+        {/* Header */}
+        {active !== 'profile' && active !== 'my-payroll' && active !== 'storage' && (
+          <header>
+            <div className="header-title">
+              <h1>{active === 'dashboard' ? 'Dashboard' :
+                active === 'payroll' ? 'Quản lý Bảng lương' :
+                  active === 'attendance' ? 'Quản lý Chấm công' :
+                    active === 'chat' ? 'Trò chuyện' : 'Quản lý'}</h1>
+              <p>Xin chào, {user.name}</p>
+            </div>
+            <div className="header-actions">
+              <button className="icon-btn" title="Thông báo">
+                <i className="fa-regular fa-bell"></i>
+                {stats.notifs > 0 && <div className="notification-dot"></div>}
+              </button>
+              <div className="breadcrumbs">
+                <i className="fa-solid fa-briefcase"></i>
+                Quản lý kế toán
+              </div>
             </div>
           </header>
         )}
 
-        {/* Dashboard Main */}
-        {active === 'dashboard' && (
-          <div style={styles.dashboardContent}>
-            {/* KPI Cards Row */}
-            <div style={styles.kpiGrid}>
-              <KPICard title="Tổng doanh thu" value={`${kpiData.revenue}đ`} icon="💵" color="success" change="+12%" />
-              <KPICard title="Chi phí tháng này" value={`${kpiData.expenses}đ`} icon="📊" color="warning" change="+5%" />
-              <KPICard title="Lợi nhuận" value={`${kpiData.profit}đ`} icon="📈" color="info" change="+8%" />
-              <KPICard title="Đơn chờ duyệt" value={`${kpiData.pendingApprovals}`} icon="⏳" color="primary" change="-2" />
-            </div>
+        {/* Content Switcher */}
+        {active === 'dashboard' && renderDashboardContent()}
 
-            {/* Welcome & Notifications Row */}
-            <div style={styles.cardsRow}>
-              <div style={styles.welcomeCard}>
-                <div style={styles.welcomeContent}>
-                  <h3 style={styles.welcomeTitle}>Chào mừng, {user.name}!</h3>
-                  <p style={styles.welcomeText}>
-                    Hôm nay bạn có {pendingApprovals.length} đơn cần duyệt. 
-                    Hãy xem xét và phê duyệt để đảm bảo quy trình kế toán diễn ra suôn sẻ.
-                  </p>
-                  <button style={styles.checkInBtn} onClick={() => setActive('approvals')}>
-                    📋 Xem đơn chờ duyệt
-                  </button>
-                </div>
-              </div>
+        {active === 'payroll' && <PayrollPage />}
 
-              <div style={styles.notificationCard}>
-                <h4 style={styles.cardTitle}>Thông báo & Sự kiện</h4>
-                <div style={styles.notificationList}>
-                  {notifications.map((notif, idx) => (
-                    <div key={idx} style={styles.notificationItem}>
-                      <div style={styles.notifIcon}>📢</div>
-                      <div style={styles.notifContent}>
-                        <div style={styles.notifTitle}>{notif.title}</div>
-                        <div style={styles.notifDesc}>{notif.desc}</div>
-                        <div style={styles.notifDate}>{notif.date}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+        {active === 'attendance' && <AttendancePage />}
 
-            {/* Charts Row */}
-            <div style={styles.chartsRow}>
-              <div style={styles.chartCard}>
-                <h4 style={styles.cardTitle}>Biểu đồ doanh thu theo tháng</h4>
-                <div style={styles.chartPlaceholder}>
-                  <div style={styles.chartInfo}>📊 Biểu đồ đang được phát triển</div>
-                </div>
-              </div>
+        {active === 'storage' && <AccountingStoragePage />}
 
-              <div style={styles.chartCard}>
-                <h4 style={styles.cardTitle}>Thống kê chi phí</h4>
-                <div style={styles.chartPlaceholder}>
-                  <div style={styles.chartInfo}>📈 Biểu đồ đang được phát triển</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Attendance Management - Quản lý tất cả nhân viên */}
-        {active === 'timesheet' && <AttendanceManagementPage />}
-
-        {/* ❌ Removed: Leave Page (cá nhân) - Accounting không cần */}
-        {/* Chat Page */}
         {active === 'chat' && <ChatPage />}
 
-        
+        {active === 'my-payroll' && (
+          <SharedPayrollPage
+            title="Phiếu lương cá nhân"
+            breadcrumb="Cá nhân / Phiếu lương"
+            glassMode={true}
+          />
+        )}
 
-        {/* Profile Page */}
         {active === 'profile' && (
-          <SharedProfilePage 
-            title="Hồ sơ cá nhân"
-            breadcrumb="Cá nhân / Hồ sơ cá nhân"
+          <SharedProfilePage
+            title="Cài đặt"
+            breadcrumb="Hệ thống / Cài đặt"
             allowEdit={true}
             userRole="Accounting Manager"
           />
         )}
 
-        {/* Documents Placeholder */}
-        {active === 'documents' && (
-          <div style={styles.pageContent}>
-            <div style={styles.placeholderCard}>
-              <div style={styles.placeholderIcon}>📄</div>
-              <h3 style={styles.placeholderTitle}>{meta.pageTitle}</h3>
-              <p style={styles.placeholderText}>
-                Tính năng đang được phát triển
-              </p>
-            </div>
-          </div>
-        )}
       </main>
     </div>
   )
 }
-

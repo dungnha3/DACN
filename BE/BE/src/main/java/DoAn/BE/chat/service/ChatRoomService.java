@@ -4,8 +4,11 @@ import DoAn.BE.chat.dto.ChatRoomDTO;
 import DoAn.BE.chat.dto.CreateChatRoomRequest;
 import DoAn.BE.chat.entity.ChatRoom;
 import DoAn.BE.chat.entity.ChatRoomMember;
+import DoAn.BE.chat.entity.ChatRoomMemberId;
+import DoAn.BE.chat.entity.Message;
 import DoAn.BE.chat.repository.ChatRoomMemberRepository;
 import DoAn.BE.chat.repository.ChatRoomRepository;
+import DoAn.BE.chat.repository.MessageRepository;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.user.repository.UserRepository;
 import DoAn.BE.project.entity.Project;
@@ -37,19 +40,22 @@ public class ChatRoomService {
     private final WebSocketNotificationService webSocketNotificationService;
     private final ChatNotificationService chatNotificationService;
     private final ProjectRepository projectRepository;
+    private final MessageRepository messageRepository;
 
     public ChatRoomService(ChatRoomRepository chatRoomRepository,
             ChatRoomMemberRepository chatRoomMemberRepository,
             UserRepository userRepository,
             WebSocketNotificationService webSocketNotificationService,
             ChatNotificationService chatNotificationService,
-            ProjectRepository projectRepository) {
+            ProjectRepository projectRepository,
+            MessageRepository messageRepository) {
         this.chatRoomRepository = chatRoomRepository;
         this.chatRoomMemberRepository = chatRoomMemberRepository;
         this.userRepository = userRepository;
         this.webSocketNotificationService = webSocketNotificationService;
         this.chatNotificationService = chatNotificationService;
         this.projectRepository = projectRepository;
+        this.messageRepository = messageRepository;
     }
 
     // Tạo phòng chat mới
@@ -69,6 +75,7 @@ public class ChatRoomService {
             chatRoom.setName(request.getName().trim());
             chatRoom.setType(request.getRoomType());
             chatRoom.setAvatarUrl(request.getAvatarUrl());
+            chatRoom.setCreatedBy(currentUser);
             chatRoom.setCreatedAt(LocalDateTime.now());
 
             // Handle project chat creation
@@ -82,18 +89,47 @@ public class ChatRoomService {
 
             chatRoom = chatRoomRepository.save(chatRoom);
 
+            // Thêm người tạo làm ADMIN
             ChatRoomMember creatorMember = new ChatRoomMember();
+            creatorMember.setId(new ChatRoomMemberId(chatRoom.getRoomId(), currentUser.getUserId()));
             creatorMember.setChatRoom(chatRoom);
             creatorMember.setUser(currentUser);
             creatorMember.setRole(ChatRoomMember.MemberRole.ADMIN);
             creatorMember.setJoinedAt(LocalDateTime.now());
             chatRoomMemberRepository.save(creatorMember);
 
+            // Thêm các thành viên khác từ memberIds
+            if (request.getMemberIds() != null && !request.getMemberIds().isEmpty()) {
+                for (Long memberId : request.getMemberIds()) {
+                    // Bỏ qua người tạo (đã thêm ở trên)
+                    if (memberId.equals(currentUser.getUserId())) {
+                        continue;
+                    }
+
+                    User memberUser = userRepository.findById(memberId).orElse(null);
+                    if (memberUser != null) {
+                        ChatRoomMember member = new ChatRoomMember();
+                        member.setId(new ChatRoomMemberId(chatRoom.getRoomId(), memberUser.getUserId()));
+                        member.setChatRoom(chatRoom);
+                        member.setUser(memberUser);
+                        member.setRole(ChatRoomMember.MemberRole.MEMBER);
+                        member.setJoinedAt(LocalDateTime.now());
+                        chatRoomMemberRepository.save(member);
+                        log.info("Thêm thành viên {} vào phòng chat {}", memberUser.getUsername(), chatRoom.getName());
+                    }
+                }
+            }
+
             return convertToChatRoomDTO(chatRoom);
 
-        } catch (DataAccessException | IllegalArgumentException e) {
-            log.error("Lỗi tạo phòng chat cho user {}: {}", currentUser.getUsername(), e.getMessage(), e);
-            throw new BadRequestException("Không thể tạo phòng chat, vui lòng thử lại");
+        } catch (DataAccessException e) {
+            log.error("Database error khi tạo phòng chat cho user {}: {}", currentUser.getUsername(), e.getMessage(),
+                    e);
+            throw new BadRequestException("Không thể tạo phòng chat do lỗi database");
+        } catch (Exception e) {
+            log.error("Lỗi không xác định khi tạo phòng chat cho user {}: {} - Class: {}",
+                    currentUser.getUsername(), e.getMessage(), e.getClass().getName(), e);
+            throw e; // Re-throw để GlobalExceptionHandler xử lý
         }
     }
 
@@ -156,6 +192,7 @@ public class ChatRoomService {
         directRoom = chatRoomRepository.save(directRoom);
 
         ChatRoomMember member1 = new ChatRoomMember();
+        member1.setId(new ChatRoomMemberId(directRoom.getRoomId(), user1.getUserId()));
         member1.setChatRoom(directRoom);
         member1.setUser(user1);
         member1.setRole(ChatRoomMember.MemberRole.MEMBER);
@@ -163,6 +200,7 @@ public class ChatRoomService {
         chatRoomMemberRepository.save(member1);
 
         ChatRoomMember member2 = new ChatRoomMember();
+        member2.setId(new ChatRoomMemberId(directRoom.getRoomId(), user2.getUserId()));
         member2.setChatRoom(directRoom);
         member2.setUser(user2);
         member2.setRole(ChatRoomMember.MemberRole.MEMBER);
@@ -199,6 +237,7 @@ public class ChatRoomService {
         }
 
         ChatRoomMember member = new ChatRoomMember();
+        member.setId(new ChatRoomMemberId(chatRoom.getRoomId(), user.getUserId()));
         member.setChatRoom(chatRoom);
         member.setUser(user);
         member.setRole(ChatRoomMember.MemberRole.MEMBER);
@@ -405,6 +444,13 @@ public class ChatRoomService {
 
         long memberCount = chatRoomMemberRepository.countByChatRoom_RoomId(chatRoom.getRoomId());
         dto.setMemberCount((int) memberCount);
+
+        // Fetch and set last message
+        Message lastMessage = messageRepository.findTopByChatRoom_RoomIdOrderBySentAtDesc(chatRoom.getRoomId());
+        if (lastMessage != null) {
+            dto.setLastMessage(lastMessage);
+            dto.setLastMessageAt(lastMessage.getSentAt());
+        }
 
         return dto;
     }

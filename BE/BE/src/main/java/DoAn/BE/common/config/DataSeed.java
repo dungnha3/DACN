@@ -452,6 +452,11 @@ public class DataSeed {
             project.setStatus(Project.ProjectStatus.ACTIVE);
             project.setStartDate(LocalDate.now().minusMonths(3));
             project.setEndDate(LocalDate.now().plusMonths(6));
+
+            // Random Budget 100M - 2B
+            long randomBudget = 100_000_000L + (long) (Math.random() * 1_900_000_000L);
+            project.setBudget(new java.math.BigDecimal(randomBudget));
+
             project.setCreatedBy(pmUser);
             project.setIsActive(true);
             projects.add(projectRepository.save(project));
