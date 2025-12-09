@@ -16,6 +16,12 @@ export const attendanceService = {
     })
   },
 
+  getByDateRange: async (startDate, endDate) => {
+    return await apiService.get('/api/cham-cong/date-range', {
+      params: { startDate, endDate }
+    })
+  },
+
   checkIn: async (employeeId, date) => {
     return await apiService.post('/api/cham-cong/check-in', null, {
       params: { nhanvienId: employeeId, ngayCham: date }

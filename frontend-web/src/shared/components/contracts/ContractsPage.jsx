@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { contractsService } from '@/features/hr/shared/services';
+import { employeesService } from '@/features/hr/shared/services';
+import { profileService } from '@/shared/services/profile.service';
 import { usePermissions, useErrorHandler } from '@/shared/hooks';
 import { formatCurrency } from '@/shared/utils';
 import {
@@ -34,30 +36,53 @@ import {
 export default function SharedContractsPage({
   title = "Hợp đồng & Tài liệu",
   breadcrumb = "Cá nhân / Hợp đồng",
-  viewMode = "personal" // "personal" | "management"
+  viewMode = "personal", // "personal" | "management"
+  glassMode = false
 }) {
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('HIEU_LUC');
   const [selectedContract, setSelectedContract] = useState(null);
+  const [employeeId, setEmployeeId] = useState(null);
 
   const { user: authUser } = useAuth();
   const { currentUser, isHRManager } = usePermissions();
   const { handleError } = useErrorHandler();
 
+  // Fetch employee ID on mount (for personal view)
   useEffect(() => {
+    const fetchEmployeeId = async () => {
+      if (viewMode === "personal") {
+        try {
+          const profile = await profileService.getProfile();
+          if (profile?.userId) {
+            const employee = await employeesService.getByUserId(profile.userId);
+            if (employee?.nhanvienId) {
+              setEmployeeId(employee.nhanvienId);
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching employee ID:', err);
+        }
+      }
+    };
+    fetchEmployeeId();
+  }, [viewMode]);
+
+  useEffect(() => {
+    if (viewMode === "personal" && !employeeId) return;
     loadContracts();
-  }, [activeTab]);
+  }, [activeTab, employeeId, viewMode]);
 
   const loadContracts = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      if (viewMode === "personal" && currentUser?.userId) {
-        // Load personal contracts only
-        const data = await contractsService.getByEmployee(currentUser.userId);
+      if (viewMode === "personal" && employeeId) {
+        // Load personal contracts only - using nhanvienId
+        const data = await contractsService.getByEmployee(employeeId);
         setContracts(data || []);
       } else if (viewMode === "management" && isHRManager) {
         // Load all contracts for management
@@ -88,13 +113,12 @@ export default function SharedContractsPage({
   };
 
 
-  // Get contract type
+  // Get contract type - matching BE enum: THU_VIEC, XAC_DINH, VO_THOI_HAN
   const getContractType = (type) => {
     const types = {
       THU_VIEC: { label: 'Thử việc', icon: '📝', color: '#f59e0b' },
-      XAC_DINH_THOI_HAN: { label: 'Xác định thời hạn', icon: '📋', color: '#3b82f6' },
-      KHONG_XAC_DINH_THOI_HAN: { label: 'Không xác định thời hạn', icon: '📄', color: '#10b981' },
-      THOI_VU: { label: 'Thời vụ', icon: '⏰', color: '#ef4444' }
+      XAC_DINH: { label: 'Xác định thời hạn', icon: '📋', color: '#3b82f6' },
+      VO_THOI_HAN: { label: 'Không xác định thời hạn', icon: '📄', color: '#10b981' }
     };
     return types[type] || { label: type, icon: '📄', color: '#6b7280' };
   };
@@ -119,9 +143,15 @@ export default function SharedContractsPage({
     );
   };
 
+  // Glass mode container style
+  const containerStyle = glassMode ? {
+    background: 'transparent',
+    minHeight: 'auto'
+  } : {};
+
   if (loading) {
     return (
-      <PageContainer>
+      <PageContainer style={containerStyle}>
         <LoadingState message="Đang tải thông tin hợp đồng..." />
       </PageContainer>
     );
@@ -129,60 +159,86 @@ export default function SharedContractsPage({
 
   if (error) {
     return (
-      <PageContainer>
+      <PageContainer style={containerStyle}>
         <ErrorState message={error} onRetry={loadContracts} />
       </PageContainer>
     );
   }
 
   return (
-    <PageContainer>
-      {/* Header */}
-      <PageHeader>
-        <div>
-          <Breadcrumb>{breadcrumb}</Breadcrumb>
-          <PageTitle>{title}</PageTitle>
-          {viewMode === "personal" && (
-            <div style={{ fontSize: 14, color: '#7b809a', marginTop: 4 }}>
-              Quản lý hợp đồng và tài liệu cá nhân
-            </div>
+    <PageContainer style={containerStyle}>
+      {/* Header - Hide when embedded in dashboard (glassMode) since dashboard already has header */}
+      {!glassMode && (
+        <PageHeader>
+          <div>
+            <Breadcrumb>{breadcrumb}</Breadcrumb>
+            <PageTitle>{title}</PageTitle>
+            {viewMode === "personal" && (
+              <div style={{ fontSize: 14, color: '#7b809a', marginTop: 4 }}>
+                Quản lý hợp đồng và tài liệu cá nhân
+              </div>
+            )}
+          </div>
+          {viewMode === "management" && isHRManager && (
+            <Button variant="success">+ Tạo hợp đồng</Button>
           )}
-        </div>
-        {viewMode === "management" && isHRManager && (
-          <Button variant="success">+ Tạo hợp đồng</Button>
-        )}
-      </PageHeader>
+        </PageHeader>
+      )}
 
-      {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 24 }}>
-        <StatCard
-          title="Tổng hợp đồng"
-          value={stats.total}
-          icon="📄"
-          color="#3b82f6"
-          bg="#eff6ff"
-        />
-        <StatCard
-          title="Đang hiệu lực"
-          value={stats.active}
-          icon="✓"
-          color="#10b981"
-          bg="#f0fdf4"
-        />
-        <StatCard
-          title="Hết hạn"
-          value={stats.expired}
-          icon="⏰"
-          color="#f59e0b"
-          bg="#fff7ed"
-        />
-        <StatCard
-          title="Đã chấm dứt"
-          value={stats.terminated}
-          icon="✗"
-          color="#ef4444"
-          bg="#fef2f2"
-        />
+      {/* Stats Cards - with glassmorphism styling */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+        <div style={{
+          padding: 20, borderRadius: 16,
+          background: glassMode ? 'rgba(255,255,255,0.55)' : '#eff6ff',
+          backdropFilter: glassMode ? 'blur(10px)' : 'none',
+          border: glassMode ? '1px solid rgba(255,255,255,0.4)' : '1px solid #bfdbfe',
+          boxShadow: glassMode ? '0 4px 20px rgba(0,0,0,0.05)' : 'none'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Tổng hợp đồng</span>
+            <span style={{ fontSize: 18 }}>📄</span>
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: '#3b82f6' }}>{stats.total}</div>
+        </div>
+        <div style={{
+          padding: 20, borderRadius: 16,
+          background: glassMode ? 'rgba(255,255,255,0.55)' : '#f0fdf4',
+          backdropFilter: glassMode ? 'blur(10px)' : 'none',
+          border: glassMode ? '1px solid rgba(255,255,255,0.4)' : '1px solid #86efac',
+          boxShadow: glassMode ? '0 4px 20px rgba(0,0,0,0.05)' : 'none'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Đang hiệu lực</span>
+            <span style={{ fontSize: 18 }}>✓</span>
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: '#10b981' }}>{stats.active}</div>
+        </div>
+        <div style={{
+          padding: 20, borderRadius: 16,
+          background: glassMode ? 'rgba(255,255,255,0.55)' : '#fff7ed',
+          backdropFilter: glassMode ? 'blur(10px)' : 'none',
+          border: glassMode ? '1px solid rgba(255,255,255,0.4)' : '1px solid #fed7aa',
+          boxShadow: glassMode ? '0 4px 20px rgba(0,0,0,0.05)' : 'none'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Hết hạn</span>
+            <span style={{ fontSize: 18 }}>⏰</span>
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: '#f59e0b' }}>{stats.expired}</div>
+        </div>
+        <div style={{
+          padding: 20, borderRadius: 16,
+          background: glassMode ? 'rgba(255,255,255,0.55)' : '#fef2f2',
+          backdropFilter: glassMode ? 'blur(10px)' : 'none',
+          border: glassMode ? '1px solid rgba(255,255,255,0.4)' : '1px solid #fecaca',
+          boxShadow: glassMode ? '0 4px 20px rgba(0,0,0,0.05)' : 'none'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Đã chấm dứt</span>
+            <span style={{ fontSize: 18 }}>✗</span>
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: '#ef4444' }}>{stats.terminated}</div>
+        </div>
       </div>
 
       {/* Filter Tabs */}
@@ -257,14 +313,14 @@ export default function SharedContractsPage({
                               background: 'linear-gradient(195deg, #42424a, #191919)',
                               color: '#fff', display: 'grid', placeItems: 'center', fontSize: 14
                             }}>
-                              {contract.nhanvien?.hoTen?.charAt(0) || '?'}
+                              {contract.hoTenNhanVien?.charAt(0) || '?'}
                             </div>
                             <div>
                               <div style={{ fontWeight: 600, fontSize: 14 }}>
-                                {contract.nhanvien?.hoTen || 'N/A'}
+                                {contract.hoTenNhanVien || 'N/A'}
                               </div>
                               <div style={{ fontSize: 12, color: '#7b809a' }}>
-                                {contract.nhanvien?.maNhanVien || 'N/A'}
+                                {contract.tenChucVu || ''}
                               </div>
                             </div>
                           </div>
@@ -276,17 +332,20 @@ export default function SharedContractsPage({
                           <div>
                             <div style={{ fontWeight: 600, fontSize: 14 }}>{contractType.label}</div>
                             <div style={{ fontSize: 12, color: '#7b809a' }}>
-                              Số: {contract.soHopDong || 'N/A'}
+                              ID: #{contract.hopdongId}
                             </div>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div style={{ fontSize: 14 }}>
-                          <div>{contract.ngayBatDau}</div>
-                          <div style={{ fontSize: 12, color: '#7b809a' }}>
-                            đến {contract.ngayKetThuc || 'Không xác định'}
-                          </div>
+                        <div style={{ fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontWeight: 500 }}>
+                            {contract.ngayBatDau ? new Date(contract.ngayBatDau).toLocaleDateString('vi-VN') : 'N/A'}
+                          </span>
+                          <span style={{ color: '#94a3b8' }}>→</span>
+                          <span style={{ fontWeight: 500 }}>
+                            {contract.ngayKetThuc ? new Date(contract.ngayKetThuc).toLocaleDateString('vi-VN') : 'Vô thời hạn'}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -301,7 +360,7 @@ export default function SharedContractsPage({
                             border: 'none', background: '#f8f9fa', borderRadius: 8,
                             width: 32, height: 32, cursor: 'pointer', fontSize: 16,
                             color: '#344767', display: 'flex', alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center', margin: '0 auto'
                           }}
                           onClick={() => setSelectedContract(contract)}
                           title="Xem chi tiết"
@@ -329,10 +388,10 @@ export default function SharedContractsPage({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
               <div>
                 <label style={{ fontSize: 12, color: '#7b809a', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', display: 'block' }}>
-                  Số hợp đồng
+                  Mã hợp đồng
                 </label>
                 <div style={{ fontSize: 15, color: '#344767', fontWeight: 500 }}>
-                  {selectedContract.soHopDong || 'N/A'}
+                  #{selectedContract.hopdongId}
                 </div>
               </div>
 

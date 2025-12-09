@@ -1,17 +1,15 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
-import { dashboardBaseStyles as styles } from '@/shared/styles/dashboard'
+import './EmployeeDashboard.css' // Import custom CSS
+
 import {
-  NavItem,
   RoleBadge,
   StatCard,
   TodayStatusCard,
   AttendanceChart,
   LeaveStatusWidget,
-
   QuickActionButton
 } from './components/EmployeeDashboard.components'
-import { sectionsConfig } from './components/EmployeeDashboard.constants'
 import { ProfilePage, MyPayrollPage, MyAttendancePage, MyLeavePage, MyDocumentsPage, MyProjectsPage, MyStoragePage } from '@/modules/employee'
 import NotificationBell from '@/shared/components/notification/NotificationBell'
 import { ChatPage } from '@/modules/project'
@@ -26,8 +24,6 @@ import { payrollService } from '@/shared/services/payroll.service'
 export default function EmployeeDashboard() {
   const [active, setActive] = useState('dashboard')
   const { logout, user: authUser } = useAuth()
-  const username = authUser?.username || localStorage.getItem('username') || 'Employee'
-  const user = useMemo(() => ({ name: username || 'Nguyễn Văn A', role: 'Nhân viên' }), [username])
 
   // Dashboard data states
   const [loading, setLoading] = useState(true)
@@ -43,26 +39,16 @@ export default function EmployeeDashboard() {
   })
   const [checkInLoading, setCheckInLoading] = useState(false)
   const [userAvatar, setUserAvatar] = useState(null)
+  const [fullName, setFullName] = useState(null)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
-  const sections = useMemo(() => sectionsConfig, [])
-  const meta = sections[active] || { title: 'Dashboard', subtitle: 'Employee Portal' }
+  const username = authUser?.username || localStorage.getItem('username') || 'Employee'
+  const user = useMemo(() => ({
+    name: fullName || username,
+    role: 'Nhân viên',
+    initial: (fullName || username).charAt(0).toUpperCase()
+  }), [username, fullName])
 
-  // State for sidebar hover
-  const [isSidebarHovered, setIsSidebarHovered] = useState(false)
-  const hoverTimeoutRef = useRef(null)
-
-  const handleMouseEnter = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current)
-    }
-    setIsSidebarHovered(true)
-  }
-
-  const handleMouseLeave = () => {
-    hoverTimeoutRef.current = setTimeout(() => {
-      setIsSidebarHovered(false)
-    }, 100)
-  }
 
   const handleLogout = async () => {
     await logout()
@@ -81,6 +67,7 @@ export default function EmployeeDashboard() {
           const employee = await employeesService.getByUserId(profile.userId)
           if (employee?.nhanvienId) {
             setEmployeeId(employee.nhanvienId)
+            if (employee.hoTen) setFullName(employee.hoTen)
           }
         }
       } catch (error) {
@@ -158,9 +145,8 @@ export default function EmployeeDashboard() {
           })
         }
 
-        // Process payroll data - handle gracefully (may return 204/403/404 when no data)
+        // Process payroll data
         if (payrollRes.status === 'fulfilled' && payrollRes.value) {
-          // Response is single object for the specified period
           setPayrollData(payrollRes.value)
         }
 
@@ -209,335 +195,146 @@ export default function EmployeeDashboard() {
     }
   }
 
-  // Format currency
-  const formatCurrency = (amount) => {
-    if (!amount) return '0 ₫'
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
-  }
-
-  // Custom Styles for Light/Collapsed Theme
-  const customStyles = {
-    ...styles,
-    appShell: {
-      ...styles.appShell,
-      display: 'flex',
-      gridTemplateColumns: 'none',
-      backgroundColor: '#f8fafc',
-      height: '100vh',
-      overflow: 'hidden',
-    },
-    sidebar: {
-      ...styles.sidebar,
-      width: isSidebarHovered ? '260px' : '70px',
-      background: '#fff',
-      borderRight: '1px solid #e2e8f0',
-      padding: '20px 12px',
-      display: 'flex',
-      flexDirection: 'column',
-      transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-      boxShadow: isSidebarHovered ? '0 4px 6px -1px rgba(0, 0, 0, 0.05)' : 'none',
-      zIndex: 50,
-      flexShrink: 0,
-      overflowY: 'auto',
-      overflowX: 'hidden',
-      height: '100vh',
-      willChange: 'width',
-    },
-    content: {
-      ...styles.content,
-      flex: 1,
-      width: '100%',
-      background: '#f8fafc',
-      height: '100vh',
-      overflowY: 'auto',
-      overflowX: 'hidden',
-    },
-    userCard: {
-      ...styles.userCard,
-      background: 'transparent',
-      padding: 0,
-      justifyContent: isSidebarHovered ? 'flex-start' : 'center',
-      marginBottom: 24,
-      transition: 'justify-content 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-    },
-    userInfo: {
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
-      marginLeft: isSidebarHovered ? 12 : 0,
-    },
-    userInfoInner: {
-      transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-      opacity: isSidebarHovered ? 1 : 0,
-      transform: isSidebarHovered ? 'translateX(0)' : 'translateX(-10px)',
-    },
-    userName: {
-      ...styles.userName,
-      color: '#334155',
-      whiteSpace: 'nowrap',
-      fontSize: 14,
-      fontWeight: 600,
-    },
-    userRole: {
-      ...styles.userRole,
-      color: '#94a3b8',
-      whiteSpace: 'nowrap',
-      fontSize: 12,
-    },
-    userAvatar: {
-      ...styles.userAvatar,
-      minWidth: 40,
-      width: 40,
-      height: 40,
-      flexShrink: 0,
-      background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
-      boxShadow: '0 2px 4px rgba(100, 116, 139, 0.2)',
-    },
-    navGroup: {
-      marginBottom: 24,
-    },
-    navGroupLabel: {
-      ...styles.navGroupLabel,
-      color: '#94a3b8',
-      fontSize: 11,
-      fontWeight: 700,
-      textTransform: 'uppercase',
-      letterSpacing: '0.5px',
-      paddingLeft: 12,
-      overflow: 'hidden',
-      transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), height 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-      opacity: isSidebarHovered ? 1 : 0,
-      height: isSidebarHovered ? '20px' : '0',
-      marginBottom: isSidebarHovered ? 8 : 0,
-    },
-    divider: {
-      ...styles.divider,
-      background: '#f1f5f9',
-      margin: '20px 0',
-    },
-    logoutBtn: {
-      ...styles.logoutBtn,
-      background: '#fff',
-      color: '#ef4444',
-      border: '1px solid #fecaca',
-      borderRadius: '10px',
-      justifyContent: isSidebarHovered ? 'flex-start' : 'center',
-      padding: isSidebarHovered ? '12px 16px' : '12px',
-      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-      overflow: 'hidden',
-      boxShadow: 'none',
-    }
-  }
-
-  // Local styles for dashboard
-  const dashboardStyles = {
-    container: {
-      padding: 32,
-      maxWidth: 1400,
-      margin: '0 auto'
-    },
-    header: {
-      marginBottom: 32
-    },
-    greeting: {
-      fontSize: 28,
-      fontWeight: 700,
-      color: '#0f172a',
-      margin: 0,
-      marginBottom: 4
-    },
-    subGreeting: {
-      fontSize: 15,
-      color: '#64748b',
-      margin: 0
-    },
-    mainGrid: {
-      display: 'grid',
-      gridTemplateColumns: '1fr 380px',
-      gap: 24,
-      marginBottom: 24
-    },
-    statsGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3, 1fr)',
-      gap: 16,
-      marginBottom: 24
-    },
-    chartsGrid: {
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: 24
-    },
-    quickActions: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(2, 1fr)',
-      gap: 16,
-      marginTop: 0
-    }
-  }
-
   return (
-    <div style={customStyles.appShell}>
-      <aside
-        style={customStyles.sidebar}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        <div style={customStyles.userCard}>
-          <div style={customStyles.userAvatar}>{user.name.slice(0, 1).toUpperCase()}</div>
-          <div style={customStyles.userInfo}>
-            <div style={customStyles.userInfoInner}>
-              <div style={customStyles.userName}>{user.name}</div>
-              <div style={customStyles.userRole}>{user.role}</div>
-            </div>
+    <div className="employee-dashboard-container">
+      <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+        <div className="sidebar-toggle-btn" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}>
+          <i className="fa-solid fa-bars"></i>
+        </div>
+
+        <div className="menu-section">
+          <div className="menu-title">Tổng quan</div>
+          <div className={`menu-item ${active === 'dashboard' ? 'active' : ''}`} onClick={() => setActive('dashboard')} title={isSidebarCollapsed ? "Dashboard" : ""}>
+            <i className="fa-solid fa-house"></i>
+            <span>Dashboard</span>
+          </div>
+
+          <div className="menu-title">Công việc</div>
+          <div className={`menu-item ${active === 'timesheet' ? 'active' : ''}`} onClick={() => setActive('timesheet')} title={isSidebarCollapsed ? "Chấm công" : ""}>
+            <i className="fa-solid fa-clock"></i>
+            <span>Chấm công</span>
+          </div>
+          <div className={`menu-item ${active === 'leave' ? 'active' : ''}`} onClick={() => setActive('leave')} title={isSidebarCollapsed ? "Nghỉ phép" : ""}>
+            <i className="fa-solid fa-calendar-days"></i>
+            <span>Nghỉ phép</span>
+          </div>
+          <div className={`menu-item ${active === 'projects' ? 'active' : ''}`} onClick={() => setActive('projects')} title={isSidebarCollapsed ? "Dự án của tôi" : ""}>
+            <i className="fa-solid fa-industry"></i>
+            <span>Dự án của tôi</span>
+          </div>
+
+          <div className="menu-title">Tài chính & Tài liệu</div>
+          <div className={`menu-item ${active === 'payroll' ? 'active' : ''}`} onClick={() => setActive('payroll')} title={isSidebarCollapsed ? "Phiếu lương" : ""}>
+            <i className="fa-solid fa-money-bill-wave"></i>
+            <span>Phiếu lương</span>
+          </div>
+          <div className={`menu-item ${active === 'documents' ? 'active' : ''}`} onClick={() => setActive('documents')} title={isSidebarCollapsed ? "Tài liệu" : ""}>
+            <i className="fa-solid fa-file-lines"></i>
+            <span>Tài liệu</span>
+          </div>
+          <div className={`menu-item ${active === 'storage' ? 'active' : ''}`} onClick={() => setActive('storage')} title={isSidebarCollapsed ? "File của tôi" : ""}>
+            <i className="fa-solid fa-folder-open"></i>
+            <span>File của tôi</span>
+          </div>
+
+          <div className="menu-title">Giao tiếp</div>
+          <div className={`menu-item ${active === 'chat' ? 'active' : ''}`} onClick={() => setActive('chat')} title={isSidebarCollapsed ? "Trò chuyện" : ""}>
+            <i className="fa-solid fa-comments"></i>
+            <span>Trò chuyện</span>
+          </div>
+
+          <div className="menu-title">Hệ thống</div>
+          <div className={`menu-item ${active === 'profile' ? 'active' : ''}`} onClick={() => setActive('profile')} title={isSidebarCollapsed ? "Cài đặt" : ""}>
+            <i className="fa-solid fa-user-gear"></i>
+            <span>Cài đặt</span>
+          </div>
+
+          <div style={{ flex: 1 }}></div>
+          <div className="menu-item" onClick={handleLogout} style={{ color: '#ef4444', borderColor: '#fecaca', background: '#fff' }} title={isSidebarCollapsed ? "Đăng xuất" : ""}>
+            <i className="fa-solid fa-right-from-bracket"></i>
+            <span>Đăng xuất</span>
           </div>
         </div>
-
-        <div style={customStyles.divider} />
-
-        {/* Group 1: Tổng quan */}
-        <div style={customStyles.navGroup}>
-          <div style={customStyles.navGroupLabel}>Tổng quan</div>
-          <NavItem active={active === 'dashboard'} onClick={() => setActive('dashboard')} icon="🏠" collapsed={!isSidebarHovered}>
-            {sections.dashboard.title}
-          </NavItem>
-        </div>
-
-        {/* Group 2: Công việc */}
-        <div style={customStyles.navGroup}>
-          <div style={customStyles.navGroupLabel}>Công việc</div>
-          <NavItem active={active === 'timesheet'} onClick={() => setActive('timesheet')} icon="🕐" collapsed={!isSidebarHovered}>
-            {sections.timesheet.title}
-          </NavItem>
-          <NavItem active={active === 'leave'} onClick={() => setActive('leave')} icon="📋" collapsed={!isSidebarHovered}>
-            {sections.leave.title}
-          </NavItem>
-          <NavItem active={active === 'projects'} onClick={() => setActive('projects')} icon="🏭" collapsed={!isSidebarHovered}>
-            Dự án của tôi
-          </NavItem>
-        </div>
-
-        {/* Group 3: Tài chính & Tài liệu */}
-        <div style={customStyles.navGroup}>
-          <div style={customStyles.navGroupLabel}>Tài chính & Tài liệu</div>
-          <NavItem active={active === 'payroll'} onClick={() => setActive('payroll')} icon="💰" collapsed={!isSidebarHovered}>
-            {sections.payroll.title}
-          </NavItem>
-          <NavItem active={active === 'documents'} onClick={() => setActive('documents')} icon="📄" collapsed={!isSidebarHovered}>
-            {sections.documents.title}
-          </NavItem>
-          <NavItem active={active === 'storage'} onClick={() => setActive('storage')} icon="💾" collapsed={!isSidebarHovered}>
-            File của tôi
-          </NavItem>
-        </div>
-
-        {/* Group 4: Giao tiếp */}
-        <div style={customStyles.navGroup}>
-          <div style={customStyles.navGroupLabel}>Giao tiếp</div>
-          <NavItem active={active === 'chat'} onClick={() => setActive('chat')} icon="💬" collapsed={!isSidebarHovered}>
-            {sections.chat.title}
-          </NavItem>
-        </div>
-
-        <div style={{ flex: 1 }} />
-
-        <div style={customStyles.navGroup}>
-          <div style={customStyles.navGroupLabel}>Hệ thống</div>
-          <NavItem active={active === 'profile'} onClick={() => setActive('profile')} icon="⚙️" collapsed={!isSidebarHovered}>
-            Thông tin & Tài khoản
-          </NavItem>
-        </div>
-
-        <button style={customStyles.logoutBtn} onClick={handleLogout}>
-          <span style={{ fontSize: 20, minWidth: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🚪</span>
-          <span style={{
-            marginLeft: isSidebarHovered ? 12 : 0,
-            transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-            opacity: isSidebarHovered ? 1 : 0,
-            transform: isSidebarHovered ? 'translateX(0)' : 'translateX(-10px)',
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            display: 'flex',
-            alignItems: 'center',
-            fontWeight: 600
-          }}>Đăng xuất</span>
-        </button>
       </aside>
 
-      <main style={customStyles.content}>
-        {/* Hide header for pages with their own headers */}
-        {!['profile', 'projects'].includes(active) && (
-          <header style={styles.header}>
-            <div>
-              <div style={styles.pageHeading}>{meta.title}</div>
-              {active !== 'chat' && <div style={styles.subHeading}>Xin chào, {user.name}</div>}
+      <main className="main-content">
+        {/* Header */}
+        {active !== 'profile' && active !== 'projects' && (
+          <header className="accounting-header">
+            <div className="header-title">
+              <h1>{active === 'dashboard' ? 'Dashboard' :
+                active === 'timesheet' ? 'Chấm công' :
+                  active === 'leave' ? 'Nghỉ phép' :
+                    active === 'projects' ? 'Dự án' :
+                      active === 'payroll' ? 'Phiếu lương' :
+                        active === 'documents' ? 'Tài liệu' :
+                          active === 'storage' ? 'File của tôi' :
+                            active === 'chat' ? 'Trò chuyện' : 'Tổng quan'}</h1>
+              <p>Xin chào, {user.name}</p>
             </div>
 
-            <div style={styles.rightCluster}>
+            <div className="header-actions">
               <NotificationBell />
-              <RoleBadge role={user.role} avatarUrl={userAvatar} />
+              <RoleBadge role={user.role} avatarUrl={userAvatar} size={45} />
             </div>
           </header>
         )}
 
-        {/* Dashboard Main - NEW DESIGN */}
+        {/* Dashboard Main - REDESIGNED Layout */}
         {active === 'dashboard' && (
-          <div style={dashboardStyles.container}>
-            <div style={dashboardStyles.mainGrid}>
-              {/* Left Column */}
-              <div>
-                {/* Stats Grid */}
-                <div style={dashboardStyles.statsGrid}>
-                  <StatCard
-                    title="Ngày phép còn lại"
-                    value={`${leaveStats.remaining} ngày`}
-                    subtext={`Đã sử dụng ${12 - leaveStats.remaining} ngày`}
-                    icon="📅"
-                    accentColor="#3b82f6"
-                    loading={loading}
-                    onClick={() => setActive('leave')}
-                  />
-                  <StatCard
-                    title="Số lần đi muộn"
-                    value={`${stats.lateDays} lần`}
-                    subtext="Trong tháng này"
-                    icon="⏰"
-                    accentColor={stats.lateDays > 3 ? '#ef4444' : '#f59e0b'}
-                    loading={loading}
-                    onClick={() => setActive('timesheet')}
-                  />
-                  <StatCard
-                    title="Tổng giờ làm"
-                    value={`${stats.totalHours.toFixed(1)}h`}
-                    subtext={`${stats.workingDays} ngày công`}
-                    icon="🕐"
-                    accentColor="#8b5cf6"
-                    loading={loading}
-                    onClick={() => setActive('timesheet')}
-                  />
-                </div>
-
-                {/* Charts Row */}
-                <div style={dashboardStyles.chartsGrid}>
-                  <AttendanceChart data={attendanceData} loading={loading} />
-                  <LeaveStatusWidget data={leaveStats} loading={loading} />
-                </div>
-
+          <div className="dashboard-grid">
+            {/* Left Column - Main Content */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Stats Row - 3 cards in a row */}
+              <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                <StatCard
+                  title="Ngày phép còn lại"
+                  value={`${leaveStats.remaining} ngày`}
+                  subtext={`Đã sử dụng ${12 - leaveStats.remaining} ngày`}
+                  icon="📅"
+                  accentColor="#3b82f6"
+                  loading={loading}
+                  onClick={() => setActive('leave')}
+                />
+                <StatCard
+                  title="Số lần đi muộn"
+                  value={`${stats.lateDays} lần`}
+                  subtext="Trong tháng này"
+                  icon="⏰"
+                  accentColor={stats.lateDays > 3 ? '#ef4444' : '#f59e0b'}
+                  loading={loading}
+                  onClick={() => setActive('timesheet')}
+                />
+                <StatCard
+                  title="Tổng giờ làm"
+                  value={`${stats.totalHours.toFixed(1)}h`}
+                  subtext={`${stats.workingDays} ngày công`}
+                  icon="🕐"
+                  accentColor="#8b5cf6"
+                  loading={loading}
+                  onClick={() => setActive('timesheet')}
+                />
               </div>
 
-              {/* Right Column */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                <TodayStatusCard
-                  status={attendanceStatus}
-                  onCheckIn={handleCheckIn}
-                  onCheckOut={handleCheckOut}
-                  loading={checkInLoading}
-                />
+              {/* Charts Row - Side by side */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div className="card" style={{ padding: 0 }}>
+                  <AttendanceChart data={attendanceData} loading={loading} />
+                </div>
+                <div className="card" style={{ padding: 0 }}>
+                  <LeaveStatusWidget data={leaveStats} loading={loading} />
+                </div>
+              </div>
 
-                {/* Quick Actions - Moved to Right Column */}
-                <div style={dashboardStyles.quickActions}>
+              {/* Quick Actions - Full width */}
+              <div className="card">
+                <h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1rem', color: 'var(--text-dark)', fontWeight: 600 }}>
+                  <span style={{ marginRight: '8px' }}>⚡</span>Truy cập nhanh
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
                   <QuickActionButton
                     icon="🕐"
-                    label="Xem chấm công"
+                    label="Chấm công"
                     onClick={() => setActive('timesheet')}
                     color="#3b82f6"
                   />
@@ -549,7 +346,7 @@ export default function EmployeeDashboard() {
                   />
                   <QuickActionButton
                     icon="💰"
-                    label="Xem phiếu lương"
+                    label="Phiếu lương"
                     onClick={() => setActive('payroll')}
                     color="#f59e0b"
                   />
@@ -562,32 +359,95 @@ export default function EmployeeDashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Right Column - Today Status (Primary Action) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <TodayStatusCard
+                status={attendanceStatus}
+                onCheckIn={handleCheckIn}
+                onCheckOut={handleCheckOut}
+                loading={checkInLoading}
+              />
+
+              {/* Payroll Summary Card - Show if data available */}
+              {payrollData && (
+                <div className="card" onClick={() => setActive('payroll')} style={{ cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                    <div style={{
+                      width: '40px', height: '40px', borderRadius: '10px',
+                      background: '#fef3c7', display: 'flex', alignItems: 'center',
+                      justifyContent: 'center', fontSize: '20px'
+                    }}>💰</div>
+                    <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: 'var(--text-dark)' }}>
+                      Lương tháng {new Date().getMonth() + 1}
+                    </h3>
+                  </div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#10b981', marginBottom: '4px' }}>
+                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(payrollData.thucNhan || 0)}
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
+                    Thực nhận sau thuế
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Quick Links */}
+              <div className="card">
+                <h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1rem', color: 'var(--text-dark)', fontWeight: 600 }}>
+                  <span style={{ marginRight: '8px' }}>📂</span>Thêm
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div
+                    onClick={() => setActive('projects')}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '12px', padding: '12px',
+                      background: 'rgba(59,130,246,0.1)', borderRadius: '10px', cursor: 'pointer',
+                      transition: 'background 0.2s'
+                    }}
+                  >
+                    <span style={{ fontSize: '18px' }}>🏭</span>
+                    <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-dark)' }}>Dự án của tôi</span>
+                  </div>
+                  <div
+                    onClick={() => setActive('storage')}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '12px', padding: '12px',
+                      background: 'rgba(139,92,246,0.1)', borderRadius: '10px', cursor: 'pointer',
+                      transition: 'background 0.2s'
+                    }}
+                  >
+                    <span style={{ fontSize: '18px' }}>💾</span>
+                    <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-dark)' }}>File của tôi</span>
+                  </div>
+                  <div
+                    onClick={() => setActive('chat')}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '12px', padding: '12px',
+                      background: 'rgba(16,185,129,0.1)', borderRadius: '10px', cursor: 'pointer',
+                      transition: 'background 0.2s'
+                    }}
+                  >
+                    <span style={{ fontSize: '18px' }}>💬</span>
+                    <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-dark)' }}>Trò chuyện</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Timesheet Page */}
-        {active === 'timesheet' && <MyAttendancePage />}
-
-        {/* Leave Page */}
-        {active === 'leave' && <MyLeavePage />}
-
-        {/* Chat Page */}
-        {active === 'chat' && <ChatPage />}
-
-        {/* Profile Page */}
-        {active === 'profile' && <ProfilePage />}
-
-        {/* Payroll Page */}
-        {active === 'payroll' && <MyPayrollPage />}
-
-        {/* Documents Page */}
-        {active === 'documents' && <MyDocumentsPage />}
-
-        {/* Storage Page */}
-        {active === 'storage' && <MyStoragePage />}
-
-        {/* Projects Page */}
-        {active === 'projects' && <MyProjectsPage />}
+        {/* Child Pages - Passing glassMode where appropriate */}
+        {active === 'timesheet' && <MyAttendancePage glassMode={true} />}
+        {active === 'leave' && <MyLeavePage glassMode={true} />}
+        {active === 'chat' && <ChatPage glassMode={true} />}
+        {active === 'profile' && <ProfilePage glassMode={true} onProfileUpdate={(data) => {
+          if (data.avatarUrl) setUserAvatar(data.avatarUrl)
+          if (data.hoTen) setFullName(data.hoTen)
+        }} />}
+        {active === 'payroll' && <MyPayrollPage glassMode={true} />}
+        {active === 'documents' && <MyDocumentsPage glassMode={true} />}
+        {active === 'storage' && <MyStoragePage glassMode={true} />}
+        {active === 'projects' && <MyProjectsPage glassMode={true} />}
       </main>
     </div>
   )

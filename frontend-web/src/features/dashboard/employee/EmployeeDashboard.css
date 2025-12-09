@@ -19,7 +19,7 @@
     --card-hover-bg: rgba(255, 255, 255, 0.75);
 }
 
-.accounting-dashboard-container {
+.employee-dashboard-container {
     background-image: url('../../../Image/Background Main.jpg');
     background-size: cover;
     background-position: center;
@@ -46,6 +46,28 @@
     gap: 30px;
     transition: width 0.3s ease;
     /* Smooth transition */
+    overflow-y: auto;
+    /* Enable vertical scrolling */
+    overflow-x: hidden;
+}
+
+/* Custom scrollbar for sidebar */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(142, 68, 173, 0.4);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(142, 68, 173, 0.6);
 }
 
 .sidebar.collapsed {
@@ -59,6 +81,9 @@
     justify-content: center;
     width: 45px;
     height: 45px;
+    min-width: 45px;
+    min-height: 45px;
+    flex-shrink: 0;
     background: rgba(255, 255, 255, 0.4);
     border: var(--glass-border);
     backdrop-filter: blur(10px);

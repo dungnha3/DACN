@@ -7,17 +7,22 @@ import { apiService } from '@/shared/services/api.service' // For direct API cal
 
 // Feature Pages (We will implement these next)
 import { PayrollPage } from '@/features/accounting/payroll/PayrollPage'
+import { profileService } from '@/shared/services/profile.service' // Import profile service
+import { employeesService } from '@/features/hr/shared/services/employees.service' // Import employees service
 import { AttendancePage } from '@/features/accounting/attendance/AttendancePage'
 import AccountingStoragePage from '@/features/accounting/storage/AccountingStoragePage'
 
 // Shared Components
 import { SharedProfilePage } from '@/shared/components/profile'
+
 import { SharedPayrollPage } from '@/shared/components/payroll'
+import { SharedAttendancePage } from '@/shared/components/attendance' // Import SharedAttendancePage
 import { ChatPage } from '@/modules/project'
 import NotificationBell from '@/shared/components/notification/NotificationBell'
 
 export default function AccountingManagerDashboard() {
   const [active, setActive] = useState('dashboard')
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false) // State for sidebar collapse
   const { logout, user: authUser } = useAuth()
 
   // Real Data State
@@ -28,15 +33,17 @@ export default function AccountingManagerDashboard() {
     pendingTasks: 0,
     notifs: 0
   })
+  const [userAvatar, setUserAvatar] = useState(null) // State for avatar
   const [loading, setLoading] = useState(true)
   const [welcomeText, setWelcomeText] = useState('')
+  const [fullName, setFullName] = useState(null) // State for full name
 
   const username = authUser?.username || localStorage.getItem('username') || 'Accounting'
   const user = useMemo(() => ({
-    name: username,
+    name: fullName || username, // Use fullName if available
     role: 'Quản lý kế toán',
-    initial: username.charAt(0).toUpperCase()
-  }), [username])
+    initial: (fullName || username).charAt(0).toUpperCase()
+  }), [username, fullName])
 
   // Fetch Dashboard Data
   useEffect(() => {
@@ -85,6 +92,34 @@ export default function AccountingManagerDashboard() {
     }
   }, [active])
 
+  // Fetch User Avatar and Full Name
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const profile = await profileService.getProfile()
+        if (profile) {
+          if (profile.avatarUrl) {
+            setUserAvatar(profile.avatarUrl)
+          }
+          // Fetch employee details to get full name
+          if (profile.userId) {
+            try {
+              const employee = await employeesService.getByUserId(profile.userId)
+              if (employee && employee.hoTen) {
+                setFullName(employee.hoTen)
+              }
+            } catch (empError) {
+              console.error('Error fetching employee details:', empError)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error)
+      }
+    }
+    fetchProfile()
+  }, [])
+
   const handleLogout = async () => {
     await logout()
   }
@@ -94,50 +129,50 @@ export default function AccountingManagerDashboard() {
   // --- Render Helpers ---
 
   const renderSidebar = () => (
-    <aside className="sidebar">
-      <div className="user-profile">
-        <div className="avatar">{user.initial}</div>
-        <div className="user-info">
-          <h4>{user.name}</h4>
-          <p>{user.role}</p>
-        </div>
+    <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+      <div className="sidebar-toggle-btn" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}>
+        <i className="fa-solid fa-bars"></i>
       </div>
 
       <div className="menu-section">
         <div className="menu-title">Tổng quan</div>
-        <div className={`menu-item ${active === 'dashboard' ? 'active' : ''}`} onClick={() => setActive('dashboard')}>
+        <div className={`menu-item ${active === 'dashboard' ? 'active' : ''}`} onClick={() => setActive('dashboard')} title={isSidebarCollapsed ? "Dashboard" : ""}>
           <i className="fa-solid fa-house"></i>
           <span>Dashboard</span>
         </div>
 
-        <div className="menu-title" style={{ marginTop: '15px' }}>Cá nhân</div>
-        <div className={`menu-item ${active === 'my-payroll' ? 'active' : ''}`} onClick={() => setActive('my-payroll')}>
+        <div className="menu-title">Cá nhân</div>
+        <div className={`menu-item ${active === 'my-payroll' ? 'active' : ''}`} onClick={() => setActive('my-payroll')} title={isSidebarCollapsed ? "Phiếu lương cá nhân" : ""}>
           <i className="fa-solid fa-money-check-dollar"></i>
           <span>Phiếu lương cá nhân</span>
         </div>
-        <div className={`menu-item ${active === 'storage' ? 'active' : ''}`} onClick={() => setActive('storage')}>
+        <div className={`menu-item ${active === 'storage' ? 'active' : ''}`} onClick={() => setActive('storage')} title={isSidebarCollapsed ? "File của tôi" : ""}>
           <i className="fa-solid fa-folder-open"></i>
           <span>File của tôi</span>
         </div>
+        <div className={`menu-item ${active === 'my-attendance' ? 'active' : ''}`} onClick={() => setActive('my-attendance')} title={isSidebarCollapsed ? "Chấm công" : ""}>
+          <i className="fa-solid fa-calendar-check"></i>
+          <span>Chấm công</span>
+        </div>
 
-        <div className="menu-title" style={{ marginTop: '15px' }}>Quản lý tài chính</div>
-        <div className={`menu-item ${active === 'payroll' ? 'active' : ''}`} onClick={() => setActive('payroll')}>
+        <div className="menu-title">Quản lý tài chính</div>
+        <div className={`menu-item ${active === 'payroll' ? 'active' : ''}`} onClick={() => setActive('payroll')} title={isSidebarCollapsed ? "Bảng lương" : ""}>
           <i className="fa-solid fa-coins"></i>
           <span>Bảng lương</span>
         </div>
-        <div className={`menu-item ${active === 'attendance' ? 'active' : ''}`} onClick={() => setActive('attendance')}>
+        <div className={`menu-item ${active === 'attendance' ? 'active' : ''}`} onClick={() => setActive('attendance')} title={isSidebarCollapsed ? "Quản lý chấm công" : ""}>
           <i className="fa-regular fa-clock"></i>
           <span>Quản lý chấm công</span>
         </div>
 
-        <div className="menu-title" style={{ marginTop: '15px' }}>Hệ thống</div>
-        <div className={`menu-item ${active === 'profile' ? 'active' : ''}`} onClick={() => setActive('profile')}>
+        <div className="menu-title">Hệ thống</div>
+        <div className={`menu-item ${active === 'profile' ? 'active' : ''}`} onClick={() => setActive('profile')} title={isSidebarCollapsed ? "Cài đặt" : ""}>
           <i className="fa-solid fa-gear"></i>
           <span>Cài đặt</span>
         </div>
 
         <div style={{ flex: 1 }}></div>
-        <div className="menu-item" onClick={handleLogout} style={{ color: '#ef4444', borderColor: '#fecaca', background: '#fff' }}>
+        <div className="menu-item" onClick={handleLogout} style={{ color: '#ef4444', borderColor: '#fecaca', background: '#fff' }} title={isSidebarCollapsed ? "Đăng xuất" : ""}>
           <i className="fa-solid fa-right-from-bracket"></i>
           <span>Đăng xuất</span>
         </div>
@@ -266,29 +301,56 @@ export default function AccountingManagerDashboard() {
     </>
   )
 
+  const handleProfileUpdate = (updatedData) => {
+    if (updatedData.avatarUrl) {
+      setUserAvatar(updatedData.avatarUrl);
+    }
+    if (updatedData.hoTen) {
+      setFullName(updatedData.hoTen);
+    }
+  };
+
   return (
     <div className="accounting-dashboard-container">
       {renderSidebar()}
 
       <main className="main-content">
         {/* Header */}
-        {active !== 'profile' && active !== 'my-payroll' && active !== 'storage' && (
-          <header>
+        {active !== 'profile' && active !== 'my-payroll' && active !== 'storage' && active !== 'my-attendance' && (
+          <header className="accounting-header">
             <div className="header-title">
               <h1>{active === 'dashboard' ? 'Dashboard' :
                 active === 'payroll' ? 'Quản lý Bảng lương' :
                   active === 'attendance' ? 'Quản lý Chấm công' :
-                    active === 'chat' ? 'Trò chuyện' : 'Quản lý'}</h1>
+                    active === 'my-attendance' ? 'Chấm công cá nhân' :
+                      active === 'chat' ? 'Trò chuyện' : 'Quản lý'}</h1>
               <p>Xin chào, {user.name}</p>
             </div>
             <div className="header-actions">
-              <button className="icon-btn" title="Thông báo">
-                <i className="fa-regular fa-bell"></i>
-                {stats.notifs > 0 && <div className="notification-dot"></div>}
-              </button>
+              <NotificationBell />
               <div className="breadcrumbs">
                 <i className="fa-solid fa-briefcase"></i>
                 Quản lý kế toán
+              </div>
+              <div
+                className="header-avatar"
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #8e44ad, #a29bfe)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  boxShadow: '0 4px 10px rgba(142, 68, 173, 0.3)',
+                  overflow: 'hidden'
+                }}
+              >
+                {userAvatar ? (
+                  <img src={userAvatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : user.initial}
               </div>
             </div>
           </header>
@@ -313,12 +375,23 @@ export default function AccountingManagerDashboard() {
           />
         )}
 
+        {active === 'my-attendance' && (
+          <SharedAttendancePage
+            title="Chấm công cá nhân"
+            breadcrumb="Cá nhân / Chấm công"
+            viewMode="personal"
+            glassMode={true}
+          />
+        )}
+
         {active === 'profile' && (
           <SharedProfilePage
             title="Cài đặt"
             breadcrumb="Hệ thống / Cài đặt"
             allowEdit={true}
             userRole="Accounting Manager"
+            onProfileUpdate={handleProfileUpdate}
+            glassMode={true}
           />
         )}
 

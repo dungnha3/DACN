@@ -7,7 +7,7 @@ import ProjectDetailPage from '@/features/project/projects/pages/ProjectDetailPa
 import IssueDetailPage from '@/features/project/projects/pages/IssueDetailPage';
 import CreateIssueModal from '@/features/project/projects/components/CreateIssueModal';
 
-export default function MyProjectsPage() {
+export default function MyProjectsPage({ glassMode }) {
   const [mainTab, setMainTab] = useState('tasks'); // tasks | projects | performance
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -30,7 +30,11 @@ export default function MyProjectsPage() {
   };
 
   return (
-    <div style={styles.container}>
+    <div style={{
+      ...styles.container,
+      backgroundColor: glassMode ? 'transparent' : styles.container.backgroundColor,
+      minHeight: glassMode ? 'auto' : styles.container.minHeight
+    }}>
       {/* Main Tab Navigation */}
       <div style={styles.mainTabContainer}>
         <button

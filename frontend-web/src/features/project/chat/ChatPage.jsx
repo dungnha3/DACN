@@ -4,11 +4,32 @@ import websocketService from './services/websocketService'
 import ConversationList from './components/ConversationList'
 import ChatRoom from './components/ChatRoom'
 
-export default function ChatPage() {
+export default function ChatPage({ glassMode }) {
   const [chatRooms, setChatRooms] = useState([])
   const [selectedRoomId, setSelectedRoomId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [wsConnected, setWsConnected] = useState(false)
+
+  // Computed styles based on glassMode
+  const computedStyles = {
+    container: {
+      ...styles.container,
+      backgroundColor: glassMode ? 'rgba(255, 255, 255, 0.6)' : styles.container.backgroundColor,
+      backdropFilter: glassMode ? 'blur(10px)' : 'none',
+      border: glassMode ? '1px solid rgba(255, 255, 255, 0.5)' : 'none',
+      height: glassMode ? 'calc(100vh - 40px)' : styles.container.height,
+      margin: glassMode ? 0 : styles.container.margin
+    },
+    sidebar: {
+      ...styles.sidebar,
+      backgroundColor: glassMode ? 'rgba(255, 255, 255, 0.4)' : styles.sidebar.backgroundColor,
+      borderRight: glassMode ? '1px solid rgba(255, 255, 255, 0.5)' : styles.sidebar.borderRight
+    },
+    mainArea: {
+      ...styles.mainArea,
+      backgroundColor: glassMode ? 'transparent' : styles.mainArea.backgroundColor
+    }
+  }
 
   // Handle new message to update conversation list
   const handleNewMessage = useCallback((roomId, messageData) => {
@@ -68,9 +89,9 @@ export default function ChatPage() {
   }
 
   return (
-    <div style={styles.container}>
+    <div style={computedStyles.container}>
       {/* Sidebar */}
-      <div style={styles.sidebar}>
+      <div style={computedStyles.sidebar}>
         <ConversationList
           rooms={chatRooms}
           selectedRoomId={selectedRoomId}
@@ -83,7 +104,7 @@ export default function ChatPage() {
       </div>
 
       {/* Main Area */}
-      <div style={styles.mainArea}>
+      <div style={computedStyles.mainArea}>
         {selectedRoomId ? (
           <ChatRoom
             roomId={selectedRoomId}
