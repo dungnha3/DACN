@@ -18,16 +18,4 @@ public class NotificationResponse {
     private LocalDateTime createdAt;
     private Long userId; // Minimal user info if needed
 
-    // Constructor to map from Entity
-    public NotificationResponse(Long notificationId, String type, String title, String content, String link,
-            Boolean isRead, LocalDateTime createdAt, Long userId) {
-        this.notificationId = notificationId;
-        this.type = type;
-        this.title = title;
-        this.content = content;
-        this.link = link;
-        this.isRead = isRead;
-        this.createdAt = createdAt;
-        this.userId = userId;
-    }
 }

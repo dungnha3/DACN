@@ -19,7 +19,7 @@ import DoAn.BE.hr.entity.PhongBan;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Project {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "project_id")
@@ -29,7 +29,7 @@ public class Project {
     private String name;
 
     @Column(name = "key_project", nullable = false, unique = true, length = 10, columnDefinition = "NVARCHAR(10)")
-    private String keyProject;  // VD: PROJ-001, HRM-001
+    private String keyProject; // VD: PROJ-001, HRM-001
 
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
@@ -61,6 +61,9 @@ public class Project {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "budget", precision = 15, scale = 2)
+    private java.math.BigDecimal budget;
+
     // Relationships
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
@@ -91,18 +94,17 @@ public class Project {
     }
 
     public boolean isOverdue() {
-        return this.status == ProjectStatus.ACTIVE && 
-               this.endDate != null && 
-               this.endDate.isBefore(LocalDate.now());
+        return this.status == ProjectStatus.ACTIVE &&
+                this.endDate != null &&
+                this.endDate.isBefore(LocalDate.now());
     }
 
     // Enum
     public enum ProjectStatus {
-        ACTIVE,      // Đang hoạt động
-        ON_HOLD,     // Tạm dừng
-        OVERDUE,     // Quá hạn
-        COMPLETED,   // Hoàn thành
-        CANCELLED    // Đã hủy
+        ACTIVE, // Đang hoạt động
+        ON_HOLD, // Tạm dừng
+        OVERDUE, // Quá hạn
+        COMPLETED, // Hoàn thành
+        CANCELLED // Đã hủy
     }
 }
-

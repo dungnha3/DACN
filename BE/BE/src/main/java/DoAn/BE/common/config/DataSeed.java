@@ -110,7 +110,7 @@ public class DataSeed {
     }
 
     // ==================== MODULE 1: HR ====================
-    // ==================== MODULE 1: HR ====================
+
     private void seedHRModule() {
         log.info("📋 ========== SEEDING HR MODULE ==========");
 
