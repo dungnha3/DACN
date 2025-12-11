@@ -41,7 +41,7 @@ const IconChevronRight = () => <svg width="20" height="20" viewBox="0 0 24 24" f
 
 const ITEMS_PER_PAGE = 5;
 
-export default function EmployeesPage() {
+export default function EmployeesPage({ onViewDetail, glassMode = false }) {
   const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [positions, setPositions] = useState([]);
@@ -373,11 +373,33 @@ export default function EmployeesPage() {
     );
   };
 
+  // Glass Styles
+  const glassStyles = glassMode ? {
+    card: {
+      background: 'rgba(255, 255, 255, 0.55)',
+      backdropFilter: 'blur(20px)',
+      border: '1px solid rgba(255, 255, 255, 0.6)',
+      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+    },
+    header: {
+      background: 'transparent',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.6)'
+    },
+    tableHeader: {
+      background: 'rgba(255, 255, 255, 0.3)',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.6)'
+    }
+  } : {};
+
   // --- COMPONENTS ---
   const ModernStatCard = ({ title, value, icon, iconColor }) => (
     <div style={{
-      background: 'white', borderRadius: '16px', padding: '24px',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9',
+      background: glassMode ? glassStyles.card.background : 'white',
+      borderRadius: '16px',
+      padding: '24px',
+      boxShadow: glassMode ? glassStyles.card.boxShadow : '0 2px 10px rgba(0,0,0,0.03)',
+      border: glassMode ? glassStyles.card.border : '1px solid #f1f5f9',
+      backdropFilter: glassMode ? glassStyles.card.backdropFilter : 'none',
       display: 'flex', justifyContent: 'space-between', alignItems: 'center'
     }}>
       <div>
@@ -497,10 +519,11 @@ export default function EmployeesPage() {
 
       {/* 3. MAIN CARD (CONTAINER CHUNG CHO FILTER & TABLE) */}
       <div style={{
-        background: 'white',
+        background: glassMode ? glassStyles.card.background : 'white',
         borderRadius: '16px',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+        border: glassMode ? glassStyles.card.border : '1px solid #e2e8f0',
+        backdropFilter: glassMode ? glassStyles.card.backdropFilter : 'none',
+        boxShadow: glassMode ? glassStyles.card.boxShadow : '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
         overflow: 'hidden'
       }}>
 
@@ -513,7 +536,7 @@ export default function EmployeesPage() {
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: 16,
-          background: '#ffffff'
+          background: glassMode ? 'transparent' : '#ffffff'
         }}>
           {/* Segmented Control Style Tabs */}
           <div style={{ background: '#f1f5f9', padding: 4, borderRadius: 8, display: 'flex', gap: 2 }}>
@@ -593,7 +616,7 @@ export default function EmployeesPage() {
             {isHRManager && <col style={{ width: '12%' }} />}
           </colgroup>
           <TableHeader>
-            <TableRow style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <TableRow style={{ background: glassMode ? glassStyles.tableHeader.background : '#f8fafc', borderBottom: glassMode ? glassStyles.tableHeader.borderBottom : '1px solid #e2e8f0' }}>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'left' }}>NHÂN VIÊN</TableHead>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>LIÊN HỆ</TableHead>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>VỊ TRÍ</TableHead>
@@ -616,7 +639,15 @@ export default function EmployeesPage() {
               </TableRow>
             ) : (
               paginatedEmployees.map(emp => (
-                <TableRow key={emp.nhanvienId} style={{ borderBottom: '1px solid #f1f5f9', transition: 'all 0.2s' }}>
+                <TableRow
+                  key={emp.nhanvienId}
+                  style={{
+                    borderBottom: glassMode ? '1px solid rgba(255,255,255,0.4)' : '1px solid #f1f5f9',
+                    transition: 'all 0.2s',
+                    background: glassMode ? 'rgba(255,255,255,0.2)' : 'transparent'
+                  }}
+                  className={glassMode ? 'glass-row-hover' : ''}
+                >
                   {/* Cột Nhân viên */}
                   <TableCell style={{ padding: '16px', textAlign: 'left', verticalAlign: 'middle' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 10 }}>
@@ -679,7 +710,7 @@ export default function EmployeesPage() {
                       <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
                         {/* Nút sửa */}
                         <div
-                          onClick={() => handleEdit(emp)}
+                          onClick={(e) => { e.stopPropagation(); handleEdit(emp); }}
                           title="Sửa"
                           style={{
                             width: 32, height: 32, borderRadius: 6,
@@ -704,7 +735,7 @@ export default function EmployeesPage() {
 
                         {/* Nút xóa */}
                         <div
-                          onClick={() => handleDelete(emp.nhanvienId)}
+                          onClick={(e) => { e.stopPropagation(); handleDelete(emp.nhanvienId); }}
                           title="Xóa"
                           style={{
                             width: 32, height: 32, borderRadius: 6,
@@ -743,7 +774,7 @@ export default function EmployeesPage() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            background: '#ffffff'
+            background: glassMode ? 'transparent' : '#ffffff'
           }}>
             <div style={{ fontSize: 13, color: '#64748b' }}>
               Hiển thị <b>{(currentPage - 1) * ITEMS_PER_PAGE + 1}</b> - <b>{Math.min(currentPage * ITEMS_PER_PAGE, filteredEmployees.length)}</b> trên tổng <b>{filteredEmployees.length}</b>

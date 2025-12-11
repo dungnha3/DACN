@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { leavesService } from '@/features/hr/shared/services';
 import { usePermissions, useErrorHandler } from '@/shared/hooks';
@@ -6,7 +6,8 @@ import { usePermissions, useErrorHandler } from '@/shared/hooks';
 export default function SharedLeaveRequestPage({
   title = "Đơn từ & Nghỉ phép",
   breadcrumb = "Cá nhân / Nghỉ phép",
-  viewMode = "personal"
+  viewMode = "personal",
+  glassMode = false
 }) {
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,10 @@ export default function SharedLeaveRequestPage({
     ngayKetThuc: '',
     lyDo: ''
   });
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     loadLeaves();
@@ -127,6 +132,13 @@ export default function SharedLeaveRequestPage({
     return types[type] || { label: type, icon: '📄' };
   };
 
+  // Pagination calculations
+  const totalPages = Math.ceil(leaves.length / itemsPerPage);
+  const paginatedLeaves = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return leaves.slice(start, start + itemsPerPage);
+  }, [leaves, currentPage]);
+
   if (loading) {
     return (
       <div style={{ padding: '24px 32px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -147,6 +159,19 @@ export default function SharedLeaveRequestPage({
       </div>
     );
   }
+
+  // Glass Styles
+  const glassStyles = glassMode ? {
+    container: {
+      background: 'transparent',
+    },
+    card: {
+      background: 'rgba(255, 255, 255, 0.55)',
+      backdropFilter: 'blur(20px)',
+      border: '1px solid rgba(255, 255, 255, 0.6)',
+      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+    }
+  } : {};
 
   return (
     <div style={{ padding: '24px 32px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -195,7 +220,10 @@ export default function SharedLeaveRequestPage({
         ].map((stat, i) => (
           <div key={i} style={{
             padding: 20, borderRadius: 16, border: '1px solid', borderColor: stat.color + '40',
-            background: stat.bg, display: 'flex', flexDirection: 'column'
+            background: glassMode ? glassStyles.card.background : stat.bg,
+            backdropFilter: glassMode ? glassStyles.card.backdropFilter : 'none',
+            boxShadow: glassMode ? glassStyles.card.boxShadow : 'none',
+            display: 'flex', flexDirection: 'column'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: '#67748e', textTransform: 'uppercase' }}>
@@ -212,22 +240,26 @@ export default function SharedLeaveRequestPage({
 
       {/* Table */}
       <div style={{
-        background: '#fff', borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-        overflow: 'hidden', border: '1px solid rgba(0,0,0,0.02)'
+        background: glassMode ? glassStyles.card.background : '#fff',
+        borderRadius: 16,
+        boxShadow: glassMode ? glassStyles.card.boxShadow : '0 4px 20px rgba(0,0,0,0.05)',
+        overflow: 'hidden',
+        border: glassMode ? glassStyles.card.border : '1px solid rgba(0,0,0,0.02)',
+        backdropFilter: glassMode ? glassStyles.card.backdropFilter : 'none'
       }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5' }}>
+              <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5', background: glassMode ? 'rgba(255,255,255,0.3)' : 'transparent' }}>
                 Loại phép
               </th>
-              <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5' }}>
+              <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5', background: glassMode ? 'rgba(255,255,255,0.3)' : 'transparent' }}>
                 Thời gian
               </th>
-              <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5' }}>
+              <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5', background: glassMode ? 'rgba(255,255,255,0.3)' : 'transparent' }}>
                 Lý do
               </th>
-              <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5' }}>
+              <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5', background: glassMode ? 'rgba(255,255,255,0.3)' : 'transparent' }}>
                 Trạng thái
               </th>
             </tr>
@@ -246,10 +278,10 @@ export default function SharedLeaveRequestPage({
                 </td>
               </tr>
             ) : (
-              leaves.map(leave => {
+              paginatedLeaves.map(leave => {
                 const leaveType = getLeaveType(leave.loaiPhep);
                 return (
-                  <tr key={leave.nghiphepId} style={{ borderBottom: '1px solid #f0f2f5' }}>
+                  <tr key={leave.nghiphepId} style={{ borderBottom: '1px solid #f0f2f5', background: glassMode ? 'rgba(255,255,255,0.2)' : 'transparent' }}>
                     <td style={{ padding: '16px 24px', fontSize: 14, verticalAlign: 'middle', color: '#344767' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ fontSize: 16 }}>{leaveType.icon}</span>
@@ -274,6 +306,56 @@ export default function SharedLeaveRequestPage({
             )}
           </tbody>
         </table>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderTop: '1px solid #f0f2f5' }}>
+            <div style={{ fontSize: 13, color: '#7b809a' }}>
+              Hiển thị {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, leaves.length)} trên tổng {leaves.length}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                style={{
+                  border: '1px solid #e2e8f0', background: 'white', padding: '6px 10px',
+                  borderRadius: 6, cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                  color: currentPage === 1 ? '#cbd5e1' : '#475569', display: 'flex'
+                }}
+              >
+                ◀
+              </button>
+
+              {Array.from({ length: totalPages }, (_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentPage(idx + 1)}
+                  style={{
+                    border: currentPage === idx + 1 ? 'none' : '1px solid #e2e8f0',
+                    background: currentPage === idx + 1 ? '#3b82f6' : 'white',
+                    color: currentPage === idx + 1 ? 'white' : '#475569',
+                    width: 32, height: 32, borderRadius: 6, fontSize: 13, fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {idx + 1}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                style={{
+                  border: '1px solid #e2e8f0', background: 'white', padding: '6px 10px',
+                  borderRadius: 6, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                  color: currentPage === totalPages ? '#cbd5e1' : '#475569', display: 'flex'
+                }}
+              >
+                ▶
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Create Modal */}
