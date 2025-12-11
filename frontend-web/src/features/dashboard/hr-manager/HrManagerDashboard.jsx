@@ -35,25 +35,26 @@ export default function HrManagerDashboard() {
   const username = authUser?.username || localStorage.getItem('username') || 'HR Manager'
   const user = useMemo(() => ({ name: username || 'Nguyễn Thị C', role: 'Quản lý nhân sự' }), [username])
 
-  // Fetch user avatar
-  useEffect(() => {
-    const loadAvatar = async () => {
-      try {
-        const profile = await profileService.getProfile();
-        setUserAvatar(profile?.avatarUrl);
+  // Reusable function to load avatar
+  const loadAvatar = async () => {
+    try {
+      const profile = await profileService.getProfile();
+      setUserAvatar(profile?.avatarUrl);
 
-        // Also try to get employee name if possible
-        if (profile?.userId) {
-          const employee = await import('@/features/hr/shared/services/employees.service').then(m => m.employeesService.getByUserId(profile.userId));
-          if (employee?.hoTen) {
-            // Update user memo would be complex, let's use a local state for display name
-            setDisplayName(employee.hoTen);
-          }
+      // Also try to get employee name if possible
+      if (profile?.userId) {
+        const employee = await import('@/features/hr/shared/services/employees.service').then(m => m.employeesService.getByUserId(profile.userId));
+        if (employee?.hoTen) {
+          setDisplayName(employee.hoTen);
         }
-      } catch (error) {
-        console.error('Failed to load user avatar/info:', error);
       }
-    };
+    } catch (error) {
+      console.error('Failed to load user avatar/info:', error);
+    }
+  };
+
+  // Fetch user avatar on mount
+  useEffect(() => {
     loadAvatar();
   }, []);
 
@@ -201,8 +202,30 @@ export default function HrManagerDashboard() {
             </div>
             <div className="header-actions">
               <NotificationBell />
-              <div className="icon-btn">
-                {userAvatar ? <img src={userAvatar} alt="User" style={{ width: '100%', height: '100%', borderRadius: '50%' }} /> : <i className="fa-solid fa-user"></i>}
+              <div className="breadcrumbs">
+                <i className="fa-solid fa-id-card"></i>
+                Quản lý nhân sự
+              </div>
+              <div style={{
+                width: 60,
+                height: 60,
+                borderRadius: '50%',
+                border: '3px solid #e2e8f0',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'var(--glass-bg)',
+                fontWeight: 700,
+                color: 'var(--primary-color)',
+                fontSize: '1.2rem'
+              }}>
+                {userAvatar ? (
+                  <img src={userAvatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span>{user.name ? user.name.charAt(0).toUpperCase() : 'HR'}</span>
+                )}
               </div>
             </div>
           </header>
@@ -314,7 +337,7 @@ export default function HrManagerDashboard() {
         )}
 
         {/* Shared Components & Pages */}
-        {active === 'profile' && <SharedProfilePage title="Hồ sơ cá nhân" breadcrumb="Cá nhân / Hồ sơ cá nhân" allowEdit={true} glassMode={true} />}
+        {active === 'profile' && <SharedProfilePage title="Hồ sơ cá nhân" breadcrumb="Cá nhân / Hồ sơ cá nhân" allowEdit={true} glassMode={true} onAvatarChange={loadAvatar} />}
         {active === 'my-leave' && <SharedLeaveRequestPage title="Quản lý nghỉ phép" breadcrumb="HR / Quản lý nghỉ phép" viewMode="management" glassMode={true} />}
         {active === 'employees' && <EmployeesPage onViewDetail={handleViewEmployeeDetail} glassMode={true} />}
         {active === 'employee-detail' && selectedEmployeeId && <EmployeeDetailPage employeeId={selectedEmployeeId} onBack={handleBackFromEmployeeDetail} glassMode={true} />}
