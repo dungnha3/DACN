@@ -105,7 +105,8 @@ export function ProjectStatsCard({ projects = [], loading = false, onViewAll }) 
                 <span>{project.projectName || project.name}</span>
                 <span style={{ color: 'var(--primary-color)' }}>{completionRate}%</span>
               </div>
-              <div style={{ height: 8, background: '#f1f5f9', borderRadius: 10, overflow: 'hidden' }}>
+              {/* FIXED: inner div used background causing conflict, changed to backgroundColor */}
+              <div style={{ height: 8, backgroundColor: '#f1f5f9', borderRadius: 10, overflow: 'hidden' }}>
                 <div style={{
                   width: `${completionRate}%`,
                   height: '100%',
@@ -126,6 +127,20 @@ const getInitials = (name) => {
   if (!name) return 'NV';
   return name.split(' ').map(n => n[0]).join('').slice(-2).toUpperCase();
 }
+
+// Helper to format leave type
+const formatLeaveType = (type) => {
+  const types = {
+    'PHEP_NAM': 'Phép năm',
+    'OM': 'Nghỉ ốm',
+    'KHAC': 'Lý do khác',
+    'KO_LUONG': 'Không lương',
+    'THAI_SAN': 'Thai sản',
+    'CUOI_HOI': 'Cưới hỏi',
+    'CONG_TAC': 'Công tác'
+  };
+  return types[type] || type || 'Nghỉ phép';
+};
 
 // Pending Approvals Widget - REDESIGNED
 export function PendingApprovalsWidget({ leaves = [], loading = false, onApprove, onReject, onViewAll }) {
@@ -158,14 +173,14 @@ export function PendingApprovalsWidget({ leaves = [], loading = false, onApprove
               {/* Left: Avatar & Info */}
               <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1 }}>
                 <div className="approval-avatar bg-blue">
-                  {getInitials(leave.nhanVien?.hoTen || leave.tenNhanVien)}
+                  {getInitials(leave.hoTenNhanVien)}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <div className="approval-name">
-                    {leave.nhanVien?.hoTen || leave.tenNhanVien}
+                    {leave.hoTenNhanVien || 'Chưa cập nhật tên'}
                   </div>
                   <div className="approval-meta">
-                    {leave.loaiNghiPhep || 'Nghỉ phép'} • {new Date(leave.ngayBatDau).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+                    {formatLeaveType(leave.loaiPhep || leave.loaiNghiPhep)} • {new Date(leave.ngayBatDau).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
                   </div>
                 </div>
               </div>

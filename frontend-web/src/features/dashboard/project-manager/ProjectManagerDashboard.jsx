@@ -131,13 +131,14 @@ export default function ProjectManagerDashboard() {
                     </NavItem>
 
                     <div className="menu-title">Hệ thống</div>
+                    {/* Renamed to "Cài đặt" as requested */}
                     <NavItem active={active === 'profile'} onClick={() => setActive('profile')} icon="fa-solid fa-user-gear" collapsed={isSidebarCollapsed}>
-                        Thông tin & Tài khoản
+                        Cài đặt
                     </NavItem>
 
                     <div style={{ flex: 1 }}></div>
 
-                    <div className="menu-item" onClick={handleLogout} style={{ color: '#ef4444', borderColor: '#fecaca', background: '#fff' }} title={isSidebarCollapsed ? "Đăng xuất" : ""}>
+                    <div className="menu-item" onClick={handleLogout} style={{ color: '#ef4444', borderColor: '#fecaca', backgroundColor: '#fff' }} title={isSidebarCollapsed ? "Đăng xuất" : ""}>
                         <i className="fa-solid fa-right-from-bracket"></i>
                         <span>Đăng xuất</span>
                     </div>
