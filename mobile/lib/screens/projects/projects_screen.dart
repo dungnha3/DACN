@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/services/project_service.dart';
-import '../../data/services/auth_service.dart';
+import '../../data/models/project.dart';
 import '../../widgets/common_widgets.dart';
 
 class ProjectsScreen extends StatefulWidget {
@@ -12,10 +12,9 @@ class ProjectsScreen extends StatefulWidget {
 
 class _ProjectsScreenState extends State<ProjectsScreen> {
   final ProjectService _projectService = ProjectService();
-  final AuthService _authService = AuthService();
   
   bool _isLoading = false;
-  List<dynamic> _projects = [];
+  List<Project> _projects = [];
 
   @override
   void initState() {
@@ -26,16 +25,11 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   Future<void> _fetchProjects() async {
     setState(() => _isLoading = true);
     try {
-      final userIdStr = await _authService.getUserId();
-      if (userIdStr != null) {
-        final userId = int.parse(userIdStr);
-        final data = await _projectService.getMyProjects(userId);
-        setState(() {
-          _projects = data ?? [];
-        });
-      }
+      final data = await _projectService.getMyProjects();
+      setState(() {
+        _projects = data;
+      });
     } catch (e) {
-
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Lỗi tải danh sách dự án')),
@@ -76,9 +70,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     );
   }
 
-  Widget _buildProjectCard(Map<String, dynamic> project, ThemeData theme) {
+  Widget _buildProjectCard(Project project, ThemeData theme) {
     Color statusColor = Colors.grey;
-    String statusText = project['status'] ?? 'UNKNOWN';
+    String statusText = project.status;
     
     if (statusText == 'ACTIVE' || statusText == 'RUNNING') {
       statusColor = theme.colorScheme.secondary;
@@ -86,13 +80,16 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     } else if (statusText == 'COMPLETED' || statusText == 'FINISHED') {
       statusColor = theme.colorScheme.primary;
       statusText = 'Hoàn thành';
-    } else if (statusText == 'PENDING') {
-      statusColor = theme.colorScheme.error; // Or warning color
-      statusText = 'Chờ duyệt';
+    } else if (statusText == 'PENDING' || statusText == 'ON_HOLD') {
+      statusColor = Colors.orange;
+      statusText = 'Tạm dừng';
+    } else if (statusText == 'OVERDUE') {
+      statusColor = theme.colorScheme.error;
+      statusText = 'Quá hạn';
+    } else if (statusText == 'CANCELLED') {
+      statusColor = Colors.grey;
+      statusText = 'Đã hủy';
     }
-
-    // Mock Progress
-    double progress = 0.75; // 75%
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -113,13 +110,27 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: Text(
-                      project['name'] ?? 'Tên dự án',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          project.keyProject,
+                          style: TextStyle(
+                            color: theme.primaryColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          project.name,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
                   Container(
@@ -138,93 +149,21 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                project['description'] ?? 'Không có mô tả',
+                project.description.isNotEmpty ? project.description : 'Không có mô tả',
                 style: TextStyle(color: Colors.grey[600]),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 20),
-              
-              // Progress Bar
+              const SizedBox(height: 16),
+
+              // Footer: Dates
               Row(
                 children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        backgroundColor: Colors.grey.shade200,
-                        valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.secondary),
-                        minHeight: 8,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
+                  Icon(Icons.calendar_today, size: 16, color: Colors.grey.shade400),
+                  const SizedBox(width: 6),
                   Text(
-                    '${(progress * 100).toInt()}%',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade700),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // Footer: Dates & Avatars
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today, size: 16, color: Colors.grey.shade400),
-                      const SizedBox(width: 6),
-                      Text(
-                        project['endDate'] ?? 'N/A',
-                        style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-                      ),
-                    ],
-                  ),
-                  
-                  // Avatar Stack (Mock)
-                  SizedBox(
-                    width: 80,
-                    height: 30,
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          left: 0,
-                          child: CircleAvatar(
-                            radius: 14,
-                            backgroundColor: Colors.white,
-                            child: CircleAvatar(
-                              radius: 12,
-                              backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=1'),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 20,
-                          child: CircleAvatar(
-                            radius: 14,
-                            backgroundColor: Colors.white,
-                            child: CircleAvatar(
-                              radius: 12,
-                              backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=2'),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 40,
-                          child: CircleAvatar(
-                            radius: 14,
-                            backgroundColor: Colors.white,
-                            child: CircleAvatar(
-                              radius: 12,
-                              backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=3'),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    '${project.startDate} - ${project.endDate}',
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                   ),
                 ],
               ),
@@ -235,3 +174,4 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     );
   }
 }
+

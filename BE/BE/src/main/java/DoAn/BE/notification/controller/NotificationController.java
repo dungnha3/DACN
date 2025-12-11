@@ -1,5 +1,6 @@
 package DoAn.BE.notification.controller;
 
+import DoAn.BE.notification.dto.NotificationResponse;
 import DoAn.BE.notification.entity.Notification;
 import DoAn.BE.notification.service.NotificationService;
 import DoAn.BE.common.exception.EntityNotFoundException;
@@ -14,7 +15,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -51,14 +51,28 @@ public class NotificationController {
 
     /**
      * Lấy danh sách notification của user hiện tại
+     * Trả về Page<NotificationResponse> (DTO)
      */
     @GetMapping
-    public ResponseEntity<org.springframework.data.domain.Page<Notification>> getMyNotifications(
+    public ResponseEntity<org.springframework.data.domain.Page<NotificationResponse>> getMyNotifications(
             org.springframework.data.domain.Pageable pageable) {
         User currentUser = getCurrentUser();
         org.springframework.data.domain.Page<Notification> notifications = notificationService
                 .getUserNotifications(currentUser.getUserId(), pageable);
-        return ResponseEntity.ok(notifications);
+
+        // Map Entity -> DTO
+        org.springframework.data.domain.Page<NotificationResponse> response = notifications
+                .map(n -> new NotificationResponse(
+                        n.getNotificationId(),
+                        n.getType(),
+                        n.getTitle(),
+                        n.getContent(),
+                        n.getLink(),
+                        n.getIsRead(),
+                        n.getCreatedAt(),
+                        n.getUser().getUserId()));
+
+        return ResponseEntity.ok(response);
     }
 
     /**

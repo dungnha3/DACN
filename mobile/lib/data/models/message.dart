@@ -25,12 +25,12 @@ class Message {
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
-      messageId: json['messageId'],
-      roomId: json['roomId'],
-      sender: User.fromJson(json['sender']),
+      messageId: json['messageId'] ?? 0,
+      roomId: json['roomId'] ?? 0,
+      sender: User.fromJson(json['sender'] ?? {}),
       content: json['content'] ?? '',
       type: _parseMessageType(json['messageType']),
-      sentAt: DateTime.parse(json['sentAt']),
+      sentAt: json['sentAt'] != null ? DateTime.parse(json['sentAt']) : DateTime.now(),
       fileUrl: json['fileUrl'],
       fileName: json['fileName'],
     );

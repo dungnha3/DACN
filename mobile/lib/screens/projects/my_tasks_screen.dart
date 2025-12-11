@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../data/services/project_service.dart';
-import '../../data/services/auth_service.dart';
 import '../../data/models/issue.dart';
 import '../../widgets/common_widgets.dart';
 import '../../config/app_router.dart';
@@ -15,7 +14,6 @@ class MyTasksScreen extends StatefulWidget {
 class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final ProjectService _projectService = ProjectService();
-  final AuthService _authService = AuthService();
   
   bool _isLoading = false;
   List<Issue> _allTasks = [];
@@ -39,16 +37,12 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
   Future<void> _fetchTasks() async {
     setState(() => _isLoading = true);
     try {
-      final userIdStr = await _authService.getUserId();
-      if (userIdStr != null) {
-        final userId = int.parse(userIdStr);
-        final data = await _projectService.getMyTasks(userId);
-        
-        setState(() {
-          _allTasks = data;
-          _filterTasks();
-        });
-      }
+      final data = await _projectService.getMyTasks();
+      
+      setState(() {
+        _allTasks = data;
+        _filterTasks();
+      });
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -61,33 +55,72 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
   }
 
   void _filterTasks() {
-    _todoTasks = _allTasks.where((t) => t.issueStatus == 'TODO' || t.issueStatus == 'OPEN' || t.issueStatus == 'NEW').toList();
-    _inProgressTasks = _allTasks.where((t) => t.issueStatus == 'IN_PROGRESS').toList();
-    _doneTasks = _allTasks.where((t) => t.issueStatus == 'DONE' || t.issueStatus == 'CLOSED' || t.issueStatus == 'RESOLVED').toList();
+    // Status from API: "To Do", "In Progress", "Review", "Done"
+    _todoTasks = _allTasks.where((t) {
+      final status = t.statusName.toUpperCase();
+      return status.contains('TODO') || 
+             status.contains('TO DO') ||
+             status.contains('OPEN') || 
+             status.contains('NEW');
+    }).toList();
+    
+    _inProgressTasks = _allTasks.where((t) {
+      final status = t.statusName.toUpperCase();
+      return status.contains('PROGRESS') || 
+             status.contains('REVIEW') ||
+             status.contains('TESTING');
+    }).toList();
+    
+    _doneTasks = _allTasks.where((t) {
+      final status = t.statusName.toUpperCase();
+      return status.contains('DONE') || 
+             status.contains('CLOSED') || 
+             status.contains('RESOLVED') ||
+             status.contains('COMPLETE');
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Bitrix24 style: Light gray background for contrast
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: const Color(0xFFF5F7FA), 
       appBar: AppBar(
-        title: const Text('Công việc của tôi'),
+        title: const Text('Công việc của tôi', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
-        backgroundColor: theme.primaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
         elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          tabs: [
-            Tab(text: 'Cần làm (${_todoTasks.length})'),
-            Tab(text: 'Đang làm (${_inProgressTasks.length})'),
-            Tab(text: 'Hoàn thành (${_doneTasks.length})'),
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(50),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(25),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              labelColor: Colors.black87,
+              unselectedLabelColor: Colors.grey[600],
+              indicator: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2)),
+                ],
+              ),
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              tabs: [
+                Tab(text: 'Cần làm (${_todoTasks.length})'),
+                Tab(text: 'Đang làm (${_inProgressTasks.length})'),
+                Tab(text: 'Xong (${_doneTasks.length})'),
+              ],
+            ),
+          ),
         ),
       ),
       body: _isLoading
@@ -96,48 +129,71 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
               controller: _tabController,
               children: [
                 _buildTaskList(_todoTasks, Colors.orange, theme),
-                _buildTaskList(_inProgressTasks, theme.primaryColor, theme),
+                _buildTaskList(_inProgressTasks, theme.colorScheme.secondary, theme),
                 _buildTaskList(_doneTasks, Colors.green, theme),
               ],
             ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final result = await Navigator.pushNamed(context, AppRouter.createIssue);
+          if (result == true) {
+            _fetchTasks();
+          }
+        },
+        backgroundColor: const Color(0xFF00AEEF), // Bitrix Blue-ish
+        elevation: 4,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
     );
   }
 
   Widget _buildTaskList(List<Issue> tasks, Color accentColor, ThemeData theme) {
     if (tasks.isEmpty) {
-      return const EmptyState(message: 'Không có công việc nào', icon: Icons.assignment_turned_in_outlined);
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.assignment_outlined, size: 80, color: Colors.grey[300]),
+            const SizedBox(height: 16),
+            Text('Không có công việc nào', style: TextStyle(color: Colors.grey[500], fontSize: 16)),
+          ],
+        ),
+      );
     }
 
     return RefreshIndicator(
       onRefresh: _fetchTasks,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         itemCount: tasks.length,
         itemBuilder: (context, index) {
           final task = tasks[index];
-          return _buildTaskCard(task, accentColor, theme);
+          return _buildPremiumTaskCard(task, accentColor, theme);
         },
       ),
     );
   }
 
-  Widget _buildTaskCard(Issue task, Color accentColor, ThemeData theme) {
-    Color priorityColor = Colors.green;
-    String priority = task.priority;
-    
-    if (priority == 'HIGH' || priority == 'URGENT') {
-      priorityColor = theme.colorScheme.error;
-    } else if (priority == 'MEDIUM') {
-      priorityColor = Colors.orange;
-    } else if (priority == 'LOW') {
-      priorityColor = Colors.blue;
-    }
+  Widget _buildPremiumTaskCard(Issue task, Color accentColor, ThemeData theme) {
+    // Determine priority color
+    Color priorityColor = Colors.grey;
+    if (task.priority == 'HIGH') priorityColor = Colors.orange;
+    if (task.priority == 'URGENT') priorityColor = Colors.red;
+    if (task.priority == 'MEDIUM') priorityColor = Colors.blue;
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shadowColor: Colors.black12,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: InkWell(
         onTap: () async {
           final result = await Navigator.pushNamed(
@@ -145,72 +201,118 @@ class _MyTasksScreenState extends State<MyTasksScreen> with SingleTickerProvider
             AppRouter.issueDetail,
             arguments: {'issueId': task.issueId},
           );
-          if (result == true) {
-            _fetchTasks(); // Refresh if status changed
-          }
+          if (result == true) _fetchTasks();
         },
         borderRadius: BorderRadius.circular(12),
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border(left: BorderSide(color: accentColor, width: 4)),
-            borderRadius: BorderRadius.circular(12),
-          ),
+        child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header: Project Name + Priority
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Text(
-                      task.title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                      task.projectName ?? 'Project',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  if (priorityColor != Colors.grey)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: priorityColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        task.priority,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: priorityColor,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              
+              // Title
+              Text(
+                task.title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                  height: 1.3,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 12),
+              
+              // Footer: Deadline + Avatar
+              Row(
+                children: [
+                  // Deadline
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: priorityColor.withOpacity(0.1),
+                      color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: priorityColor.withOpacity(0.3)),
                     ),
-                    child: Text(
-                      priority,
-                      style: TextStyle(color: priorityColor, fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      task.issueKey,
-                      style: TextStyle(color: Colors.grey.shade700, fontSize: 11, fontWeight: FontWeight.w500),
+                    child: Row(
+                      children: [
+                        Icon(Icons.calendar_today, size: 12, color: Colors.grey[600]),
+                        const SizedBox(width: 4),
+                        Text(
+                          task.dueDate ?? 'No deadline',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const Spacer(),
-                  if (task.dueDate != null) ...[
-                    Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
-                    const SizedBox(width: 4),
-                    Text(
-                      task.dueDate!,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
+                  
+                  // Comment/Attachment indicators (Mockup)
+                  if (task.comments.isNotEmpty) ...[
+                     Icon(Icons.chat_bubble_outline, size: 14, color: Colors.grey[400]),
+                     const SizedBox(width: 4),
+                     Text(
+                       '${task.comments.length}',
+                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                     ),
+                     const SizedBox(width: 12),
                   ],
+
+                  // Avatar
+                  if (task.assigneeName != null)
+                    CircleAvatar(
+                      radius: 12,
+                      backgroundColor: theme.primaryColor.withOpacity(0.1),
+                      backgroundImage: task.assigneeAvatarUrl != null 
+                          ? NetworkImage(task.assigneeAvatarUrl!) 
+                          : null,
+                      child: task.assigneeAvatarUrl == null
+                          ? Text(
+                              task.assigneeName![0].toUpperCase(),
+                              style: TextStyle(fontSize: 10, color: theme.primaryColor, fontWeight: FontWeight.bold),
+                            )
+                          : null,
+                    ),
                 ],
               ),
             ],

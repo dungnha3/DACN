@@ -10,7 +10,8 @@ logs/
 Thumbs.db
 
 # IDEs
-.vscode/
+.vscode/*
+!.vscode/launch.json
 .idea/
 *.swp
 *.swo

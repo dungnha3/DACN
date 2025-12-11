@@ -80,11 +80,11 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
         final userId = int.parse(userIdStr);
         
         final requestData = {
-          'nhanvienId': userId, // Note: Service might expect nhanvienId
-          'tuNgay': DateFormat('yyyy-MM-dd').format(_startDate!),
-          'denNgay': DateFormat('yyyy-MM-dd').format(_endDate!),
+          'nhanvienId': userId,
+          'ngayBatDau': DateFormat('yyyy-MM-dd').format(_startDate!),
+          'ngayKetThuc': DateFormat('yyyy-MM-dd').format(_endDate!),
           'lyDo': _reasonController.text,
-          'loaiNghiPhep': _selectedType,
+          'loaiPhep': _selectedType,
           'soNgay': _endDate!.difference(_startDate!).inDays + 1,
         };
 
@@ -260,24 +260,21 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
   }
 
   Widget _buildRequestCard(LeaveRequest request, ThemeData theme) {
+    // Use helper getters from model
     Color statusColor = Colors.grey;
-    String statusText = request.trangThai;
+    String statusText = request.trangThaiDisplay;
     
-    if (statusText == 'PENDING' || statusText == 'CHO_DUYET') {
-      statusColor = theme.colorScheme.secondary; // Use secondary for pending/info
-      statusText = 'Chờ duyệt';
-    } else if (statusText == 'APPROVED' || statusText == 'DA_DUYET' || statusText == 'DUYET') {
-      statusColor = theme.colorScheme.primary; // Use primary/success
-      statusText = 'Đã duyệt';
-    } else if (statusText == 'REJECTED' || statusText == 'TU_CHOI') {
+    if (request.isPending) {
+      statusColor = theme.colorScheme.secondary;
+    } else if (request.isPMApproved) {
+      statusColor = Colors.orange;
+    } else if (request.isApproved) {
+      statusColor = Colors.green;
+    } else if (request.isRejected) {
       statusColor = theme.colorScheme.error;
-      statusText = 'Từ chối';
     }
 
-    String typeText = request.loaiNghiPhep;
-    if (typeText == 'PHEP_NAM') typeText = 'Phép năm';
-    if (typeText == 'NGHI_OM') typeText = 'Nghỉ ốm';
-    if (typeText == 'KHONG_LUONG') typeText = 'Không lương';
+    String typeText = request.loaiPhepDisplay;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -323,7 +320,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
                 Icon(Icons.calendar_today, size: 18, color: Colors.grey.shade600),
                 const SizedBox(width: 8),
                 Text(
-                  '${request.tuNgay} - ${request.denNgay}',
+                  '${request.ngayBatDau} - ${request.ngayKetThuc}',
                   style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                 ),
                 const Spacer(),

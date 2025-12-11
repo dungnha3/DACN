@@ -39,60 +39,72 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
 
                         // ===== WEBSOCKET ENDPOINTS =====
-                        // Allow WebSocket handshake (SockJS /info, /websocket)
-                        // Auth will be checked at STOMP CONNECT level in AuthChannelInterceptor
                         .requestMatchers("/ws/**").permitAll()
 
                         // ===== ADMIN ENDPOINTS =====
-                        // Admin chỉ quản lý user và thông báo, KHÔNG truy cập dữ liệu công ty
-                        .requestMatchers("/api/admin/users/**").hasRole("ADMIN")
-                        .requestMatchers("/api/admin/role-requests/**").hasRole("ADMIN")
-                        .requestMatchers("/api/admin/notifications/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/accounts/**").hasRole("ADMIN")
 
                         // ===== HR MANAGER ENDPOINTS =====
-                        // Allow employees to view their own details via this specific endpoint
-                        .requestMatchers("/nhan-vien/user/**")
+                        .requestMatchers("/api/nhan-vien/user/**")
                         .hasAnyRole("EMPLOYEE", "MANAGER_HR", "MANAGER_ACCOUNTING", "MANAGER_PROJECT")
-                        .requestMatchers("/nhan-vien/**").hasAnyRole("MANAGER_HR", "MANAGER_ACCOUNTING")
-                        .requestMatchers("/phong-ban/**").hasRole("MANAGER_HR")
-                        .requestMatchers("/chuc-vu/**").hasRole("MANAGER_HR")
-                        .requestMatchers("/hop-dong/**").hasRole("MANAGER_HR")
+                        .requestMatchers("/api/nhan-vien/**").hasAnyRole("MANAGER_HR", "MANAGER_ACCOUNTING")
+                        .requestMatchers("/api/phong-ban/**").hasRole("MANAGER_HR")
+                        .requestMatchers("/api/chuc-vu/**").hasRole("MANAGER_HR")
+                        .requestMatchers("/api/hop-dong/**").hasRole("MANAGER_HR")
                         .requestMatchers("/api/hr/role-change-request/**").hasRole("MANAGER_HR")
+                        .requestMatchers("/api/danh-gia/**")
+                        .hasAnyRole("MANAGER_HR", "MANAGER_PROJECT", "EMPLOYEE")
 
                         // ===== ACCOUNTING MANAGER ENDPOINTS =====
-                        .requestMatchers("/bang-luong/tinh-tu-dong/**").hasRole("MANAGER_ACCOUNTING")
-                        .requestMatchers("/bang-luong/export/**").hasRole("MANAGER_ACCOUNTING")
-                        .requestMatchers("/cham-cong/manage/**").hasRole("MANAGER_ACCOUNTING")
-                        .requestMatchers("/nghi-phep/approve/**").hasAnyRole("MANAGER_ACCOUNTING", "MANAGER_PROJECT")
+                        .requestMatchers("/api/bang-luong/tinh-tu-dong/**").hasRole("MANAGER_ACCOUNTING")
+                        .requestMatchers("/api/bang-luong/export/**").hasRole("MANAGER_ACCOUNTING")
+                        .requestMatchers("/api/bang-luong/nhan-vien/**")
+                        .hasAnyRole("EMPLOYEE", "MANAGER_HR", "MANAGER_ACCOUNTING", "MANAGER_PROJECT")
+                        .requestMatchers("/api/cham-cong/manage/**").hasRole("MANAGER_ACCOUNTING")
+                        .requestMatchers("/api/cham-cong/nhan-vien/**")
+                        .hasAnyRole("EMPLOYEE", "MANAGER_HR", "MANAGER_ACCOUNTING", "MANAGER_PROJECT")
+                        .requestMatchers("/api/nghi-phep/approve/**")
+                        .hasAnyRole("MANAGER_ACCOUNTING", "MANAGER_PROJECT")
+                        .requestMatchers("/api/hr/salary-proposal/**")
+                        .hasAnyRole("MANAGER_HR", "MANAGER_ACCOUNTING")
+                        .requestMatchers("/api/export/**").hasAnyRole("MANAGER_HR", "MANAGER_ACCOUNTING")
+                        .requestMatchers("/api/dashboard/**")
+                        .hasAnyRole("MANAGER_HR", "MANAGER_ACCOUNTING", "MANAGER_PROJECT")
 
-                        // ===== PROJECT MANAGER ENDPOINTS =====
-                        // Project Manager chỉ truy cập dự án của mình (kiểm tra trong service)
+                        // ===== PROJECT ENDPOINTS =====
                         .requestMatchers("/api/projects/**").hasAnyRole("MANAGER_PROJECT", "EMPLOYEE")
                         .requestMatchers("/api/issues/**").hasAnyRole("MANAGER_PROJECT", "EMPLOYEE")
+                        .requestMatchers("/api/sprints/**").hasAnyRole("MANAGER_PROJECT", "EMPLOYEE")
+                        .requestMatchers("/api/comments/**").hasAnyRole("MANAGER_PROJECT", "EMPLOYEE")
+                        .requestMatchers("/api/activities/**").hasAnyRole("MANAGER_PROJECT", "EMPLOYEE")
+                        .requestMatchers("/api/project-dashboard/**").hasAnyRole("MANAGER_PROJECT", "EMPLOYEE")
 
                         // ===== EMPLOYEE ENDPOINTS =====
-                        // Employee truy cập dữ liệu của chính mình
                         .requestMatchers("/api/profile/**").authenticated()
-                        .requestMatchers("/cham-cong/gps")
+                        .requestMatchers("/api/cham-cong/gps")
                         .hasAnyRole("EMPLOYEE", "MANAGER_PROJECT", "MANAGER_HR", "MANAGER_ACCOUNTING")
-                        .requestMatchers("/cham-cong/my/**").authenticated()
-                        .requestMatchers("/bang-luong/my/**").authenticated()
-                        .requestMatchers("/nghi-phep/my/**").authenticated()
+                        .requestMatchers("/api/cham-cong/my/**").authenticated()
+                        .requestMatchers("/api/bang-luong/my/**").authenticated()
+                        .requestMatchers("/api/nghi-phep/my/**").authenticated()
+                        .requestMatchers("/api/nghi-phep/**")
+                        .hasAnyRole("EMPLOYEE", "MANAGER_HR", "MANAGER_ACCOUNTING", "MANAGER_PROJECT")
 
-                        // ===== CHAT & STORAGE =====
-                        // Admin KHÔNG có quyền chat
+                        // ===== CHAT & MEETINGS =====
                         .requestMatchers("/api/chat/**")
                         .hasAnyRole("EMPLOYEE", "MANAGER_HR", "MANAGER_ACCOUNTING", "MANAGER_PROJECT")
-                        .requestMatchers("/api/storage/**").hasAnyRole("EMPLOYEE", "MANAGER_PROJECT")
+                        .requestMatchers("/api/meetings/**")
+                        .hasAnyRole("EMPLOYEE", "MANAGER_HR", "MANAGER_ACCOUNTING", "MANAGER_PROJECT")
+                        .requestMatchers("/api/storage/**").authenticated()
 
                         // ===== AI CHATBOT =====
-                        // AI Assistant cho quản lý dự án - tất cả authenticated users (trừ ADMIN)
-                        .requestMatchers("/api/ai/status").authenticated()
                         .requestMatchers("/api/ai/**")
                         .hasAnyRole("EMPLOYEE", "MANAGER_HR", "MANAGER_ACCOUNTING", "MANAGER_PROJECT")
 
-                        // ===== NOTIFICATION =====
+                        // ===== NOTIFICATIONS =====
                         .requestMatchers("/api/notifications/**").authenticated()
+                        .requestMatchers("/api/thong-bao/**").authenticated()
 
                         // All other requests require authentication
                         .anyRequest().authenticated())
