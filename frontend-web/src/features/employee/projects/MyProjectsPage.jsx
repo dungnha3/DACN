@@ -1,238 +1,682 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/features/auth/hooks/useAuth';
+import { styles } from './MyProjectsPage.styles';
+import { projectService } from '@/shared/services/project.service';
+import { issueService } from '@/shared/services/issue.service';
+import { apiService } from '@/shared/services/api.service';
+import ProjectDetailPage from '@/features/project/projects/pages/ProjectDetailPage';
+import IssueDetailPage from '@/features/project/projects/pages/IssueDetailPage';
+import CreateIssueModal from '@/features/project/projects/components/CreateIssueModal';
 
-export default function MyProjectsPage() {
+export default function MyProjectsPage({ glassMode }) {
+  const [mainTab, setMainTab] = useState('tasks'); // tasks | projects | performance
   const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedProject, setSelectedProject] = useState(null);
-  
-  const { user: authUser } = useAuth();
-  const username = authUser?.username || localStorage.getItem('username') || 'Employee';
+  const [loading, setLoading] = useState(false);
 
+  // Load projects khi component mount
   useEffect(() => {
-    loadMyProjects();
-  }, []);
+    loadProjects()
+  }, [])
 
-  const loadMyProjects = async () => {
+  const loadProjects = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      // Simulate loading projects where employee is assigned
-      setTimeout(() => {
-        setProjects([
-          {
-            id: 1,
-            tenDuAn: 'Website QLNS',
-            moTa: 'Phát triển hệ thống quản lý nhân sự',
-            trangThai: 'DANG_THUC_HIEN',
-            ngayBatDau: '2024-01-15',
-            ngayKetThuc: '2024-12-31',
-            tieuDe: 'Frontend Development',
-            vaiTro: 'Developer',
-            issues: [
-              { id: 1, title: 'Tạo giao diện đăng nhập', status: 'HOAN_THANH', priority: 'HIGH' },
-              { id: 2, title: 'Thiết kế dashboard', status: 'DANG_LAM', priority: 'MEDIUM' },
-              { id: 3, title: 'Tích hợp API', status: 'TODO', priority: 'HIGH' }
-            ]
-          },
-          {
-            id: 2,
-            tenDuAn: 'Mobile App',
-            moTa: 'Ứng dụng di động cho nhân viên',
-            trangThai: 'DANG_THUC_HIEN',
-            ngayBatDau: '2024-06-01',
-            ngayKetThuc: '2024-11-30',
-            tieuDe: 'UI/UX Design',
-            vaiTro: 'Designer',
-            issues: [
-              { id: 4, title: 'Thiết kế wireframe', status: 'HOAN_THANH', priority: 'HIGH' },
-              { id: 5, title: 'Tạo prototype', status: 'DANG_LAM', priority: 'MEDIUM' }
-            ]
-          }
-        ]);
-        setLoading(false);
-      }, 1000);
-    } catch (err) {
+      const data = await projectService.getMyProjects();
+      setProjects(data);
+    } catch (error) {
+      console.error("Failed to load projects", error);
+    } finally {
       setLoading(false);
     }
   };
 
-  const getStatusBadge = (status) => {
-    const config = {
-      TODO: { bg: '#fff7ed', color: '#c2410c', label: '📋 Chưa làm' },
-      DANG_LAM: { bg: '#fef3c7', color: '#d97706', label: '⏳ Đang làm' },
-      HOAN_THANH: { bg: '#f0fdf4', color: '#15803d', label: '✅ Hoàn thành' },
-      DANG_THUC_HIEN: { bg: '#eff6ff', color: '#2563eb', label: '🚀 Đang thực hiện' }
-    };
-    const s = config[status] || config.TODO;
-    return (
-      <span style={{
-        background: s.bg, color: s.color, padding: '4px 8px', borderRadius: 6,
-        fontSize: 11, fontWeight: 700, textTransform: 'uppercase', whiteSpace: 'nowrap'
-      }}>
-        {s.label}
-      </span>
-    );
-  };
-
-  const getPriorityBadge = (priority) => {
-    const config = {
-      HIGH: { bg: '#fef2f2', color: '#b91c1c', label: '🔥 Cao' },
-      MEDIUM: { bg: '#fff7ed', color: '#c2410c', label: '⚡ Trung bình' },
-      LOW: { bg: '#f0fdf4', color: '#15803d', label: '📝 Thấp' }
-    };
-    const p = config[priority] || config.MEDIUM;
-    return (
-      <span style={{
-        background: p.bg, color: p.color, padding: '2px 6px', borderRadius: 4,
-        fontSize: 10, fontWeight: 600
-      }}>
-        {p.label}
-      </span>
-    );
-  };
-
-  if (loading) {
-    return (
-      <div style={{ padding: '24px 32px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-          <div style={{ fontSize: 18, color: '#7b809a', marginBottom: 16 }}>Đang tải dự án...</div>
-        </div>
+  return (
+    <div style={{
+      ...styles.container,
+      backgroundColor: glassMode ? 'transparent' : styles.container.backgroundColor,
+      minHeight: glassMode ? 'auto' : styles.container.minHeight
+    }}>
+      {/* Main Tab Navigation */}
+      <div style={styles.mainTabContainer}>
+        <button
+          style={{
+            ...styles.mainTabButton,
+            ...(mainTab === 'tasks' ? styles.mainTabButtonActive : {})
+          }}
+          onClick={() => setMainTab('tasks')}
+        >
+          Tác vụ của tôi ✏️
+        </button>
+        <button
+          style={{
+            ...styles.mainTabButton,
+            ...(mainTab === 'projects' ? styles.mainTabButtonActive : {})
+          }}
+          onClick={() => setMainTab('projects')}
+        >
+          Dự án
+        </button>
+        <button
+          style={{
+            ...styles.mainTabButton,
+            ...(mainTab === 'performance' ? styles.mainTabButtonActive : {})
+          }}
+          onClick={() => setMainTab('performance')}
+        >
+          Hiệu suất 📊
+        </button>
       </div>
-    );
+
+      {/* Content Area */}
+      {mainTab === 'tasks' ? (
+        <TasksTab key="tasks-tab" />
+      ) : mainTab === 'projects' ? (
+        <ProjectsTab
+          projects={projects}
+          loading={loading}
+        />
+      ) : (
+        <PerformanceTab key="performance-tab" />
+      )}
+    </div>
+  )
+}
+
+// Tab "Tác vụ của tôi"
+function TasksTab() {
+  const [viewMode, setViewMode] = useState('list'); // list | deadline | calendar | gantt
+  const [issues, setIssues] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedIssueId, setSelectedIssueId] = useState(null);
+  const [hoveredRow, setHoveredRow] = useState(null);
+
+  // Load issues khi component mount
+  useEffect(() => {
+    loadIssues();
+  }, []);
+
+  const loadIssues = async () => {
+    setLoading(true);
+    try {
+      const data = await issueService.getMyIssues();
+      setIssues(data);
+    } catch (error) {
+      console.error("Failed to load issues", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+  }
+
+  const handleIssueCreated = (newIssue) => {
+    // Reload issues sau khi tạo mới
+    loadIssues()
+  }
+
+  // Nếu đã chọn issue, hiển thị IssueDetailPage
+  if (selectedIssueId) {
+    return (
+      <IssueDetailPage
+        issueId={selectedIssueId}
+        onBack={() => setSelectedIssueId(null)}
+      />
+    )
   }
 
   return (
-    <div style={{ padding: '24px 32px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-      {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 13, color: '#7b809a', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase' }}>
-          Cá nhân / Dự án của tôi
+    <div style={styles.tabContent}>
+      {/* Toolbar */}
+      <div style={styles.toolbar}>
+        <div style={styles.toolbarLeft}>
+          {/* Employee usually doesn't create tasks directly from here, but if needed we can enable it */}
+          {/* <button style={styles.createBtn} onClick={handleOpenModal}>+ Tạo</button> */}
+
+          <select style={styles.filterSelect}>
+            <option>Tất cả các vai trò</option>
+            <option>Người tạo</option>
+            <option>Người được phân công</option>
+          </select>
+          <select style={styles.filterSelect}>
+            <option>Đang tiến hành ⚡</option>
+            <option>Hoàn thành</option>
+            <option>Chưa bắt đầu</option>
+          </select>
+          <input
+            type="text"
+            placeholder="+ Tìm kiếm"
+            style={styles.searchInput}
+          />
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: '#344767' }}>
-            Dự án của tôi
-          </h1>
-          <div style={{
-            background: '#f8f9fa', color: '#6b7280', border: '1px solid #e5e7eb',
-            borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 600
-          }}>
-            👁️ Chỉ xem (Employee)
-          </div>
+        <div style={styles.toolbarRight}>
+          <button style={styles.iconBtn} title="Cài đặt">⚙️</button>
+          <button style={styles.iconBtn} title="Thông báo">🔔</button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 24 }}>
-        {[
-          { title: 'Dự án tham gia', value: projects.length, icon: '🏭', color: '#3b82f6', bg: '#eff6ff' },
-          { title: 'Tasks hoàn thành', value: projects.reduce((sum, p) => sum + p.issues.filter(i => i.status === 'HOAN_THANH').length, 0), icon: '✅', color: '#10b981', bg: '#f0fdf4' },
-          { title: 'Tasks đang làm', value: projects.reduce((sum, p) => sum + p.issues.filter(i => i.status === 'DANG_LAM').length, 0), icon: '⏳', color: '#f59e0b', bg: '#fff7ed' },
-          { title: 'Tasks chưa làm', value: projects.reduce((sum, p) => sum + p.issues.filter(i => i.status === 'TODO').length, 0), icon: '📋', color: '#ef4444', bg: '#fef2f2' }
-        ].map((stat, i) => (
-          <div key={i} style={{
-            padding: 20, borderRadius: 16, border: '1px solid', borderColor: stat.color + '40',
-            background: stat.bg, display: 'flex', flexDirection: 'column'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: '#67748e', textTransform: 'uppercase' }}>
-                {stat.title}
-              </span>
-              <span style={{ fontSize: 18, color: stat.color }}>{stat.icon}</span>
-            </div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: stat.color }}>
-              {stat.value}
-            </div>
-          </div>
-        ))}
+      {/* View Mode Tabs */}
+      <div style={styles.viewModeTabs}>
+        <button
+          style={{ ...styles.viewModeTab, ...(viewMode === 'list' ? styles.viewModeTabActive : {}) }}
+          onClick={() => setViewMode('list')}
+        >
+          📋 Danh sách
+        </button>
+        <button
+          style={{ ...styles.viewModeTab, ...(viewMode === 'deadline' ? styles.viewModeTabActive : {}) }}
+          onClick={() => setViewMode('deadline')}
+        >
+          ⏰ Hạn chót
+        </button>
+        <button style={styles.viewModeTab}>📅 Lịch</button>
+        <div style={styles.viewModeDivider} />
+        <button style={styles.viewModeTab}>⚠️ 0 Quá hạn</button>
+        <button style={styles.viewModeTab}>💬 0 Bình luận</button>
+        <div style={{ flex: 1 }} />
       </div>
 
-      {/* Projects Grid */}
-      <div style={{ display: 'grid', gap: 24, gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
-        {projects.map(project => (
-          <div key={project.id} style={{
-            background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-            border: '1px solid rgba(0,0,0,0.02)', cursor: 'pointer',
-            transition: 'all 0.2s ease', ':hover': { transform: 'translateY(-2px)' }
-          }}
-          onClick={() => setSelectedProject(selectedProject === project.id ? null : project.id)}
-          >
-            {/* Project Header */}
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#344767', margin: 0 }}>
-                  {project.tenDuAn}
-                </h3>
-                {getStatusBadge(project.trangThai)}
-              </div>
-              <p style={{ fontSize: 14, color: '#7b809a', margin: 0, lineHeight: 1.5 }}>
-                {project.moTa}
-              </p>
-            </div>
+      {/* Create Issue Modal */}
+      <CreateIssueModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSuccess={handleIssueCreated}
+      />
 
-            {/* Project Info */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#7b809a', marginBottom: 4 }}>VAI TRÒ</div>
-                <div style={{ fontSize: 14, color: '#344767', fontWeight: 600 }}>{project.vaiTro}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#7b809a', marginBottom: 4 }}>THỜI GIAN</div>
-                <div style={{ fontSize: 14, color: '#344767' }}>{project.ngayBatDau} → {project.ngayKetThuc}</div>
-              </div>
-            </div>
-
-            {/* Tasks Summary */}
-            <div style={{ borderTop: '1px solid #f0f2f5', paddingTop: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: '#344767' }}>
-                  Tasks ({project.issues.length})
-                </span>
-                <span style={{ fontSize: 12, color: '#7b809a' }}>
-                  {selectedProject === project.id ? '🔽 Thu gọn' : '🔽 Xem chi tiết'}
-                </span>
-              </div>
-
-              {/* Tasks List (Expandable) */}
-              {selectedProject === project.id && (
-                <div style={{ space: '8px' }}>
-                  {project.issues.map(issue => (
-                    <div key={issue.id} style={{
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      padding: '8px 12px', background: '#f8f9fa', borderRadius: 8, marginBottom: 8
-                    }}>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#344767' }}>
-                          {issue.title}
+      {/* Tasks Table */}
+      <div style={styles.tableWrapper}>
+        {loading ? (
+          <div style={styles.loadingContainer}>
+            <div style={styles.loadingText}>Đang tải dữ liệu...</div>
+          </div>
+        ) : (
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>Tên</th>
+                <th style={styles.th}>
+                  Hoạt động
+                  <span style={styles.sortIcon}>▼</span>
+                </th>
+                <th style={styles.th}>Hạn chót</th>
+                <th style={styles.th}>Người tạo</th>
+                <th style={styles.th}>Người được phân công</th>
+                <th style={styles.th}>Dự án</th>
+              </tr>
+            </thead>
+            <tbody>
+              {issues.length === 0 ? (
+                <tr>
+                  <td colSpan="6" style={{ ...styles.td, textAlign: 'center', padding: '32px' }}>
+                    Chưa có tác vụ nào.
+                  </td>
+                </tr>
+              ) : (
+                issues.map((task) => (
+                  <tr
+                    key={task.issueId}
+                    style={{
+                      ...styles.tr,
+                      cursor: 'pointer',
+                      backgroundColor: hoveredRow === task.issueId ? '#f7fafc' : 'transparent'
+                    }}
+                    onClick={() => setSelectedIssueId(task.issueId)}
+                    onMouseEnter={() => setHoveredRow(task.issueId)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                  >
+                    <td style={styles.td}>
+                      <div style={styles.taskName}>
+                        {task.issueKey}: {task.title}
+                      </div>
+                    </td>
+                    <td style={styles.td}>
+                      <span style={{ ...styles.statusBadge, backgroundColor: task.statusColor || '#e5e7eb' }}>
+                        {task.statusName}
+                      </span>
+                    </td>
+                    <td style={styles.td}>
+                      {task.dueDate ? (
+                        <span style={{ ...styles.deadlineBadge, ...(task.isOverdue ? { backgroundColor: '#fee2e2', color: '#991b1b' } : {}) }}>
+                          {new Date(task.dueDate).toLocaleDateString('vi-VN')}
+                        </span>
+                      ) : '-'}
+                    </td>
+                    <td style={styles.td}>
+                      {task.reporterName ? (
+                        <div style={styles.userBadge}>
+                          <span style={styles.avatar}>{task.reporterName.charAt(0).toUpperCase()}</span>
+                          {task.reporterName}
                         </div>
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        {getPriorityBadge(issue.priority)}
-                        {getStatusBadge(issue.status)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      ) : '-'}
+                    </td>
+                    <td style={styles.td}>
+                      {task.assigneeName ? (
+                        <div style={styles.userBadge}>
+                          <span style={styles.avatar}>{task.assigneeName.charAt(0).toUpperCase()}</span>
+                          {task.assigneeName}
+                        </div>
+                      ) : '-'}
+                    </td>
+                    <td style={styles.td}>
+                      <span style={styles.projectBadge}>{task.projectName || '-'}</span>
+                    </td>
+                  </tr>
+                ))
               )}
-            </div>
-          </div>
-        ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
-      {projects.length === 0 && (
-        <div style={{
-          background: '#fff', borderRadius: 16, padding: 60, textAlign: 'center',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.02)'
-        }}>
-          <div style={{ fontSize: 64, marginBottom: 20 }}>🏭</div>
-          <div style={{ fontSize: 20, fontWeight: 600, color: '#344767', marginBottom: 12 }}>
-            Chưa có dự án nào
-          </div>
-          <div style={{ fontSize: 14, color: '#7b809a', lineHeight: 1.6 }}>
-            Bạn chưa được phân công vào dự án nào. 
-            Liên hệ Project Manager để được thêm vào dự án.
-          </div>
+      {/* Footer */}
+      <div style={styles.tableFooter}>
+        <div style={styles.footerLeft}>
+          <span>TỔNG: {issues.length}</span>
         </div>
+        <div style={styles.footerCenter}>
+          <span>TRANG: 1</span>
+        </div>
+        <div style={styles.footerRight}>
+          <span>BẢN GHI:</span>
+          <select style={styles.pageSize}>
+            <option>50</option>
+            <option>100</option>
+            <option>200</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Helper function để lấy style cho status badge
+const getStatusBadgeStyle = (status) => {
+  const baseStyle = {
+    padding: '4px 10px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: '500',
+  }
+
+  switch (status) {
+    case 'PLANNING':
+      return { ...baseStyle, backgroundColor: '#fef3c7', color: '#92400e' }
+    case 'IN_PROGRESS':
+      return { ...baseStyle, backgroundColor: '#dbeafe', color: '#1e40af' }
+    case 'ON_HOLD':
+      return { ...baseStyle, backgroundColor: '#fee2e2', color: '#991b1b' }
+    case 'COMPLETED':
+      return { ...baseStyle, backgroundColor: '#dcfce7', color: '#166534' }
+    case 'CANCELLED':
+      return { ...baseStyle, backgroundColor: '#e5e7eb', color: '#374151' }
+    default:
+      return { ...baseStyle, backgroundColor: '#f3f4f6', color: '#6b7280' }
+  }
+}
+
+// Helper function để lấy text cho status
+const getStatusText = (status) => {
+  switch (status) {
+    case 'PLANNING': return 'Đang lập kế hoạch'
+    case 'IN_PROGRESS': return 'Đang thực hiện'
+    case 'ON_HOLD': return 'Tạm dừng'
+    case 'COMPLETED': return 'Hoàn thành'
+    case 'CANCELLED': return 'Đã hủy'
+    default: return status
+  }
+}
+
+// Tab "Dự án"
+function ProjectsTab({ projects, loading }) {
+  const [selectedProjectId, setSelectedProjectId] = useState(null)
+  const [hoveredRow, setHoveredRow] = useState(null)
+
+  // Nếu đã chọn project, hiển thị ProjectDetailPage
+  if (selectedProjectId) {
+    return (
+      <ProjectDetailPage
+        projectId={selectedProjectId}
+        onBack={() => setSelectedProjectId(null)}
+      />
+    )
+  }
+
+  return (
+    <div style={styles.tabContent}>
+      {/* Toolbar */}
+      <div style={styles.toolbar}>
+        <div style={styles.toolbarLeft}>
+          <select style={styles.filterSelect}>
+            <option>Của tôi</option>
+            <option>Tất cả</option>
+          </select>
+          <input
+            type="text"
+            placeholder="+ Tìm kiếm"
+            style={styles.searchInput}
+          />
+        </div>
+      </div>
+
+      {/* View Mode Tabs */}
+      <div style={styles.viewModeTabs}>
+        <button style={styles.viewModeTab}>⚠️ 0 Quá hạn</button>
+        <button style={styles.viewModeTab}>💬 0 Bình luận</button>
+        <div style={{ flex: 1 }} />
+      </div>
+
+      {/* Projects Table */}
+      <div style={styles.tableWrapper}>
+        {loading ? (
+          <div style={styles.loadingContainer}>
+            <div style={styles.loadingText}>Đang tải dữ liệu...</div>
+          </div>
+        ) : (
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>ID</th>
+                <th style={styles.th}>Mã dự án</th>
+                <th style={styles.th}>Tên</th>
+                <th style={styles.th}>Mô tả</th>
+                <th style={styles.th}>Trạng thái</th>
+                <th style={styles.th}>Ngày bắt đầu</th>
+                <th style={styles.th}>Ngày kết thúc</th>
+                <th style={styles.th}>Người tạo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {projects.length === 0 ? (
+                <tr>
+                  <td colSpan="8" style={{ ...styles.td, textAlign: 'center', padding: '32px' }}>
+                    Chưa có dự án nào.
+                  </td>
+                </tr>
+              ) : (
+                projects.map((project) => (
+                  <tr
+                    key={project.projectId}
+                    style={{
+                      ...styles.tr,
+                      cursor: 'pointer',
+                      backgroundColor: hoveredRow === project.projectId ? '#f7fafc' : 'transparent',
+                    }}
+                    onClick={() => setSelectedProjectId(project.projectId)}
+                    onMouseEnter={() => setHoveredRow(project.projectId)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                  >
+                    <td style={styles.td}>{project.projectId}</td>
+                    <td style={styles.td}>
+                      <span style={styles.keyBadge}>{project.keyProject}</span>
+                    </td>
+                    <td style={styles.td}>
+                      <div style={styles.projectName}>
+                        <span style={styles.projectIcon}>🔵</span>
+                        {project.name}
+                      </div>
+                    </td>
+                    <td style={styles.td}>
+                      <div style={styles.descriptionCell}>
+                        {project.description || '-'}
+                      </div>
+                    </td>
+                    <td style={styles.td}>
+                      <span style={getStatusBadgeStyle(project.status)}>
+                        {getStatusText(project.status)}
+                      </span>
+                    </td>
+                    <td style={styles.td}>
+                      {project.startDate ? new Date(project.startDate).toLocaleDateString('vi-VN') : '-'}
+                    </td>
+                    <td style={styles.td}>
+                      {project.endDate ? new Date(project.endDate).toLocaleDateString('vi-VN') : '-'}
+                    </td>
+                    <td style={styles.td}>
+                      <div style={styles.userBadge}>
+                        <span style={styles.avatar}>
+                          {project.createdByName ? project.createdByName.charAt(0).toUpperCase() : 'U'}
+                        </span>
+                        {project.createdByName || 'Unknown'}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div style={styles.tableFooter}>
+        <div style={styles.footerLeft}>
+          <span>TỔNG: {projects.length}</span>
+        </div>
+        <div style={styles.footerCenter}>
+          <span>TRANG: 1</span>
+        </div>
+        <div style={styles.footerRight}>
+          <span>BẢN GHI:</span>
+          <select style={styles.pageSize}>
+            <option>50</option>
+            <option>100</option>
+            <option>200</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Tab "Hiệu suất"
+function PerformanceTab() {
+  const [stats, setStats] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [summary, setSummary] = useState({
+    totalProjects: 0,
+    totalIssues: 0,
+    completedIssues: 0,
+    avgCompletionRate: 0,
+    totalOverdue: 0
+  })
+
+  useEffect(() => {
+    loadPerformanceData()
+  }, [])
+
+  const loadPerformanceData = async () => {
+    setLoading(true)
+    try {
+      const data = await apiService.get('/api/project-dashboard/my-projects')
+      setStats(data)
+
+      // Tính toán summary
+      const totalProjects = data.length
+      const totalIssues = data.reduce((sum, p) => sum + p.totalIssues, 0)
+      const completedIssues = data.reduce((sum, p) => sum + p.completedIssues, 0)
+      const avgCompletionRate = totalProjects > 0
+        ? data.reduce((sum, p) => sum + p.completionRate, 0) / totalProjects
+        : 0
+      const totalOverdue = data.reduce((sum, p) => sum + p.overdueIssues, 0)
+
+      setSummary({
+        totalProjects,
+        totalIssues,
+        completedIssues,
+        avgCompletionRate,
+        totalOverdue
+      })
+    } catch (error) {
+      console.error("Failed to load performance data", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getCompletionColor = (rate) => {
+    if (rate >= 80) return '#10b981'
+    if (rate >= 50) return '#f59e0b'
+    return '#ef4444'
+  }
+
+  return (
+    <div style={styles.tabContent}>
+      {/* Header */}
+      <div style={styles.performanceHeader}>
+        <h2 style={styles.performanceTitle}>Tổng quan hiệu suất</h2>
+        <p style={styles.performanceSubtitle}>Thống kê tất cả dự án của bạn</p>
+      </div>
+
+      {loading ? (
+        <div style={styles.loadingContainer}>
+          <div style={styles.loadingText}>Đang tải dữ liệu...</div>
+        </div>
+      ) : (
+        <>
+          {/* Summary Cards */}
+          <div style={styles.summaryCards}>
+            <div style={styles.summaryCard}>
+              <div style={styles.summaryIcon}>📁</div>
+              <div style={styles.summaryContent}>
+                <div style={styles.summaryLabel}>Tổng dự án</div>
+                <div style={styles.summaryValue}>{summary.totalProjects}</div>
+              </div>
+            </div>
+
+            <div style={styles.summaryCard}>
+              <div style={styles.summaryIcon}>📋</div>
+              <div style={styles.summaryContent}>
+                <div style={styles.summaryLabel}>Tổng tác vụ</div>
+                <div style={styles.summaryValue}>{summary.totalIssues}</div>
+                <div style={styles.summaryDetail}>
+                  Hoàn thành: {summary.completedIssues}
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.summaryCard}>
+              <div style={styles.summaryIcon}>✅</div>
+              <div style={styles.summaryContent}>
+                <div style={styles.summaryLabel}>Tỷ lệ hoàn thành TB</div>
+                <div style={{
+                  ...styles.summaryValue,
+                  color: getCompletionColor(summary.avgCompletionRate)
+                }}>
+                  {summary.avgCompletionRate.toFixed(1)}%
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.summaryCard}>
+              <div style={styles.summaryIcon}>⚠️</div>
+              <div style={styles.summaryContent}>
+                <div style={styles.summaryLabel}>Quá hạn</div>
+                <div style={{ ...styles.summaryValue, color: '#ef4444' }}>
+                  {summary.totalOverdue}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Projects Performance Table */}
+          <div style={styles.performanceTable}>
+            <h3 style={styles.sectionTitle}>Chi tiết theo dự án</h3>
+
+            {stats.length === 0 ? (
+              <div style={styles.emptyState}>
+                <p>Chưa có dữ liệu thống kê</p>
+              </div>
+            ) : (
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Dự án</th>
+                    <th style={styles.th}>Trạng thái</th>
+                    <th style={styles.th}>Tổng tác vụ</th>
+                    <th style={styles.th}>Hoàn thành</th>
+                    <th style={styles.th}>Đang làm</th>
+                    <th style={styles.th}>Chưa làm</th>
+                    <th style={styles.th}>Quá hạn</th>
+                    <th style={styles.th}>Tỷ lệ hoàn thành</th>
+                    <th style={styles.th}>Sprints</th>
+                    <th style={styles.th}>Thành viên</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.map((project) => (
+                    <tr key={project.projectId} style={styles.tr}>
+                      <td style={styles.td}>
+                        <div style={styles.projectNameCell}>
+                          <span style={styles.projectKeyBadge}>{project.projectKey}</span>
+                          <span style={styles.projectNameText}>{project.projectName}</span>
+                        </div>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={styles.statusBadge}>{project.status}</span>
+                      </td>
+                      <td style={styles.td}>
+                        <strong>{project.totalIssues}</strong>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={{ color: '#10b981', fontWeight: '600' }}>
+                          {project.completedIssues}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={{ color: '#3b82f6', fontWeight: '600' }}>
+                          {project.inProgressIssues}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={{ color: '#6b7280', fontWeight: '600' }}>
+                          {project.todoIssues}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={{ color: '#ef4444', fontWeight: '600' }}>
+                          {project.overdueIssues}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <div style={styles.progressCell}>
+                          <div style={styles.progressBar}>
+                            <div style={{
+                              ...styles.progressFill,
+                              width: `${project.completionRate}%`,
+                              backgroundColor: getCompletionColor(project.completionRate)
+                            }} />
+                          </div>
+                          <span style={styles.progressText}>
+                            {project.completionRate.toFixed(1)}%
+                          </span>
+                        </div>
+                      </td>
+                      <td style={styles.td}>
+                        <div style={styles.sprintInfo}>
+                          <span>Hoạt động: {project.activeSprints}</span>
+                          <span style={{ color: '#6b7280', fontSize: '12px' }}>
+                            / {project.totalSprints} tổng
+                          </span>
+                        </div>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={styles.memberBadge}>
+                          👥 {project.totalMembers}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </>
       )}
     </div>
-  );
+  )
 }

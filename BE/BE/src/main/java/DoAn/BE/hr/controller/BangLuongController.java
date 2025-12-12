@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/bang-luong")
+@RequestMapping("/api/bang-luong")
 public class BangLuongController {
-    
+
     private final BangLuongService bangLuongService;
     private final BangLuongMapper bangLuongMapper;
 
@@ -34,12 +34,12 @@ public class BangLuongController {
         this.bangLuongService = bangLuongService;
         this.bangLuongMapper = bangLuongMapper;
     }
-    
+
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return (User) auth.getPrincipal();
     }
-    
+
     // Tạo bảng lương mới
     @PostMapping
     public ResponseEntity<BangLuongDTO> createBangLuong(@Valid @RequestBody CreateBangLuongRequest request) {
@@ -47,7 +47,7 @@ public class BangLuongController {
         BangLuong bangLuong = bangLuongService.createBangLuong(request, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(bangLuongMapper.toDTO(bangLuong));
     }
-    
+
     // Lấy thông tin bảng lương theo ID
     @GetMapping("/{id}")
     public ResponseEntity<BangLuongDTO> getBangLuongById(@PathVariable Long id) {
@@ -55,7 +55,7 @@ public class BangLuongController {
         BangLuong bangLuong = bangLuongService.getBangLuongById(id, currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTO(bangLuong));
     }
-    
+
     // Lấy danh sách tất cả bảng lương
     @GetMapping
     public ResponseEntity<List<BangLuongDTO>> getAllBangLuong() {
@@ -63,7 +63,7 @@ public class BangLuongController {
         List<BangLuong> bangLuongs = bangLuongService.getAllBangLuong(currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTOList(bangLuongs));
     }
-    
+
     // Cập nhật bảng lương
     @PutMapping("/{id}")
     public ResponseEntity<BangLuongDTO> updateBangLuong(
@@ -73,7 +73,7 @@ public class BangLuongController {
         BangLuong bangLuong = bangLuongService.updateBangLuong(id, request, currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTO(bangLuong));
     }
-    
+
     // Xóa bảng lương
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteBangLuong(@PathVariable Long id) {
@@ -83,7 +83,7 @@ public class BangLuongController {
         response.put("message", "Xóa bảng lương thành công");
         return ResponseEntity.ok(response);
     }
-    
+
     // Lấy bảng lương theo nhân viên
     @GetMapping("/nhan-vien/{nhanvienId}")
     public ResponseEntity<List<BangLuongDTO>> getBangLuongByNhanVien(@PathVariable Long nhanvienId) {
@@ -91,7 +91,7 @@ public class BangLuongController {
         List<BangLuong> bangLuongs = bangLuongService.getBangLuongByNhanVien(nhanvienId, currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTOList(bangLuongs));
     }
-    
+
     // Lấy bảng lương theo kỳ (tháng/năm)
     @GetMapping("/period")
     public ResponseEntity<List<BangLuongDTO>> getBangLuongByPeriod(
@@ -101,18 +101,33 @@ public class BangLuongController {
         List<BangLuong> bangLuongs = bangLuongService.getBangLuongByPeriod(thang, nam, currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTOList(bangLuongs));
     }
-    
+
     // Lấy bảng lương theo nhân viên và kỳ
     @GetMapping("/nhan-vien/{nhanvienId}/period")
-    public ResponseEntity<BangLuongDTO> getBangLuongByNhanVienAndPeriod(
+    public ResponseEntity<?> getBangLuongByNhanVienAndPeriod(
             @PathVariable Long nhanvienId,
             @RequestParam Integer thang,
             @RequestParam Integer nam) {
-        User currentUser = getCurrentUser();
-        BangLuong bangLuong = bangLuongService.getBangLuongByNhanVienAndPeriod(nhanvienId, thang, nam, currentUser);
-        return ResponseEntity.ok(bangLuongMapper.toDTO(bangLuong));
+        try {
+            User currentUser = getCurrentUser();
+            BangLuong bangLuong = bangLuongService.getBangLuongByNhanVienAndPeriod(nhanvienId, thang, nam, currentUser);
+
+            // Trả về 204 No Content nếu không có bảng lương (thay vì 500)
+            if (bangLuong == null) {
+                return ResponseEntity.noContent().build();
+            }
+
+            return ResponseEntity.ok(bangLuongMapper.toDTO(bangLuong));
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Internal Server Error");
+            error.put("message", e.getMessage());
+            error.put("trace", e.toString());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
-    
+
     // Lấy bảng lương theo trạng thái
     @GetMapping("/trang-thai/{trangThai}")
     public ResponseEntity<List<BangLuongDTO>> getBangLuongByTrangThai(@PathVariable String trangThai) {
@@ -120,7 +135,7 @@ public class BangLuongController {
         List<BangLuong> bangLuongs = bangLuongService.getBangLuongByTrangThai(trangThai, currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTOList(bangLuongs));
     }
-    
+
     // Đánh dấu đã thanh toán
     @PatchMapping("/{id}/mark-paid")
     public ResponseEntity<BangLuongDTO> markAsPaid(@PathVariable Long id) {
@@ -128,7 +143,7 @@ public class BangLuongController {
         BangLuong bangLuong = bangLuongService.markAsPaid(id, currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTO(bangLuong));
     }
-    
+
     // Hủy bảng lương
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<BangLuongDTO> cancelBangLuong(@PathVariable Long id) {
@@ -136,7 +151,7 @@ public class BangLuongController {
         BangLuong bangLuong = bangLuongService.cancelBangLuong(id, currentUser);
         return ResponseEntity.ok(bangLuongMapper.toDTO(bangLuong));
     }
-    
+
     // Tính tổng lương thực nhận theo kỳ
     @GetMapping("/total/period")
     public ResponseEntity<Map<String, Object>> getTotalSalaryByPeriod(
@@ -150,7 +165,7 @@ public class BangLuongController {
         response.put("tongLuongThucNhan", total);
         return ResponseEntity.ok(response);
     }
-    
+
     // Tính tổng lương thực nhận theo nhân viên trong năm
     @GetMapping("/total/nhan-vien/{nhanvienId}/year/{nam}")
     public ResponseEntity<Map<String, Object>> getTotalSalaryByNhanVienAndYear(
@@ -198,15 +213,14 @@ public class BangLuongController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "thang") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
-        
-        Sort sort = sortDir.equalsIgnoreCase("asc") ? 
-            Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        
+
         User currentUser = getCurrentUser();
         Page<BangLuong> bangLuongPage = bangLuongService.getAllBangLuongPage(pageable, currentUser);
         Page<BangLuongDTO> dtoPage = bangLuongPage.map(bangLuongMapper::toDTO);
-        
+
         return ResponseEntity.ok(dtoPage);
     }
 }

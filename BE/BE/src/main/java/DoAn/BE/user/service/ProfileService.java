@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import DoAn.BE.common.exception.BadRequestException;
 import DoAn.BE.common.exception.EntityNotFoundException;
+import DoAn.BE.hr.repository.NhanVienRepository;
 import DoAn.BE.notification.service.AuthNotificationService;
 import DoAn.BE.user.dto.ChangePasswordRequest;
 import DoAn.BE.user.dto.UpdateUserRequest;
@@ -22,12 +23,14 @@ public class ProfileService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthNotificationService authNotificationService;
+    private final NhanVienRepository nhanVienRepository;
 
     public ProfileService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-            AuthNotificationService authNotificationService) {
+            AuthNotificationService authNotificationService, NhanVienRepository nhanVienRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authNotificationService = authNotificationService;
+        this.nhanVienRepository = nhanVienRepository;
     }
 
     public User getCurrentUserProfile(Long userId) {
@@ -48,7 +51,33 @@ public class ProfileService {
             user.setAvatarUrl(request.getAvatarUrl());
         }
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // Also update NhanVien if exists
+        updateNhanVienInfo(userId, request);
+
+        return savedUser;
+    }
+
+    private void updateNhanVienInfo(Long userId, UpdateUserRequest request) {
+        // Find NhanVien by userId (if exists)
+        DoAn.BE.hr.entity.NhanVien nhanVien = nhanVienRepository.findByUser_UserId(userId).orElse(null);
+        if (nhanVien == null) {
+            return; // User không có NhanVien record
+        }
+
+        // Update NhanVien fields from request
+        if (request.getHoTen() != null) {
+            nhanVien.setHoTen(request.getHoTen());
+        }
+        if (request.getSdt() != null) {
+            nhanVien.setSdt(request.getSdt());
+        }
+        if (request.getDiaChi() != null) {
+            nhanVien.setDiaChi(request.getDiaChi());
+        }
+
+        nhanVienRepository.save(nhanVien);
     }
 
     public void changePassword(Long userId, ChangePasswordRequest request) {

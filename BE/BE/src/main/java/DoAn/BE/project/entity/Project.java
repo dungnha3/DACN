@@ -44,6 +44,9 @@ public class Project {
     @Column(name = "end_date")
     private LocalDate endDate;
 
+    @Column(name = "budget", precision = 15, scale = 2)
+    private java.math.BigDecimal budget;
+
     @ManyToOne
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;

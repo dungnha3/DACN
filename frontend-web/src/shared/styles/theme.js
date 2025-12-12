@@ -6,26 +6,26 @@ export const colors = {
   // Primary colors
   primary: '#344767',
   secondary: '#7b809a',
-  
+
   // Status colors
   success: '#10b981',
   warning: '#f59e0b',
   error: '#ef4444',
   info: '#3b82f6',
-  
+
   // Background colors
   background: '#f0f2f5',
   white: '#ffffff',
-  
+
   // Text colors
   textPrimary: '#344767',
   textSecondary: '#7b809a',
   textMuted: '#6b7280',
-  
+
   // Border colors
   border: '#d2d6da',
   borderLight: '#e5e7eb',
-  
+
   // Gradient colors
   gradientPrimary: 'linear-gradient(195deg, #42424a, #191919)',
   gradientSuccess: 'linear-gradient(195deg, #66bb6a, #43a047)',
@@ -35,7 +35,7 @@ export const colors = {
 
 export const typography = {
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-  
+
   // Font sizes
   xs: '12px',
   sm: '13px',
@@ -46,7 +46,7 @@ export const typography = {
   '3xl': '24px',
   '4xl': '28px',
   '5xl': '32px',
-  
+
   // Font weights
   normal: 400,
   medium: 500,

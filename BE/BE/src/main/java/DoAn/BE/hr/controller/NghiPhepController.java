@@ -21,9 +21,9 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/nghi-phep")
+@RequestMapping("/api/nghi-phep")
 public class NghiPhepController {
-    
+
     private final NghiPhepService nghiPhepService;
     private final NghiPhepMapper nghiPhepMapper;
 
@@ -31,12 +31,12 @@ public class NghiPhepController {
         this.nghiPhepService = nghiPhepService;
         this.nghiPhepMapper = nghiPhepMapper;
     }
-    
+
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return (User) auth.getPrincipal();
     }
-    
+
     /**
      * Tạo đơn nghỉ phép mới
      * POST /api/nghi-phep
@@ -47,7 +47,7 @@ public class NghiPhepController {
         NghiPhep nghiPhep = nghiPhepService.createNghiPhep(request, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(nghiPhepMapper.toDTO(nghiPhep));
     }
-    
+
     /**
      * Lấy thông tin nghỉ phép theo ID
      * GET /api/nghi-phep/{id}
@@ -58,7 +58,7 @@ public class NghiPhepController {
         NghiPhep nghiPhep = nghiPhepService.getNghiPhepById(id, currentUser);
         return ResponseEntity.ok(nghiPhepMapper.toDTO(nghiPhep));
     }
-    
+
     /**
      * Lấy danh sách tất cả nghỉ phép
      * GET /api/nghi-phep
@@ -69,7 +69,7 @@ public class NghiPhepController {
         List<NghiPhep> nghiPheps = nghiPhepService.getAllNghiPhep(currentUser);
         return ResponseEntity.ok(nghiPhepMapper.toDTOList(nghiPheps));
     }
-    
+
     /**
      * Cập nhật đơn nghỉ phép
      * PUT /api/nghi-phep/{id}
@@ -82,7 +82,7 @@ public class NghiPhepController {
         NghiPhep nghiPhep = nghiPhepService.updateNghiPhep(id, request, currentUser);
         return ResponseEntity.ok(nghiPhepMapper.toDTO(nghiPhep));
     }
-    
+
     /**
      * Xóa đơn nghỉ phép
      * DELETE /api/nghi-phep/{id}
@@ -94,17 +94,26 @@ public class NghiPhepController {
         response.put("message", "Xóa đơn nghỉ phép thành công");
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Lấy nghỉ phép theo nhân viên
      * GET /api/nghi-phep/nhan-vien/{nhanvienId}
      */
     @GetMapping("/nhan-vien/{nhanvienId}")
-    public ResponseEntity<List<NghiPhepDTO>> getNghiPhepByNhanVien(@PathVariable Long nhanvienId) {
-        List<NghiPhep> nghiPheps = nghiPhepService.getNghiPhepByNhanVien(nhanvienId);
-        return ResponseEntity.ok(nghiPhepMapper.toDTOList(nghiPheps));
+    public ResponseEntity<?> getNghiPhepByNhanVien(@PathVariable Long nhanvienId) {
+        try {
+            List<NghiPhep> nghiPheps = nghiPhepService.getNghiPhepByNhanVien(nhanvienId);
+            return ResponseEntity.ok(nghiPhepMapper.toDTOList(nghiPheps));
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Internal Server Error");
+            error.put("message", e.getMessage());
+            error.put("trace", e.toString());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
-    
+
     /**
      * Lấy nghỉ phép trong khoảng thời gian
      * GET /api/nghi-phep/date-range?startDate=2024-01-01&endDate=2024-12-31
@@ -116,7 +125,7 @@ public class NghiPhepController {
         List<NghiPhep> nghiPheps = nghiPhepService.getNghiPhepInDateRange(startDate, endDate);
         return ResponseEntity.ok(nghiPhepMapper.toDTOList(nghiPheps));
     }
-    
+
     /**
      * Lấy danh sách đơn chờ duyệt
      * GET /api/nghi-phep/pending
@@ -126,7 +135,7 @@ public class NghiPhepController {
         List<NghiPhep> nghiPheps = nghiPhepService.getPendingNghiPhep();
         return ResponseEntity.ok(nghiPhepMapper.toDTOList(nghiPheps));
     }
-    
+
     /**
      * Lấy danh sách đơn đã duyệt
      * GET /api/nghi-phep/approved
@@ -136,7 +145,7 @@ public class NghiPhepController {
         List<NghiPhep> nghiPheps = nghiPhepService.getApprovedNghiPhep();
         return ResponseEntity.ok(nghiPhepMapper.toDTOList(nghiPheps));
     }
-    
+
     /**
      * Lấy danh sách đơn bị từ chối
      * GET /api/nghi-phep/rejected
@@ -146,7 +155,7 @@ public class NghiPhepController {
         List<NghiPhep> nghiPheps = nghiPhepService.getRejectedNghiPhep();
         return ResponseEntity.ok(nghiPhepMapper.toDTOList(nghiPheps));
     }
-    
+
     /**
      * Duyệt đơn nghỉ phép
      * PATCH /api/nghi-phep/{id}/approve
@@ -159,7 +168,7 @@ public class NghiPhepController {
         NghiPhep nghiPhep = nghiPhepService.approveNghiPhep(id, request.getGhiChu(), currentUser);
         return ResponseEntity.ok(nghiPhepMapper.toDTO(nghiPhep));
     }
-    
+
     /**
      * Từ chối đơn nghỉ phép
      * PATCH /api/nghi-phep/{id}/reject
@@ -172,7 +181,7 @@ public class NghiPhepController {
         NghiPhep nghiPhep = nghiPhepService.rejectNghiPhep(id, request.getGhiChu(), currentUser);
         return ResponseEntity.ok(nghiPhepMapper.toDTO(nghiPhep));
     }
-    
+
     /**
      * Tính tổng số ngày nghỉ của nhân viên trong năm
      * GET /api/nghi-phep/nhan-vien/{nhanvienId}/total-days?year=2024
@@ -188,7 +197,7 @@ public class NghiPhepController {
         response.put("totalLeaveDays", totalDays);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Kiểm tra nhân viên có đang nghỉ phép không
      * GET /api/nghi-phep/nhan-vien/{nhanvienId}/is-on-leave?date=2024-01-15

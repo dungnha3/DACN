@@ -16,28 +16,28 @@ import EmployeeDetailModal from '../components/EmployeeDetailModal';
 
 const ITEMS_PER_PAGE = 9;
 
-export default function DepartmentsPage() {
+export default function DepartmentsPage({ glassMode = false }) {
   const [departments, setDepartments] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   // State cho modal xem nhân viên
   const [showEmployeeModal, setShowEmployeeModal] = useState(false);
   const [selectedDepartmentEmployees, setSelectedDepartmentEmployees] = useState([]);
   const [selectedDepartmentName, setSelectedDepartmentName] = useState('');
-  
+
   // State cho modal chi tiết nhân viên
   const [showEmployeeDetailModal, setShowEmployeeDetailModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  
+
   const { isHRManager } = usePermissions();
   const { handleError } = useErrorHandler();
-  
+
   useEffect(() => {
     loadData();
   }, []);
-  
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -56,7 +56,7 @@ export default function DepartmentsPage() {
   };
 
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -67,7 +67,7 @@ export default function DepartmentsPage() {
   });
 
   const filteredDepartments = useMemo(() => {
-    return departments.filter(dept => 
+    return departments.filter(dept =>
       dept.tenPhongBan.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [departments, searchTerm]);
@@ -107,7 +107,7 @@ export default function DepartmentsPage() {
   };
 
   const handleDelete = async (id) => {
-    if(confirm('Bạn có chắc chắn muốn xóa phòng ban này?')) {
+    if (confirm('Bạn có chắc chắn muốn xóa phòng ban này?')) {
       try {
         setLoading(true);
         await departmentsService.delete(id);
@@ -124,8 +124,8 @@ export default function DepartmentsPage() {
 
   // Xử lý xem danh sách nhân viên
   const handleViewEmployees = (dept) => {
-    const deptEmployees = employees.filter(emp => 
-      emp.phongbanId === dept.phongbanId || 
+    const deptEmployees = employees.filter(emp =>
+      emp.phongbanId === dept.phongbanId ||
       (emp.phongban && emp.phongban.phongbanId === dept.phongbanId)
     );
     setSelectedDepartmentEmployees(deptEmployees);
@@ -151,7 +151,7 @@ export default function DepartmentsPage() {
       <span style={{
         background: style.bg, color: style.color,
         padding: '4px 8px', borderRadius: '6px',
-        fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', 
+        fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
         display: 'inline-block', whiteSpace: 'nowrap'
       }}>
         {style.text}
@@ -193,6 +193,19 @@ export default function DepartmentsPage() {
     );
   }
 
+  // GLASS STYLES OVERRIDES
+  const glassCardStyle = glassMode ? {
+    background: 'rgba(255, 255, 255, 0.55)',
+    backdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255, 255, 255, 0.6)',
+    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.07)'
+  } : {};
+
+  const glassInputStyle = glassMode ? {
+    background: 'rgba(255, 255, 255, 0.4)',
+    border: '1px solid rgba(255, 255, 255, 0.6)'
+  } : {};
+
   return (
     <div style={s.container}>
       <div style={s.headerWrapper}>
@@ -201,22 +214,22 @@ export default function DepartmentsPage() {
           <h1 style={s.pageTitle}>Quản lý Phòng Ban</h1>
         </div>
         <button style={s.btnAdd} onClick={handleAddNew}>
-          <span style={{marginRight: 6}}>+</span> Thêm mới
+          <span style={{ marginRight: 6 }}>+</span> Thêm mới
         </button>
       </div>
 
       <div style={s.statsGrid}>
-        <StatCard title="Tổng phòng ban" value={stats.totalDepts} icon="🏢" color="#3b82f6" />
-        <StatCard title="Tổng nhân sự" value={stats.totalEmps} icon="👥" color="#10b981" />
-        <StatCard title="Chưa có trưởng phòng" value={stats.noManager} icon="⚠️" color="#f59e0b" />
+        <StatCard title="Tổng phòng ban" value={stats.totalDepts} icon="🏢" color="#3b82f6" glassMode={glassMode} glassStyle={glassCardStyle} />
+        <StatCard title="Tổng nhân sự" value={stats.totalEmps} icon="👥" color="#10b981" glassMode={glassMode} glassStyle={glassCardStyle} />
+        <StatCard title="Chưa có trưởng phòng" value={stats.noManager} icon="⚠️" color="#f59e0b" glassMode={glassMode} glassStyle={glassCardStyle} />
       </div>
 
       <div style={s.searchBar}>
         <div style={s.searchWrapper}>
           <span style={s.searchIcon}>🔍</span>
-          <input 
-            style={s.searchInput} 
-            placeholder="Tìm kiếm phòng ban..." 
+          <input
+            style={s.searchInput}
+            placeholder="Tìm kiếm phòng ban..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
@@ -225,16 +238,16 @@ export default function DepartmentsPage() {
 
       <div style={s.grid}>
         {paginatedDepartments.map(dept => (
-          <div 
-            key={dept.phongbanId} 
-            style={{...s.card, cursor: 'pointer'}} 
+          <div
+            key={dept.phongbanId}
+            style={{ ...s.card, ...glassCardStyle, cursor: 'pointer' }}
             onClick={() => handleViewEmployees(dept)}
           >
             <div style={s.cardHeader}>
               <div style={s.iconBox}>🏢</div>
               <div style={s.actionMenu} onClick={e => e.stopPropagation()}>
                 <button style={s.iconBtn} onClick={() => handleEdit(dept)}>✏️</button>
-                <button style={{...s.iconBtn, color: '#ef4444'}} onClick={() => handleDelete(dept.phongbanId)}>🗑️</button>
+                <button style={{ ...s.iconBtn, color: '#ef4444' }} onClick={() => handleDelete(dept.phongbanId)}>🗑️</button>
               </div>
             </div>
 
@@ -255,7 +268,7 @@ export default function DepartmentsPage() {
                   <span style={s.noManager}>Chưa bổ nhiệm</span>
                 )}
               </div>
-              
+
               <div style={s.infoItem}>
                 <span style={s.infoLabel}>Nhân sự</span>
                 <div style={s.empCountBadge}>
@@ -270,10 +283,10 @@ export default function DepartmentsPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
-          <Pagination 
-            currentPage={currentPage} 
-            totalPages={totalPages} 
-            onPageChange={setCurrentPage} 
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
           />
         </div>
       )}
@@ -281,18 +294,18 @@ export default function DepartmentsPage() {
       {/* MODAL XEM NHÂN VIÊN */}
       {showEmployeeModal && (
         <div style={s.modalOverlay} onClick={() => setShowEmployeeModal(false)}>
-          <div style={{...s.modal, width: '900px', maxWidth: '95vw'}} onClick={e => e.stopPropagation()}>
+          <div style={{ ...s.modal, width: '900px', maxWidth: '95vw' }} onClick={e => e.stopPropagation()}>
             <div style={s.modalHeader}>
               <h3 style={s.modalTitle}>
                 Danh sách nhân viên - {selectedDepartmentName}
-                <span style={{fontSize: 14, fontWeight: 400, color: '#7b809a', marginLeft: 10}}>
+                <span style={{ fontSize: 14, fontWeight: 400, color: '#7b809a', marginLeft: 10 }}>
                   ({selectedDepartmentEmployees.length} nhân sự)
                 </span>
               </h3>
               <button style={s.closeBtn} onClick={() => setShowEmployeeModal(false)}>×</button>
             </div>
-            
-            <div style={{...s.modalBody, maxHeight: '70vh', overflowY: 'auto', padding: 0}}>
+
+            <div style={{ ...s.modalBody, maxHeight: '70vh', overflowY: 'auto', padding: 0 }}>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -306,8 +319,8 @@ export default function DepartmentsPage() {
                   {selectedDepartmentEmployees.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} align="center">
-                        <EmptyState 
-                          icon="👥" 
+                        <EmptyState
+                          icon="👥"
                           title="Chưa có nhân viên"
                           message="Phòng ban này chưa có nhân viên nào"
                         />
@@ -315,13 +328,13 @@ export default function DepartmentsPage() {
                     </TableRow>
                   ) : (
                     selectedDepartmentEmployees.map(emp => (
-                      <TableRow key={emp.nhanvienId} style={{cursor: 'pointer'}} onClick={() => handleViewEmployeeDetail(emp)}>
+                      <TableRow key={emp.nhanvienId} style={{ cursor: 'pointer' }} onClick={() => handleViewEmployeeDetail(emp)}>
                         <TableCell>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <div style={{
-                              width: 36, height: 36, borderRadius: 10, 
+                              width: 36, height: 36, borderRadius: 10,
                               background: 'linear-gradient(195deg, #42424a, #191919)',
-                              color: '#fff', display: 'grid', placeItems: 'center', 
+                              color: '#fff', display: 'grid', placeItems: 'center',
                               fontSize: 16, boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                             }}>
                               {emp.avatar || '👤'}
@@ -356,7 +369,7 @@ export default function DepartmentsPage() {
                 </TableBody>
               </Table>
             </div>
-            
+
             <div style={s.modalFooter}>
               <button style={s.btnCancel} onClick={() => setShowEmployeeModal(false)}>Đóng</button>
             </div>
@@ -374,29 +387,29 @@ export default function DepartmentsPage() {
             </div>
             <div style={s.modalBody}>
               <div style={s.formGroup}>
-                <label style={s.label}>Tên phòng ban <span style={{color:'red'}}>*</span></label>
-                <input 
-                  style={s.input} 
+                <label style={s.label}>Tên phòng ban <span style={{ color: 'red' }}>*</span></label>
+                <input
+                  style={s.input}
                   value={formData.tenPhongBan}
-                  onChange={e => setFormData({...formData, tenPhongBan: e.target.value})}
+                  onChange={e => setFormData({ ...formData, tenPhongBan: e.target.value })}
                   placeholder="VD: Phòng Marketing"
                 />
               </div>
               <div style={s.formGroup}>
                 <label style={s.label}>Mô tả</label>
-                <textarea 
-                  style={s.textarea} 
+                <textarea
+                  style={s.textarea}
                   value={formData.moTa}
-                  onChange={e => setFormData({...formData, moTa: e.target.value})}
+                  onChange={e => setFormData({ ...formData, moTa: e.target.value })}
                   placeholder="Mô tả chức năng, nhiệm vụ..."
                 />
               </div>
               <div style={s.formGroup}>
                 <label style={s.label}>Trưởng phòng</label>
-                <select 
+                <select
                   style={s.select}
                   value={formData.truongPhongId}
-                  onChange={e => setFormData({...formData, truongPhongId: e.target.value})}
+                  onChange={e => setFormData({ ...formData, truongPhongId: e.target.value })}
                 >
                   <option value="">-- Chọn nhân viên --</option>
                   {employees.map(e => (
@@ -415,7 +428,7 @@ export default function DepartmentsPage() {
 
       {/* MODAL CHI TIẾT NHÂN VIÊN */}
       {showEmployeeDetailModal && selectedEmployee && (
-        <EmployeeDetailModal 
+        <EmployeeDetailModal
           employee={selectedEmployee}
           onClose={() => {
             setShowEmployeeDetailModal(false);
@@ -427,14 +440,14 @@ export default function DepartmentsPage() {
   );
 }
 
-function StatCard({ title, value, icon, color }) {
+function StatCard({ title, value, icon, color, glassMode, glassStyle }) {
   return (
-    <div style={s.statCard}>
+    <div style={{ ...s.statCard, ...(glassMode ? glassStyle : {}) }}>
       <div>
         <div style={s.statTitle}>{title}</div>
-        <div style={{...s.statValue, color}}>{value}</div>
+        <div style={{ ...s.statValue, color }}>{value}</div>
       </div>
-      <div style={{...s.statIcon, color, background: `${color}15`}}>{icon}</div>
+      <div style={{ ...s.statIcon, color, background: `${color}15` }}>{icon}</div>
     </div>
   );
 }
@@ -461,7 +474,7 @@ const s = {
     fontSize: 13, fontWeight: 700, cursor: 'pointer',
     boxShadow: '0 4px 6px rgba(251, 140, 0, 0.2)', display: 'flex', alignItems: 'center'
   },
-  
+
   statsGrid: {
     display: 'flex', gap: 20, marginBottom: 24
   },
@@ -509,11 +522,11 @@ const s = {
   deptName: { fontSize: 18, fontWeight: 700, color: '#344767', margin: '0 0 8px 0' },
   deptDesc: { fontSize: 13, color: '#7b809a', lineHeight: 1.5, height: 40, overflow: 'hidden', marginBottom: 16 },
   divider: { height: 1, background: '#f0f2f5', marginBottom: 16 },
-  
+
   cardInfo: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' },
   infoItem: { display: 'flex', flexDirection: 'column', gap: 6 },
   infoLabel: { fontSize: 11, textTransform: 'uppercase', color: '#7b809a', fontWeight: 700 },
-  
+
   managerBox: { display: 'flex', alignItems: 'center', gap: 8 },
   managerAvatar: {
     width: 24, height: 24, borderRadius: '50%', background: '#3b82f6', color: '#fff',
@@ -521,7 +534,7 @@ const s = {
   },
   managerName: { fontSize: 14, fontWeight: 600, color: '#344767' },
   noManager: { fontSize: 13, color: '#9ca3af', fontStyle: 'italic' },
-  
+
   empCountBadge: {
     background: '#f0fdf4', color: '#166534', padding: '4px 10px',
     borderRadius: 20, fontSize: 12, fontWeight: 700, border: '1px solid #dcfce7'
@@ -538,27 +551,27 @@ const s = {
   modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   modalTitle: { margin: 0, fontSize: 20, fontWeight: 700, color: '#344767' },
   closeBtn: { border: 'none', background: 'none', fontSize: 24, cursor: 'pointer', color: '#7b809a' },
-  
+
   modalBody: { display: 'flex', flexDirection: 'column', gap: 16 },
   formGroup: { display: 'flex', flexDirection: 'column', gap: 8 },
   label: { fontSize: 14, fontWeight: 600, color: '#344767' },
-  
+
   // FIX: Thêm màu chữ và nền rõ ràng cho Input/Select
   input: {
-    width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #d2d6da', 
+    width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #d2d6da',
     outline: 'none', fontSize: 14, color: '#344767', background: '#fff', boxSizing: 'border-box'
   },
   textarea: {
-    width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #d2d6da', 
+    width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #d2d6da',
     outline: 'none', fontSize: 14, minHeight: 80, resize: 'vertical',
     color: '#344767', background: '#fff', fontFamily: 'inherit', boxSizing: 'border-box'
   },
   select: {
-    width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #d2d6da', 
-    outline: 'none', fontSize: 14, color: '#344767', background: '#fff', 
+    width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #d2d6da',
+    outline: 'none', fontSize: 14, color: '#344767', background: '#fff',
     cursor: 'pointer', boxSizing: 'border-box'
   },
-  
+
   modalFooter: {
     marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 12, paddingTop: 16, borderTop: '1px solid #f0f2f5'
   },

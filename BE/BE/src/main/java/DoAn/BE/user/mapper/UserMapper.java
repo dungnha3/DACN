@@ -10,13 +10,13 @@ import java.util.stream.Collectors;
 
 @Component
 public class UserMapper {
-    
+
     private final NhanVienRepository nhanVienRepository;
-    
+
     public UserMapper(NhanVienRepository nhanVienRepository) {
         this.nhanVienRepository = nhanVienRepository;
     }
-    
+
     /**
      * Convert User entity to UserDTO
      */
@@ -24,7 +24,7 @@ public class UserMapper {
         if (user == null) {
             return null;
         }
-        
+
         UserDTO dto = new UserDTO();
         dto.setUserId(user.getUserId());
         dto.setUsername(user.getUsername());
@@ -37,14 +37,14 @@ public class UserMapper {
         dto.setLastSeen(user.getLastSeen());
         dto.setCreatedAt(user.getCreatedAt());
         dto.setLastLogin(user.getLastLogin());
-        
+
         // Lấy nhanvienId nếu user có liên kết với NhanVien
         nhanVienRepository.findByUser_UserId(user.getUserId())
-            .ifPresent(nhanVien -> dto.setNhanvienId(nhanVien.getNhanvienId()));
-        
+                .ifPresent(nhanVien -> dto.setNhanvienId(nhanVien.getNhanvienId()));
+
         return dto;
     }
-    
+
     /**
      * Convert list of User entities to list of UserDTOs
      */
@@ -52,10 +52,9 @@ public class UserMapper {
         if (users == null) {
             return null;
         }
-        
+
         return users.stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 }
-

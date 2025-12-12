@@ -11,56 +11,59 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ChamCongRepository extends JpaRepository<ChamCong, Long> {
-    
-    // Tìm theo nhân viên
-    List<ChamCong> findByNhanVien_NhanvienIdOrderByNgayChamDesc(Long nhanvienId);
-    
-    // Tìm theo khoảng thời gian
-    List<ChamCong> findByNgayChamBetween(LocalDate start, LocalDate end);
-    
-    // Tìm theo nhân viên và khoảng thời gian
-    List<ChamCong> findByNhanVien_NhanvienIdAndNgayChamBetween(Long nhanvienId, LocalDate start, LocalDate end);
-    
-    // Tìm theo nhân viên và ngày cụ thể (cho GPS attendance)
-    List<ChamCong> findByNhanVien_NhanvienIdAndNgayCham(Long nhanvienId, LocalDate ngayCham);
-    
-    // Đếm số ngày công (trạng thái hợp lệ)
-    @Query("SELECT COUNT(cc) FROM ChamCong cc WHERE cc.nhanVien.nhanvienId = :nhanvienId " +
-           "AND cc.ngayCham BETWEEN :startDate AND :endDate " +
-           "AND cc.trangThai IN ('DU_GIO', 'DI_TRE', 'VE_SOM')")
-    int countWorkingDaysByNhanVienAndMonth(@Param("nhanvienId") Long nhanvienId, 
-                                           @Param("startDate") LocalDate startDate, 
-                                           @Param("endDate") LocalDate endDate);
-    
-    // Tính tổng giờ làm việc  
-    @Query("SELECT COALESCE(SUM(cc.soGioLam), 0) FROM ChamCong cc WHERE cc.nhanVien.nhanvienId = :nhanvienId " +
-           "AND cc.ngayCham BETWEEN :startDate AND :endDate")
-    BigDecimal sumWorkingHoursByNhanVienAndMonth(@Param("nhanvienId") Long nhanvienId, 
-                                                  @Param("startDate") LocalDate startDate, 
-                                                  @Param("endDate") LocalDate endDate);
-    
-    // Đếm số ngày đi trễ (dựa vào gioVao > 08:00)
-    @Query("SELECT COUNT(cc) FROM ChamCong cc WHERE cc.nhanVien.nhanvienId = :nhanvienId " +
-           "AND cc.ngayCham BETWEEN :startDate AND :endDate " +
-           "AND HOUR(cc.gioVao) * 60 + MINUTE(cc.gioVao) > 480")
-    long countLateDaysByNhanVienAndMonth(@Param("nhanvienId") Long nhanvienId, 
-                                         @Param("startDate") LocalDate startDate, 
-                                         @Param("endDate") LocalDate endDate);
-    
-    // Đếm số ngày về sớm (dựa vào gioRa < 17:00)
-    @Query("SELECT COUNT(cc) FROM ChamCong cc WHERE cc.nhanVien.nhanvienId = :nhanvienId " +
-           "AND cc.ngayCham BETWEEN :startDate AND :endDate " +
-           "AND cc.gioRa IS NOT NULL " +
-           "AND HOUR(cc.gioRa) * 60 + MINUTE(cc.gioRa) < 1020")
-    long countEarlyLeaveDaysByNhanVienAndMonth(@Param("nhanvienId") Long nhanvienId, 
-                                               @Param("startDate") LocalDate startDate, 
-                                               @Param("endDate") LocalDate endDate);
-    
-    // Tìm theo nhân viên và khoảng thời gian (cần cho dashboard)
-    List<ChamCong> findByNhanVienAndNgayChamBetween(DoAn.BE.hr.entity.NhanVien nhanVien, LocalDate startDate, LocalDate endDate);
-    
-    // Tìm chấm công theo danh sách user ID (cho Project Manager)
-    List<ChamCong> findByNhanVien_User_UserIdIn(List<Long> userIds);
+
+       // Tìm theo nhân viên
+       List<ChamCong> findByNhanVien_NhanvienIdOrderByNgayChamDesc(Long nhanvienId);
+
+       // Tìm theo khoảng thời gian
+       List<ChamCong> findByNgayChamBetween(LocalDate start, LocalDate end);
+
+       // Tìm theo nhân viên và khoảng thời gian
+       List<ChamCong> findByNhanVien_NhanvienIdAndNgayChamBetween(Long nhanvienId, LocalDate start, LocalDate end);
+
+       // Tìm theo nhân viên và ngày cụ thể (cho GPS attendance)
+       List<ChamCong> findByNhanVien_NhanvienIdAndNgayCham(Long nhanvienId, LocalDate ngayCham);
+
+       // Đếm số ngày công (trạng thái hợp lệ)
+       @Query(value = "SELECT COUNT(*) FROM cham_cong cc " +
+                     "WHERE cc.nhanvien_id = :nhanvienId " +
+                     "AND cc.ngay_cham BETWEEN :startDate AND :endDate " +
+                     "AND cc.trang_thai IN ('DU_GIO', 'DI_TRE', 'VE_SOM')", nativeQuery = true)
+       int countWorkingDaysByNhanVienAndMonth(@Param("nhanvienId") Long nhanvienId,
+                     @Param("startDate") LocalDate startDate,
+                     @Param("endDate") LocalDate endDate);
+
+       // Tính tổng giờ làm việc
+       @Query(value = "SELECT COALESCE(SUM(cc.so_gio_lam), 0) FROM cham_cong cc " +
+                     "WHERE cc.nhanvien_id = :nhanvienId " +
+                     "AND cc.ngay_cham BETWEEN :startDate AND :endDate", nativeQuery = true)
+       BigDecimal sumWorkingHoursByNhanVienAndMonth(@Param("nhanvienId") Long nhanvienId,
+                     @Param("startDate") LocalDate startDate,
+                     @Param("endDate") LocalDate endDate);
+
+       // Đếm số ngày đi trễ (dựa vào gioVao > 08:00) -> 8 * 60 = 480 minutes
+       @Query(value = "SELECT COUNT(*) FROM cham_cong cc " +
+                     "WHERE cc.nhanvien_id = :nhanvienId " +
+                     "AND cc.ngay_cham BETWEEN :startDate AND :endDate " +
+                     "AND DATEPART(HOUR, cc.gio_vao) * 60 + DATEPART(MINUTE, cc.gio_vao) > 480", nativeQuery = true)
+       long countLateDaysByNhanVienAndMonth(@Param("nhanvienId") Long nhanvienId,
+                     @Param("startDate") LocalDate startDate,
+                     @Param("endDate") LocalDate endDate);
+
+       // Đếm số ngày về sớm (dựa vào gioRa < 17:00) -> 17 * 60 = 1020 minutes
+       @Query(value = "SELECT COUNT(*) FROM cham_cong cc " +
+                     "WHERE cc.nhanvien_id = :nhanvienId " +
+                     "AND cc.ngay_cham BETWEEN :startDate AND :endDate " +
+                     "AND cc.gio_ra IS NOT NULL " +
+                     "AND DATEPART(HOUR, cc.gio_ra) * 60 + DATEPART(MINUTE, cc.gio_ra) < 1020", nativeQuery = true)
+       long countEarlyLeaveDaysByNhanVienAndMonth(@Param("nhanvienId") Long nhanvienId,
+                     @Param("startDate") LocalDate startDate,
+                     @Param("endDate") LocalDate endDate);
+
+       // Tìm theo nhân viên và khoảng thời gian (cần cho dashboard)
+       List<ChamCong> findByNhanVienAndNgayChamBetween(DoAn.BE.hr.entity.NhanVien nhanVien, LocalDate startDate,
+                     LocalDate endDate);
+
+       // Tìm chấm công theo danh sách user ID (cho Project Manager)
+       List<ChamCong> findByNhanVien_User_UserIdIn(List<Long> userIds);
 }
-
-

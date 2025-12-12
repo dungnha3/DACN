@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class MessDTO {
     private Long messageId;
-    private Long roomId;                  
+    private Long roomId;
     private UserDTO sender;
     private String content;
     private Message.MessageType messageType = Message.MessageType.TEXT;
@@ -22,7 +22,7 @@ public class MessDTO {
     private String fileUrl;
     private Long fileSize;
     private String fileType;
-    
+
     private LocalDateTime sentAt;
     private LocalDateTime editedAt;
     private Boolean isDeleted = false;

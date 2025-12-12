@@ -60,6 +60,17 @@ public class ProfileController {
     }
 
     /**
+     * Cập nhật profile của user hiện tại (alias for /me endpoint)
+     * PUT /api/profile/me
+     */
+    @PutMapping("/me")
+    public ResponseEntity<UserDTO> updateProfileMe(@Valid @RequestBody UpdateUserRequest request) {
+        Long userId = getCurrentUserId();
+        User user = profileService.updateProfile(userId, request);
+        return ResponseEntity.ok(userMapper.toDTO(user));
+    }
+
+    /**
      * Đổi mật khẩu
      * POST /api/profile/change-password
      */

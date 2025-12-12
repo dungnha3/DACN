@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class WebSocketMessage {
-    
+
     public enum MessageType {
         CHAT_MESSAGE,
         TYPING_START,
@@ -20,7 +20,7 @@ public class WebSocketMessage {
         ROOM_UPDATED,
         NOTIFICATION
     }
-    
+
     private MessageType type;
     private Long roomId;
     private Long userId;
@@ -29,7 +29,7 @@ public class WebSocketMessage {
     private Long messageId;
     private String timestamp;
     private Object data; // For additional data like file info, etc.
-    
+
     // Constructor for chat messages
     public WebSocketMessage(MessageType type, Long roomId, Long userId, String username, String content) {
         this.type = type;
@@ -39,7 +39,7 @@ public class WebSocketMessage {
         this.content = content;
         this.timestamp = java.time.LocalDateTime.now().toString();
     }
-    
+
     // Constructor for typing indicators
     public WebSocketMessage(MessageType type, Long roomId, Long userId, String username) {
         this.type = type;
@@ -48,7 +48,7 @@ public class WebSocketMessage {
         this.username = username;
         this.timestamp = java.time.LocalDateTime.now().toString();
     }
-    
+
     // Constructor for notifications
     public WebSocketMessage(MessageType type, String content, Object data) {
         this.type = type;

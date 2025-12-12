@@ -15,9 +15,9 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/chuc-vu")
+@RequestMapping("/api/chuc-vu")
 public class ChucVuController {
-    
+
     private final ChucVuService chucVuService;
     private final ChucVuMapper chucVuMapper;
 
@@ -25,25 +25,25 @@ public class ChucVuController {
         this.chucVuService = chucVuService;
         this.chucVuMapper = chucVuMapper;
     }
-    
+
     @PostMapping
     public ResponseEntity<ChucVuDTO> createChucVu(@Valid @RequestBody ChucVuRequest request) {
         ChucVu chucVu = chucVuService.createChucVu(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(chucVuMapper.toDTO(chucVu));
     }
-    
+
     @GetMapping("/{id}")
     public ResponseEntity<ChucVuDTO> getChucVuById(@PathVariable Long id) {
         ChucVu chucVu = chucVuService.getChucVuById(id);
         return ResponseEntity.ok(chucVuMapper.toDTO(chucVu));
     }
-    
+
     @GetMapping
     public ResponseEntity<List<ChucVuDTO>> getAllChucVu() {
         List<ChucVu> chucVus = chucVuService.getAllChucVu();
         return ResponseEntity.ok(chucVuMapper.toDTOList(chucVus));
     }
-    
+
     @PutMapping("/{id}")
     public ResponseEntity<ChucVuDTO> updateChucVu(
             @PathVariable Long id,
@@ -51,7 +51,7 @@ public class ChucVuController {
         ChucVu chucVu = chucVuService.updateChucVu(id, request);
         return ResponseEntity.ok(chucVuMapper.toDTO(chucVu));
     }
-    
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteChucVu(@PathVariable Long id) {
         chucVuService.deleteChucVu(id);

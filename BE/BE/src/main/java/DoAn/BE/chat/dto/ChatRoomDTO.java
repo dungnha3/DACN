@@ -10,7 +10,6 @@ import DoAn.BE.chat.entity.ChatRoom;
 import DoAn.BE.chat.entity.Message;
 import DoAn.BE.user.entity.User;
 
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

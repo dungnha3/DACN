@@ -17,4 +17,5 @@ public class StorageStatsDTO {
     private Long remainingQuota;
     private String remainingQuotaFormatted;
     private Double usagePercentage;
+    private Long fileTypes; // Number of distinct file types
 }

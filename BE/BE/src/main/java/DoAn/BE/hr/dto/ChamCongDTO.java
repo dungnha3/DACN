@@ -24,7 +24,11 @@ public class ChamCongDTO {
     private TrangThaiChamCong trangThai;
     private String ghiChu;
     private LocalDateTime createdAt;
-    
+
+    // New fields for UI display
+    private String phongBan;
+    private String avatarUrl;
+
     // Computed fields
     private Boolean isLate;
     private Boolean isEarlyLeave;

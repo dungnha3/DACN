@@ -15,9 +15,9 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/phong-ban")
+@RequestMapping("/api/phong-ban")
 public class PhongBanController {
-    
+
     private final PhongBanService phongBanService;
     private final PhongBanMapper phongBanMapper;
 
@@ -25,25 +25,25 @@ public class PhongBanController {
         this.phongBanService = phongBanService;
         this.phongBanMapper = phongBanMapper;
     }
-    
+
     @PostMapping
     public ResponseEntity<PhongBanDTO> createPhongBan(@Valid @RequestBody PhongBanRequest request) {
         PhongBan phongBan = phongBanService.createPhongBan(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(phongBanMapper.toDTO(phongBan));
     }
-    
+
     @GetMapping("/{id}")
     public ResponseEntity<PhongBanDTO> getPhongBanById(@PathVariable Long id) {
         PhongBan phongBan = phongBanService.getPhongBanById(id);
         return ResponseEntity.ok(phongBanMapper.toDTO(phongBan));
     }
-    
+
     @GetMapping
     public ResponseEntity<List<PhongBanDTO>> getAllPhongBan() {
         List<PhongBan> phongBans = phongBanService.getAllPhongBan();
         return ResponseEntity.ok(phongBanMapper.toDTOList(phongBans));
     }
-    
+
     @PutMapping("/{id}")
     public ResponseEntity<PhongBanDTO> updatePhongBan(
             @PathVariable Long id,
@@ -51,7 +51,7 @@ public class PhongBanController {
         PhongBan phongBan = phongBanService.updatePhongBan(id, request);
         return ResponseEntity.ok(phongBanMapper.toDTO(phongBan));
     }
-    
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deletePhongBan(@PathVariable Long id) {
         phongBanService.deletePhongBan(id);

@@ -18,7 +18,7 @@ import jakarta.transaction.Transactional;
 @Service
 @Transactional
 public class HopDongService {
-    
+
     private final HopDongRepository hopDongRepository;
     private final NhanVienRepository nhanVienRepository;
 
@@ -30,9 +30,9 @@ public class HopDongService {
     // Tạo hợp đồng mới
     public HopDong createHopDong(HopDongRequest request) {
         NhanVien nhanVien = nhanVienRepository.findById(request.getNhanvienId())
-            .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
-        if (request.getNgayKetThuc() != null && 
-            request.getNgayKetThuc().isBefore(request.getNgayBatDau())) {
+                .orElseThrow(() -> new EntityNotFoundException("Nhân viên không tồn tại"));
+        if (request.getNgayKetThuc() != null &&
+                request.getNgayKetThuc().isBefore(request.getNgayBatDau())) {
             throw new BadRequestException("Ngày kết thúc phải sau ngày bắt đầu");
         }
 
@@ -51,7 +51,7 @@ public class HopDongService {
     // Lấy thông tin hợp đồng theo ID
     public HopDong getHopDongById(Long id) {
         return hopDongRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Hợp đồng không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("Hợp đồng không tồn tại"));
     }
 
     /**
@@ -68,8 +68,8 @@ public class HopDongService {
         HopDong hopDong = getHopDongById(id);
 
         // Không cho đổi nhân viên
-        if (request.getNhanvienId() != null && 
-            !request.getNhanvienId().equals(hopDong.getNhanVien().getNhanvienId())) {
+        if (request.getNhanvienId() != null &&
+                !request.getNhanvienId().equals(hopDong.getNhanVien().getNhanvienId())) {
             throw new BadRequestException("Không thể thay đổi nhân viên");
         }
 
@@ -91,8 +91,8 @@ public class HopDongService {
         }
 
         // Validate lại ngày
-        if (hopDong.getNgayKetThuc() != null && 
-            hopDong.getNgayKetThuc().isBefore(hopDong.getNgayBatDau())) {
+        if (hopDong.getNgayKetThuc() != null &&
+                hopDong.getNgayKetThuc().isBefore(hopDong.getNgayBatDau())) {
             throw new BadRequestException("Ngày kết thúc phải sau ngày bắt đầu");
         }
 
@@ -119,8 +119,8 @@ public class HopDongService {
      */
     public HopDong getActiveHopDong(Long nhanvienId) {
         return hopDongRepository.findFirstByNhanVien_NhanvienIdAndTrangThaiOrderByNgayBatDauDesc(
-            nhanvienId, TrangThaiHopDong.HIEU_LUC)
-            .orElseThrow(() -> new EntityNotFoundException("Nhân viên không có hợp đồng hiệu lực"));
+                nhanvienId, TrangThaiHopDong.HIEU_LUC)
+                .orElseThrow(() -> new EntityNotFoundException("Nhân viên không có hợp đồng hiệu lực"));
     }
 
     /**
@@ -144,15 +144,15 @@ public class HopDongService {
      */
     public HopDong renewHopDong(Long id, LocalDate newEndDate) {
         HopDong hopDong = getHopDongById(id);
-        
+
         if (hopDong.getTrangThai() != TrangThaiHopDong.HIEU_LUC) {
             throw new BadRequestException("Chỉ có thể gia hạn hợp đồng đang hiệu lực");
         }
-        
+
         if (newEndDate.isBefore(LocalDate.now())) {
             throw new BadRequestException("Ngày gia hạn phải sau ngày hiện tại");
         }
-        
+
         hopDong.setNgayKetThuc(newEndDate);
         return hopDongRepository.save(hopDong);
     }
@@ -181,6 +181,6 @@ public class HopDongService {
      */
     public boolean hasActiveContract(Long nhanvienId) {
         return hopDongRepository.findFirstByNhanVien_NhanvienIdAndTrangThaiOrderByNgayBatDauDesc(
-            nhanvienId, TrangThaiHopDong.HIEU_LUC).isPresent();
+                nhanvienId, TrangThaiHopDong.HIEU_LUC).isPresent();
     }
 }

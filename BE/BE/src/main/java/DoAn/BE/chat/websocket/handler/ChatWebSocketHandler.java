@@ -28,9 +28,9 @@ public class ChatWebSocketHandler {
     private final UserPresenceService userPresenceService;
 
     public ChatWebSocketHandler(SimpMessagingTemplate messagingTemplate,
-                               ChatRoomMemberRepository chatRoomMemberRepository,
-                               UserRepository userRepository,
-                               UserPresenceService userPresenceService) {
+            ChatRoomMemberRepository chatRoomMemberRepository,
+            UserRepository userRepository,
+            UserPresenceService userPresenceService) {
         this.messagingTemplate = messagingTemplate;
         this.chatRoomMemberRepository = chatRoomMemberRepository;
         this.userRepository = userRepository;
@@ -75,12 +75,11 @@ public class ChatWebSocketHandler {
 
             // Send message to all room members
             WebSocketMessage wsMessage = new WebSocketMessage(
-                WebSocketMessage.MessageType.CHAT_MESSAGE,
-                roomId,
-                user.getUserId(),
-                user.getUsername(),
-                message.getContent()
-            );
+                    WebSocketMessage.MessageType.CHAT_MESSAGE,
+                    roomId,
+                    user.getUserId(),
+                    user.getUsername(),
+                    message.getContent());
             wsMessage.setMessageId(System.currentTimeMillis()); // Temporary ID
 
             messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
@@ -97,7 +96,8 @@ public class ChatWebSocketHandler {
     public void handleTypingStart(@Payload WebSocketMessage message, SimpMessageHeaderAccessor headerAccessor) {
         try {
             Object principal = headerAccessor.getUser();
-            if (principal == null || !(principal instanceof User)) return;
+            if (principal == null || !(principal instanceof User))
+                return;
 
             User user = (User) principal;
             Long roomId = message.getRoomId();
@@ -107,19 +107,19 @@ public class ChatWebSocketHandler {
 
             // Check if user is member of the room
             boolean isMember = chatRoomMemberRepository.existsByChatRoom_RoomIdAndUser_UserId(roomId, user.getUserId());
-            if (!isMember) return;
+            if (!isMember)
+                return;
 
             // Add user to typing list
             typingUsers.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>())
-                      .put(user.getUserId(), System.currentTimeMillis());
+                    .put(user.getUserId(), System.currentTimeMillis());
 
             // Notify other users
             WebSocketMessage wsMessage = new WebSocketMessage(
-                WebSocketMessage.MessageType.TYPING_START,
-                roomId,
-                user.getUserId(),
-                user.getUsername()
-            );
+                    WebSocketMessage.MessageType.TYPING_START,
+                    roomId,
+                    user.getUserId(),
+                    user.getUsername());
 
             messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
 
@@ -135,7 +135,8 @@ public class ChatWebSocketHandler {
     public void handleTypingStop(@Payload WebSocketMessage message, SimpMessageHeaderAccessor headerAccessor) {
         try {
             Object principal = headerAccessor.getUser();
-            if (principal == null || !(principal instanceof User)) return;
+            if (principal == null || !(principal instanceof User))
+                return;
 
             User user = (User) principal;
             Long roomId = message.getRoomId();
@@ -154,11 +155,10 @@ public class ChatWebSocketHandler {
 
             // Notify other users
             WebSocketMessage wsMessage = new WebSocketMessage(
-                WebSocketMessage.MessageType.TYPING_STOP,
-                roomId,
-                user.getUserId(),
-                user.getUsername()
-            );
+                    WebSocketMessage.MessageType.TYPING_STOP,
+                    roomId,
+                    user.getUserId(),
+                    user.getUsername());
 
             messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
 
@@ -174,7 +174,8 @@ public class ChatWebSocketHandler {
     public void handleUserJoin(@Payload WebSocketMessage message, SimpMessageHeaderAccessor headerAccessor) {
         try {
             Object principal = headerAccessor.getUser();
-            if (principal == null || !(principal instanceof User)) return;
+            if (principal == null || !(principal instanceof User))
+                return;
 
             User user = (User) principal;
             Long roomId = message.getRoomId();
@@ -184,18 +185,18 @@ public class ChatWebSocketHandler {
 
             // Check if user is member of the room
             boolean isMember = chatRoomMemberRepository.existsByChatRoom_RoomIdAndUser_UserId(roomId, user.getUserId());
-            if (!isMember) return;
+            if (!isMember)
+                return;
 
             // Mark user as online
             userPresenceService.markUserOnline(user.getUserId());
 
             // Notify other users
             WebSocketMessage wsMessage = new WebSocketMessage(
-                WebSocketMessage.MessageType.USER_JOINED,
-                roomId,
-                user.getUserId(),
-                user.getUsername()
-            );
+                    WebSocketMessage.MessageType.USER_JOINED,
+                    roomId,
+                    user.getUserId(),
+                    user.getUsername());
 
             messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
 
@@ -211,7 +212,8 @@ public class ChatWebSocketHandler {
     public void handleUserLeave(@Payload WebSocketMessage message, SimpMessageHeaderAccessor headerAccessor) {
         try {
             Object principal = headerAccessor.getUser();
-            if (principal == null || !(principal instanceof User)) return;
+            if (principal == null || !(principal instanceof User))
+                return;
 
             User user = (User) principal;
             Long roomId = message.getRoomId();
@@ -233,11 +235,10 @@ public class ChatWebSocketHandler {
 
             // Notify other users
             WebSocketMessage wsMessage = new WebSocketMessage(
-                WebSocketMessage.MessageType.USER_LEFT,
-                roomId,
-                user.getUserId(),
-                user.getUsername()
-            );
+                    WebSocketMessage.MessageType.USER_LEFT,
+                    roomId,
+                    user.getUserId(),
+                    user.getUsername());
 
             messagingTemplate.convertAndSend("/topic/room." + roomId, wsMessage);
 
@@ -263,9 +264,9 @@ public class ChatWebSocketHandler {
         roomTypingUsers.entrySet().removeIf(entry -> currentTime - entry.getValue() > 5000);
 
         return roomTypingUsers.keySet().stream()
-            .map(userId -> userRepository.findById(userId)
-                .map(User::getUsername)
-                .orElse("Unknown"))
-            .toList();
+                .map(userId -> userRepository.findById(userId)
+                        .map(User::getUsername)
+                        .orElse("Unknown"))
+                .toList();
     }
 }

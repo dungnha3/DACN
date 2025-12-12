@@ -1,20 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { leavesService } from '@/features/hr/shared/services';
 import { usePermissions, useErrorHandler } from '@/shared/hooks';
 
-export default function SharedLeaveRequestPage({ 
+export default function SharedLeaveRequestPage({
   title = "Đơn từ & Nghỉ phép",
   breadcrumb = "Cá nhân / Nghỉ phép",
-  viewMode = "personal"
+  viewMode = "personal",
+  glassMode = false
 }) {
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  
+
   const { user: authUser } = useAuth();
-  const { currentUser, isHRManager, isProjectManager } = usePermissions();
+  const { user: currentUser, isHRManager, isProjectManager } = usePermissions();
   const { handleError } = useErrorHandler();
 
   const [createForm, setCreateForm] = useState({
@@ -24,24 +25,42 @@ export default function SharedLeaveRequestPage({
     lyDo: ''
   });
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-      setLoading(false);
-      setLeaves([
-        {
-          nghiphepId: 1,
-          loaiPhep: 'PHEP_NAM',
-          ngayBatDau: '2025-11-25',
-          ngayKetThuc: '2025-11-26',
-          soNgay: 2,
-          lyDo: 'Nghỉ lễ',
-          trangThai: 'CHO_DUYET',
-          ngayTao: '2025-11-20'
-        }
-      ]);
-    }, 1000);
+    loadLeaves();
   }, []);
+
+  const loadLeaves = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      if (viewMode === "personal" && currentUser?.userId) {
+        // Get employee ID first
+        const employeeRes = await import('@/features/hr/shared/services/employees.service').then(m => m.employeesService.getByUserId(currentUser.userId));
+        const employeeId = employeeRes?.nhanvienId;
+
+        if (employeeId) {
+          const data = await import('@/shared/services/leave.service').then(m => m.leaveService.getByEmployee(employeeId));
+          setLeaves(data || []);
+        }
+      } else if (viewMode === "management" && isHRManager) {
+        // Management view - fetch all pending or all leaves
+        // For now let's fetch all
+        const data = await import('@/shared/services/leave.service').then(m => m.leaveService.getAll());
+        setLeaves(data || []);
+      }
+
+      setLoading(false);
+    } catch (err) {
+      const errorMessage = handleError(err, { context: 'load_leaves' });
+      setError(errorMessage);
+      setLoading(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -53,11 +72,37 @@ export default function SharedLeaveRequestPage({
       alert('Vui lòng nhập đủ thông tin');
       return;
     }
-    
-    // Simulate API call
-    alert('✅ Đã tạo đơn nghỉ phép thành công!');
-    setShowCreateModal(false);
-    setCreateForm({ loaiPhep: 'PHEP_NAM', ngayBatDau: '', ngayKetThuc: '', lyDo: '' });
+
+    try {
+      // Get employee ID
+      const employeeRes = await import('@/features/hr/shared/services/employees.service').then(m => m.employeesService.getByUserId(currentUser.userId));
+      const employeeId = employeeRes?.nhanvienId;
+
+      if (!employeeId) {
+        alert('Không tìm thấy thông tin nhân viên');
+        return;
+      }
+
+      const payload = {
+        nhanVien: { nhanvienId: employeeId },
+        loaiPhep: createForm.loaiPhep,
+        ngayBatDau: createForm.ngayBatDau,
+        ngayKetThuc: createForm.ngayKetThuc,
+        lyDo: createForm.lyDo
+      };
+
+      await import('@/shared/services/leave.service').then(m => m.leaveService.create(payload));
+
+      alert('✅ Đã tạo đơn nghỉ phép thành công!');
+      setShowCreateModal(false);
+      setCreateForm({ loaiPhep: 'PHEP_NAM', ngayBatDau: '', ngayKetThuc: '', lyDo: '' });
+
+      // Refresh list
+      loadLeaves();
+
+    } catch (err) {
+      alert('Lỗi khi tạo đơn: ' + (err.response?.data?.message || err.message));
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -87,6 +132,13 @@ export default function SharedLeaveRequestPage({
     return types[type] || { label: type, icon: '📄' };
   };
 
+  // Pagination calculations
+  const totalPages = Math.ceil(leaves.length / itemsPerPage);
+  const paginatedLeaves = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return leaves.slice(start, start + itemsPerPage);
+  }, [leaves, currentPage]);
+
   if (loading) {
     return (
       <div style={{ padding: '24px 32px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -108,6 +160,19 @@ export default function SharedLeaveRequestPage({
     );
   }
 
+  // Glass Styles
+  const glassStyles = glassMode ? {
+    container: {
+      background: 'transparent',
+    },
+    card: {
+      background: 'rgba(255, 255, 255, 0.55)',
+      backdropFilter: 'blur(20px)',
+      border: '1px solid rgba(255, 255, 255, 0.6)',
+      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+    }
+  } : {};
+
   return (
     <div style={{ padding: '24px 32px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       {/* Header */}
@@ -121,7 +186,7 @@ export default function SharedLeaveRequestPage({
           </h1>
           {/* HR chỉ được xem, không được tạo đơn trong management view */}
           {!(isHRManager && viewMode === "management") && (
-            <button 
+            <button
               style={{
                 background: 'linear-gradient(195deg, #66bb6a, #43a047)',
                 color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px',
@@ -155,7 +220,10 @@ export default function SharedLeaveRequestPage({
         ].map((stat, i) => (
           <div key={i} style={{
             padding: 20, borderRadius: 16, border: '1px solid', borderColor: stat.color + '40',
-            background: stat.bg, display: 'flex', flexDirection: 'column'
+            background: glassMode ? glassStyles.card.background : stat.bg,
+            backdropFilter: glassMode ? glassStyles.card.backdropFilter : 'none',
+            boxShadow: glassMode ? glassStyles.card.boxShadow : 'none',
+            display: 'flex', flexDirection: 'column'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: '#67748e', textTransform: 'uppercase' }}>
@@ -172,22 +240,26 @@ export default function SharedLeaveRequestPage({
 
       {/* Table */}
       <div style={{
-        background: '#fff', borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-        overflow: 'hidden', border: '1px solid rgba(0,0,0,0.02)'
+        background: glassMode ? glassStyles.card.background : '#fff',
+        borderRadius: 16,
+        boxShadow: glassMode ? glassStyles.card.boxShadow : '0 4px 20px rgba(0,0,0,0.05)',
+        overflow: 'hidden',
+        border: glassMode ? glassStyles.card.border : '1px solid rgba(0,0,0,0.02)',
+        backdropFilter: glassMode ? glassStyles.card.backdropFilter : 'none'
       }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5' }}>
+              <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5', background: glassMode ? 'rgba(255,255,255,0.3)' : 'transparent' }}>
                 Loại phép
               </th>
-              <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5' }}>
+              <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5', background: glassMode ? 'rgba(255,255,255,0.3)' : 'transparent' }}>
                 Thời gian
               </th>
-              <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5' }}>
+              <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5', background: glassMode ? 'rgba(255,255,255,0.3)' : 'transparent' }}>
                 Lý do
               </th>
-              <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5' }}>
+              <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#7b809a', textTransform: 'uppercase', borderBottom: '1px solid #f0f2f5', background: glassMode ? 'rgba(255,255,255,0.3)' : 'transparent' }}>
                 Trạng thái
               </th>
             </tr>
@@ -206,10 +278,10 @@ export default function SharedLeaveRequestPage({
                 </td>
               </tr>
             ) : (
-              leaves.map(leave => {
+              paginatedLeaves.map(leave => {
                 const leaveType = getLeaveType(leave.loaiPhep);
                 return (
-                  <tr key={leave.nghiphepId} style={{ borderBottom: '1px solid #f0f2f5' }}>
+                  <tr key={leave.nghiphepId} style={{ borderBottom: '1px solid #f0f2f5', background: glassMode ? 'rgba(255,255,255,0.2)' : 'transparent' }}>
                     <td style={{ padding: '16px 24px', fontSize: 14, verticalAlign: 'middle', color: '#344767' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ fontSize: 16 }}>{leaveType.icon}</span>
@@ -234,6 +306,56 @@ export default function SharedLeaveRequestPage({
             )}
           </tbody>
         </table>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderTop: '1px solid #f0f2f5' }}>
+            <div style={{ fontSize: 13, color: '#7b809a' }}>
+              Hiển thị {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, leaves.length)} trên tổng {leaves.length}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                style={{
+                  border: '1px solid #e2e8f0', background: 'white', padding: '6px 10px',
+                  borderRadius: 6, cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                  color: currentPage === 1 ? '#cbd5e1' : '#475569', display: 'flex'
+                }}
+              >
+                ◀
+              </button>
+
+              {Array.from({ length: totalPages }, (_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentPage(idx + 1)}
+                  style={{
+                    border: currentPage === idx + 1 ? 'none' : '1px solid #e2e8f0',
+                    background: currentPage === idx + 1 ? '#3b82f6' : 'white',
+                    color: currentPage === idx + 1 ? 'white' : '#475569',
+                    width: 32, height: 32, borderRadius: 6, fontSize: 13, fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {idx + 1}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                style={{
+                  border: '1px solid #e2e8f0', background: 'white', padding: '6px 10px',
+                  borderRadius: 6, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                  color: currentPage === totalPages ? '#cbd5e1' : '#475569', display: 'flex'
+                }}
+              >
+                ▶
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Create Modal */}
@@ -253,20 +375,20 @@ export default function SharedLeaveRequestPage({
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#344767' }}>
                 Tạo đơn nghỉ phép mới
               </h3>
-              <button 
+              <button
                 style={{ border: 'none', background: 'none', fontSize: 24, color: '#7b809a', cursor: 'pointer' }}
                 onClick={() => setShowCreateModal(false)}
               >
                 ×
               </button>
             </div>
-            
+
             <div style={{ padding: 24 }}>
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontSize: 13, fontWeight: 600, color: '#344767', marginBottom: 8, display: 'block' }}>
                   Loại phép <span style={{ color: 'red' }}>*</span>
                 </label>
-                <select 
+                <select
                   name="loaiPhep"
                   value={createForm.loaiPhep}
                   onChange={handleInputChange}
@@ -281,13 +403,13 @@ export default function SharedLeaveRequestPage({
                   <option value="KHAC">📝 Khác</option>
                 </select>
               </div>
-              
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                 <div>
                   <label style={{ fontSize: 13, fontWeight: 600, color: '#344767', marginBottom: 8, display: 'block' }}>
                     Từ ngày <span style={{ color: 'red' }}>*</span>
                   </label>
-                  <input 
+                  <input
                     type="date"
                     name="ngayBatDau"
                     value={createForm.ngayBatDau}
@@ -299,12 +421,12 @@ export default function SharedLeaveRequestPage({
                     }}
                   />
                 </div>
-                
+
                 <div>
                   <label style={{ fontSize: 13, fontWeight: 600, color: '#344767', marginBottom: 8, display: 'block' }}>
                     Đến ngày <span style={{ color: 'red' }}>*</span>
                   </label>
-                  <input 
+                  <input
                     type="date"
                     name="ngayKetThuc"
                     value={createForm.ngayKetThuc}
@@ -317,12 +439,12 @@ export default function SharedLeaveRequestPage({
                   />
                 </div>
               </div>
-              
+
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontSize: 13, fontWeight: 600, color: '#344767', marginBottom: 8, display: 'block' }}>
                   Lý do nghỉ phép <span style={{ color: 'red' }}>*</span>
                 </label>
-                <textarea 
+                <textarea
                   name="lyDo"
                   value={createForm.lyDo}
                   onChange={handleInputChange}
@@ -337,8 +459,8 @@ export default function SharedLeaveRequestPage({
               </div>
 
               {createForm.ngayBatDau && createForm.ngayKetThuc && (
-                <div style={{ 
-                  background: '#f0fdf4', padding: 12, borderRadius: 8, 
+                <div style={{
+                  background: '#f0fdf4', padding: 12, borderRadius: 8,
                   border: '1px solid #dcfce7', fontSize: 14, marginBottom: 16
                 }}>
                   <strong>Số ngày nghỉ: </strong>
@@ -346,12 +468,12 @@ export default function SharedLeaveRequestPage({
                 </div>
               )}
             </div>
-            
+
             <div style={{
               padding: '16px 24px 20px', display: 'flex', justifyContent: 'flex-end', gap: 12,
               borderTop: '1px solid #f0f2f5'
             }}>
-              <button 
+              <button
                 style={{
                   background: '#f0f2f5', color: '#7b809a', border: '1px solid #d2d6da',
                   borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer'
@@ -360,7 +482,7 @@ export default function SharedLeaveRequestPage({
               >
                 Hủy
               </button>
-              <button 
+              <button
                 style={{
                   background: 'linear-gradient(195deg, #66bb6a, #43a047)', color: '#fff', border: 'none',
                   borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer',

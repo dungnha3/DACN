@@ -21,9 +21,9 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/hop-dong")
+@RequestMapping("/api/hop-dong")
 public class HopDongController {
-    
+
     private final HopDongService hopDongService;
     private final HopDongMapper hopDongMapper;
 
@@ -31,12 +31,12 @@ public class HopDongController {
         this.hopDongService = hopDongService;
         this.hopDongMapper = hopDongMapper;
     }
-    
+
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return (User) auth.getPrincipal();
     }
-    
+
     /**
      * Tạo hợp đồng mới
      * POST /api/hop-dong
@@ -47,7 +47,7 @@ public class HopDongController {
         HopDong hopDong = hopDongService.createHopDong(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(hopDongMapper.toDTO(hopDong, currentUser));
     }
-    
+
     /**
      * Lấy thông tin hợp đồng theo ID
      * GET /api/hop-dong/{id}
@@ -58,7 +58,7 @@ public class HopDongController {
         HopDong hopDong = hopDongService.getHopDongById(id);
         return ResponseEntity.ok(hopDongMapper.toDTO(hopDong, currentUser));
     }
-    
+
     /**
      * Lấy danh sách tất cả hợp đồng
      * GET /api/hop-dong
@@ -69,7 +69,7 @@ public class HopDongController {
         List<HopDong> hopDongs = hopDongService.getAllHopDong();
         return ResponseEntity.ok(hopDongMapper.toDTOList(hopDongs, currentUser));
     }
-    
+
     /**
      * Cập nhật hợp đồng
      * PUT /api/hop-dong/{id}
@@ -82,7 +82,7 @@ public class HopDongController {
         HopDong hopDong = hopDongService.updateHopDong(id, request);
         return ResponseEntity.ok(hopDongMapper.toDTO(hopDong, currentUser));
     }
-    
+
     /**
      * Xóa hợp đồng
      * DELETE /api/hop-dong/{id}
@@ -94,7 +94,7 @@ public class HopDongController {
         response.put("message", "Xóa hợp đồng thành công");
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Lấy hợp đồng theo nhân viên
      * GET /api/hop-dong/nhan-vien/{nhanvienId}
@@ -105,7 +105,7 @@ public class HopDongController {
         List<HopDong> hopDongs = hopDongService.getHopDongByNhanVien(nhanvienId);
         return ResponseEntity.ok(hopDongMapper.toDTOList(hopDongs, currentUser));
     }
-    
+
     /**
      * Lấy hợp đồng hiệu lực của nhân viên
      * GET /api/hop-dong/nhan-vien/{nhanvienId}/active
@@ -116,7 +116,7 @@ public class HopDongController {
         HopDong hopDong = hopDongService.getActiveHopDong(nhanvienId);
         return ResponseEntity.ok(hopDongMapper.toDTO(hopDong, currentUser));
     }
-    
+
     /**
      * Lấy hợp đồng theo trạng thái
      * GET /api/hop-dong/trang-thai/{trangThai}
@@ -127,7 +127,7 @@ public class HopDongController {
         List<HopDong> hopDongs = hopDongService.getHopDongByTrangThai(trangThai);
         return ResponseEntity.ok(hopDongMapper.toDTOList(hopDongs, currentUser));
     }
-    
+
     /**
      * Hủy hợp đồng
      * PATCH /api/hop-dong/{id}/cancel
@@ -138,7 +138,7 @@ public class HopDongController {
         HopDong hopDong = hopDongService.cancelHopDong(id);
         return ResponseEntity.ok(hopDongMapper.toDTO(hopDong, currentUser));
     }
-    
+
     /**
      * Gia hạn hợp đồng
      * PATCH /api/hop-dong/{id}/renew
@@ -151,7 +151,7 @@ public class HopDongController {
         HopDong hopDong = hopDongService.renewHopDong(id, newEndDate);
         return ResponseEntity.ok(hopDongMapper.toDTO(hopDong, currentUser));
     }
-    
+
     /**
      * Lấy danh sách hợp đồng sắp hết hạn
      * GET /api/hop-dong/expiring?daysAhead=30
@@ -163,7 +163,7 @@ public class HopDongController {
         List<HopDong> hopDongs = hopDongService.getExpiringContracts(daysAhead);
         return ResponseEntity.ok(hopDongMapper.toDTOList(hopDongs, currentUser));
     }
-    
+
     /**
      * Cập nhật trạng thái hợp đồng hết hạn (batch job)
      * POST /api/hop-dong/update-expired
@@ -176,7 +176,7 @@ public class HopDongController {
         response.put("updatedCount", count);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Kiểm tra nhân viên có hợp đồng hiệu lực không
      * GET /api/hop-dong/nhan-vien/{nhanvienId}/has-active

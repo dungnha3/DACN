@@ -40,7 +40,7 @@ public class User {
     @Column(name = "phone_number", length = 15, columnDefinition = "NVARCHAR(15)")
     private String phoneNumber;
 
-    @Column(name = "avatar_url", length = 500, columnDefinition = "NVARCHAR(500)")
+    @Column(name = "avatar_data", columnDefinition = "NVARCHAR(MAX)")
     private String avatarUrl;
 
     // Enum Role: ADMIN / MANAGER / EMPLOYEE

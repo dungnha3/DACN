@@ -10,14 +10,14 @@ import ProjectDetailPage from './pages/ProjectDetailPage';
 import IssueDetailPage from './pages/IssueDetailPage';
 import { usePermissions, useErrorHandler } from '@/shared/hooks';
 
-export default function ProjectsPage() {
+export default function ProjectsPage({ glassMode = false }) {
   const [mainTab, setMainTab] = useState('tasks'); // tasks | projects | performance
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
-  
+
   const { isProjectManager, isHRManager } = usePermissions();
   const { handleError } = useErrorHandler();
-  
+
   // Permission guard
   if (!isProjectManager && !isHRManager) {
     return (
@@ -52,14 +52,17 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div style={styles.container}>
+    <div style={{
+      ...styles.container,
+      ...(glassMode ? { backgroundColor: 'transparent', padding: 0, minHeight: 'auto' } : {})
+    }}>
       {/* HR READ-ONLY NOTICE */}
       {isHRManager && !isProjectManager && (
         <div style={styles.hrNotice}>
-          <span style={{fontSize: 18}}>ℹ️</span>
+          <span style={{ fontSize: 18 }}>ℹ️</span>
           <div>
-            <div style={{fontWeight: 600, color: '#3b82f6'}}>Chế độ chỉ xem</div>
-            <div style={{fontSize: 13, color: '#6b7280', marginTop: 4}}>
+            <div style={{ fontWeight: 600, color: '#3b82f6' }}>Chế độ chỉ xem</div>
+            <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>
               HR Manager chỉ có quyền xem thông tin dự án. Để tạo/chỉnh sửa, liên hệ Project Manager.
             </div>
           </div>
@@ -67,11 +70,15 @@ export default function ProjectsPage() {
       )}
 
       {/* Main Tab Navigation */}
-      <div style={styles.mainTabContainer}>
+      <div style={{
+        ...styles.mainTabContainer,
+        ...(glassMode ? { backgroundColor: 'transparent', borderBottom: '1px solid rgba(255,255,255,0.2)' } : {})
+      }}>
         <button
           style={{
             ...styles.mainTabButton,
-            ...(mainTab === 'tasks' ? styles.mainTabButtonActive : {})
+            ...(glassMode ? { color: 'var(--text-dark)' } : {}),
+            ...(mainTab === 'tasks' ? (glassMode ? { backgroundColor: 'var(--glass-bg)', backdropFilter: 'blur(10px)', color: 'var(--primary-color)' } : styles.mainTabButtonActive) : {})
           }}
           onClick={() => setMainTab('tasks')}
         >
@@ -80,7 +87,8 @@ export default function ProjectsPage() {
         <button
           style={{
             ...styles.mainTabButton,
-            ...(mainTab === 'projects' ? styles.mainTabButtonActive : {})
+            ...(glassMode ? { color: 'var(--text-dark)' } : {}),
+            ...(mainTab === 'projects' ? (glassMode ? { backgroundColor: 'var(--glass-bg)', backdropFilter: 'blur(10px)', color: 'var(--primary-color)' } : styles.mainTabButtonActive) : {})
           }}
           onClick={() => setMainTab('projects')}
         >
@@ -89,7 +97,8 @@ export default function ProjectsPage() {
         <button
           style={{
             ...styles.mainTabButton,
-            ...(mainTab === 'performance' ? styles.mainTabButtonActive : {})
+            ...(glassMode ? { color: 'var(--text-dark)' } : {}),
+            ...(mainTab === 'performance' ? (glassMode ? { backgroundColor: 'var(--glass-bg)', backdropFilter: 'blur(10px)', color: 'var(--primary-color)' } : styles.mainTabButtonActive) : {})
           }}
           onClick={() => setMainTab('performance')}
         >
@@ -98,33 +107,36 @@ export default function ProjectsPage() {
       </div>
 
       {/* Content Area */}
-      {mainTab === 'tasks' ? (
-        <TasksTab key="tasks-tab" isProjectManager={isProjectManager} />
-      ) : mainTab === 'projects' ? (
-        <ProjectsTab 
-          projects={projects} 
-          loading={loading}
-          onProjectCreated={handleProjectCreated}
-          isProjectManager={isProjectManager}
-        />
-      ) : (
-        <PerformanceTab key="performance-tab" />
-      )}
+      <div style={glassMode ? { marginTop: 20 } : {}}>
+        {mainTab === 'tasks' ? (
+          <TasksTab key="tasks-tab" isProjectManager={isProjectManager} glassMode={glassMode} />
+        ) : mainTab === 'projects' ? (
+          <ProjectsTab
+            projects={projects}
+            loading={loading}
+            onProjectCreated={handleProjectCreated}
+            isProjectManager={isProjectManager}
+            glassMode={glassMode}
+          />
+        ) : (
+          <PerformanceTab key="performance-tab" glassMode={glassMode} />
+        )}
+      </div>
     </div>
   )
 }
 
 // Tab "Tác vụ của tôi"
-function TasksTab({ isProjectManager }) {
+function TasksTab({ isProjectManager, glassMode }) {
   const [viewMode, setViewMode] = useState('list'); // list | deadline | calendar | gantt
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIssueId, setSelectedIssueId] = useState(null);
   const [hoveredRow, setHoveredRow] = useState(null);
-  
+
   const { handleError } = useErrorHandler();
-  
+
   // Load issues khi component mount
   useEffect(() => {
     loadIssues();
@@ -158,15 +170,18 @@ function TasksTab({ isProjectManager }) {
   // Nếu đã chọn issue, hiển thị IssueDetailPage
   if (selectedIssueId) {
     return (
-      <IssueDetailPage 
+      <IssueDetailPage
         issueId={selectedIssueId}
         onBack={() => setSelectedIssueId(null)}
       />
     )
   }
-  
+
   return (
-    <div style={styles.tabContent}>
+    <div style={{
+      ...styles.tabContent,
+      ...(glassMode ? { backgroundColor: 'transparent', padding: 0 } : {})
+    }}>
       {/* Toolbar */}
       <div style={styles.toolbar}>
         <div style={styles.toolbarLeft}>
@@ -183,9 +198,9 @@ function TasksTab({ isProjectManager }) {
             <option>Hoàn thành</option>
             <option>Chưa bắt đầu</option>
           </select>
-          <input 
-            type="text" 
-            placeholder="+ Tìm kiếm" 
+          <input
+            type="text"
+            placeholder="+ Tìm kiếm"
             style={styles.searchInput}
           />
         </div>
@@ -196,24 +211,27 @@ function TasksTab({ isProjectManager }) {
       </div>
 
       {/* View Mode Tabs */}
-      <div style={styles.viewModeTabs}>
-        <button 
-          style={{...styles.viewModeTab, ...(viewMode === 'list' ? styles.viewModeTabActive : {})}}
+      <div style={{
+        ...styles.viewModeTabs,
+        ...(glassMode ? { backgroundColor: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: 'var(--glass-border)' } : {})
+      }}>
+        <button
+          style={{ ...styles.viewModeTab, ...(viewMode === 'list' ? styles.viewModeTabActive : {}) }}
           onClick={() => setViewMode('list')}
         >
           📋 Danh sách
         </button>
-        <button 
-          style={{...styles.viewModeTab, ...(viewMode === 'deadline' ? styles.viewModeTabActive : {})}}
+        <button
+          style={{ ...styles.viewModeTab, ...(viewMode === 'deadline' ? styles.viewModeTabActive : {}) }}
           onClick={() => setViewMode('deadline')}
         >
           ⏰ Hạn chót
         </button>
-        <button style={styles.viewModeTab}>� Lịch</button>
+        <button style={styles.viewModeTab}>📅 Lịch</button>
         <div style={styles.viewModeDivider} />
         <button style={styles.viewModeTab}>⚠️ 0 Quá hạn</button>
         <button style={styles.viewModeTab}>💬 0 Bình luận</button>
-        <div style={{flex: 1}} />
+        <div style={{ flex: 1 }} />
       </div>
 
       {/* Create Issue Modal */}
@@ -224,87 +242,90 @@ function TasksTab({ isProjectManager }) {
       />
 
       {/* Tasks Table */}
-      <div style={styles.tableWrapper}>
+      <div style={{
+        ...styles.tableWrapper,
+        ...(glassMode ? { backgroundColor: 'var(--glass-bg)', backdropFilter: 'blur(15px)', border: 'var(--glass-border)' } : {})
+      }}>
         {loading ? (
           <div style={styles.loadingContainer}>
             <div style={styles.loadingText}>Đang tải dữ liệu...</div>
           </div>
         ) : (
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>Tên</th>
-              <th style={styles.th}>
-                Hoạt động 
-                <span style={styles.sortIcon}>▼</span>
-              </th>
-              <th style={styles.th}>Hạn chót</th>
-              <th style={styles.th}>Người tạo</th>
-              <th style={styles.th}>Người được phân công</th>
-              <th style={styles.th}>Dự án</th>
-            </tr>
-          </thead>
-          <tbody>
-            {issues.length === 0 ? (
+          <table style={styles.table}>
+            <thead>
               <tr>
-                <td colSpan="6" style={{...styles.td, textAlign: 'center', padding: '32px'}}>
-                  Chưa có tác vụ nào. Nhấn nút "Tạo" để tạo tác vụ mới.
-                </td>
+                <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Tên</th>
+                <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>
+                  Hoạt động
+                  <span style={styles.sortIcon}>▼</span>
+                </th>
+                <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Hạn chót</th>
+                <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Người tạo</th>
+                <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Người được phân công</th>
+                <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Dự án</th>
               </tr>
-            ) : (
-              issues.map((task) => (
-              <tr 
-                key={task.issueId} 
-                style={{
-                  ...styles.tr, 
-                  cursor: 'pointer',
-                  backgroundColor: hoveredRow === task.issueId ? '#f7fafc' : 'transparent'
-                }}
-                onClick={() => setSelectedIssueId(task.issueId)}
-                onMouseEnter={() => setHoveredRow(task.issueId)}
-                onMouseLeave={() => setHoveredRow(null)}
-              >
-                <td style={styles.td}>
-                  <div style={styles.taskName}>
-                    {task.issueKey}: {task.title}
-                  </div>
-                </td>
-                <td style={styles.td}>
-                  <span style={{...styles.statusBadge, backgroundColor: task.statusColor || '#e5e7eb'}}>
-                    {task.statusName}
-                  </span>
-                </td>
-                <td style={styles.td}>
-                  {task.dueDate ? (
-                    <span style={{...styles.deadlineBadge, ...(task.isOverdue ? {backgroundColor: '#fee2e2', color: '#991b1b'} : {})}}>
-                      {new Date(task.dueDate).toLocaleDateString('vi-VN')}
-                    </span>
-                  ) : '-'}
-                </td>
-                <td style={styles.td}>
-                  {task.reporterName ? (
-                    <div style={styles.userBadge}>
-                      <span style={styles.avatar}>{task.reporterName.charAt(0).toUpperCase()}</span>
-                      {task.reporterName}
-                    </div>
-                  ) : '-'}
-                </td>
-                <td style={styles.td}>
-                  {task.assigneeName ? (
-                    <div style={styles.userBadge}>
-                      <span style={styles.avatar}>{task.assigneeName.charAt(0).toUpperCase()}</span>
-                      {task.assigneeName}
-                    </div>
-                  ) : '-'}
-                </td>
-                <td style={styles.td}>
-                  <span style={styles.projectBadge}>{task.projectName || '-'}</span>
-                </td>
-              </tr>
-            ))
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {issues.length === 0 ? (
+                <tr>
+                  <td colSpan="6" style={{ ...styles.td, textAlign: 'center', padding: '32px' }}>
+                    Chưa có tác vụ nào. Nhấn nút "Tạo" để tạo tác vụ mới.
+                  </td>
+                </tr>
+              ) : (
+                issues.map((task) => (
+                  <tr
+                    key={task.issueId}
+                    style={{
+                      ...styles.tr,
+                      cursor: 'pointer',
+                      backgroundColor: hoveredRow === task.issueId ? (glassMode ? 'rgba(255,255,255,0.4)' : '#f7fafc') : 'transparent'
+                    }}
+                    onClick={() => setSelectedIssueId(task.issueId)}
+                    onMouseEnter={() => setHoveredRow(task.issueId)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                  >
+                    <td style={styles.td}>
+                      <div style={styles.taskName}>
+                        {task.issueKey}: {task.title}
+                      </div>
+                    </td>
+                    <td style={styles.td}>
+                      <span style={{ ...styles.statusBadge, backgroundColor: task.statusColor || '#e5e7eb' }}>
+                        {task.statusName}
+                      </span>
+                    </td>
+                    <td style={styles.td}>
+                      {task.dueDate ? (
+                        <span style={{ ...styles.deadlineBadge, ...(task.isOverdue ? { backgroundColor: '#fee2e2', color: '#991b1b' } : {}) }}>
+                          {new Date(task.dueDate).toLocaleDateString('vi-VN')}
+                        </span>
+                      ) : '-'}
+                    </td>
+                    <td style={styles.td}>
+                      {task.reporterName ? (
+                        <div style={styles.userBadge}>
+                          <span style={styles.avatar}>{task.reporterName.charAt(0).toUpperCase()}</span>
+                          {task.reporterName}
+                        </div>
+                      ) : '-'}
+                    </td>
+                    <td style={styles.td}>
+                      {task.assigneeName ? (
+                        <div style={styles.userBadge}>
+                          <span style={styles.avatar}>{task.assigneeName.charAt(0).toUpperCase()}</span>
+                          {task.assigneeName}
+                        </div>
+                      ) : '-'}
+                    </td>
+                    <td style={styles.td}>
+                      <span style={styles.projectBadge}>{task.projectName || '-'}</span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         )}
       </div>
 
@@ -337,8 +358,8 @@ const getStatusBadgeStyle = (status) => {
     fontSize: '12px',
     fontWeight: '500',
   }
-  
-  switch(status) {
+
+  switch (status) {
     case 'PLANNING':
       return { ...baseStyle, backgroundColor: '#fef3c7', color: '#92400e' }
     case 'IN_PROGRESS':
@@ -356,7 +377,7 @@ const getStatusBadgeStyle = (status) => {
 
 // Helper function để lấy text cho status
 const getStatusText = (status) => {
-  switch(status) {
+  switch (status) {
     case 'PLANNING': return 'Đang lập kế hoạch'
     case 'IN_PROGRESS': return 'Đang thực hiện'
     case 'ON_HOLD': return 'Tạm dừng'
@@ -367,7 +388,7 @@ const getStatusText = (status) => {
 }
 
 // Tab "Dự án"
-function ProjectsTab({ projects, loading, onProjectCreated, isProjectManager }) {
+function ProjectsTab({ projects, loading, onProjectCreated, isProjectManager, glassMode }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedProjectId, setSelectedProjectId] = useState(null)
   const [hoveredRow, setHoveredRow] = useState(null)
@@ -375,7 +396,7 @@ function ProjectsTab({ projects, loading, onProjectCreated, isProjectManager }) 
   // Nếu đã chọn project, hiển thị ProjectDetailPage
   if (selectedProjectId) {
     return (
-      <ProjectDetailPage 
+      <ProjectDetailPage
         projectId={selectedProjectId}
         onBack={() => setSelectedProjectId(null)}
       />
@@ -395,7 +416,10 @@ function ProjectsTab({ projects, loading, onProjectCreated, isProjectManager }) 
   }
 
   return (
-    <div style={styles.tabContent}>
+    <div style={{
+      ...styles.tabContent,
+      ...(glassMode ? { backgroundColor: 'transparent', padding: 0 } : {})
+    }}>
       {/* Toolbar */}
       <div style={styles.toolbar}>
         <div style={styles.toolbarLeft}>
@@ -406,9 +430,9 @@ function ProjectsTab({ projects, loading, onProjectCreated, isProjectManager }) 
             <option>Của tôi</option>
             <option>Tất cả</option>
           </select>
-          <input 
-            type="text" 
-            placeholder="+ Tìm kiếm" 
+          <input
+            type="text"
+            placeholder="+ Tìm kiếm"
             style={styles.searchInput}
           />
         </div>
@@ -422,14 +446,20 @@ function ProjectsTab({ projects, loading, onProjectCreated, isProjectManager }) 
       />
 
       {/* View Mode Tabs */}
-      <div style={styles.viewModeTabs}>
+      <div style={{
+        ...styles.viewModeTabs,
+        ...(glassMode ? { backgroundColor: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: 'var(--glass-border)' } : {})
+      }}>
         <button style={styles.viewModeTab}>⚠️ 0 Quá hạn</button>
         <button style={styles.viewModeTab}>💬 0 Bình luận</button>
-        <div style={{flex: 1}} />
+        <div style={{ flex: 1 }} />
       </div>
 
       {/* Projects Table */}
-      <div style={styles.tableWrapper}>
+      <div style={{
+        ...styles.tableWrapper,
+        ...(glassMode ? { backgroundColor: 'var(--glass-bg)', backdropFilter: 'blur(15px)', border: 'var(--glass-border)' } : {})
+      }}>
         {loading ? (
           <div style={styles.loadingContainer}>
             <div style={styles.loadingText}>Đang tải dữ liệu...</div>
@@ -438,31 +468,31 @@ function ProjectsTab({ projects, loading, onProjectCreated, isProjectManager }) 
           <table style={styles.table}>
             <thead>
               <tr>
-                <th style={styles.th}>ID</th>
-                <th style={styles.th}>Mã dự án</th>
-                <th style={styles.th}>Tên</th>
-                <th style={styles.th}>Mô tả</th>
-                <th style={styles.th}>Trạng thái</th>
-                <th style={styles.th}>Ngày bắt đầu</th>
-                <th style={styles.th}>Ngày kết thúc</th>
-                <th style={styles.th}>Người tạo</th>
+                <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>ID</th>
+                <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Mã dự án</th>
+                <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Tên</th>
+                <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Mô tả</th>
+                <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Trạng thái</th>
+                <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Ngày bắt đầu</th>
+                <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Ngày kết thúc</th>
+                <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Người tạo</th>
               </tr>
             </thead>
             <tbody>
               {projects.length === 0 ? (
                 <tr>
-                  <td colSpan="8" style={{...styles.td, textAlign: 'center', padding: '32px'}}>
+                  <td colSpan="8" style={{ ...styles.td, textAlign: 'center', padding: '32px' }}>
                     Chưa có dự án nào. Nhấn nút "Tạo" để tạo dự án mới.
                   </td>
                 </tr>
               ) : (
                 projects.map((project) => (
-                  <tr 
-                    key={project.projectId} 
+                  <tr
+                    key={project.projectId}
                     style={{
                       ...styles.tr,
                       cursor: 'pointer',
-                      backgroundColor: hoveredRow === project.projectId ? '#f7fafc' : 'transparent',
+                      backgroundColor: hoveredRow === project.projectId ? (glassMode ? 'rgba(255,255,255,0.4)' : '#f7fafc') : 'transparent',
                     }}
                     onClick={() => setSelectedProjectId(project.projectId)}
                     onMouseEnter={() => setHoveredRow(project.projectId)}
@@ -517,7 +547,7 @@ function ProjectsTab({ projects, loading, onProjectCreated, isProjectManager }) 
         </div>
         <div style={styles.footerCenter}>
           <button style={styles.paginationBtn}>← TRƯỚC</button>
-          <span style={{margin: '0 16px'}}>TRANG: 1</span>
+          <span style={{ margin: '0 16px' }}>TRANG: 1</span>
           <button style={styles.paginationBtn}>TIẾP THEO →</button>
         </div>
       </div>
@@ -526,7 +556,7 @@ function ProjectsTab({ projects, loading, onProjectCreated, isProjectManager }) 
 }
 
 // Tab "Hiệu suất"
-function PerformanceTab() {
+function PerformanceTab({ glassMode }) {
   const [stats, setStats] = useState([])
   const [loading, setLoading] = useState(false)
   const [summary, setSummary] = useState({
@@ -546,13 +576,13 @@ function PerformanceTab() {
     try {
       const data = await dashboardApi.getMyProjectsStats()
       setStats(data)
-      
+
       // Tính toán summary
       const totalProjects = data.length
       const totalIssues = data.reduce((sum, p) => sum + p.totalIssues, 0)
       const completedIssues = data.reduce((sum, p) => sum + p.completedIssues, 0)
-      const avgCompletionRate = totalProjects > 0 
-        ? data.reduce((sum, p) => sum + p.completionRate, 0) / totalProjects 
+      const avgCompletionRate = totalProjects > 0
+        ? data.reduce((sum, p) => sum + p.completionRate, 0) / totalProjects
         : 0
       const totalOverdue = data.reduce((sum, p) => sum + p.overdueIssues, 0)
 
@@ -577,9 +607,15 @@ function PerformanceTab() {
   }
 
   return (
-    <div style={styles.tabContent}>
+    <div style={{
+      ...styles.tabContent,
+      ...(glassMode ? { backgroundColor: 'transparent', padding: 0 } : {})
+    }}>
       {/* Header */}
-      <div style={styles.performanceHeader}>
+      <div style={{
+        ...styles.performanceHeader,
+        ...(glassMode ? { backgroundColor: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: 'var(--glass-border)' } : {})
+      }}>
         <h2 style={styles.performanceTitle}>Tổng quan hiệu suất</h2>
         <p style={styles.performanceSubtitle}>Thống kê tất cả dự án của bạn</p>
       </div>
@@ -592,7 +628,10 @@ function PerformanceTab() {
         <>
           {/* Summary Cards */}
           <div style={styles.summaryCards}>
-            <div style={styles.summaryCard}>
+            <div style={{
+              ...styles.summaryCard,
+              ...(glassMode ? { backgroundColor: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: 'var(--glass-border)' } : {})
+            }}>
               <div style={styles.summaryIcon}>📁</div>
               <div style={styles.summaryContent}>
                 <div style={styles.summaryLabel}>Tổng dự án</div>
@@ -600,7 +639,10 @@ function PerformanceTab() {
               </div>
             </div>
 
-            <div style={styles.summaryCard}>
+            <div style={{
+              ...styles.summaryCard,
+              ...(glassMode ? { backgroundColor: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: 'var(--glass-border)' } : {})
+            }}>
               <div style={styles.summaryIcon}>📋</div>
               <div style={styles.summaryContent}>
                 <div style={styles.summaryLabel}>Tổng tác vụ</div>
@@ -611,7 +653,10 @@ function PerformanceTab() {
               </div>
             </div>
 
-            <div style={styles.summaryCard}>
+            <div style={{
+              ...styles.summaryCard,
+              ...(glassMode ? { backgroundColor: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: 'var(--glass-border)' } : {})
+            }}>
               <div style={styles.summaryIcon}>✅</div>
               <div style={styles.summaryContent}>
                 <div style={styles.summaryLabel}>Tỷ lệ hoàn thành TB</div>
@@ -624,11 +669,14 @@ function PerformanceTab() {
               </div>
             </div>
 
-            <div style={styles.summaryCard}>
+            <div style={{
+              ...styles.summaryCard,
+              ...(glassMode ? { backgroundColor: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: 'var(--glass-border)' } : {})
+            }}>
               <div style={styles.summaryIcon}>⚠️</div>
               <div style={styles.summaryContent}>
                 <div style={styles.summaryLabel}>Quá hạn</div>
-                <div style={{...styles.summaryValue, color: '#ef4444'}}>
+                <div style={{ ...styles.summaryValue, color: '#ef4444' }}>
                   {summary.totalOverdue}
                 </div>
               </div>
@@ -636,9 +684,12 @@ function PerformanceTab() {
           </div>
 
           {/* Projects Performance Table */}
-          <div style={styles.performanceTable}>
+          <div style={{
+            ...styles.performanceTable,
+            ...(glassMode ? { backgroundColor: 'var(--glass-bg)', backdropFilter: 'blur(20px)', border: 'var(--glass-border)' } : {})
+          }}>
             <h3 style={styles.sectionTitle}>Chi tiết theo dự án</h3>
-            
+
             {stats.length === 0 ? (
               <div style={styles.emptyState}>
                 <p>Chưa có dữ liệu thống kê</p>
@@ -647,21 +698,21 @@ function PerformanceTab() {
               <table style={styles.table}>
                 <thead>
                   <tr>
-                    <th style={styles.th}>Dự án</th>
-                    <th style={styles.th}>Trạng thái</th>
-                    <th style={styles.th}>Tổng tác vụ</th>
-                    <th style={styles.th}>Hoàn thành</th>
-                    <th style={styles.th}>Đang làm</th>
-                    <th style={styles.th}>Chưa làm</th>
-                    <th style={styles.th}>Quá hạn</th>
-                    <th style={styles.th}>Tỷ lệ hoàn thành</th>
-                    <th style={styles.th}>Sprints</th>
-                    <th style={styles.th}>Thành viên</th>
+                    <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Dự án</th>
+                    <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Trạng thái</th>
+                    <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Tổng tác vụ</th>
+                    <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Hoàn thành</th>
+                    <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Đang làm</th>
+                    <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Chưa làm</th>
+                    <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Quá hạn</th>
+                    <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Tỷ lệ hoàn thành</th>
+                    <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Sprints</th>
+                    <th style={{ ...styles.th, ...(glassMode ? { backgroundColor: 'rgba(255,255,255,0.5)' } : {}) }}>Thành viên</th>
                   </tr>
                 </thead>
                 <tbody>
                   {stats.map((project) => (
-                    <tr key={project.projectId} style={styles.tr}>
+                    <tr key={project.projectId} style={{ ...styles.tr, ...(glassMode ? { backgroundColor: 'transparent' } : {}) }}>
                       <td style={styles.td}>
                         <div style={styles.projectNameCell}>
                           <span style={styles.projectKeyBadge}>{project.projectKey}</span>
@@ -675,22 +726,22 @@ function PerformanceTab() {
                         <strong>{project.totalIssues}</strong>
                       </td>
                       <td style={styles.td}>
-                        <span style={{color: '#10b981', fontWeight: '600'}}>
+                        <span style={{ color: '#10b981', fontWeight: '600' }}>
                           {project.completedIssues}
                         </span>
                       </td>
                       <td style={styles.td}>
-                        <span style={{color: '#3b82f6', fontWeight: '600'}}>
+                        <span style={{ color: '#3b82f6', fontWeight: '600' }}>
                           {project.inProgressIssues}
                         </span>
                       </td>
                       <td style={styles.td}>
-                        <span style={{color: '#6b7280', fontWeight: '600'}}>
+                        <span style={{ color: '#6b7280', fontWeight: '600' }}>
                           {project.todoIssues}
                         </span>
                       </td>
                       <td style={styles.td}>
-                        <span style={{color: '#ef4444', fontWeight: '600'}}>
+                        <span style={{ color: '#ef4444', fontWeight: '600' }}>
                           {project.overdueIssues}
                         </span>
                       </td>
@@ -711,7 +762,7 @@ function PerformanceTab() {
                       <td style={styles.td}>
                         <div style={styles.sprintInfo}>
                           <span>Hoạt động: {project.activeSprints}</span>
-                          <span style={{color: '#6b7280', fontSize: '12px'}}>
+                          <span style={{ color: '#6b7280', fontSize: '12px' }}>
                             / {project.totalSprints} tổng
                           </span>
                         </div>

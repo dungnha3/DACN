@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { chatRoomApi } from '../api/chatRoomApi'
 import { userApi } from '../../projects/api/userApi'
-import { colors, typography, spacing } from '@/shared/styles/theme'
 
 export default function CreateGroupModal({ isOpen, onClose, onSuccess }) {
   const [groupName, setGroupName] = useState('')
@@ -15,7 +14,6 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }) {
 
   const handleSearchUser = async () => {
     if (!searchEmail.trim()) return
-
     try {
       const users = await userApi.searchUsers(searchEmail)
       setSearchResults(users)
@@ -37,31 +35,17 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }) {
   }
 
   const handleCreate = async () => {
-    if (!groupName.trim()) {
-      setError('Vui lòng nhập tên nhóm')
-      return
-    }
-
-    if (selectedMembers.length === 0) {
-      setError('Vui lòng thêm ít nhất 1 thành viên')
-      return
-    }
-
+    if (!groupName.trim()) { setError('Vui lòng nhập tên nhóm'); return }
+    if (selectedMembers.length === 0) { setError('Vui lòng thêm ít nhất 1 thành viên'); return }
     try {
       setLoading(true)
       setError('')
-
       const newGroup = await chatRoomApi.createGroupChat({
         name: groupName,
         memberIds: selectedMembers.map(m => m.userId)
       })
-
       alert('✅ Tạo nhóm chat thành công!')
-      
-      if (onSuccess) {
-        onSuccess(newGroup)
-      }
-
+      if (onSuccess) onSuccess(newGroup)
       handleClose()
     } catch (err) {
       setError(err.response?.data?.message || 'Không thể tạo nhóm chat')
@@ -90,13 +74,8 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }) {
 
         {/* Content */}
         <div style={styles.content}>
-          {error && (
-            <div style={styles.errorBox}>
-              ⚠️ {error}
-            </div>
-          )}
+          {error && <div style={styles.errorBox}>⚠️ {error}</div>}
 
-          {/* Group Name */}
           <div style={styles.formGroup}>
             <label style={styles.label}>Tên nhóm *</label>
             <input
@@ -108,7 +87,6 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }) {
             />
           </div>
 
-          {/* Search Users */}
           <div style={styles.formGroup}>
             <label style={styles.label}>Thêm thành viên</label>
             <div style={styles.searchBox}>
@@ -117,29 +95,17 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }) {
                 value={searchEmail}
                 onChange={(e) => setSearchEmail(e.target.value)}
                 placeholder="Nhập email hoặc username..."
-                style={styles.input}
+                style={{ ...styles.input, flex: 1 }}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearchUser()}
               />
-              <button 
-                onClick={handleSearchUser}
-                style={styles.searchBtn}
-              >
-                🔍
-              </button>
+              <button onClick={handleSearchUser} style={styles.searchBtn}>🔍</button>
             </div>
 
-            {/* Search Results */}
             {searchResults.length > 0 && (
               <div style={styles.searchResults}>
                 {searchResults.map(user => (
-                  <div
-                    key={user.userId}
-                    onClick={() => handleAddMember(user)}
-                    style={styles.userItem}
-                  >
-                    <div style={styles.userAvatar}>
-                      {user.username?.charAt(0).toUpperCase()}
-                    </div>
+                  <div key={user.userId} onClick={() => handleAddMember(user)} style={styles.userItem}>
+                    <div style={styles.userAvatar}>{user.username?.charAt(0).toUpperCase()}</div>
                     <div style={styles.userInfo}>
                       <div style={styles.userName}>{user.username}</div>
                       <div style={styles.userEmail}>{user.email}</div>
@@ -151,22 +117,14 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }) {
             )}
           </div>
 
-          {/* Selected Members */}
           {selectedMembers.length > 0 && (
             <div style={styles.formGroup}>
-              <label style={styles.label}>
-                Thành viên đã chọn ({selectedMembers.length})
-              </label>
+              <label style={styles.label}>Thành viên đã chọn ({selectedMembers.length})</label>
               <div style={styles.membersList}>
                 {selectedMembers.map(member => (
                   <div key={member.userId} style={styles.memberChip}>
                     <span>{member.username}</span>
-                    <button
-                      onClick={() => handleRemoveMember(member.userId)}
-                      style={styles.removeBtn}
-                    >
-                      ×
-                    </button>
+                    <button onClick={() => handleRemoveMember(member.userId)} style={styles.removeBtn}>×</button>
                   </div>
                 ))}
               </div>
@@ -176,23 +134,11 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }) {
 
         {/* Footer */}
         <div style={styles.footer}>
-          <button
-            onClick={handleClose}
-            style={styles.cancelBtn}
-            disabled={loading}
-          >
-            Hủy
-          </button>
-          <button
-            onClick={handleCreate}
-            style={{
-              ...styles.createBtn,
-              ...(loading ? styles.btnDisabled : {})
-            }}
-            disabled={loading}
-          >
-            {loading ? 'Đang tạo...' : 'Tạo nhóm'}
-          </button>
+          <button onClick={handleClose} disabled={loading} style={styles.cancelBtn}>Hủy</button>
+          <button onClick={handleCreate} disabled={loading} style={{
+            ...styles.createBtn,
+            opacity: loading ? 0.6 : 1,
+          }}>{loading ? 'Đang tạo...' : 'Tạo nhóm'}</button>
         </div>
       </div>
     </div>
@@ -206,200 +152,208 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backdropFilter: 'blur(4px)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000
+    zIndex: 1000,
   },
   modal: {
-    backgroundColor: colors.white,
-    borderRadius: spacing.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: '20px',
     width: '90%',
-    maxWidth: '500px',
-    maxHeight: '90vh',
+    maxWidth: '480px',
+    maxHeight: '85vh',
     display: 'flex',
     flexDirection: 'column',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)',
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: spacing.xl,
-    borderBottom: `1px solid ${colors.border}`
+    padding: '20px 24px',
+    borderBottom: '1px solid #f3f4f6',
   },
   title: {
-    fontSize: typography.xl,
-    fontWeight: typography.bold,
-    color: colors.textPrimary,
-    margin: 0
+    fontSize: '20px',
+    fontWeight: '700',
+    color: '#1f2937',
+    margin: 0,
   },
   closeBtn: {
-    width: '32px',
-    height: '32px',
-    borderRadius: '50%',
+    width: '36px',
+    height: '36px',
+    borderRadius: '10px',
     border: 'none',
-    background: colors.background,
+    background: '#f3f4f6',
     fontSize: '24px',
+    color: '#6b7280',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    transition: 'all 0.2s',
   },
   content: {
     flex: 1,
-    padding: spacing.xl,
-    overflow: 'auto'
+    padding: '24px',
+    overflowY: 'auto',
   },
   errorBox: {
-    padding: spacing.md,
+    padding: '14px 16px',
     backgroundColor: '#fef2f2',
-    border: `1px solid ${colors.error}`,
-    borderRadius: spacing.md,
-    color: colors.error,
-    marginBottom: spacing.lg,
-    fontSize: typography.sm
+    border: '1px solid #fee2e2',
+    borderRadius: '12px',
+    color: '#dc2626',
+    marginBottom: '20px',
+    fontSize: '14px',
   },
   formGroup: {
-    marginBottom: spacing.xl
+    marginBottom: '24px',
   },
   label: {
     display: 'block',
-    fontSize: typography.sm,
-    fontWeight: typography.semibold,
-    color: colors.textPrimary,
-    marginBottom: spacing.sm
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: '10px',
   },
   input: {
     width: '100%',
-    padding: spacing.md,
-    border: `1px solid ${colors.border}`,
-    borderRadius: spacing.md,
-    fontSize: typography.base,
+    padding: '14px 18px',
+    border: '2px solid #e5e7eb',
+    borderRadius: '12px',
+    fontSize: '14px',
     outline: 'none',
-    transition: 'border-color 0.2s'
+    transition: 'all 0.2s',
+    boxSizing: 'border-box',
   },
   searchBox: {
     display: 'flex',
-    gap: spacing.sm
+    gap: '10px',
   },
   searchBtn: {
-    padding: `${spacing.md} ${spacing.lg}`,
+    padding: '14px 20px',
     border: 'none',
-    borderRadius: spacing.md,
-    background: colors.primary,
-    color: colors.white,
-    fontSize: typography.lg,
-    cursor: 'pointer'
+    borderRadius: '12px',
+    background: 'linear-gradient(135deg, #0084ff 0%, #0077e6 100%)',
+    color: '#FFFFFF',
+    fontSize: '18px',
+    cursor: 'pointer',
+    boxShadow: '0 2px 8px rgba(0, 132, 255, 0.3)',
   },
   searchResults: {
-    marginTop: spacing.md,
-    border: `1px solid ${colors.border}`,
-    borderRadius: spacing.md,
-    maxHeight: '200px',
-    overflow: 'auto'
+    marginTop: '12px',
+    border: '1px solid #e5e7eb',
+    borderRadius: '12px',
+    maxHeight: '180px',
+    overflowY: 'auto',
   },
   userItem: {
     display: 'flex',
     alignItems: 'center',
-    padding: spacing.md,
+    padding: '12px 16px',
     cursor: 'pointer',
-    borderBottom: `1px solid ${colors.borderLight}`,
-    transition: 'background-color 0.2s'
+    borderBottom: '1px solid #f3f4f6',
+    transition: 'background-color 0.2s',
   },
   userAvatar: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    backgroundColor: colors.primary + '30',
-    color: colors.primary,
+    width: '42px',
+    height: '42px',
+    borderRadius: '12px',
+    background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)',
+    color: '#4f46e5',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: typography.base,
-    fontWeight: typography.bold,
-    marginRight: spacing.md
+    fontSize: '16px',
+    fontWeight: '700',
+    marginRight: '12px',
   },
   userInfo: {
-    flex: 1
+    flex: 1,
   },
   userName: {
-    fontSize: typography.base,
-    fontWeight: typography.semibold,
-    color: colors.textPrimary
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#1f2937',
   },
   userEmail: {
-    fontSize: typography.sm,
-    color: colors.textSecondary
+    fontSize: '12px',
+    color: '#6b7280',
+    marginTop: '2px',
   },
   addBtn: {
     width: '32px',
     height: '32px',
-    borderRadius: '50%',
+    borderRadius: '10px',
     border: 'none',
-    background: colors.success,
-    color: colors.white,
+    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    color: '#FFFFFF',
     fontSize: '20px',
-    cursor: 'pointer'
+    cursor: 'pointer',
   },
   membersList: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: spacing.sm
+    gap: '8px',
   },
   memberChip: {
     display: 'flex',
     alignItems: 'center',
-    gap: spacing.sm,
-    padding: `${spacing.xs} ${spacing.md}`,
-    backgroundColor: colors.background,
-    borderRadius: spacing.lg,
-    fontSize: typography.sm
+    gap: '8px',
+    padding: '8px 12px 8px 14px',
+    backgroundColor: '#f3f4f6',
+    borderRadius: '20px',
+    fontSize: '13px',
+    fontWeight: '500',
   },
   removeBtn: {
     width: '20px',
     height: '20px',
-    borderRadius: '50%',
+    borderRadius: '6px',
     border: 'none',
-    background: colors.error,
-    color: colors.white,
-    fontSize: '16px',
+    background: '#ef4444',
+    color: '#FFFFFF',
+    fontSize: '14px',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    lineHeight: 1
+    lineHeight: 1,
   },
   footer: {
     display: 'flex',
     justifyContent: 'flex-end',
-    gap: spacing.md,
-    padding: spacing.xl,
-    borderTop: `1px solid ${colors.border}`
+    gap: '12px',
+    padding: '20px 24px',
+    borderTop: '1px solid #f3f4f6',
+    backgroundColor: '#fafafa',
   },
   cancelBtn: {
-    padding: `${spacing.md} ${spacing.xl}`,
-    border: `1px solid ${colors.border}`,
-    borderRadius: spacing.md,
-    background: colors.white,
-    color: colors.textPrimary,
-    fontSize: typography.base,
-    fontWeight: typography.semibold,
-    cursor: 'pointer'
+    padding: '12px 24px',
+    border: '2px solid #e5e7eb',
+    borderRadius: '12px',
+    background: '#FFFFFF',
+    color: '#374151',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
   },
   createBtn: {
-    padding: `${spacing.md} ${spacing.xl}`,
+    padding: '12px 24px',
     border: 'none',
-    borderRadius: spacing.md,
-    background: colors.primary,
-    color: colors.white,
-    fontSize: typography.base,
-    fontWeight: typography.semibold,
-    cursor: 'pointer'
+    borderRadius: '12px',
+    background: 'linear-gradient(135deg, #0084ff 0%, #0077e6 100%)',
+    color: '#FFFFFF',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(0, 132, 255, 0.35)',
+    transition: 'all 0.2s',
   },
-  btnDisabled: {
-    opacity: 0.5,
-    cursor: 'not-allowed'
-  }
 }

@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class IssueService {
-    
+
     private final IssueRepository issueRepository;
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
@@ -38,27 +38,27 @@ public class IssueService {
     private final SprintRepository sprintRepository;
     private final IssueActivityRepository issueActivityRepository;
     private final DoAn.BE.notification.service.ProjectNotificationService projectNotificationService;
-    
+
     @Transactional
     public IssueDTO createIssue(CreateIssueRequest request, Long userId) {
         User reporter = userRepository.findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
         Project project = projectRepository.findById(request.getProjectId())
-            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy dự án"));
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy dự án"));
         validateProjectAccess(request.getProjectId(), userId);
-        
+
         // Nếu không có statusId, mặc định là To Do (id: 1)
         Integer statusId = request.getStatusId() != null ? request.getStatusId() : 1;
         IssueStatus status = issueStatusRepository.findById(statusId)
-            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy trạng thái"));
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy trạng thái"));
         User assignee = null;
         if (request.getAssigneeId() != null) {
             assignee = userRepository.findById(request.getAssigneeId())
-                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người được giao việc"));
+                    .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người được giao việc"));
             validateProjectAccess(request.getProjectId(), request.getAssigneeId());
         }
         String issueKey = generateIssueKey(project);
-        
+
         // Create issue
         Issue issue = new Issue();
         issue.setProject(project);
@@ -71,96 +71,96 @@ public class IssueService {
         issue.setAssignee(assignee);
         issue.setEstimatedHours(request.getEstimatedHours());
         issue.setDueDate(request.getDueDate());
-        
+
         issue = issueRepository.save(issue);
         return convertToDTO(issue);
     }
-    
+
     @Transactional(readOnly = true)
     public IssueDTO getIssueById(Long issueId, Long userId) {
         Issue issue = issueRepository.findById(issueId)
-            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
+
         if (issue.getProject() == null) {
             throw new IllegalStateException("Issue không có dự án liên kết");
         }
-        
+
         validateProjectAccess(issue.getProject().getProjectId(), userId);
-        
+
         return convertToDTO(issue);
     }
-    
+
     @Transactional(readOnly = true)
     public List<IssueDTO> getProjectIssues(Long projectId, Long userId) {
         // Validate access
         validateProjectAccess(projectId, userId);
-        
+
         List<Issue> issues = issueRepository.findByProject_ProjectId(projectId);
         return issues.stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
-    
+
     @Transactional(readOnly = true)
     public List<IssueDTO> getProjectBacklog(Long projectId, Long userId) {
         // Validate access
         validateProjectAccess(projectId, userId);
-        
+
         List<Issue> issues = issueRepository.findByProject_ProjectIdAndSprintIsNull(projectId);
         return issues.stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
-    
+
     @Transactional(readOnly = true)
     public List<IssueDTO> getSprintIssues(Long sprintId, Long userId) {
         Sprint sprint = sprintRepository.findById(sprintId)
-            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy sprint"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy sprint"));
+
         if (sprint.getProject() == null) {
             throw new IllegalStateException("Sprint không có dự án liên kết");
         }
-        
+
         validateProjectAccess(sprint.getProject().getProjectId(), userId);
-        
+
         List<Issue> issues = issueRepository.findBySprint_SprintId(sprintId);
         return issues.stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
-    
+
     @Transactional(readOnly = true)
     public List<IssueDTO> getMyIssues(Long userId) {
         List<Issue> assignedIssues = issueRepository.findByAssignee_UserId(userId);
         return assignedIssues.stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
-    
+
     @Transactional(readOnly = true)
     public List<IssueDTO> getMyReportedIssues(Long userId) {
         List<Issue> reportedIssues = issueRepository.findByReporter_UserId(userId);
         return reportedIssues.stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
-    
+
     @Transactional
     public IssueDTO updateIssue(Long issueId, UpdateIssueRequest request, Long userId) {
         Issue issue = issueRepository.findById(issueId)
-            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
+
         if (issue.getProject() == null) {
             throw new IllegalStateException("Issue không có dự án liên kết");
         }
-        
+
         validateProjectAccess(issue.getProject().getProjectId(), userId);
-        
+
         User updater = userRepository.findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
+
         StringBuilder changes = new StringBuilder();
-        
+
         // Update fields if provided
         if (request.getTitle() != null) {
             issue.setTitle(request.getTitle());
@@ -170,7 +170,7 @@ public class IssueService {
         }
         if (request.getStatusId() != null) {
             IssueStatus status = issueStatusRepository.findById(request.getStatusId())
-                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy trạng thái"));
+                    .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy trạng thái"));
             issue.setIssueStatus(status);
         }
         if (request.getPriority() != null) {
@@ -182,7 +182,7 @@ public class IssueService {
         }
         if (request.getAssigneeId() != null) {
             User assignee = userRepository.findById(request.getAssigneeId())
-                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người được giao việc"));
+                    .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người được giao việc"));
             validateProjectAccess(issue.getProject().getProjectId(), request.getAssigneeId());
             issue.setAssignee(assignee);
         }
@@ -193,193 +193,190 @@ public class IssueService {
             issue.setActualHours(request.getActualHours());
         }
         if (request.getDueDate() != null) {
-            if (changes.length() > 0) changes.append(", ");
+            if (changes.length() > 0)
+                changes.append(", ");
             changes.append("Deadline: ").append(request.getDueDate());
             issue.setDueDate(request.getDueDate());
         }
-        
+
         issue = issueRepository.save(issue);
-        
+
         // Notify assignee nếu có thay đổi quan trọng (priority, deadline)
         if (changes.length() > 0 && issue.getAssignee() != null && !issue.getAssignee().getUserId().equals(userId)) {
             projectNotificationService.createIssueUpdatedNotification(
-                issue.getAssignee().getUserId(),
-                issue.getTitle(),
-                updater.getUsername(),
-                changes.toString()
-            );
+                    issue.getAssignee().getUserId(),
+                    issue.getTitle(),
+                    updater.getUsername(),
+                    changes.toString());
         }
-        
+
         return convertToDTO(issue);
     }
-    
+
     @Transactional
     public void deleteIssue(Long issueId, Long userId) {
         Issue issue = issueRepository.findById(issueId)
-            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
+
         // Check if user can manage the project or is the reporter
         Long projectId = issue.getProject().getProjectId();
         ProjectMember member = projectMemberRepository.findByProject_ProjectIdAndUser_UserId(projectId, userId)
-            .orElseThrow(() -> new ProjectAccessDeniedException("Bạn không có quyền truy cập dự án này"));
-        
+                .orElseThrow(() -> new ProjectAccessDeniedException("Bạn không có quyền truy cập dự án này"));
+
         // Only managers/owners or the reporter can delete
         if (!member.canManageProject() && !issue.getReporter().getUserId().equals(userId)) {
             throw new ForbiddenException("Bạn không có quyền xóa issue này");
         }
-        
+
         issueRepository.delete(issue);
     }
-    
+
     @Transactional
     public IssueDTO assignIssue(Long issueId, Long assigneeId, Long userId) {
         Issue issue = issueRepository.findById(issueId)
-            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
+
         if (issue.getProject() == null) {
             throw new IllegalStateException("Issue không có dự án liên kết");
         }
-        
+
         validateProjectManagement(issue.getProject().getProjectId(), userId);
-        
+
         User assignee = userRepository.findById(assigneeId)
-            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người được giao việc"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người được giao việc"));
+
         validateProjectAccess(issue.getProject().getProjectId(), assigneeId);
-        
+
         issue.assignTo(assignee);
         issue = issueRepository.save(issue);
-        
+
         // Send notification to assignee
         projectNotificationService.createIssueAssignedNotification(
-            assigneeId,
-            issue.getTitle(),
-            issue.getProject().getName()
-        );
-        
+                assigneeId,
+                issue.getTitle(),
+                issue.getProject().getName());
+
         return convertToDTO(issue);
     }
-    
+
     @Transactional
     public IssueDTO changeIssueStatus(Long issueId, Integer statusId, Long userId) {
         Issue issue = issueRepository.findById(issueId)
-            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy issue"));
+
         if (issue.getProject() == null) {
             throw new IllegalStateException("Issue không có dự án liên kết");
         }
-        
+
         validateProjectAccess(issue.getProject().getProjectId(), userId);
-        
+
         // Validate status
         IssueStatus status = issueStatusRepository.findById(statusId)
-            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy trạng thái"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy trạng thái"));
+
         // Get user for activity log
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
+
         // Save old status for activity log
         String oldStatus = issue.getIssueStatus() != null ? issue.getIssueStatus().getName() : "";
         String newStatus = status.getName();
-        
+
         // Change status
         issue.changeStatus(status);
         issue = issueRepository.save(issue);
-        
+
         // Create activity log for status change
         if (!oldStatus.equals(newStatus)) {
             IssueActivity activity = new IssueActivity(
-                issue, 
-                user, 
-                ActivityType.STATUS_CHANGED,
-                "Status",
-                oldStatus,
-                newStatus
-            );
+                    issue,
+                    user,
+                    ActivityType.STATUS_CHANGED,
+                    "Status",
+                    oldStatus,
+                    newStatus);
             activity.setDescription(user.getUsername() + " đã thay đổi trạng thái");
             issueActivityRepository.save(activity);
         }
-        
+
         // Notify assignee về status change
         if (issue.getAssignee() != null && !issue.getAssignee().getUserId().equals(userId)) {
             projectNotificationService.createIssueStatusChangedNotification(
-                issue.getAssignee().getUserId(),
-                issue.getTitle(),
-                status.getName()
-            );
+                    issue.getAssignee().getUserId(),
+                    issue.getTitle(),
+                    status.getName());
         }
-        
+
         return convertToDTO(issue);
     }
-    
+
     // Helper methods
     private void validateProjectAccess(Long projectId, Long userId) {
         projectMemberRepository.findByProject_ProjectIdAndUser_UserId(projectId, userId)
-            .orElseThrow(() -> new ProjectAccessDeniedException("Bạn không có quyền truy cập dự án này"));
+                .orElseThrow(() -> new ProjectAccessDeniedException("Bạn không có quyền truy cập dự án này"));
     }
-    
+
     private void validateProjectManagement(Long projectId, Long userId) {
         ProjectMember member = projectMemberRepository.findByProject_ProjectIdAndUser_UserId(projectId, userId)
-            .orElseThrow(() -> new ProjectAccessDeniedException("Bạn không có quyền truy cập dự án này"));
-        
+                .orElseThrow(() -> new ProjectAccessDeniedException("Bạn không có quyền truy cập dự án này"));
+
         if (!member.canManageProject()) {
             throw new ForbiddenException("Bạn không có quyền quản lý dự án này");
         }
     }
-    
+
     private String generateIssueKey(Project project) {
         // Get the count of existing issues in the project
         List<Issue> existingIssues = issueRepository.findByProject_ProjectId(project.getProjectId());
         int nextNumber = existingIssues.size() + 1;
-        
+
         // Generate key: PROJECT_KEY-NUMBER (e.g., PROJ-1, PROJ-2)
         return String.format("%s-%d", project.getKeyProject(), nextNumber);
     }
-    
+
     private IssueDTO convertToDTO(Issue issue) {
         IssueDTO dto = new IssueDTO();
         dto.setIssueId(issue.getIssueId());
-        
+
         if (issue.getProject() != null) {
             dto.setProjectId(issue.getProject().getProjectId());
             dto.setProjectName(issue.getProject().getName());
         }
-        
+
         if (issue.getSprint() != null) {
             dto.setSprintId(issue.getSprint().getSprintId());
             dto.setSprintName(issue.getSprint().getName());
         }
-        
+
         dto.setIssueKey(issue.getIssueKey());
         dto.setTitle(issue.getTitle());
         dto.setDescription(issue.getDescription());
-        
+
         if (issue.getIssueStatus() != null) {
             dto.setStatusId(issue.getIssueStatus().getStatusId());
             dto.setStatusName(issue.getIssueStatus().getName());
             dto.setStatusColor(issue.getIssueStatus().getColor());
         }
-        
+
         dto.setPriority(issue.getPriority());
-        
+
         if (issue.getReporter() != null) {
             dto.setReporterId(issue.getReporter().getUserId());
             dto.setReporterName(issue.getReporter().getUsername());
         }
-        
+
         if (issue.getAssignee() != null) {
             dto.setAssigneeId(issue.getAssignee().getUserId());
             dto.setAssigneeName(issue.getAssignee().getUsername());
         }
-        
+
         dto.setEstimatedHours(issue.getEstimatedHours());
         dto.setActualHours(issue.getActualHours());
         dto.setDueDate(issue.getDueDate());
         dto.setCreatedAt(issue.getCreatedAt());
         dto.setUpdatedAt(issue.getUpdatedAt());
         dto.setIsOverdue(issue.isOverdue());
-        
+
         return dto;
     }
 }

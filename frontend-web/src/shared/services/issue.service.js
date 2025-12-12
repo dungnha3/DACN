@@ -6,6 +6,11 @@ export const issueService = {
     return await apiService.get(`/api/issues/${issueId}`)
   },
 
+  // Get my issues
+  getMyIssues: async () => {
+    return await apiService.get('/api/issues/my-issues')
+  },
+
   // Get issues by project
   getByProject: async (projectId) => {
     return await apiService.get(`/api/issues/project/${projectId}`)

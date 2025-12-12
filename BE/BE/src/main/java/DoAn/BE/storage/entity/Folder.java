@@ -81,9 +81,15 @@ public class Folder {
         return folderType == FolderType.SHARED;
     }
 
+    // Kiểm tra folder công ty
+    public boolean isCompanyFolder() {
+        return folderType == FolderType.COMPANY;
+    }
+
     public enum FolderType {
         PERSONAL,
         SHARED,
-        PROJECT
+        PROJECT,
+        COMPANY
     }
 }

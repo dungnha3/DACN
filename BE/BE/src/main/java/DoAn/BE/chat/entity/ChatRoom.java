@@ -18,14 +18,14 @@ import DoAn.BE.project.entity.Project;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChatRoom {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "room_id")
-    private Long roomId;  // Hoặc chatRoomId nếu muốn giữ tên
+    private Long roomId; // Hoặc chatRoomId nếu muốn giữ tên
 
     @Column(length = 100, columnDefinition = "NVARCHAR(100)")
-    private String name;  // Có thể NULL (DIRECT chat không có tên)
+    private String name; // Có thể NULL (DIRECT chat không có tên)
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -33,7 +33,7 @@ public class ChatRoom {
 
     @ManyToOne
     @JoinColumn(name = "project_id")
-    private Project project;  // NULL nếu không phải project chat
+    private Project project; // NULL nếu không phải project chat
 
     @Column(name = "avatar_url", length = 500, columnDefinition = "NVARCHAR(500)")
     private String avatarUrl;
@@ -74,8 +74,8 @@ public class ChatRoom {
 
     // Enum
     public enum RoomType {
-        DIRECT,   // Chat 1-1
-        GROUP,    // Group chat
-        PROJECT   // Project chat (auto-create khi tạo project)
+        DIRECT, // Chat 1-1
+        GROUP, // Group chat
+        PROJECT // Project chat (auto-create khi tạo project)
     }
 }

@@ -125,12 +125,18 @@ public class ChamCongController {
      * GET /api/cham-cong/nhan-vien/{nhanvienId}/month?year=2024&month=1
      */
     @GetMapping("/nhan-vien/{nhanvienId}/month")
-    public ResponseEntity<List<ChamCongDTO>> getChamCongByNhanVienAndMonth(
+    public ResponseEntity<?> getChamCongByNhanVienAndMonth(
             @PathVariable Long nhanvienId,
             @RequestParam int year,
             @RequestParam int month) {
-        List<ChamCong> chamCongs = chamCongService.getChamCongByNhanVienAndMonth(nhanvienId, year, month);
-        return ResponseEntity.ok(chamCongMapper.toDTOList(chamCongs));
+        try {
+            List<ChamCong> chamCongs = chamCongService.getChamCongByNhanVienAndMonth(nhanvienId, year, month);
+            return ResponseEntity.ok(chamCongMapper.toDTOList(chamCongs));
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", "Lỗi khi lấy dữ liệu chấm công: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
 
     /**
@@ -152,23 +158,9 @@ public class ChamCongController {
     }
 
     /**
-     * Tính tổng số giờ làm việc của nhân viên trong tháng
-     * GET /api/cham-cong/nhan-vien/{nhanvienId}/total-hours?year=2024&month=1
+     * Thống kê đi trễ/về sớm của nhân viên trong tháng
+     * GET /api/cham-cong/nhan-vien/{nhanvienId}/statistics?year=2024&month=1
      */
-    @GetMapping("/nhan-vien/{nhanvienId}/total-hours")
-    public ResponseEntity<Map<String, Object>> getTotalWorkingHours(
-            @PathVariable Long nhanvienId,
-            @RequestParam int year,
-            @RequestParam int month) {
-        BigDecimal totalHours = chamCongService.getTotalWorkingHours(nhanvienId, year, month);
-        Map<String, Object> response = new HashMap<>();
-        response.put("nhanvienId", nhanvienId);
-        response.put("year", year);
-        response.put("month", month);
-        response.put("totalHours", totalHours);
-        return ResponseEntity.ok(response);
-    }
-
     /**
      * Thống kê đi trễ/về sớm của nhân viên trong tháng
      * GET /api/cham-cong/nhan-vien/{nhanvienId}/statistics?year=2024&month=1
@@ -178,18 +170,45 @@ public class ChamCongController {
             @PathVariable Long nhanvienId,
             @RequestParam int year,
             @RequestParam int month) {
-        long lateDays = chamCongService.countLateDays(nhanvienId, year, month);
-        long earlyLeaveDays = chamCongService.countEarlyLeaveDays(nhanvienId, year, month);
-        int workingDays = chamCongService.countWorkingDays(nhanvienId, year, month);
-
         Map<String, Object> response = new HashMap<>();
         response.put("nhanvienId", nhanvienId);
         response.put("year", year);
         response.put("month", month);
-        response.put("workingDays", workingDays);
-        response.put("lateDays", lateDays);
-        response.put("earlyLeaveDays", earlyLeaveDays);
+
+        try {
+            long lateDays = chamCongService.countLateDays(nhanvienId, year, month);
+            long earlyLeaveDays = chamCongService.countEarlyLeaveDays(nhanvienId, year, month);
+            int workingDays = chamCongService.countWorkingDays(nhanvienId, year, month);
+
+            response.put("workingDays", workingDays);
+            response.put("lateDays", lateDays);
+            response.put("earlyLeaveDays", earlyLeaveDays);
+        } catch (Exception e) {
+            // Handle error gracefully - return 0 stats
+            response.put("workingDays", 0);
+            response.put("lateDays", 0);
+            response.put("earlyLeaveDays", 0);
+            response.put("error", e.getMessage());
+        }
+
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Tính tổng giờ làm việc của nhân viên trong tháng
+     * GET /api/cham-cong/nhan-vien/{nhanvienId}/total-hours?year=2024&month=1
+     */
+    @GetMapping("/nhan-vien/{nhanvienId}/total-hours")
+    public ResponseEntity<BigDecimal> getTotalHours(
+            @PathVariable Long nhanvienId,
+            @RequestParam int year,
+            @RequestParam int month) {
+        try {
+            BigDecimal totalHours = chamCongService.getTotalWorkingHours(nhanvienId, year, month);
+            return ResponseEntity.ok(totalHours != null ? totalHours : BigDecimal.ZERO);
+        } catch (Exception e) {
+            return ResponseEntity.ok(BigDecimal.ZERO);
+        }
     }
 
     /**
@@ -229,9 +248,25 @@ public class ChamCongController {
      * Lấy trạng thái chấm công hôm nay
      * GET /api/cham-cong/status/{nhanvienId}
      */
+    /**
+     * Lấy trạng thái chấm công hôm nay
+     * GET /api/cham-cong/status/{nhanvienId}
+     */
     @GetMapping("/status/{nhanvienId}")
     public ResponseEntity<Map<String, Object>> getTrangThaiChamCongHomNay(@PathVariable Long nhanvienId) {
-        Map<String, Object> response = chamCongService.getTrangThaiChamCongHomNay(nhanvienId);
-        return ResponseEntity.ok(response);
+        System.out.println("DEBUG: Request to /status/" + nhanvienId);
+        try {
+            Map<String, Object> response = chamCongService.getTrangThaiChamCongHomNay(nhanvienId);
+            System.out.println("DEBUG: Service returned: " + response);
+            return ResponseEntity.ok(response);
+        } catch (Throwable e) {
+            e.printStackTrace(); // Print stack trace to console
+            Map<String, Object> error = new HashMap<>();
+            error.put("message", "Lỗi (Throwable): " + e.getMessage());
+            error.put("exception", e.getClass().getName());
+            error.put("checkedIn", false);
+            error.put("checkedOut", false);
+            return ResponseEntity.ok(error); // Return 200 OK with error details
+        }
     }
 }
