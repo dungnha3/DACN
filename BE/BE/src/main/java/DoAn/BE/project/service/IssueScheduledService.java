@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Service xử lý scheduled jobs cho Issue
@@ -21,10 +23,11 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class IssueScheduledService {
-    
+
     private final IssueRepository issueRepository;
     private final ProjectNotificationService projectNotificationService;
-    
+    private final DoAn.BE.notification.service.FCMService fcmService;
+
     /**
      * Check overdue issues mỗi ngày lúc 9:00 AM
      */
@@ -32,12 +35,12 @@ public class IssueScheduledService {
     @Transactional
     public void checkOverdueIssues() {
         log.info("🔍 Bắt đầu kiểm tra overdue issues...");
-        
+
         LocalDate today = LocalDate.now();
-        
+
         // Get all issues chưa done
         List<Issue> allIssues = issueRepository.findAll();
-        
+
         int overdueCount = 0;
         for (Issue issue : allIssues) {
             // Check if issue is overdue
@@ -45,22 +48,36 @@ public class IssueScheduledService {
                 try {
                     // Send notification
                     projectNotificationService.createIssueOverdueNotification(
-                        issue.getAssignee().getUserId(),
-                        issue.getTitle(),
-                        issue.getIssueKey()
-                    );
+                            issue.getAssignee().getUserId(),
+                            issue.getTitle(),
+                            issue.getIssueKey());
+
+                    // 📱 Push FCM notification
+                    if (issue.getAssignee().getFcmToken() != null) {
+                        Map<String, String> data = new HashMap<>();
+                        data.put("type", "ISSUE_OVERDUE");
+                        data.put("issueId", issue.getIssueId().toString());
+                        data.put("link",
+                                "/projects/" + issue.getProject().getProjectId() + "/issues/" + issue.getIssueId());
+                        fcmService.sendToDevice(
+                                issue.getAssignee().getFcmToken(),
+                                "⚠️ Issue Overdue",
+                                "Issue \"" + issue.getTitle() + "\" (đã quá hạn",
+                                data);
+                    }
+
                     overdueCount++;
                     log.debug("⚠️ Sent overdue notification for issue: {}", issue.getIssueKey());
                 } catch (Exception e) {
-                    log.error("Error sending overdue notification for issue {}: {}", 
-                        issue.getIssueKey(), e.getMessage());
+                    log.error("Error sending overdue notification for issue {}: {}",
+                            issue.getIssueKey(), e.getMessage());
                 }
             }
         }
-        
+
         log.info("✅ Hoàn tất kiểm tra overdue issues. Đã gửi {} notifications", overdueCount);
     }
-    
+
     /**
      * Reminder cho issues sắp đến deadline (3 ngày trước)
      * Chạy mỗi ngày lúc 10:00 AM
@@ -69,34 +86,48 @@ public class IssueScheduledService {
     @Transactional
     public void remindUpcomingDeadlines() {
         log.info("🔔 Bắt đầu nhắc deadline sắp tới...");
-        
+
         LocalDate threeDaysLater = LocalDate.now().plusDays(3);
-        
+
         List<Issue> allIssues = issueRepository.findAll();
-        
+
         int reminderCount = 0;
         for (Issue issue : allIssues) {
             // Check if deadline is in 3 days and not done
-            if (issue.getDueDate() != null && 
-                issue.getDueDate().equals(threeDaysLater) && 
-                !issue.isDone() &&
-                issue.getAssignee() != null) {
+            if (issue.getDueDate() != null &&
+                    issue.getDueDate().equals(threeDaysLater) &&
+                    !issue.isDone() &&
+                    issue.getAssignee() != null) {
                 try {
                     projectNotificationService.createIssueUpdatedNotification(
-                        issue.getAssignee().getUserId(),
-                        issue.getTitle(),
-                        "System",
-                        "Deadline sắp tới: " + issue.getDueDate()
-                    );
+                            issue.getAssignee().getUserId(),
+                            issue.getTitle(),
+                            "System",
+                            "Deadline sắp tới: " + issue.getDueDate());
+
+                    // 📱 Push FCM notification
+                    if (issue.getAssignee().getFcmToken() != null) {
+                        Map<String, String> data = new HashMap<>();
+                        data.put("type", "ISSUE_DEADLINE_REMINDER");
+                        data.put("issueId", issue.getIssueId().toString());
+                        data.put("link",
+                                "/projects/" + issue.getProject().getProjectId() + "/issues/" + issue.getIssueId());
+                        fcmService.sendToDevice(
+                                issue.getAssignee().getFcmToken(),
+                                "📅 Deadline sắp tới",
+                                "Issue \"" + issue.getTitle() + "\" hết hạn trong 3 ngày nữa",
+                                data);
+                    }
+
                     reminderCount++;
                     log.debug("🔔 Sent deadline reminder for issue: {}", issue.getIssueKey());
                 } catch (Exception e) {
-                    log.error("Error sending deadline reminder for issue {}: {}", 
-                        issue.getIssueKey(), e.getMessage());
+                    log.error("Error sending deadline reminder for issue {}: {}",
+                            issue.getIssueKey(), e.getMessage());
                 }
             }
         }
-        
+
         log.info("✅ Hoàn tất nhắc deadline. Đã gửi {} reminders", reminderCount);
     }
 }

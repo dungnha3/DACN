@@ -68,7 +68,19 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
     if (!_formKey.currentState!.validate()) return;
     if (_startDate == null || _endDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng chọn ngày bắt đầu và kết thúc')),
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.warning_amber, color: Colors.white),
+              const SizedBox(width: 10),
+              Expanded(child: Text('Vui lòng chọn ngày bắt đầu và kết thúc')),
+            ],
+          ),
+          backgroundColor: Colors.orange.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: const EdgeInsets.all(16),
+        ),
       );
       return;
     }
@@ -92,7 +104,19 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
         
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gửi đơn xin nghỉ thành công!')),
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 10),
+                Expanded(child: Text('✅ Gửi đơn xin nghỉ thành công!')),
+              ],
+            ),
+            backgroundColor: Colors.green.shade600,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            margin: const EdgeInsets.all(16),
+          ),
         );
         
         // Reset form and switch to list tab
@@ -109,7 +133,19 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> with SingleTick
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi gửi đơn: $e')),
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 10),
+                Expanded(child: Text('Lỗi gửi đơn: $e')),
+              ],
+            ),
+            backgroundColor: Colors.red.shade600,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            margin: const EdgeInsets.all(16),
+          ),
         );
       }
     } finally {

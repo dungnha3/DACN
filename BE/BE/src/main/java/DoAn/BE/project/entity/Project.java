@@ -64,9 +64,6 @@ public class Project {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "budget", precision = 15, scale = 2)
-    private java.math.BigDecimal budget;
-
     // Relationships
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore

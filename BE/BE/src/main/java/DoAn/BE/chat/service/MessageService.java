@@ -24,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.regex.Pattern;
@@ -42,6 +44,7 @@ public class MessageService {
     private final WebSocketNotificationService webSocketNotificationService;
     private final ChatNotificationService chatNotificationService;
     private final TypingIndicatorService typingIndicatorService;
+    private final DoAn.BE.notification.service.FCMService fcmService;
 
     public MessageService(MessageRepository messageRepository,
             ChatRoomRepository chatRoomRepository,
@@ -50,7 +53,8 @@ public class MessageService {
             UserRepository userRepository,
             WebSocketNotificationService webSocketNotificationService,
             ChatNotificationService chatNotificationService,
-            TypingIndicatorService typingIndicatorService) {
+            TypingIndicatorService typingIndicatorService,
+            DoAn.BE.notification.service.FCMService fcmService) {
         this.messageRepository = messageRepository;
         this.chatRoomRepository = chatRoomRepository;
         this.chatRoomMemberRepository = chatRoomMemberRepository;
@@ -59,6 +63,7 @@ public class MessageService {
         this.webSocketNotificationService = webSocketNotificationService;
         this.chatNotificationService = chatNotificationService;
         this.typingIndicatorService = typingIndicatorService;
+        this.fcmService = fcmService;
     }
 
     // Gửi tin nhắn
@@ -148,6 +153,28 @@ public class MessageService {
                     sender.getUsername(),
                     request.getContent(),
                     request.getRoomId());
+
+            // 📱 Push FCM notification
+            try {
+                if (member.getUser().getFcmToken() != null) {
+                    String truncatedContent = request.getContent();
+                    if (truncatedContent != null && truncatedContent.length() > 100) {
+                        truncatedContent = truncatedContent.substring(0, 97) + "...";
+                    }
+
+                    Map<String, String> data = new HashMap<>();
+                    data.put("type", "CHAT_NEW_MESSAGE");
+                    data.put("roomId", request.getRoomId().toString());
+                    data.put("link", "/chat/rooms/" + request.getRoomId());
+                    fcmService.sendToDevice(
+                            member.getUser().getFcmToken(),
+                            "💬 " + sender.getUsername(),
+                            truncatedContent != null ? truncatedContent : "[Ảnh/Tệp]",
+                            data);
+                }
+            } catch (Exception e) {
+                // Log but don't fail
+            }
         }
 
         typingIndicatorService.forceStopTyping(request.getRoomId(), senderId);

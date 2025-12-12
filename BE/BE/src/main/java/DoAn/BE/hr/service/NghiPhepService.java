@@ -16,9 +16,13 @@ import DoAn.BE.hr.entity.NhanVien;
 import DoAn.BE.hr.repository.NghiPhepRepository;
 import DoAn.BE.hr.repository.NhanVienRepository;
 import DoAn.BE.notification.service.HRNotificationService;
+import DoAn.BE.notification.service.FCMService;
 import DoAn.BE.user.entity.User;
 import DoAn.BE.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
+
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 // Service quản lý nghỉ phép (tạo, duyệt, từ chối, thống kê)
@@ -31,15 +35,18 @@ public class NghiPhepService {
     private final NhanVienRepository nhanVienRepository;
     private final UserRepository userRepository;
     private final HRNotificationService hrNotificationService;
+    private final FCMService fcmService;
 
     public NghiPhepService(NghiPhepRepository nghiPhepRepository,
             NhanVienRepository nhanVienRepository,
             UserRepository userRepository,
-            HRNotificationService hrNotificationService) {
+            HRNotificationService hrNotificationService,
+            FCMService fcmService) {
         this.nghiPhepRepository = nghiPhepRepository;
         this.nhanVienRepository = nhanVienRepository;
         this.userRepository = userRepository;
         this.hrNotificationService = hrNotificationService;
+        this.fcmService = fcmService;
     }
 
     // Tạo đơn nghỉ phép mới - Employee tự tạo
@@ -228,13 +235,27 @@ public class NghiPhepService {
         NghiPhep saved = nghiPhepRepository.save(nghiPhep);
         log.info("✅ Accounting đã duyệt đơn nghỉ phép - Hoàn tất 2-step approval");
 
-        // 🔔 Gửi notification cho nhân viên khi hoàn tất
+        // 🔔 Gửi notification + Push FCM cho nhân viên khi hoàn tất
         try {
-            if (nghiPhep.getNhanVien().getUser() != null) {
+            User employeeUser = nghiPhep.getNhanVien().getUser();
+            if (employeeUser != null) {
                 hrNotificationService.createLeaveApprovedNotification(
-                        nghiPhep.getNhanVien().getUser().getUserId(),
+                        employeeUser.getUserId(),
                         nghiPhep.getNgayBatDau().toString(),
                         nghiPhep.getNgayKetThuc().toString());
+
+                // 📱 Push FCM notification
+                if (employeeUser.getFcmToken() != null) {
+                    Map<String, String> data = new HashMap<>();
+                    data.put("type", "LEAVE_APPROVED");
+                    data.put("link", "/leave-request");
+                    fcmService.sendToDevice(
+                            employeeUser.getFcmToken(),
+                            "✅ Đơn nghỉ phép được duyệt",
+                            "Đơn nghỉ từ " + nghiPhep.getNgayBatDau() + " đến " + nghiPhep.getNgayKetThuc()
+                                    + " đã được duyệt",
+                            data);
+                }
             }
         } catch (Exception e) {
             log.warn("Không thể gửi notification: {}", e.getMessage());
@@ -263,13 +284,27 @@ public class NghiPhepService {
         NghiPhep saved = nghiPhepRepository.save(nghiPhep);
         log.info("✅ Đã phê duyệt đơn nghỉ phép cho nhân viên: {}", nghiPhep.getNhanVien().getHoTen());
 
-        // 🔔 Gửi notification cho nhân viên
+        // 🔔 Gửi notification + Push FCM cho nhân viên
         try {
-            if (nghiPhep.getNhanVien().getUser() != null) {
+            User employeeUser = nghiPhep.getNhanVien().getUser();
+            if (employeeUser != null) {
                 hrNotificationService.createLeaveApprovedNotification(
-                        nghiPhep.getNhanVien().getUser().getUserId(),
+                        employeeUser.getUserId(),
                         nghiPhep.getNgayBatDau().toString(),
                         nghiPhep.getNgayKetThuc().toString());
+
+                // 📱 Push FCM notification
+                if (employeeUser.getFcmToken() != null) {
+                    Map<String, String> data = new HashMap<>();
+                    data.put("type", "LEAVE_APPROVED");
+                    data.put("link", "/leave-request");
+                    fcmService.sendToDevice(
+                            employeeUser.getFcmToken(),
+                            "✅ Đơn nghỉ phép được duyệt",
+                            "Đơn nghỉ từ " + nghiPhep.getNgayBatDau() + " đến " + nghiPhep.getNgayKetThuc()
+                                    + " đã được duyệt",
+                            data);
+                }
             }
         } catch (Exception e) {
             log.warn("Không thể gửi notification: {}", e.getMessage());
@@ -297,14 +332,29 @@ public class NghiPhepService {
         NghiPhep saved = nghiPhepRepository.save(nghiPhep);
         log.info("❌ Đã từ chối đơn nghỉ phép cho nhân viên: {}", nghiPhep.getNhanVien().getHoTen());
 
-        // 🔔 Gửi notification cho nhân viên
+        // 🔔 Gửi notification + Push FCM cho nhân viên
         try {
-            if (nghiPhep.getNhanVien().getUser() != null) {
+            User employeeUser = nghiPhep.getNhanVien().getUser();
+            if (employeeUser != null) {
+                String reason = note != null ? note : "Không có lý do cụ thể";
                 hrNotificationService.createLeaveRejectedNotification(
-                        nghiPhep.getNhanVien().getUser().getUserId(),
+                        employeeUser.getUserId(),
                         nghiPhep.getNgayBatDau().toString(),
                         nghiPhep.getNgayKetThuc().toString(),
-                        note != null ? note : "Không có lý do cụ thể");
+                        reason);
+
+                // 📱 Push FCM notification
+                if (employeeUser.getFcmToken() != null) {
+                    Map<String, String> data = new HashMap<>();
+                    data.put("type", "LEAVE_REJECTED");
+                    data.put("link", "/leave-request");
+                    fcmService.sendToDevice(
+                            employeeUser.getFcmToken(),
+                            "❌ Đơn nghỉ phép bị từ chối",
+                            "Đơn nghỉ từ " + nghiPhep.getNgayBatDau() + " đến " + nghiPhep.getNgayKetThuc()
+                                    + " bị từ chối. Lý do: " + reason,
+                            data);
+                }
             }
         } catch (Exception e) {
             log.warn("Không thể gửi notification: {}", e.getMessage());

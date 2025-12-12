@@ -24,6 +24,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,6 +40,7 @@ public class IssueService {
     private final SprintRepository sprintRepository;
     private final IssueActivityRepository issueActivityRepository;
     private final DoAn.BE.notification.service.ProjectNotificationService projectNotificationService;
+    private final DoAn.BE.notification.service.FCMService fcmService;
 
     @Transactional
     public IssueDTO createIssue(CreateIssueRequest request, Long userId) {
@@ -256,6 +259,23 @@ public class IssueService {
                 issue.getTitle(),
                 issue.getProject().getName());
 
+        // 📱 Push FCM notification to assignee
+        try {
+            if (assignee.getFcmToken() != null) {
+                Map<String, String> data = new HashMap<>();
+                data.put("type", "ISSUE_ASSIGNED");
+                data.put("issueId", issue.getIssueId().toString());
+                data.put("link", "/projects/" + issue.getProject().getProjectId() + "/issues/" + issue.getIssueId());
+                fcmService.sendToDevice(
+                        assignee.getFcmToken(),
+                        "📝 Issue mới được giao",
+                        "Bạn được giao issue \"" + issue.getTitle() + "\" trong dự án " + issue.getProject().getName(),
+                        data);
+            }
+        } catch (Exception e) {
+            // Log but don't fail the operation
+        }
+
         return convertToDTO(issue);
     }
 
@@ -305,6 +325,24 @@ public class IssueService {
                     issue.getAssignee().getUserId(),
                     issue.getTitle(),
                     status.getName());
+
+            // 📱 Push FCM notification to assignee
+            try {
+                if (issue.getAssignee().getFcmToken() != null) {
+                    Map<String, String> data = new HashMap<>();
+                    data.put("type", "ISSUE_STATUS_CHANGED");
+                    data.put("issueId", issue.getIssueId().toString());
+                    data.put("link",
+                            "/projects/" + issue.getProject().getProjectId() + "/issues/" + issue.getIssueId());
+                    fcmService.sendToDevice(
+                            issue.getAssignee().getFcmToken(),
+                            "🔄 Trạng thái issue thay đổi",
+                            "Issue \"" + issue.getTitle() + "\" chuyển sang " + status.getName(),
+                            data);
+                }
+            } catch (Exception e) {
+                // Log but don't fail the operation
+            }
         }
 
         return convertToDTO(issue);

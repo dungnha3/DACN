@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +35,7 @@ public class IssueCommentService {
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
     private final DoAn.BE.notification.service.ProjectNotificationService projectNotificationService;
+    private final DoAn.BE.notification.service.FCMService fcmService;
 
     @Transactional
     public IssueCommentDTO createComment(CreateCommentRequest request, User currentUser) {
@@ -64,6 +67,24 @@ public class IssueCommentService {
                     issue.getAssignee().getUserId(),
                     currentUser.getUsername(),
                     issue.getTitle());
+
+            // 📱 Push FCM notification to assignee
+            try {
+                if (issue.getAssignee().getFcmToken() != null) {
+                    Map<String, String> data = new HashMap<>();
+                    data.put("type", "ISSUE_COMMENT");
+                    data.put("issueId", issue.getIssueId().toString());
+                    data.put("link",
+                            "/projects/" + issue.getProject().getProjectId() + "/issues/" + issue.getIssueId());
+                    fcmService.sendToDevice(
+                            issue.getAssignee().getFcmToken(),
+                            "💬 Comment mới trên issue",
+                            currentUser.getUsername() + " đã bình luận trên \"" + issue.getTitle() + "\"",
+                            data);
+                }
+            } catch (Exception e) {
+                // Log but don't fail
+            }
         }
         if (issue.getReporter() != null && !issue.getReporter().getUserId().equals(currentUser.getUserId())
                 && (issue.getAssignee() == null
@@ -72,6 +93,24 @@ public class IssueCommentService {
                     issue.getReporter().getUserId(),
                     currentUser.getUsername(),
                     issue.getTitle());
+
+            // 📱 Push FCM notification to reporter
+            try {
+                if (issue.getReporter().getFcmToken() != null) {
+                    Map<String, String> data = new HashMap<>();
+                    data.put("type", "ISSUE_COMMENT");
+                    data.put("issueId", issue.getIssueId().toString());
+                    data.put("link",
+                            "/projects/" + issue.getProject().getProjectId() + "/issues/" + issue.getIssueId());
+                    fcmService.sendToDevice(
+                            issue.getReporter().getFcmToken(),
+                            "💬 Comment mới trên issue",
+                            currentUser.getUsername() + " đã bình luận trên \"" + issue.getTitle() + "\"",
+                            data);
+                }
+            } catch (Exception e) {
+                // Log but don't fail
+            }
         }
 
         return convertToDTO(comment, currentUser);

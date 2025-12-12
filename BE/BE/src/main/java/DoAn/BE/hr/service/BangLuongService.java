@@ -21,9 +21,12 @@ import DoAn.BE.hr.repository.NhanVienRepository;
 import DoAn.BE.hr.entity.HopDong;
 import DoAn.BE.hr.entity.HopDong.TrangThaiHopDong;
 import DoAn.BE.notification.service.HRNotificationService;
+import DoAn.BE.notification.service.FCMService;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,17 +42,20 @@ public class BangLuongService {
     private final HopDongRepository hopDongRepository;
     private final ChamCongRepository chamCongRepository;
     private final HRNotificationService hrNotificationService;
+    private final FCMService fcmService;
 
     public BangLuongService(BangLuongRepository bangLuongRepository,
             NhanVienRepository nhanVienRepository,
             HopDongRepository hopDongRepository,
             ChamCongRepository chamCongRepository,
-            HRNotificationService hrNotificationService) {
+            HRNotificationService hrNotificationService,
+            FCMService fcmService) {
         this.bangLuongRepository = bangLuongRepository;
         this.nhanVienRepository = nhanVienRepository;
         this.hopDongRepository = hopDongRepository;
         this.chamCongRepository = chamCongRepository;
         this.hrNotificationService = hrNotificationService;
+        this.fcmService = fcmService;
     }
 
     // Tạo bảng lương mới - CHỈ Accounting Manager
@@ -313,7 +319,38 @@ public class BangLuongService {
 
         BangLuong bangLuong = getBangLuongById(id);
         bangLuong.setTrangThai("DA_THANH_TOAN");
-        return bangLuongRepository.save(bangLuong);
+        BangLuong saved = bangLuongRepository.save(bangLuong);
+
+        // 🔔 Gửi notification + Push FCM cho nhân viên
+        try {
+            User employeeUser = bangLuong.getNhanVien().getUser();
+            if (employeeUser != null) {
+                String amount = saved.getLuongThucNhan() != null ? String.format("%,.0f", saved.getLuongThucNhan())
+                        : "0";
+                hrNotificationService.createSalaryPaidNotification(
+                        employeeUser.getUserId(),
+                        String.valueOf(bangLuong.getThang()),
+                        String.valueOf(bangLuong.getNam()),
+                        amount);
+
+                // 📱 Push FCM notification
+                if (employeeUser.getFcmToken() != null) {
+                    Map<String, String> data = new HashMap<>();
+                    data.put("type", "SALARY_PAID");
+                    data.put("link", "/payroll");
+                    fcmService.sendToDevice(
+                            employeeUser.getFcmToken(),
+                            "💰 Lương đã được thanh toán",
+                            "Lương tháng " + bangLuong.getThang() + "/" + bangLuong.getNam() + " (" + amount
+                                    + " VNĐ) đã được thanh toán",
+                            data);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Không thể gửi notification: {}", e.getMessage());
+        }
+
+        return saved;
     }
 
     /**
@@ -436,13 +473,28 @@ public class BangLuongService {
         log.info("✅ Tính lương thành công cho nhân viên: {} - Thực nhận: {}",
                 nhanVien.getHoTen(), saved.getLuongThucNhan());
 
-        // 🔔 Gửi notification cho nhân viên
+        // 🔔 Gửi notification + Push FCM cho nhân viên
         try {
-            if (nhanVien.getUser() != null) {
+            User employeeUser = nhanVien.getUser();
+            if (employeeUser != null) {
                 hrNotificationService.createSalaryNotification(
-                        nhanVien.getUser().getUserId(),
+                        employeeUser.getUserId(),
                         String.valueOf(thang),
                         String.valueOf(nam));
+
+                // 📱 Push FCM notification
+                if (employeeUser.getFcmToken() != null) {
+                    Map<String, String> data = new HashMap<>();
+                    data.put("type", "SALARY_CREATED");
+                    data.put("link", "/payroll");
+                    String amount = saved.getLuongThucNhan() != null ? String.format("%,.0f", saved.getLuongThucNhan())
+                            : "0";
+                    fcmService.sendToDevice(
+                            employeeUser.getFcmToken(),
+                            "💵 Bảng lương mới",
+                            "Bảng lương tháng " + thang + "/" + nam + " đã được tạo. Thực nhận: " + amount + " VNĐ",
+                            data);
+                }
             }
         } catch (Exception e) {
             log.warn("Không thể gửi notification lương cho nhân viên {}: {}", nhanVien.getHoTen(), e.getMessage());

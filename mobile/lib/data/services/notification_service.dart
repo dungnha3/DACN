@@ -15,23 +15,34 @@ class NotificationService {
   }
 
   // Get my notifications
-  // Backend: GET /api/notifications?page=0&size=20&sort=createdAt,desc
+  // Backend: GET /api/notifications?page=0&size=20
   Future<List<NotificationModel>> getMyNotifications({int page = 0, int size = 20}) async {
     try {
-      final response = await _apiService.get('/notifications?page=$page&size=$size&sort=createdAt,desc');
+      // Note: Removed sort parameter - backend already sorts by createdAt desc
+      final response = await _apiService.get('/notifications?page=$page&size=$size');
+      
+      // DEBUG: Log raw response
+      debugPrint('📨 Notification API Response: $response');
+      debugPrint('📨 Response type: ${response.runtimeType}');
       
       // Backend returns Page<Notification>
       if (response is Map<String, dynamic> && response.containsKey('content')) {
         final content = response['content'] as List;
+        debugPrint('📨 Content length: ${content.length}');
+        if (content.isNotEmpty) {
+          debugPrint('📨 First item: ${content.first}');
+        }
         return content.map((e) => NotificationModel.fromJson(e)).toList();
       } else if (response is List) {
          // Fallback if backend changes to list
+         debugPrint('📨 Response is List, length: ${response.length}');
          return response.map((e) => NotificationModel.fromJson(e)).toList();
       } else {
-        debugPrint('Unexpected response format: ${response.runtimeType}');
+        debugPrint('❌ Unexpected response format: ${response.runtimeType}');
       }
-    } catch (e) {
-      debugPrint('Error getting notifications: $e');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error getting notifications: $e');
+      debugPrint('Stack trace: $stackTrace');
     }
     return [];
   }

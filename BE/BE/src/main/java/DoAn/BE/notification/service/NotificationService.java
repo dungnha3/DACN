@@ -49,9 +49,7 @@ public class NotificationService {
     }
 
     public Page<Notification> getUserNotifications(Long userId, Pageable pageable) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
-        return notificationRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+        return notificationRepository.findByUser_UserIdOrderByCreatedAtDesc(userId, pageable);
     }
 
     public long getUnreadCount(Long userId) {

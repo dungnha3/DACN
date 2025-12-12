@@ -24,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 // Service quản lý dự án (CRUD, members, phòng ban)
@@ -40,6 +42,7 @@ public class ProjectService {
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ProjectChatIntegrationService projectChatIntegrationService;
     private final DoAn.BE.notification.service.ProjectNotificationService projectNotificationService;
+    private final DoAn.BE.notification.service.FCMService fcmService;
     private final DoAn.BE.storage.service.StorageProjectIntegrationService storageProjectIntegrationService;
 
     @Transactional
@@ -347,6 +350,23 @@ public class ProjectService {
                 project.getName(),
                 project.getProjectId());
 
+        // 📱 Push FCM notification to new member
+        try {
+            if (newMember.getFcmToken() != null) {
+                Map<String, String> data = new HashMap<>();
+                data.put("type", "PROJECT_MEMBER_ADDED");
+                data.put("projectId", project.getProjectId().toString());
+                data.put("link", "/projects/" + project.getProjectId());
+                fcmService.sendToDevice(
+                        newMember.getFcmToken(),
+                        "📁 Được thêm vào dự án",
+                        "Bạn đã được thêm vào dự án \"" + project.getName() + "\"",
+                        data);
+            }
+        } catch (Exception e) {
+            log.warn("Không thể gửi FCM notification: {}", e.getMessage());
+        }
+
         return convertToMemberDTO(projectMember);
     }
 
@@ -394,6 +414,22 @@ public class ProjectService {
                 projectNotificationService.createProjectMemberRemovedNotification(
                         memberToRemove.getUser().getUserId(),
                         project.getName());
+
+                // 📱 Push FCM notification to removed member
+                try {
+                    if (memberToRemove.getUser().getFcmToken() != null) {
+                        Map<String, String> data = new HashMap<>();
+                        data.put("type", "PROJECT_MEMBER_REMOVED");
+                        data.put("link", "/projects");
+                        fcmService.sendToDevice(
+                                memberToRemove.getUser().getFcmToken(),
+                                "📁 Đã bị xóa khỏi dự án",
+                                "Bạn đã bị xóa khỏi dự án \"" + project.getName() + "\"",
+                                data);
+                    }
+                } catch (Exception e) {
+                    log.warn("Không thể gửi FCM notification: {}", e.getMessage());
+                }
             }
         }
     }

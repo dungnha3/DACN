@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Service xử lý scheduled jobs cho Sprint
@@ -23,13 +25,14 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class SprintScheduledService {
-    
+
     private final SprintRepository sprintRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectNotificationService projectNotificationService;
-    
+    private final DoAn.BE.notification.service.FCMService fcmService;
+
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    
+
     /**
      * Check sprints ending in 3 days (chạy mỗi ngày lúc 8:00 AM)
      */
@@ -37,46 +40,59 @@ public class SprintScheduledService {
     @Transactional
     public void checkSprintsEndingSoon() {
         log.info("🔍 Bắt đầu kiểm tra sprints sắp kết thúc...");
-        
+
         LocalDate threeDaysLater = LocalDate.now().plusDays(3);
-        
+
         // Get all active sprints
         List<Sprint> activeSprints = sprintRepository.findByStatus(Sprint.SprintStatus.ACTIVE);
-        
+
         int notifiedCount = 0;
         for (Sprint sprint : activeSprints) {
             try {
                 // Check if sprint ends in 3 days
                 if (sprint.getEndDate() != null && sprint.getEndDate().equals(threeDaysLater)) {
                     String endDateStr = sprint.getEndDate().format(DATE_FORMATTER);
-                    
+
                     // Notify all project members
                     if (sprint.getProject() != null) {
                         List<ProjectMember> members = projectMemberRepository.findByProject_ProjectId(
-                            sprint.getProject().getProjectId()
-                        );
-                        
+                                sprint.getProject().getProjectId());
+
                         for (ProjectMember member : members) {
                             if (member.getUser() != null) {
                                 projectNotificationService.createSprintEndingNotification(
-                                    member.getUser().getUserId(),
-                                    sprint.getName(),
-                                    endDateStr,
-                                    sprint.getProject().getProjectId()
-                                );
+                                        member.getUser().getUserId(),
+                                        sprint.getName(),
+                                        endDateStr,
+                                        sprint.getProject().getProjectId());
+
+                                // 📱 Push FCM notification
+                                if (member.getUser().getFcmToken() != null) {
+                                    Map<String, String> data = new HashMap<>();
+                                    data.put("type", "SPRINT_ENDING_SOON");
+                                    data.put("sprintId", sprint.getSprintId().toString());
+                                    data.put("projectId", sprint.getProject().getProjectId().toString());
+                                    data.put("link", "/projects/" + sprint.getProject().getProjectId() + "/sprints/"
+                                            + sprint.getSprintId());
+                                    fcmService.sendToDevice(
+                                            member.getUser().getFcmToken(),
+                                            "⏰ Sprint sắp kết thúc",
+                                            "Sprint \"" + sprint.getName() + "\" kết thúc vào " + endDateStr,
+                                            data);
+                                }
                             }
                         }
-                        
+
                         notifiedCount += members.size();
-                        log.debug("⏰ Sprint {} ending on {}, notified {} members", 
-                            sprint.getName(), endDateStr, members.size());
+                        log.debug("⏰ Sprint {} ending on {}, notified {} members",
+                                sprint.getName(), endDateStr, members.size());
                     }
                 }
             } catch (Exception e) {
                 log.error("Error checking sprint {}: {}", sprint.getName(), e.getMessage());
             }
         }
-        
+
         log.info("✅ Hoàn tất kiểm tra sprints. Đã gửi {} notifications", notifiedCount);
     }
 }

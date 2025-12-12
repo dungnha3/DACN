@@ -6,7 +6,7 @@ import '../screens/hr/payroll_screen.dart';
 import '../screens/hr/leave_request_screen.dart';
 import '../screens/projects/my_tasks_screen.dart';
 import '../screens/projects/issue_detail_screen.dart';
-import '../screens/notifications/notification_screen.dart';
+import '../screens/notifications/notifications_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/profile/change_password_screen.dart';
 import '../screens/chat/chat_list_screen.dart';
@@ -60,7 +60,7 @@ class AppRouter {
           ),
         );
       case notifications:
-        return MaterialPageRoute(builder: (_) => NotificationScreen());
+        return MaterialPageRoute(builder: (_) => NotificationsScreen());
       case profile:
         return MaterialPageRoute(builder: (_) => ProfileScreen());
       case changePassword:

@@ -6,6 +6,7 @@ import 'package:mobile/data/services/notification_service.dart';
 import 'package:mobile/data/models/user.dart';
 import 'package:mobile/data/models/issue.dart';
 import 'package:mobile/config/app_router.dart';
+import 'package:mobile/services/firebase_notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -31,11 +32,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadData();
+    
+    // Đăng ký callback để refresh badge khi nhận FCM foreground
+    FirebaseNotificationService.onNotificationReceived = _fetchUnreadCount;
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    // Hủy callback để tránh memory leak
+    FirebaseNotificationService.onNotificationReceived = null;
     super.dispose();
   }
 

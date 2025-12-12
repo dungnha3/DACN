@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../data/services/notification_service.dart';
+import '../../data/services/thong_bao_service.dart';
 import '../../data/models/notification_model.dart';
+import '../../data/models/thong_bao_model.dart';
 import '../../config/app_router.dart';
 import '../hr/payroll_screen.dart';
+import 'package:intl/intl.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -11,312 +14,556 @@ class NotificationsScreen extends StatefulWidget {
   State<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen> {
-  final NotificationService _notificationService = NotificationService();
+class _NotificationsScreenState extends State<NotificationsScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   
-  bool _isLoading = false;
-  List<NotificationModel> _notifications = [];
-  int _page = 0;
-  bool _hasMore = true;
-  final ScrollController _scrollController = ScrollController();
+  final NotificationService _notificationService = NotificationService();
+  final ThongBaoService _thongBaoService = ThongBaoService();
+  
+  // System Notifications State
+  bool _isLoadingSys = false;
+  List<NotificationModel> _sysNotifications = [];
+  int _pageSys = 0;
+  bool _hasMoreSys = true;
+
+  // News (ThongBao) State
+  bool _isLoadingNews = false;
+  List<ThongBaoModel> _newsNotifications = [];
+  int _pageNews = 0;
+  bool _hasMoreNews = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchNotifications();
-    _scrollController.addListener(_onScroll);
+    _tabController = TabController(length: 2, vsync: this);
+    _fetchSystemNotifications();
+    _fetchNewsNotifications();
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
-      if (_hasMore && !_isLoading) {
-        _fetchNotifications(loadMore: true);
-      }
-    }
-  }
+  // --- Fetching Logic ---
 
-  Future<void> _fetchNotifications({bool loadMore = false}) async {
-    if (_isLoading) return;
-    
-    setState(() => _isLoading = true);
+  Future<void> _fetchSystemNotifications({bool loadMore = false}) async {
+    if (_isLoadingSys) return;
+    setState(() => _isLoadingSys = true);
     try {
       if (!loadMore) {
-        _page = 0;
-        _notifications.clear();
+        _pageSys = 0;
+        _sysNotifications.clear();
       }
-
-      final newNotifications = await _notificationService.getNotifications(page: _page);
-      
+      final newItems = await _notificationService.getMyNotifications(page: _pageSys);
       setState(() {
-        _notifications.addAll(newNotifications);
-        _page++;
-        _hasMore = newNotifications.length >= 20; // Assuming page size 20
+        _sysNotifications.addAll(newItems);
+        _pageSys++;
+        _hasMoreSys = newItems.length >= 20;
       });
     } catch (e) {
-       // Handle error
+      debugPrint("Error fetching system notifications: $e");
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoadingSys = false);
     }
   }
 
-  Future<void> _markAsRead(int id, int index) async {
+  Future<void> _fetchNewsNotifications({bool loadMore = false}) async {
+    if (_isLoadingNews) return;
+    setState(() => _isLoadingNews = true);
     try {
-      await _notificationService.markAsRead(id);
-      // Optimistically update UI
-      // Since NotificationModel is final, we might need to replace the item or just force rebuild
-      // But for simplicity, we can't easily modify final fields.
-      // Let's just re-fetch or ignore for now, or create a copy.
-      // Creating a copy is better.
-      final old = _notifications[index];
-      final updated = NotificationModel(
-        notificationId: old.notificationId,
-        title: old.title,
-        content: old.content,
-        type: old.type,
-        isRead: true,
-        createdAt: old.createdAt,
-      );
-      
+      if (!loadMore) {
+        _pageNews = 0;
+        _newsNotifications.clear();
+      }
+      final newItems = await _thongBaoService.getMyThongBao(page: _pageNews);
       setState(() {
-        _notifications[index] = updated;
+        _newsNotifications.addAll(newItems);
+        _pageNews++;
+        _hasMoreNews = newItems.length >= 10;
       });
     } catch (e) {
-      // ignore
+       debugPrint("Error fetching news: $e");
+    } finally {
+      if (mounted) setState(() => _isLoadingNews = false);
     }
   }
 
-  Future<void> _markAllAsRead() async {
-    try {
-      await _notificationService.markAllAsRead();
-      setState(() {
-        _notifications = _notifications.map((n) => NotificationModel(
-          notificationId: n.notificationId,
-          title: n.title,
-          content: n.content,
-          type: n.type,
+  // --- Actions ---
+
+  Future<void> _markAsReadSys(NotificationModel item) async {
+    if (item.isRead) return;
+    await _notificationService.markAsRead(item.notificationId);
+    setState(() {
+      final index = _sysNotifications.indexOf(item);
+      if (index != -1) {
+        _sysNotifications[index] = NotificationModel(
+          notificationId: item.notificationId,
+          title: item.title,
+          content: item.content,
+          type: item.type,
+          link: item.link,
+          createdAt: item.createdAt,
           isRead: true,
-          createdAt: n.createdAt,
-        )).toList();
-      });
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đã đánh dấu tất cả là đã đọc')),
         );
       }
-    } catch (e) {
-      // ignore
-    }
+    });
   }
 
-  void _handleNotificationTap(NotificationModel notification, int index) {
-    // Mark as read
-    if (!notification.isRead) {
-      _markAsRead(notification.notificationId, index);
-    }
+  Future<void> _markAsReadNews(ThongBaoModel item) async {
+    if (item.trangThai == 'DA_DOC') return;
+    await _thongBaoService.markAsRead(item.id);
+    // Optimistic update not fully supported for ThongBaoModel (final fields) without copyWith
+    // Just refetch or ignore for UI simplicity
+    _fetchNewsNotifications(); 
+  }
+
+  void _handleSysTap(NotificationModel item) {
+    _markAsReadSys(item);
     
-    // Handle deep link navigation
-    final link = notification.link;
+    // Deep linking
+    final link = item.link;
     if (link != null && link.isNotEmpty) {
       if (link.contains('bang-luong') || link.contains('payroll')) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const PayrollScreen()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const PayrollScreen()));
       } else if (link.contains('chat')) {
-        // Navigate to chat - could expand this
         Navigator.pushNamed(context, '/chat');
       } else if (link.contains('nghi-phep') || link.contains('leave')) {
         Navigator.pushNamed(context, '/leave-requests');
       }
-      // Add more deep link handlers as needed
     }
   }
 
-  Future<void> _deleteNotification(int id, int index) async {
-    try {
-      await _notificationService.deleteNotification(id);
-      setState(() {
-        _notifications.removeAt(index);
-      });
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đã xóa thông báo')),
+  void _showNewsDetail(ThongBaoModel item) {
+    _markAsReadNews(item);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 50,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: _getNewsColor(item.loai).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _getNewsTypeLabel(item.loai),
+                      style: TextStyle(
+                        color: _getNewsColor(item.loai),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    item.tieuDe,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.access_time, size: 16, color: Colors.grey[500]),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatDate(item.ngayTao),
+                        style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 32),
+                  Text(
+                    item.noiDung,
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 1.6,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            );
+          },
         );
-      }
-    } catch (e) {
-      // ignore
-    }
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: Colors.grey[50], // Light background
       appBar: AppBar(
-        title: const Text('Thông báo'),
+        title: const Text('Trung tâm Thông báo', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
-        backgroundColor: theme.primaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
         elevation: 0,
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: theme.primaryColor,
+          unselectedLabelColor: Colors.grey[600],
+          indicatorColor: theme.primaryColor,
+          indicatorWeight: 3,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          tabs: const [
+            Tab(text: 'Biến động'),
+            Tab(text: 'Tin tức'),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.done_all),
-            tooltip: 'Đánh dấu tất cả đã đọc',
-            onPressed: _markAllAsRead,
+            tooltip: 'Đọc tất cả',
+            onPressed: () {
+               // Determine current tab
+               if (_tabController.index == 0) {
+                 _notificationService.markAllAsRead().then((_) => _fetchSystemNotifications());
+               } else {
+                 _thongBaoService.markAllAsRead().then((_) => _fetchNewsNotifications());
+               }
+            },
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () => _fetchNotifications(loadMore: false),
-        child: _notifications.isEmpty && !_isLoading
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.notifications_off_outlined, size: 80, color: Colors.grey[300]),
-                    const SizedBox(height: 20),
-                    Text('Không có thông báo nào', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
-                  ],
-                ),
-              )
-            : ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                itemCount: _notifications.length + (_hasMore ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == _notifications.length) {
-                    return Center(child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: CircularProgressIndicator(color: theme.primaryColor),
-                    ));
-                  }
-
-                  final notification = _notifications[index];
-                  final bool isRead = notification.isRead;
-
-                  return Dismissible(
-                    key: Key(notification.notificationId.toString()),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.error,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 20),
-                      child: const Icon(Icons.delete, color: Colors.white),
-                    ),
-                    onDismissed: (direction) {
-                      _deleteNotification(notification.notificationId, index);
-                    },
-                    child: Card(
-                      color: isRead ? Colors.white : theme.primaryColor.withOpacity(0.05),
-                      elevation: isRead ? 1 : 0,
-                      shadowColor: Colors.black12,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: isRead ? BorderSide.none : BorderSide(color: theme.primaryColor.withOpacity(0.2)),
-                      ),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () {
-                          _handleNotificationTap(notification, index);
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              CircleAvatar(
-                                radius: 20,
-                                backgroundColor: isRead ? Colors.grey[200] : theme.primaryColor.withOpacity(0.1),
-                                child: Icon(
-                                  _getIconForType(notification.type),
-                                  color: isRead ? Colors.grey : theme.primaryColor,
-                                  size: 20,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            notification.title,
-                                            style: TextStyle(
-                                              fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                                              fontSize: 16,
-                                              color: isRead ? Colors.black87 : theme.primaryColor,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        if (!isRead)
-                                          Container(
-                                            width: 8,
-                                            height: 8,
-                                            decoration: BoxDecoration(
-                                              color: theme.colorScheme.error,
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      notification.content,
-                                      style: TextStyle(color: Colors.grey[700], height: 1.4, fontSize: 14),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      notification.createdAt,
-                                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildSystemList(),
+          _buildNewsList(),
+        ],
       ),
     );
   }
 
-  IconData _getIconForType(String type) {
+  Widget _buildSystemList() {
+    if (_sysNotifications.isEmpty && !_isLoadingSys) {
+      return _buildEmptyState('Không có thông báo nào', Icons.notifications_off_outlined);
+    }
+    return RefreshIndicator(
+      onRefresh: () => _fetchSystemNotifications(),
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        itemCount: _sysNotifications.length + (_hasMoreSys ? 1 : 0),
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          if (index == _sysNotifications.length) return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()));
+          
+          final item = _sysNotifications[index];
+          return Dismissible(
+            key: Key('sys_${item.notificationId}'),
+            background: Container(color: Colors.red, alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 20), child: const Icon(Icons.delete, color: Colors.white)),
+            onDismissed: (_) {
+               _notificationService.deleteNotification(item.notificationId);
+               setState(() => _sysNotifications.removeAt(index));
+            },
+            child: _buildSystemCard(item),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildNewsList() {
+    if (_newsNotifications.isEmpty && !_isLoadingNews) {
+      return _buildEmptyState('Không có tin tức nào', Icons.article_outlined);
+    }
+    return RefreshIndicator(
+      onRefresh: () => _fetchNewsNotifications(),
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        itemCount: _newsNotifications.length + (_hasMoreNews ? 1 : 0),
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          if (index == _newsNotifications.length) return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()));
+          
+          final item = _newsNotifications[index];
+          return _buildNewsCard(item);
+        },
+      ),
+    );
+  }
+
+  Widget _buildSystemCard(NotificationModel item) {
+    final theme = Theme.of(context);
+    final isRead = item.isRead;
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: isRead ? Colors.white : Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: isRead ? Colors.transparent : Colors.blue.withOpacity(0.2)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _handleSysTap(item),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isRead ? Colors.grey[100] : Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _getSysIcon(item.type),
+                    color: isRead ? Colors.grey : theme.primaryColor,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.title,
+                              style: TextStyle(
+                                fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            _formatTime(item.createdAt),
+                            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        item.content,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: Colors.grey[600], height: 1.4),
+                      ),
+                    ],
+                  ),
+                ),
+                if (!isRead)
+                  Container(
+                    margin: const EdgeInsets.only(left: 8, top: 5),
+                    width: 10,
+                    height: 10,
+                    decoration: const BoxDecoration(
+                      color: Colors.blue,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNewsCard(ThongBaoModel item) {
+    final color = _getNewsColor(item.loai);
+    final isRead = item.trangThai == 'DA_DOC';
+
+    return GestureDetector(
+      onTap: () => _showNewsDetail(item),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+             BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              height: 6,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                       Container(
+                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                         decoration: BoxDecoration(
+                           color: color.withOpacity(0.1),
+                           borderRadius: BorderRadius.circular(6),
+                         ),
+                         child: Text(
+                           _getNewsTypeLabel(item.loai),
+                           style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
+                         ),
+                       ),
+                       const Spacer(),
+                       if (!isRead)
+                         Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(4)), child: const Text("MỚI", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold))),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    item.tieuDe,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: isRead ? FontWeight.w500 : FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    item.noiDung,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Colors.grey[600], height: 1.4),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey[400]),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatDate(item.ngayTao),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String text, IconData icon) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 64, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          Text(text, style: TextStyle(color: Colors.grey[500], fontSize: 16)),
+        ],
+      ),
+    );
+  }
+
+  // --- Helpers ---
+
+  IconData _getSysIcon(String type) {
     switch (type) {
-      case 'TASK':
-        return Icons.assignment_outlined;
-      case 'CHAT':
-        return Icons.chat_bubble_outline;
-      case 'SYSTEM':
-        return Icons.info_outline;
-      case 'LEAVE':
-        return Icons.calendar_today_outlined;
-      case 'PAYROLL':
-        return Icons.attach_money;
-      default:
-        return Icons.notifications_none;
+      case 'PAYROLL': return Icons.attach_money;
+      case 'task': 
+      case 'TASK': return Icons.check_circle_outline;
+      case 'LEAVE': return Icons.flight_takeoff;
+      case 'CHAT': return Icons.chat_bubble_outline;
+      default: return Icons.notifications_none;
+    }
+  }
+
+  Color _getNewsColor(String type) {
+    switch (type) {
+      case 'KHEN_THUONG': return Colors.orange;
+      case 'KY_LUAT': return Colors.red;
+      case 'TUYEN_DUNG': return Colors.green;
+      case 'LICH_NGHI': return Colors.purple;
+      case 'CHINH_SACH': return Colors.blue;
+      default: return Colors.teal;
+    }
+  }
+
+  String _getNewsTypeLabel(String type) {
+    switch (type) {
+      case 'KHEN_THUONG': return 'Khen thưởng';
+      case 'KY_LUAT': return 'Kỷ luật';
+      case 'TUYEN_DUNG': return 'Tuyển dụng';
+      case 'LICH_NGHI': return 'Lịch nghỉ';
+      case 'CHINH_SACH': return 'Chính sách';
+      case 'TIN_TUC': return 'Tin tức';
+      default: return type;
+    }
+  }
+
+  String _formatTime(String isoDate) {
+    if (isoDate.isEmpty) return '';
+    try {
+      final date = DateTime.parse(isoDate);
+      final now = DateTime.now();
+      if (now.difference(date).inDays == 0) {
+        return DateFormat('HH:mm').format(date);
+      } else if (now.difference(date).inDays < 7) {
+         return DateFormat('EEE').format(date); // Mon, Tue...
+      } else {
+        return DateFormat('dd/MM').format(date);
+      }
+    } catch (_) {
+      return '';
+    }
+  }
+
+  String _formatDate(String isoDate) {
+    if (isoDate.isEmpty) return '';
+    try {
+      final date = DateTime.parse(isoDate);
+      return DateFormat('dd/MM/yyyy HH:mm').format(date);
+    } catch (_) {
+      return '';
     }
   }
 }
+
