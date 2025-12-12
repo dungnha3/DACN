@@ -29,10 +29,10 @@ export default function EmployeeDetailPage({ employeeId, onBack }) {
   const loadEmployeeData = async () => {
     try {
       setLoading(true);
-      
+
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 800));
-      
+
       // Mock employee data
       setEmployee({
         nhanvien_id: employeeId,
@@ -52,7 +52,7 @@ export default function EmployeeDetailPage({ employeeId, onBack }) {
         noiCapCCCD: 'TP. Hồ Chí Minh',
         ngayCapCCCD: '2020-01-01'
       });
-      
+
       setLoading(false);
     } catch (err) {
       // Handle error silently or use error handler
@@ -116,7 +116,7 @@ export default function EmployeeDetailPage({ employeeId, onBack }) {
             userRole="HR Manager"
           />
         );
-      
+
       case 'contracts':
         return (
           <SharedContractsPage
@@ -126,7 +126,7 @@ export default function EmployeeDetailPage({ employeeId, onBack }) {
             employeeId={employee.nhanvien_id}
           />
         );
-      
+
       case 'attendance':
         return (
           <SharedAttendancePage
@@ -136,7 +136,7 @@ export default function EmployeeDetailPage({ employeeId, onBack }) {
             employeeId={employee.nhanvien_id}
           />
         );
-      
+
       case 'payroll':
         return (
           <SharedPayrollPage
@@ -146,7 +146,7 @@ export default function EmployeeDetailPage({ employeeId, onBack }) {
             employeeId={employee.nhanvien_id}
           />
         );
-      
+
       case 'leave':
         return (
           <SharedLeaveRequestPage
@@ -156,7 +156,7 @@ export default function EmployeeDetailPage({ employeeId, onBack }) {
             employeeId={employee.nhanvien_id}
           />
         );
-      
+
       default:
         return null;
     }

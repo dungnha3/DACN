@@ -12,6 +12,7 @@ export default function SharedProfilePage({
   allowEdit = true,
   userRole = "User",
   onProfileUpdate,
+  onAvatarChange,
   glassMode = false
 }) {
   const { user: authUser } = useAuth();
@@ -233,6 +234,11 @@ export default function SharedProfilePage({
       // Callback to parent to update dashboard header immediately
       if (onProfileUpdate) {
         onProfileUpdate({ avatarUrl: compressedDataUrl });
+      }
+
+      // Callback to refresh header avatar
+      if (onAvatarChange) {
+        onAvatarChange();
       }
 
       alert('✅ Cập nhật avatar thành công!');

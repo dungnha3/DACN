@@ -39,7 +39,7 @@ const IconSearch = ({ size = 16 }) => <svg width={size} height={size} viewBox="0
 const IconChevronLeft = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>;
 const IconChevronRight = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>;
 
-export default function ContractsPage() {
+export default function ContractsPage({ glassMode = false }) {
   // --- STATE ---
   const [contracts, setContracts] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -296,11 +296,33 @@ export default function ContractsPage() {
     return <span style={{ color: t.color, fontWeight: 600, fontSize: 13 }}>{t.label}</span>;
   };
 
+  // Glass Styles
+  const glassStyles = glassMode ? {
+    card: {
+      background: 'rgba(255, 255, 255, 0.55)',
+      backdropFilter: 'blur(20px)',
+      border: '1px solid rgba(255, 255, 255, 0.6)',
+      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+    },
+    header: {
+      background: 'transparent',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.6)'
+    },
+    tableHeader: {
+      background: 'rgba(255, 255, 255, 0.3)',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.6)'
+    }
+  } : {};
+
   // --- COMPONENTS ---
   const ModernStatCard = ({ title, value, icon, iconColor }) => (
     <div style={{
-      background: 'white', borderRadius: '16px', padding: '24px',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9',
+      background: glassMode ? glassStyles.card.background : 'white',
+      borderRadius: '16px',
+      padding: '24px',
+      boxShadow: glassMode ? glassStyles.card.boxShadow : '0 2px 10px rgba(0,0,0,0.03)',
+      border: glassMode ? glassStyles.card.border : '1px solid #f1f5f9',
+      backdropFilter: glassMode ? glassStyles.card.backdropFilter : 'none',
       display: 'flex', justifyContent: 'space-between', alignItems: 'center'
     }}>
       <div>
@@ -362,10 +384,11 @@ export default function ContractsPage() {
 
       {/* 3. MAIN CARD (CONTAINER CHUNG CHO FILTER & TABLE) */}
       <div style={{
-        background: 'white',
+        background: glassMode ? glassStyles.card.background : 'white',
         borderRadius: '16px',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+        border: glassMode ? glassStyles.card.border : '1px solid #e2e8f0',
+        backdropFilter: glassMode ? glassStyles.card.backdropFilter : 'none',
+        boxShadow: glassMode ? glassStyles.card.boxShadow : '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
         overflow: 'hidden'
       }}>
 
@@ -378,7 +401,7 @@ export default function ContractsPage() {
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: 16,
-          background: '#ffffff'
+          background: glassMode ? 'transparent' : '#ffffff'
         }}>
           {/* Segmented Control Style Tabs */}
           <div style={{ background: '#f1f5f9', padding: 4, borderRadius: 8, display: 'flex', gap: 2 }}>
@@ -441,7 +464,7 @@ export default function ContractsPage() {
             <col style={{ width: '12%' }} />
           </colgroup>
           <TableHeader>
-            <TableRow style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <TableRow style={{ background: glassMode ? glassStyles.tableHeader.background : '#f8fafc', borderBottom: glassMode ? glassStyles.tableHeader.borderBottom : '1px solid #e2e8f0' }}>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'left' }}>NHÂN VIÊN</TableHead>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>LOẠI HĐ</TableHead>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>BẮT ĐẦU</TableHead>
@@ -464,7 +487,7 @@ export default function ContractsPage() {
                 const isExpiringSoon = contract.soNgayConLai !== null && contract.soNgayConLai <= 90 && contract.soNgayConLai > 0 && contract.trangThai === 'HIEU_LUC';
 
                 return (
-                  <TableRow key={contract.hopdongId} style={{ borderBottom: '1px solid #f1f5f9', transition: 'all 0.2s' }}>
+                  <TableRow key={contract.hopdongId} style={{ borderBottom: '1px solid #f1f5f9', transition: 'all 0.2s', background: glassMode ? 'rgba(255,255,255,0.2)' : 'transparent' }}>
 
                     {/* Cột Nhân viên */}
                     <TableCell style={{ padding: '16px', textAlign: 'left', verticalAlign: 'middle' }}>
@@ -604,9 +627,8 @@ export default function ContractsPage() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            background: '#ffffff'
-          }}>
-            <div style={{ fontSize: 13, color: '#64748b' }}>
+            background: glassMode ? 'transparent' : '#ffffff'
+          }}>            <div style={{ fontSize: 13, color: '#64748b' }}>
               Hiển thị <b>{(currentPage - 1) * itemsPerPage + 1}</b> - <b>{Math.min(currentPage * itemsPerPage, filteredContracts.length)}</b> trên tổng <b>{filteredContracts.length}</b>
             </div>
 

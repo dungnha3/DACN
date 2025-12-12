@@ -323,13 +323,13 @@ public class DashboardService {
             }
 
             long diMuon = chamCongs.stream()
-                    .filter(cc -> "DI_MUON".equals(cc.getTrangThai()))
+                    .filter(cc -> ChamCong.TrangThaiChamCong.DI_TRE.equals(cc.getTrangThai()))
                     .count();
             long veSom = chamCongs.stream()
-                    .filter(cc -> "VE_SOM".equals(cc.getTrangThai()))
+                    .filter(cc -> ChamCong.TrangThaiChamCong.VE_SOM.equals(cc.getTrangThai()))
                     .count();
             long dungGio = chamCongs.stream()
-                    .filter(cc -> "DUNG_GIO".equals(cc.getTrangThai()))
+                    .filter(cc -> ChamCong.TrangThaiChamCong.DU_GIO.equals(cc.getTrangThai()))
                     .count();
 
             double tiLeDungGio = chamCongs.size() > 0 ? (double) dungGio / chamCongs.size() * 100 : 0.0;

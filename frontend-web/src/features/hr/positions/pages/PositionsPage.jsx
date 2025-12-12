@@ -8,18 +8,18 @@ import Pagination from '@/shared/components/table/Pagination';
 const AVAILABLE_ICONS = ['💻', '🚀', '⚡', '👥', '📊', '📢', '💼', '🔧', '🛡️', '🎯', '🎓', '💎'];
 const ITEMS_PER_PAGE = 9;
 
-export default function PositionsPage() {
+export default function PositionsPage({ glassMode = false }) {
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const { isHRManager } = usePermissions();
   const { handleError } = useErrorHandler();
-  
+
   useEffect(() => {
     loadData();
   }, []);
-  
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -52,9 +52,9 @@ export default function PositionsPage() {
 
   const handleEdit = (position) => {
     setEditingPosition(position);
-    setFormData({ 
-      tenChucVu: position.tenChucVu, 
-      moTa: position.moTa, 
+    setFormData({
+      tenChucVu: position.tenChucVu,
+      moTa: position.moTa,
       heSoLuong: position.heSoLuong,
       icon: position.icon || '💼'
     });
@@ -114,6 +114,14 @@ export default function PositionsPage() {
     );
   }
 
+  // GLASS STYLES OVERRIDES
+  const glassCardStyle = glassMode ? {
+    background: 'rgba(255, 255, 255, 0.55)',
+    backdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255, 255, 255, 0.6)',
+    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.07)'
+  } : {};
+
   return (
     <div style={s.container}>
       {/* Header */}
@@ -130,7 +138,7 @@ export default function PositionsPage() {
       {/* Grid System */}
       <div style={s.grid}>
         {paginatedPositions.map(pos => (
-          <div key={pos.chucvuId} style={s.card}>
+          <div key={pos.chucvuId} style={{ ...s.card, ...glassCardStyle }}>
             <div style={s.cardTop}>
               <div style={s.iconBox}>
                 {pos.icon || '💼'}
@@ -139,7 +147,7 @@ export default function PositionsPage() {
                 <button style={s.iconBtn} onClick={() => handleEdit(pos)} title="Chỉnh sửa">
                   ✏️
                 </button>
-                <button style={{...s.iconBtn, color: '#ef4444', background: '#fef2f2'}} onClick={() => handleDelete(pos.chucvuId)} title="Xóa">
+                <button style={{ ...s.iconBtn, color: '#ef4444', background: '#fef2f2' }} onClick={() => handleDelete(pos.chucvuId)} title="Xóa">
                   🗑️
                 </button>
               </div>
@@ -158,7 +166,7 @@ export default function PositionsPage() {
                 <div style={s.dividerVertical}></div>
                 <div style={s.statCol}>
                   <span style={s.statLabel}>Nhân sự</span>
-                  <span style={s.statValue}>{pos.soLuongNhanVien || 0} <span style={{fontSize: 12, color: '#adb5bd', fontWeight: 400}}>/20</span></span>
+                  <span style={s.statValue}>{pos.soLuongNhanVien || 0} <span style={{ fontSize: 12, color: '#adb5bd', fontWeight: 400 }}>/20</span></span>
                 </div>
               </div>
             </div>
@@ -171,7 +179,7 @@ export default function PositionsPage() {
               </div>
               <div style={s.progressBarBg}>
                 <div style={{
-                  ...s.progressBarFill, 
+                  ...s.progressBarFill,
                   width: `${Math.min(((pos.soLuongNhanVien || 0) / 20) * 100, 100)}%`,
                   background: (pos.soLuongNhanVien || 0) >= 20 ? '#4caf50' : 'linear-gradient(195deg, #fb8c00, #ffa726)'
                 }}></div>
@@ -184,10 +192,10 @@ export default function PositionsPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
-          <Pagination 
-            currentPage={currentPage} 
-            totalPages={totalPages} 
-            onPageChange={setCurrentPage} 
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
           />
         </div>
       )}
@@ -200,16 +208,16 @@ export default function PositionsPage() {
               <h2 style={s.modalTitle}>{editingPosition ? 'Cập nhật chức vụ' : 'Thêm chức vụ mới'}</h2>
               <button style={s.closeBtn} onClick={() => setShowModal(false)}>×</button>
             </div>
-            
+
             <div style={s.modalBody}>
               {/* Icon Selection */}
               <div style={s.formGroup}>
                 <label style={s.label}>Chọn biểu tượng</label>
                 <div style={s.iconGrid}>
                   {AVAILABLE_ICONS.map((icon, idx) => (
-                    <button 
-                      key={idx} 
-                      type="button" 
+                    <button
+                      key={idx}
+                      type="button"
                       style={{
                         ...s.iconOption,
                         ...(formData.icon === icon ? s.iconOptionActive : {})
@@ -223,8 +231,8 @@ export default function PositionsPage() {
               </div>
 
               <div style={s.row}>
-                <div style={{...s.formGroup, flex: 2}}>
-                  <label style={s.label}>Tên chức vụ <span style={{color: 'red'}}>*</span></label>
+                <div style={{ ...s.formGroup, flex: 2 }}>
+                  <label style={s.label}>Tên chức vụ <span style={{ color: 'red' }}>*</span></label>
                   <input
                     style={s.input}
                     value={formData.tenChucVu}
@@ -233,8 +241,8 @@ export default function PositionsPage() {
                     autoFocus
                   />
                 </div>
-                
-                <div style={{...s.formGroup, flex: 1}}>
+
+                <div style={{ ...s.formGroup, flex: 1 }}>
                   <label style={s.label}>Hệ số lương</label>
                   <input
                     type="number"
@@ -393,7 +401,7 @@ const s = {
     WebkitLineClamp: 2,
     WebkitBoxOrient: 'vertical',
   },
-  
+
   // Stats
   statsContainer: {
     background: '#f8f9fa',
@@ -458,30 +466,30 @@ const s = {
 
   // Modal Styles
   modalOverlay: {
-    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', 
-    backdropFilter: 'blur(3px)', display: 'flex', 
-    alignItems: 'center', justifyContent: 'center', zIndex: 1000 
+    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+    backdropFilter: 'blur(3px)', display: 'flex',
+    alignItems: 'center', justifyContent: 'center', zIndex: 1000
   },
-  modal: { 
-    background: '#fff', 
-    borderRadius: 16, 
-    width: 500, 
+  modal: {
+    background: '#fff',
+    borderRadius: 16,
+    width: 500,
     maxWidth: '95%',
     boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
     display: 'flex',
     flexDirection: 'column',
     maxHeight: '90vh'
   },
-  modalHeader: { 
-    padding: '20px 24px', 
-    borderBottom: '1px solid #f0f2f5', 
-    display: 'flex', 
+  modalHeader: {
+    padding: '20px 24px',
+    borderBottom: '1px solid #f0f2f5',
+    display: 'flex',
     justifyContent: 'space-between',
-    flexShrink: 0 
+    flexShrink: 0
   },
   modalTitle: { margin: 0, fontSize: 20, fontWeight: 700, color: '#344767' },
   closeBtn: { border: 'none', background: 'none', fontSize: 24, cursor: 'pointer', color: '#7b809a' },
-  modalBody: { 
+  modalBody: {
     padding: 24,
     overflowY: 'auto'
   },
@@ -492,13 +500,13 @@ const s = {
   },
   formGroup: { marginBottom: 20 },
   label: { display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#344767' },
-  
+
   // Input fix: ép màu nền trắng và box-sizing
-  input: { 
-    width: '100%', 
-    padding: '12px 16px', 
-    border: '1px solid #d2d6da', 
-    borderRadius: 8, 
+  input: {
+    width: '100%',
+    padding: '12px 16px',
+    border: '1px solid #d2d6da',
+    borderRadius: 8,
     outline: 'none',
     fontSize: 14,
     boxSizing: 'border-box',
@@ -506,13 +514,13 @@ const s = {
     backgroundColor: '#ffffff', // Bắt buộc nền trắng
     color: '#344767'            // Bắt buộc chữ màu tối chuẩn
   },
-  textarea: { 
-    width: '100%', 
-    padding: '12px 16px', 
-    border: '1px solid #d2d6da', 
-    borderRadius: 8, 
-    outline: 'none', 
-    minHeight: 100, 
+  textarea: {
+    width: '100%',
+    padding: '12px 16px',
+    border: '1px solid #d2d6da',
+    borderRadius: 8,
+    outline: 'none',
+    minHeight: 100,
     resize: 'vertical',
     fontSize: 14,
     fontFamily: 'inherit',
@@ -520,7 +528,7 @@ const s = {
     backgroundColor: '#ffffff', // Bắt buộc nền trắng
     color: '#344767'
   },
-  
+
   // FIX: Căn giữa icon trong ô chọn
   iconGrid: {
     display: 'flex',
@@ -551,30 +559,30 @@ const s = {
     transform: 'scale(1.1)'
   },
 
-  modalFooter: { 
-    padding: '16px 24px', 
-    borderTop: '1px solid #f0f2f5', 
-    display: 'flex', 
-    justifyContent: 'flex-end', 
+  modalFooter: {
+    padding: '16px 24px',
+    borderTop: '1px solid #f0f2f5',
+    display: 'flex',
+    justifyContent: 'flex-end',
     gap: 12,
-    flexShrink: 0 
+    flexShrink: 0
   },
-  btnCancel: { 
-    padding: '10px 24px', 
-    border: 'none', 
-    background: '#f0f2f5', 
-    borderRadius: 8, 
-    fontWeight: 600, 
-    cursor: 'pointer', 
-    color: '#7b809a' 
+  btnCancel: {
+    padding: '10px 24px',
+    border: 'none',
+    background: '#f0f2f5',
+    borderRadius: 8,
+    fontWeight: 600,
+    cursor: 'pointer',
+    color: '#7b809a'
   },
-  btnSave: { 
-    padding: '10px 24px', 
-    border: 'none', 
-    background: 'linear-gradient(195deg, #fb8c00, #ffa726)', 
-    color: '#fff', 
-    borderRadius: 8, 
-    fontWeight: 600, 
+  btnSave: {
+    padding: '10px 24px',
+    border: 'none',
+    background: 'linear-gradient(195deg, #fb8c00, #ffa726)',
+    color: '#fff',
+    borderRadius: 8,
+    fontWeight: 600,
     cursor: 'pointer',
     boxShadow: '0 4px 6px rgba(251, 140, 0, 0.2)'
   }

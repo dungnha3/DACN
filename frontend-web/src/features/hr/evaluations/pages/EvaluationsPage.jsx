@@ -41,7 +41,7 @@ const IconChevronRight = () => <svg width="20" height="20" viewBox="0 0 24 24" f
 
 const itemsPerPage = 5;
 
-export default function EvaluationsPage() {
+export default function EvaluationsPage({ glassMode = false }) {
   const [evaluations, setEvaluations] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -261,10 +261,32 @@ export default function EvaluationsPage() {
     return types[type] || `📝 ${type}`;
   };
 
+  // Glass Styles
+  const glassStyles = glassMode ? {
+    card: {
+      background: 'rgba(255, 255, 255, 0.55)',
+      backdropFilter: 'blur(20px)',
+      border: '1px solid rgba(255, 255, 255, 0.6)',
+      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+    },
+    header: {
+      background: 'transparent',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.6)'
+    },
+    tableHeader: {
+      background: 'rgba(255, 255, 255, 0.3)',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.6)'
+    }
+  } : {};
+
   const ModernStatCard = ({ title, value, icon, iconColor }) => (
     <div style={{
-      background: 'white', borderRadius: '16px', padding: '24px',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9',
+      background: glassMode ? glassStyles.card.background : 'white',
+      borderRadius: '16px',
+      padding: '24px',
+      boxShadow: glassMode ? glassStyles.card.boxShadow : '0 2px 10px rgba(0,0,0,0.03)',
+      border: glassMode ? glassStyles.card.border : '1px solid #f1f5f9',
+      backdropFilter: glassMode ? glassStyles.card.backdropFilter : 'none',
       display: 'flex', justifyContent: 'space-between', alignItems: 'center'
     }}>
       <div>
@@ -325,8 +347,12 @@ export default function EvaluationsPage() {
 
       {/* Main Card */}
       <div style={{
-        background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', overflow: 'hidden'
+        background: glassMode ? glassStyles.card.background : 'white',
+        borderRadius: '16px',
+        border: glassMode ? glassStyles.card.border : '1px solid #e2e8f0',
+        backdropFilter: glassMode ? glassStyles.card.backdropFilter : 'none',
+        boxShadow: glassMode ? glassStyles.card.boxShadow : '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+        overflow: 'hidden'
       }}>
         {/* Filter Bar */}
         <div style={{
@@ -354,7 +380,9 @@ export default function EvaluationsPage() {
                     padding: '8px 16px', borderRadius: 6, fontSize: 13,
                     fontWeight: isActive ? 600 : 500, cursor: 'pointer',
                     boxShadow: isActive ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
-                    transition: 'all 0.2s ease'
+                    transition: 'all 0.2s ease',
+                    background: isActive ? 'white' : 'transparent',
+                    color: isActive ? '#0f172a' : '#64748b'
                   }}
                 >
                   {tab.label}
@@ -395,7 +423,7 @@ export default function EvaluationsPage() {
             <col style={{ width: '8%' }} />
           </colgroup>
           <TableHeader>
-            <TableRow style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <TableRow style={{ background: glassMode ? glassStyles.tableHeader.background : '#f8fafc', borderBottom: glassMode ? glassStyles.tableHeader.borderBottom : '1px solid #e2e8f0' }}>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'left' }}>NHÂN VIÊN</TableHead>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>KỲ</TableHead>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>CHUYÊN MÔN</TableHead>
@@ -417,7 +445,7 @@ export default function EvaluationsPage() {
               </TableRow>
             ) : (
               paginatedEvals.map(e => (
-                <TableRow key={e.danhGiaId} style={{ borderBottom: '1px solid #f1f5f9', transition: 'all 0.2s' }}>
+                <TableRow key={e.danhGiaId} style={{ borderBottom: '1px solid #f1f5f9', transition: 'all 0.2s', background: glassMode ? 'rgba(255,255,255,0.2)' : 'transparent' }}>
                   <TableCell style={{ padding: '16px', textAlign: 'left', verticalAlign: 'middle' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <div style={getAvatarStyle(e.tenNhanVien)}>

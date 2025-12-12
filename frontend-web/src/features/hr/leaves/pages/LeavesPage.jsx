@@ -4,7 +4,7 @@ import { usePermissions, useErrorHandler } from '@/shared/hooks';
 import { validateRequired } from '@/shared/utils/validation';
 import {
   PageContainer,
-  PageHeader, 
+  PageHeader,
   PageTitle,
   Breadcrumb,
   Button,
@@ -31,20 +31,20 @@ import {
 } from '@/shared/components/ui';
 
 // --- ICONS (SVG) ---
-const IconClock = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
-const IconCheck = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
-const IconX = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
-const IconCalendar = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
-const IconSearch = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>;
-const IconChevronLeft = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
-const IconChevronRight = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
+const IconClock = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>;
+const IconCheck = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>;
+const IconX = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>;
+const IconCalendar = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>;
+const IconSearch = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>;
+const IconChevronLeft = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>;
+const IconChevronRight = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>;
 
-export default function LeavesPage() {
+export default function LeavesPage({ glassMode = false }) {
   // --- STATE ---
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Filter & Search
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,7 +55,7 @@ export default function LeavesPage() {
 
   const { isProjectManager, isHRManager } = usePermissions();
   const { handleError } = useErrorHandler();
-  
+
   const canApprove = isProjectManager;
   const isReadOnly = isHRManager && !isProjectManager;
 
@@ -63,8 +63,8 @@ export default function LeavesPage() {
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [approvalNote, setApprovalNote] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [createForm, setCreateForm] = useState({ 
-    nhanvienId: '', loaiPhep: 'PHEP_NAM', ngayBatDau: '', ngayKetThuc: '', lyDo: '' 
+  const [createForm, setCreateForm] = useState({
+    nhanvienId: '', loaiPhep: 'PHEP_NAM', ngayBatDau: '', ngayKetThuc: '', lyDo: ''
   });
 
   // --- EFFECT ---
@@ -118,7 +118,7 @@ export default function LeavesPage() {
   const handleAction = async (action) => {
     if (!selectedLeave) return;
     if (action === 'REJECT' && validateRequired(approvalNote, 'Lý do từ chối')) return alert('Vui lòng nhập lý do từ chối');
-    
+
     try {
       if (action === 'APPROVE') {
         await leavesService.approve(selectedLeave.nghiphepId, approvalNote || 'Approved');
@@ -156,7 +156,7 @@ export default function LeavesPage() {
     const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
     return '#' + '00000'.substring(0, 6 - c.length) + c;
   };
-  
+
   const getAvatarStyle = (name) => {
     const bg = stringToColor(name || 'User');
     return {
@@ -176,10 +176,10 @@ export default function LeavesPage() {
     };
     const s = config[status] || config.CHO_DUYET;
     return (
-      <span style={{ 
+      <span style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
-        background: s.bg, color: s.color, 
-        padding: '6px 12px', borderRadius: '6px', 
+        background: s.bg, color: s.color,
+        padding: '6px 12px', borderRadius: '6px',
         fontSize: '12px', fontWeight: 600
       }}>
         {s.icon} {s.label}
@@ -197,11 +197,33 @@ export default function LeavesPage() {
     return map[type] || { label: type, color: '#6b7280' };
   };
 
+  // Glass Styles
+  const glassStyles = glassMode ? {
+    card: {
+      background: 'rgba(255, 255, 255, 0.55)',
+      backdropFilter: 'blur(20px)',
+      border: '1px solid rgba(255, 255, 255, 0.6)',
+      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+    },
+    header: {
+      background: 'transparent',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.6)'
+    },
+    tableHeader: {
+      background: 'rgba(255, 255, 255, 0.3)',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.6)'
+    }
+  } : {};
+
   // --- COMPONENTS ---
   const ModernStatCard = ({ title, value, icon, iconColor }) => (
     <div style={{
-      background: 'white', borderRadius: '16px', padding: '24px',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9',
+      background: glassMode ? glassStyles.card.background : 'white',
+      borderRadius: '16px',
+      padding: '24px',
+      boxShadow: glassMode ? glassStyles.card.boxShadow : '0 2px 10px rgba(0,0,0,0.03)',
+      border: glassMode ? glassStyles.card.border : '1px solid #f1f5f9',
+      backdropFilter: glassMode ? glassStyles.card.backdropFilter : 'none',
       display: 'flex', justifyContent: 'space-between', alignItems: 'center'
     }}>
       <div>
@@ -228,10 +250,10 @@ export default function LeavesPage() {
           <Breadcrumb style={{ fontSize: 13, color: '#64748b', marginBottom: 4 }}>Quản lý nhân sự / Nghỉ phép</Breadcrumb>
           <PageTitle style={{ color: '#0f172a', fontSize: 24 }}>Quản lý Đơn Nghỉ Phép</PageTitle>
         </div>
-        <Button 
-          variant="primary" 
+        <Button
+          variant="primary"
           onClick={() => setShowCreateModal(true)}
-          style={{ 
+          style={{
             borderRadius: '8px', padding: '10px 24px', fontWeight: 600,
             background: '#3b82f6', border: 'none', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
           }}
@@ -242,31 +264,32 @@ export default function LeavesPage() {
 
       {/* 2. STATS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24, marginBottom: 32 }}>
-        <ModernStatCard title="Chờ phê duyệt" value={stats.choDuyet} icon={<IconClock size={24}/>} iconColor="#f59e0b" />
-        <ModernStatCard title="Đã duyệt (Tháng)" value={stats.daDuyet} icon={<IconCheck size={24}/>} iconColor="#10b981" />
-        <ModernStatCard title="Đã từ chối" value={stats.tuChoi} icon={<IconX size={24}/>} iconColor="#ef4444" />
-        <ModernStatCard title="Tổng ngày nghỉ" value={stats.tongNgayPhep} icon={<IconCalendar size={24}/>} iconColor="#3b82f6" />
+        <ModernStatCard title="Chờ phê duyệt" value={stats.choDuyet} icon={<IconClock size={24} />} iconColor="#f59e0b" />
+        <ModernStatCard title="Đã duyệt (Tháng)" value={stats.daDuyet} icon={<IconCheck size={24} />} iconColor="#10b981" />
+        <ModernStatCard title="Đã từ chối" value={stats.tuChoi} icon={<IconX size={24} />} iconColor="#ef4444" />
+        <ModernStatCard title="Tổng ngày nghỉ" value={stats.tongNgayPhep} icon={<IconCalendar size={24} />} iconColor="#3b82f6" />
       </div>
 
       {/* 3. MAIN CARD (CONTAINER CHUNG CHO FILTER & TABLE) */}
-      <div style={{ 
-        background: 'white', 
-        borderRadius: '16px', 
-        border: '1px solid #e2e8f0', 
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+      <div style={{
+        background: glassMode ? glassStyles.card.background : 'white',
+        borderRadius: '16px',
+        border: glassMode ? glassStyles.card.border : '1px solid #e2e8f0',
+        backdropFilter: glassMode ? glassStyles.card.backdropFilter : 'none',
+        boxShadow: glassMode ? glassStyles.card.boxShadow : '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
         overflow: 'hidden'
       }}>
-        
+
         {/* FILTER BAR - GỌN GÀNG HƠN */}
-        <div style={{ 
-          padding: '16px 24px', 
-          borderBottom: '1px solid #f1f5f9', 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+        <div style={{
+          padding: '16px 24px',
+          borderBottom: '1px solid #f1f5f9',
+          display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
-          flexWrap: 'wrap', 
+          flexWrap: 'wrap',
           gap: 16,
-          background: '#ffffff'
+          background: glassMode ? 'transparent' : '#ffffff'
         }}>
           {/* Segmented Control Style Tabs */}
           <div style={{ background: '#f1f5f9', padding: 4, borderRadius: 8, display: 'flex', gap: 2 }}>
@@ -282,13 +305,13 @@ export default function LeavesPage() {
                   key={tab.id}
                   onClick={() => setFilterStatus(tab.id)}
                   style={{
-                    border: 'none', 
+                    border: 'none',
                     background: isActive ? 'white' : 'transparent',
                     color: isActive ? '#0f172a' : '#64748b',
-                    padding: '8px 16px', 
-                    borderRadius: 6, 
-                    fontSize: 13, 
-                    fontWeight: isActive ? 600 : 500, 
+                    padding: '8px 16px',
+                    borderRadius: 6,
+                    fontSize: 13,
+                    fontWeight: isActive ? 600 : 500,
                     cursor: 'pointer',
                     boxShadow: isActive ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
                     transition: 'all 0.2s ease'
@@ -305,8 +328,8 @@ export default function LeavesPage() {
             <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
               <IconSearch />
             </div>
-            <input 
-              placeholder="Tìm nhân viên..." 
+            <input
+              placeholder="Tìm nhân viên..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               style={{
@@ -329,7 +352,7 @@ export default function LeavesPage() {
             <col style={{ width: '12%' }} />
           </colgroup>
           <TableHeader>
-            <TableRow style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <TableRow style={{ background: glassMode ? glassStyles.tableHeader.background : '#f8fafc', borderBottom: glassMode ? glassStyles.tableHeader.borderBottom : '1px solid #e2e8f0' }}>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>NHÂN VIÊN</TableHead>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>THỜI GIAN</TableHead>
               <TableHead style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', textAlign: 'center' }}>LOẠI PHÉP</TableHead>
@@ -349,8 +372,8 @@ export default function LeavesPage() {
               paginatedLeaves.map(leave => {
                 const typeInfo = getLeaveType(leave.loaiPhep);
                 return (
-                  <TableRow key={leave.nghiphepId} style={{ borderBottom: '1px solid #f1f5f9', transition: 'all 0.2s' }}>
-                    
+                  <TableRow key={leave.nghiphepId} style={{ borderBottom: '1px solid #f1f5f9', transition: 'all 0.2s', background: glassMode ? 'rgba(255,255,255,0.2)' : 'transparent' }}>
+
                     {/* Cột Nhân viên */}
                     <TableCell style={{ padding: '16px', textAlign: 'left', verticalAlign: 'middle' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 10 }}>
@@ -368,9 +391,9 @@ export default function LeavesPage() {
                     <TableCell style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                         <span style={{ fontSize: 13, color: '#334155', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-                           {new Date(leave.ngayBatDau).toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit'})}
-                           <span style={{color:'#94a3b8', fontSize: 10}}>➜</span>
-                           {new Date(leave.ngayKetThuc).toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit'})}
+                          {new Date(leave.ngayBatDau).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+                          <span style={{ color: '#94a3b8', fontSize: 10 }}>➜</span>
+                          {new Date(leave.ngayKetThuc).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
                         </span>
                         <span style={{ fontSize: 11, color: '#64748b', background: '#f1f5f9', padding: '2px 8px', borderRadius: 4, width: 'fit-content' }}>
                           {leave.soNgay} ngày
@@ -380,14 +403,14 @@ export default function LeavesPage() {
 
                     {/* Cột Loại phép */}
                     <TableCell style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
-                       <span style={{ color: typeInfo.color, fontWeight: 600, fontSize: 13 }}>{typeInfo.label}</span>
+                      <span style={{ color: typeInfo.color, fontWeight: 600, fontSize: 13 }}>{typeInfo.label}</span>
                     </TableCell>
 
                     {/* Cột Lý do */}
                     <TableCell style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
                       <div style={{
                         maxWidth: 280, // Tăng max-width để text dài hơn
-                        whiteSpace: 'nowrap', overflow: 'hidden', 
+                        whiteSpace: 'nowrap', overflow: 'hidden',
                         textOverflow: 'ellipsis', color: '#475569', fontSize: 13,
                         lineHeight: 1.5
                       }} title={leave.lyDo}>
@@ -402,7 +425,7 @@ export default function LeavesPage() {
 
                     {/* Cột Action */}
                     <TableCell style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
-                      <div 
+                      <div
                         onClick={() => { setSelectedLeave(leave); setApprovalNote(leave.ghiChuDuyet || ''); }}
                         title="Xem chi tiết"
                         style={{
@@ -423,7 +446,7 @@ export default function LeavesPage() {
                           e.currentTarget.style.borderColor = '#e2e8f0';
                         }}
                       >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -435,31 +458,31 @@ export default function LeavesPage() {
 
         {/* 4. PAGINATION FOOTER */}
         {filteredLeaves.length > 0 && (
-          <div style={{ 
-            padding: '16px 24px', 
-            borderTop: '1px solid #e2e8f0', 
-            display: 'flex', 
-            justifyContent: 'space-between', 
+          <div style={{
+            padding: '16px 24px',
+            borderTop: '1px solid #e2e8f0',
+            display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            background: '#ffffff'
+            background: glassMode ? 'transparent' : '#ffffff'
           }}>
             <div style={{ fontSize: 13, color: '#64748b' }}>
               Hiển thị <b>{(currentPage - 1) * itemsPerPage + 1}</b> - <b>{Math.min(currentPage * itemsPerPage, filteredLeaves.length)}</b> trên tổng <b>{filteredLeaves.length}</b>
             </div>
-            
+
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <button 
+              <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 style={{
-                  border: '1px solid #e2e8f0', background: 'white', padding: '6px 10px', 
+                  border: '1px solid #e2e8f0', background: 'white', padding: '6px 10px',
                   borderRadius: 6, cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                   color: currentPage === 1 ? '#cbd5e1' : '#475569', display: 'flex'
                 }}
               >
                 <IconChevronLeft />
               </button>
-              
+
               {/* Page Numbers */}
               {[...Array(totalPages)].map((_, idx) => (
                 <button
@@ -477,11 +500,11 @@ export default function LeavesPage() {
                 </button>
               ))}
 
-              <button 
+              <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 style={{
-                  border: '1px solid #e2e8f0', background: 'white', padding: '6px 10px', 
+                  border: '1px solid #e2e8f0', background: 'white', padding: '6px 10px',
                   borderRadius: 6, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
                   color: currentPage === totalPages ? '#cbd5e1' : '#475569', display: 'flex'
                 }}
@@ -501,7 +524,7 @@ export default function LeavesPage() {
           </ModalHeader>
           <ModalBody>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, paddingBottom: 20, borderBottom: '1px solid #f1f5f9', marginBottom: 20 }}>
-              <div style={{...getAvatarStyle(selectedLeave.hoTenNhanVien), width: 56, height: 56, fontSize: 20}}>
+              <div style={{ ...getAvatarStyle(selectedLeave.hoTenNhanVien), width: 56, height: 56, fontSize: 20 }}>
                 {selectedLeave.hoTenNhanVien ? selectedLeave.hoTenNhanVien.charAt(0) : 'U'}
               </div>
               <div>
@@ -554,11 +577,11 @@ export default function LeavesPage() {
           <ModalBody>
             <FormGroup>
               <FormLabel required>Mã nhân viên</FormLabel>
-              <FormInput placeholder="VD: 102" value={createForm.nhanvienId} onChange={(e) => setCreateForm({...createForm, nhanvienId: e.target.value})} />
+              <FormInput placeholder="VD: 102" value={createForm.nhanvienId} onChange={(e) => setCreateForm({ ...createForm, nhanvienId: e.target.value })} />
             </FormGroup>
             <FormGroup>
               <FormLabel required>Loại phép</FormLabel>
-              <FormSelect value={createForm.loaiPhep} onChange={(e) => setCreateForm({...createForm, loaiPhep: e.target.value})}>
+              <FormSelect value={createForm.loaiPhep} onChange={(e) => setCreateForm({ ...createForm, loaiPhep: e.target.value })}>
                 <option value="PHEP_NAM">Phép năm</option>
                 <option value="OM">Nghỉ ốm</option>
                 <option value="KO_LUONG">Không lương</option>
@@ -567,16 +590,16 @@ export default function LeavesPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <FormGroup>
                 <FormLabel required>Từ ngày</FormLabel>
-                <FormInput type="date" value={createForm.ngayBatDau} onChange={(e) => setCreateForm({...createForm, ngayBatDau: e.target.value})} />
+                <FormInput type="date" value={createForm.ngayBatDau} onChange={(e) => setCreateForm({ ...createForm, ngayBatDau: e.target.value })} />
               </FormGroup>
               <FormGroup>
                 <FormLabel required>Đến ngày</FormLabel>
-                <FormInput type="date" value={createForm.ngayKetThuc} onChange={(e) => setCreateForm({...createForm, ngayKetThuc: e.target.value})} />
+                <FormInput type="date" value={createForm.ngayKetThuc} onChange={(e) => setCreateForm({ ...createForm, ngayKetThuc: e.target.value })} />
               </FormGroup>
             </div>
             <FormGroup>
               <FormLabel>Lý do</FormLabel>
-              <FormTextarea placeholder="Nhập lý do chi tiết..." value={createForm.lyDo} onChange={(e) => setCreateForm({...createForm, lyDo: e.target.value})} />
+              <FormTextarea placeholder="Nhập lý do chi tiết..." value={createForm.lyDo} onChange={(e) => setCreateForm({ ...createForm, lyDo: e.target.value })} />
             </FormGroup>
           </ModalBody>
           <ModalFooter>

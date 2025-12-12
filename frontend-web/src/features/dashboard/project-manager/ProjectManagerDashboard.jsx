@@ -75,7 +75,13 @@ export default function ProjectManagerDashboard() {
             case 'dashboard':
                 return <DashboardOverview user={user} setActive={setActive} />
             case 'profile':
-                return <ProfilePage glassMode={true} />
+                return <ProfilePage
+                    glassMode={true}
+                    onProfileUpdate={(updatedData) => {
+                        if (updatedData.avatarUrl) setUserAvatar(updatedData.avatarUrl);
+                        if (updatedData.hoTen) setUserFullName(updatedData.hoTen);
+                    }}
+                />
             case 'leave':
                 return <LeavePage glassMode={true} />
             case 'storage':
