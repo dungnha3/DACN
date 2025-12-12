@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../data/services/hr_service.dart';
 import '../../data/services/auth_service.dart';
 import '../../data/models/payroll.dart';
+import 'payroll_history_screen.dart';
 
 class PayrollScreen extends StatefulWidget {
   const PayrollScreen({super.key});
@@ -19,57 +20,68 @@ class _PayrollScreenState extends State<PayrollScreen> {
   Payroll? _payrollData;
   DateTime _selectedDate = DateTime.now();
   String? _error;
+  int? _nhanvienId;
 
   @override
   void initState() {
     super.initState();
-    _fetchPayroll();
+    _initializeData();
   }
 
-  Future<void> _fetchPayroll() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-      _payrollData = null;
-    });
+  Future<void> _initializeData() async {
+    setState(() => _isLoading = true);
+    await _getEmployeeId();
+    await _fetchPayroll();
+    setState(() => _isLoading = false);
+  }
 
+  Future<void> _getEmployeeId() async {
     try {
       final userIdStr = await _authService.getUserId();
       if (userIdStr != null) {
         final userId = int.parse(userIdStr);
-        // Note: Service expects nhanvienId, but we are passing userId.
-        // Ideally backend handles this or we fetch nhanvienId first.
-        // Assuming userId works for now as per previous logic.
-        final dataList = await _hrService.getPayroll(
-          userId,
-          _selectedDate.month,
-          _selectedDate.year,
-        );
-        
-        if (dataList.isNotEmpty) {
-          setState(() {
-            _payrollData = dataList.first;
-          });
-        } else {
-           setState(() {
-            _error = 'Chưa có bảng lương cho tháng này.';
-          });
-        }
+        _nhanvienId = await _hrService.getEmployeeIdByUserId(userId);
       }
     } catch (e) {
-      setState(() {
-        _error = 'Lỗi tải dữ liệu: $e';
-      });
-    } finally {
-      setState(() => _isLoading = false);
+      debugPrint('Error getting employee ID: $e');
     }
   }
 
-  void _changeMonth(int offset) {
+  Future<void> _fetchPayroll() async {
+    setState(() {
+      _error = null;
+      _payrollData = null;
+    });
+
+    if (_nhanvienId == null) {
+      setState(() => _error = 'Không tìm thấy thông tin nhân viên');
+      return;
+    }
+
+    try {
+      final data = await _hrService.getPayroll(
+        _nhanvienId!,
+        _selectedDate.month,
+        _selectedDate.year,
+      );
+      
+      if (data != null) {
+        setState(() => _payrollData = data);
+      } else {
+        setState(() => _error = 'Chưa có bảng lương cho tháng này.');
+      }
+    } catch (e) {
+      setState(() => _error = 'Lỗi tải dữ liệu: $e');
+    }
+  }
+
+  Future<void> _changeMonth(int offset) async {
     setState(() {
       _selectedDate = DateTime(_selectedDate.year, _selectedDate.month + offset);
+      _isLoading = true;
     });
-    _fetchPayroll();
+    await _fetchPayroll();
+    setState(() => _isLoading = false);
   }
 
   @override
@@ -85,6 +97,18 @@ class _PayrollScreenState extends State<PayrollScreen> {
         backgroundColor: theme.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'Lịch sử lương',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PayrollHistoryScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -185,7 +209,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
                                       ),
                                       const SizedBox(height: 10),
                                       Text(
-                                        currencyFormat.format(_payrollData!.thucNhan),
+                                        currencyFormat.format(_payrollData!.luongThucNhan),
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 36,
@@ -205,6 +229,28 @@ class _PayrollScreenState extends State<PayrollScreen> {
                                         ),
                                       ),
                                     ],
+                                  ),
+                                ),
+
+                                const SizedBox(height: 25),
+
+                                // Work Info Card
+                                _buildSectionTitle('Thông tin công việc', theme),
+                                Card(
+                                  elevation: 2,
+                                  shadowColor: Colors.black12,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Column(
+                                      children: [
+                                        _buildInfoRow('Ngày công', '${_payrollData!.ngayCong} / ${_payrollData!.ngayCongChuan} ngày', theme),
+                                        const Divider(height: 24),
+                                        _buildInfoRow('Giờ làm thêm', '${_payrollData!.gioLamThem} giờ', theme),
+                                        const Divider(height: 24),
+                                        _buildRow('Tiền làm thêm', _payrollData!.tienLamThem, currencyFormat, isPositive: true, theme: theme),
+                                      ],
+                                    ),
                                   ),
                                 ),
 
@@ -242,11 +288,15 @@ class _PayrollScreenState extends State<PayrollScreen> {
                                     padding: const EdgeInsets.all(20),
                                     child: Column(
                                       children: [
-                                        _buildRow('Bảo hiểm', _payrollData!.baoHiem, currencyFormat, isNegative: true, theme: theme),
+                                        _buildRow('BHXH (8%)', _payrollData!.bhxh, currencyFormat, isNegative: true, theme: theme),
                                         const Divider(height: 24),
-                                        _buildRow('Thuế TNCN', _payrollData!.thue, currencyFormat, isNegative: true, theme: theme),
+                                        _buildRow('BHYT (1.5%)', _payrollData!.bhyt, currencyFormat, isNegative: true, theme: theme),
                                         const Divider(height: 24),
-                                        _buildRow('Phạt / Khác', _payrollData!.phat, currencyFormat, isNegative: true, theme: theme),
+                                        _buildRow('BHTN (1%)', _payrollData!.bhtn, currencyFormat, isNegative: true, theme: theme),
+                                        const Divider(height: 24),
+                                        _buildRow('Thuế TNCN', _payrollData!.thueTNCN, currencyFormat, isNegative: true, theme: theme),
+                                        const Divider(height: 24),
+                                        _buildRow('Khấu trừ khác', _payrollData!.khauTruKhac, currencyFormat, isNegative: true, theme: theme),
                                       ],
                                     ),
                                   ),
@@ -265,7 +315,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
                                       children: [
                                         _buildRow('Tổng thu nhập', _payrollData!.tongLuong, currencyFormat, isBold: true),
                                         const SizedBox(height: 12),
-                                        _buildRow('Tổng khấu trừ', (_payrollData!.baoHiem + _payrollData!.thue + _payrollData!.phat), currencyFormat, isBold: true, isNegative: true, theme: theme),
+                                        _buildRow('Tổng khấu trừ', _payrollData!.tongKhauTru, currencyFormat, isBold: true, isNegative: true, theme: theme),
                                       ],
                                     ),
                                   ),
@@ -316,6 +366,29 @@ class _PayrollScreenState extends State<PayrollScreen> {
             fontSize: 15,
             fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
             color: textColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, ThemeData theme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 15,
+            color: Colors.black54,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            color: theme.primaryColor,
           ),
         ),
       ],

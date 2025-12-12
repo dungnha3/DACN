@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:mobile/services/firebase_notification_service.dart';
@@ -10,7 +11,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('vi_VN', null);
   try {
-    await FirebaseNotificationService.initialize();
+    if (!kIsWeb) {
+      await FirebaseNotificationService.initialize();
+    }
   } catch (e) {
     debugPrint('Firebase initialization failed: $e');
   }
@@ -25,8 +28,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'Enterprise Management',
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      initialRoute: AppRouter.login,
+      initialRoute: AppRouter.root,
       onGenerateRoute: AppRouter.generateRoute,
     );
   }

@@ -44,7 +44,7 @@ public class NhanVien {
     @Column(name = "dia_chi", length = 255, columnDefinition = "NVARCHAR(255)")
     private String diaChi;
 
-    @Column(name = "sdt", length = 20)
+    @Column(name = "sdt", length = 20, columnDefinition = "VARCHAR(20)")
     private String sdt;
 
     @Column(name = "ngay_vao_lam", nullable = false)

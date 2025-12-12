@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../data/services/notification_service.dart';
 import '../../data/models/notification_model.dart';
 import '../../config/app_router.dart';
+import '../hr/payroll_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -74,7 +75,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       // Creating a copy is better.
       final old = _notifications[index];
       final updated = NotificationModel(
-        id: old.id,
+        notificationId: old.notificationId,
         title: old.title,
         content: old.content,
         type: old.type,
@@ -95,7 +96,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       await _notificationService.markAllAsRead();
       setState(() {
         _notifications = _notifications.map((n) => NotificationModel(
-          id: n.id,
+          notificationId: n.notificationId,
           title: n.title,
           content: n.content,
           type: n.type,
@@ -110,6 +111,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       }
     } catch (e) {
       // ignore
+    }
+  }
+
+  void _handleNotificationTap(NotificationModel notification, int index) {
+    // Mark as read
+    if (!notification.isRead) {
+      _markAsRead(notification.notificationId, index);
+    }
+    
+    // Handle deep link navigation
+    final link = notification.link;
+    if (link != null && link.isNotEmpty) {
+      if (link.contains('bang-luong') || link.contains('payroll')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PayrollScreen()),
+        );
+      } else if (link.contains('chat')) {
+        // Navigate to chat - could expand this
+        Navigator.pushNamed(context, '/chat');
+      } else if (link.contains('nghi-phep') || link.contains('leave')) {
+        Navigator.pushNamed(context, '/leave-requests');
+      }
+      // Add more deep link handlers as needed
     }
   }
 
@@ -177,7 +202,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   final bool isRead = notification.isRead;
 
                   return Dismissible(
-                    key: Key(notification.id.toString()),
+                    key: Key(notification.notificationId.toString()),
                     direction: DismissDirection.endToStart,
                     background: Container(
                       margin: const EdgeInsets.only(bottom: 12),
@@ -190,7 +215,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       child: const Icon(Icons.delete, color: Colors.white),
                     ),
                     onDismissed: (direction) {
-                      _deleteNotification(notification.id, index);
+                      _deleteNotification(notification.notificationId, index);
                     },
                     child: Card(
                       color: isRead ? Colors.white : theme.primaryColor.withOpacity(0.05),
@@ -204,9 +229,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       child: InkWell(
                         borderRadius: BorderRadius.circular(12),
                         onTap: () {
-                          if (!isRead) {
-                            _markAsRead(notification.id, index);
-                          }
+                          _handleNotificationTap(notification, index);
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(16),

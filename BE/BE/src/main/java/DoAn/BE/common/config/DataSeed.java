@@ -60,6 +60,7 @@ public class DataSeed {
     private final FileRepository fileRepository;
     private final NotificationRepository notificationRepository;
     private final ThongBaoRepository thongBaoRepository;
+    private final MessageStatusRepository messageStatusRepository;
 
     @Bean
     @Order(2) // Chạy SAU DefaultUsersInitializer (@Order(1))
@@ -109,7 +110,7 @@ public class DataSeed {
     }
 
     // ==================== MODULE 1: HR ====================
-    // ==================== MODULE 1: HR ====================
+
     private void seedHRModule() {
         log.info("📋 ========== SEEDING HR MODULE ==========");
 
@@ -122,6 +123,8 @@ public class DataSeed {
 
         User hrManager = userRepository.findByUsername("hr").orElse(null);
         User admin = userRepository.findByUsername("admin").orElse(null);
+        List<User> pmUsers = userRepository.findByRole(User.Role.MANAGER_PROJECT);
+        List<User> accUsers = userRepository.findByRole(User.Role.MANAGER_ACCOUNTING);
         if (hrManager == null) {
             log.warn("⚠️  HR Manager not found!");
         }
@@ -279,6 +282,19 @@ public class DataSeed {
         double companyLat = 10.801829;
         double companyLng = 106.714231;
 
+        String[] lateReasons = {
+                "Kẹt xe trên đường Xa Lộ Hà Nội",
+                "Việc gia đình đột xuất",
+                "Thời tiết xấu, mưa lớn",
+                "Xe hỏng giữa đường",
+                "Con ốm phải đưa đi bác sĩ"
+        };
+        String[] addresses = {
+                "HUTECH Campus A, Khu Công Nghệ Cao, TP.HCM",
+                "Tòa nhà E, HUTECH, Quận 9",
+                "Cổng chính HUTECH, Đường Điện Biên Phủ"
+        };
+
         for (int day = 0; day < 10; day++) {
             LocalDate date = LocalDate.now().minusDays(day);
             for (NhanVien nv : nhanViens) {
@@ -291,15 +307,23 @@ public class DataSeed {
                 cc.setGioVao(java.time.LocalTime.of(8, 0, 0).plusMinutes(lateMinutes));
                 cc.setGioRa(java.time.LocalTime.of(17, 30, 0).plusMinutes(random.nextInt(30)));
 
+                // Add ghiChu for late arrivals (> 15 minutes)
+                if (lateMinutes > 15) {
+                    cc.setGhiChu(lateReasons[random.nextInt(lateReasons.length)]);
+                } else if (lateMinutes > 10) {
+                    cc.setGhiChu("Đi trễ " + lateMinutes + " phút");
+                }
+
                 // GPS Data (simulate near company)
                 double latOffset = (random.nextDouble() - 0.5) * 0.001; // ~100m
                 double lngOffset = (random.nextDouble() - 0.5) * 0.001;
                 cc.setLatitude(companyLat + latOffset);
                 cc.setLongitude(companyLng + lngOffset);
-                cc.setDiaChiCheckin("HUTECH Campus A, Khu Công Nghệ Cao, TP.HCM");
+                cc.setDiaChiCheckin(addresses[random.nextInt(addresses.length)]);
                 cc.setKhoangCach(random.nextDouble() * 100); // 0-100m
                 cc.setPhuongThuc(ChamCong.PhuongThucChamCong.GPS);
                 cc.setLoaiCa(ChamCong.LoaiCa.FULL);
+                // trangThai and soGioLam: Auto-calculated by @PrePersist
 
                 chamCongRepository.save(cc);
                 attendanceCount++;
@@ -322,9 +346,21 @@ public class DataSeed {
                 bl.setThang(targetMonth);
                 bl.setNam(targetYear);
                 bl.setLuongCoBan(nv.getLuongCoBan());
-                bl.setNgayCong(22);
+
+                // CRITICAL: Set ngayCongChuan explicitly for calculation to work
+                bl.setNgayCongChuan(26);
+                // Variable working days (20-26)
+                bl.setNgayCong(20 + random.nextInt(7));
+
                 bl.setPhuCap(nv.getPhuCap());
-                bl.setThuong(new BigDecimal((nv.getChucVu().getLevel() < 5 ? 2000000 : 1000000)));
+                bl.setThuong(new BigDecimal(nv.getChucVu().getLevel() < 5 ? 2_000_000 : 1_000_000));
+
+                // Add overtime hours for some employees (0-10 hours)
+                bl.setGioLamThem(random.nextInt(11));
+
+                // @PrePersist will auto-calculate: bhxh, bhyt, bhtn, thueTNCN,
+                // tongLuong, tongKhauTru, luongThucNhan
+
                 bangLuongRepository.save(bl);
                 payrollCount++;
             }
@@ -350,17 +386,47 @@ public class DataSeed {
             };
             np.setLyDo(reasons[i % reasons.length]);
 
-            // Trạng thái đơn
-            if (i % 3 == 0) {
+            // Trạng thái đơn với approval flow đầy đủ
+            String[] rejectReasons = {
+                    "Không đủ ngày phép còn lại",
+                    "Trùng với deadline dự án quan trọng",
+                    "Thiếu nhân sự trong thời gian này",
+                    "Cần bổ sung giấy tờ xác nhận"
+            };
+
+            if (i % 4 == 0) {
+                // Chờ duyệt
                 np.setTrangThai(NghiPhep.TrangThaiNghiPhep.CHO_DUYET);
-            } else if (i % 3 == 1) {
+            } else if (i % 4 == 1) {
+                // PM đã duyệt, chờ Accounting
+                np.setTrangThai(NghiPhep.TrangThaiNghiPhep.PM_APPROVED);
+                if (!pmUsers.isEmpty()) {
+                    np.setPmApprover(pmUsers.get(i % pmUsers.size()));
+                    np.setPmApprovedAt(LocalDateTime.now().minusDays(2));
+                    np.setPmNote("Không ảnh hưởng tiến độ dự án");
+                }
+            } else if (i % 4 == 2) {
+                // Đã duyệt hoàn toàn (PM + Accounting)
                 np.setTrangThai(NghiPhep.TrangThaiNghiPhep.DA_DUYET);
+                if (!pmUsers.isEmpty()) {
+                    np.setPmApprover(pmUsers.get(i % pmUsers.size()));
+                    np.setPmApprovedAt(LocalDateTime.now().minusDays(3));
+                    np.setPmNote("OK, không ảnh hưởng sprint");
+                }
+                if (!accUsers.isEmpty()) {
+                    np.setAccountingApprover(accUsers.get(i % accUsers.size()));
+                    np.setAccountingApprovedAt(LocalDateTime.now().minusDays(1));
+                    np.setAccountingNote("Còn " + (12 - np.getSoNgay()) + " ngày phép năm");
+                }
                 np.setNguoiDuyet(hrManager);
                 np.setNgayDuyet(LocalDateTime.now().minusDays(1));
+                np.setGhiChuDuyet("Đã xác nhận. Chấp thuận đơn nghỉ phép.");
             } else {
+                // Từ chối
                 np.setTrangThai(NghiPhep.TrangThaiNghiPhep.TU_CHOI);
                 np.setNguoiDuyet(hrManager);
                 np.setNgayDuyet(LocalDateTime.now().minusDays(1));
+                np.setGhiChuDuyet(rejectReasons[i % rejectReasons.length]);
             }
 
             nghiPhepRepository.save(np);
@@ -371,6 +437,29 @@ public class DataSeed {
         log.info("⭐ Creating Performance Reviews...");
         // Fetch lại NhanVien từ DB để tránh detached entity
         List<NhanVien> nhanViensFromDB = nhanVienRepository.findAll();
+
+        String[] reviewComments = {
+                "Nhân viên nhiệt tình, tích cực trong công việc",
+                "Cần cải thiện kỹ năng giao tiếp",
+                "Hoàn thành tốt các nhiệm vụ được giao",
+                "Thái độ làm việc rất chuyên nghiệp",
+                "Cần nâng cao kỹ năng chuyên môn"
+        };
+        String[] goals = {
+                "Hoàn thành chứng chỉ AWS trong Q2",
+                "Lead một dự án nhỏ độc lập",
+                "Cải thiện kỹ năng giao tiếp với khách hàng",
+                "Mentoring 2 nhân viên mới",
+                "Tham gia 3 khóa đào tạo nội bộ"
+        };
+        String[] devPlans = {
+                "Tham gia khóa đào tạo Leadership",
+                "Học thêm về Cloud Architecture",
+                "Cải thiện English Communication",
+                "Đào sâu về DevOps practices",
+                "Nâng cao soft skills"
+        };
+
         for (int i = 0; i < Math.min(15, nhanViensFromDB.size() - 1); i++) {
             DanhGia dg = new DanhGia();
             dg.setNhanVien(nhanViensFromDB.get(i));
@@ -381,21 +470,30 @@ public class DataSeed {
             dg.setKyDanhGia(reviewDate.getMonthValue() + "/" + reviewDate.getYear());
             dg.setLoaiDanhGia(i % 2 == 0 ? DanhGia.LoaiDanhGia.HANG_QUY : DanhGia.LoaiDanhGia.HANG_NAM);
 
+            // Set review period dates
+            dg.setNgayBatDau(reviewDate.withDayOfMonth(1));
+            dg.setNgayKetThuc(reviewDate.withDayOfMonth(reviewDate.lengthOfMonth()));
+
             // Điểm đánh giá (7.0 - 9.5)
             dg.setDiemChuyenMon(new BigDecimal(7.0 + (i % 5) * 0.5));
             dg.setDiemThaiDo(new BigDecimal(7.5 + (i % 5) * 0.5));
             dg.setDiemKyNangMem(new BigDecimal(7.0 + (i % 6) * 0.4));
             dg.setDiemDongDoi(new BigDecimal(7.0 + (i % 7) * 0.5));
+            // diemTong and xepLoai: Auto-calculated by @PrePersist
 
-            String[] comments = {
-                    "Nhân viên nhiệt tình, tích cực trong công việc",
-                    "Cần cải thiện kỹ năng giao tiếp",
-                    "Hoàn thành tốt các nhiệm vụ được giao",
-                    "Thái độ làm việc rất chuyên nghiệp",
-                    "Cần nâng cao kỹ năng chuyên môn"
-            };
-            dg.setNhanXet(comments[i % comments.length]);
-            dg.setKeHoachPhatTrien("Tham gia các khóa đào tạo nâng cao trong quý tới");
+            dg.setNhanXet(reviewComments[i % reviewComments.length]);
+            dg.setMucTieuTiepTheo(goals[i % goals.length]);
+            dg.setKeHoachPhatTrien(devPlans[i % devPlans.length]);
+
+            // Set status and completion date based on review date
+            if (reviewDate.isBefore(LocalDate.now().minusMonths(1))) {
+                dg.setTrangThai(DanhGia.TrangThaiDanhGia.DA_DUYET);
+                dg.setNgayHoanThanh(reviewDate.plusDays(5));
+            } else if (reviewDate.isBefore(LocalDate.now())) {
+                dg.setTrangThai(DanhGia.TrangThaiDanhGia.CHO_DUYET);
+            } else {
+                dg.setTrangThai(DanhGia.TrangThaiDanhGia.DANG_DANH_GIA);
+            }
 
             danhGiaRepository.save(dg);
         }
@@ -433,6 +531,7 @@ public class DataSeed {
         List<User> allUsers = userRepository.findAll();
         List<User> pmUsers = userRepository.findByRole(User.Role.MANAGER_PROJECT);
         User pmUser = pmUsers.isEmpty() ? allUsers.get(0) : pmUsers.get(0);
+        Random random = new Random();
 
         // 1. Projects - 10 projects
         log.info("📁 Creating Projects...");
@@ -463,38 +562,46 @@ public class DataSeed {
         }
         log.info("   ✅ Created {} projects", projects.size());
 
-        // 2. Project Members - 30 members (3 per project)
+        // 2. Project Members - Add ALL users as members across projects
         log.info("👥 Creating Project Members...");
         int memberCount = 0;
-        for (int i = 0; i < projects.size(); i++) {
-            // Owner
+
+        // First: Owner for each project (PM user)
+        for (Project project : projects) {
             ProjectMember owner = new ProjectMember();
-            owner.setProject(projects.get(i));
+            owner.setProject(project);
             owner.setUser(pmUser);
             owner.setRole(ProjectMember.ProjectRole.OWNER);
             projectMemberRepository.save(owner);
             memberCount++;
+        }
 
-            // Add 2 more members (skip if same as pmUser)
-            int addedMembers = 0;
-            int userIndex = i * 3; // Start from different offset to avoid pmUser
-            while (addedMembers < 2 && userIndex < allUsers.size()) {
-                User memberUser = allUsers.get(userIndex);
-                // Skip if this user is pmUser
-                if (!memberUser.getUserId().equals(pmUser.getUserId())) {
+        // Second: Distribute ALL other users across projects as members
+        // Each user will be member of ~3 projects
+        for (int i = 0; i < allUsers.size(); i++) {
+            User user = allUsers.get(i);
+            if (user.getUserId().equals(pmUser.getUserId()))
+                continue; // Skip owner
+
+            // Add this user to 3 different projects
+            for (int j = 0; j < 3; j++) {
+                int projectIndex = (i + j) % projects.size();
+                Project project = projects.get(projectIndex);
+
+                // Check if already exists (should not but just in case)
+                var existing = projectMemberRepository.findByProject_ProjectIdAndUser_UserId(
+                        project.getProjectId(), user.getUserId());
+                if (existing.isEmpty()) {
                     ProjectMember member = new ProjectMember();
-                    member.setProject(projects.get(i));
-                    member.setUser(memberUser);
-                    member.setRole(
-                            addedMembers == 0 ? ProjectMember.ProjectRole.MANAGER : ProjectMember.ProjectRole.MEMBER);
+                    member.setProject(project);
+                    member.setUser(user);
+                    member.setRole(j == 0 ? ProjectMember.ProjectRole.MANAGER : ProjectMember.ProjectRole.MEMBER);
                     projectMemberRepository.save(member);
                     memberCount++;
-                    addedMembers++;
                 }
-                userIndex++;
             }
         }
-        log.info("   ✅ Created {} project members", memberCount);
+        log.info("   ✅ Created {} project members (all users now have access)", memberCount);
 
         // 3. Issue Statuses - Ensure defaults exist
         List<IssueStatus> statuses;
@@ -539,6 +646,19 @@ public class DataSeed {
                 "Refactor code", "Design UI", "Write tests", "Deploy prod", "Security audit",
                 "Performance optimization"
         };
+        String[] issueDescriptions = {
+                "Implement user authentication with JWT token",
+                "Fix chart rendering issue on dashboard page",
+                "Create RESTful API endpoint for data retrieval",
+                "Update API documentation with new endpoints",
+                "Refactor legacy code to improve maintainability",
+                "Design responsive UI components",
+                "Write unit and integration tests",
+                "Deploy application to production server",
+                "Conduct security audit and fix vulnerabilities",
+                "Optimize database queries and caching"
+        };
+
         for (int i = 0; i < 100; i++) {
             Issue issue = new Issue();
             issue.setProject(projects.get(i % projects.size()));
@@ -547,15 +667,62 @@ public class DataSeed {
             }
             issue.setIssueKey(projects.get(i % projects.size()).getKeyProject() + "-" + (i + 1));
             issue.setTitle(issueTitles[i % issueTitles.length] + " #" + (i + 1));
-            issue.setDescription("Mô tả chi tiết cho issue " + issue.getTitle());
-            issue.setIssueStatus(statuses.get(i % statuses.size()));
+            issue.setDescription(issueDescriptions[i % issueDescriptions.length]);
+
+            IssueStatus currentStatus = statuses.get(i % statuses.size());
+            issue.setIssueStatus(currentStatus);
             issue.setPriority(Issue.Priority.values()[i % 4]);
             issue.setReporter(pmUser);
-            if (i % 2 == 0 && !allUsers.isEmpty()) {
-                issue.setAssignee(allUsers.get(i % allUsers.size()));
+            // ALWAYS assign to a user to ensure all users have tasks
+            if (!allUsers.isEmpty()) {
+                User assignee = allUsers.get(i % allUsers.size());
+                issue.setAssignee(assignee);
+
+                // CRITICAL FIX: Ensure assignee is a member of the project
+                // Otherwise user has task but cannot see project ("My Projects" logic)
+                try {
+                    boolean isMember = projectMemberRepository.findByProject_ProjectIdAndUser_UserId(
+                            issue.getProject().getProjectId(), assignee.getUserId()).isPresent();
+
+                    if (!isMember) {
+                        ProjectMember newMember = new ProjectMember(
+                                issue.getProject(),
+                                assignee,
+                                ProjectMember.ProjectRole.MEMBER);
+                        projectMemberRepository.save(newMember);
+                        log.info("   -> Auto-added user {} as member of project {} (Reason: Assigned Task)",
+                                assignee.getUsername(), issue.getProject().getName());
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to auto-add member during seeding: " + e.getMessage());
+                }
             }
-            issue.setEstimatedHours(new BigDecimal(4 + i % 16));
-            issue.setDueDate(LocalDate.now().plusDays(i % 30));
+
+            // Estimated hours (4-20 hours)
+            BigDecimal estimatedHours = new BigDecimal(4 + i % 16);
+            issue.setEstimatedHours(estimatedHours);
+
+            // Set actualHours for completed ("Done") issues
+            if ("Done".equals(currentStatus.getName())) {
+                // Actual = 80-120% of estimated (realistic variation)
+                double multiplier = 0.8 + random.nextDouble() * 0.4;
+                issue.setActualHours(estimatedHours
+                        .multiply(new BigDecimal(multiplier))
+                        .setScale(2, java.math.RoundingMode.HALF_UP));
+            }
+
+            // Mix of overdue, today, and future due dates
+            if (i % 5 == 0) {
+                // Overdue issues (past due dates)
+                issue.setDueDate(LocalDate.now().minusDays(random.nextInt(10) + 1));
+            } else if (i % 5 == 1) {
+                // Due today
+                issue.setDueDate(LocalDate.now());
+            } else {
+                // Future due dates
+                issue.setDueDate(LocalDate.now().plusDays(i % 30 + 1));
+            }
+
             issueRepository.save(issue);
         }
         log.info("   ✅ Created 100 issues");
@@ -650,15 +817,48 @@ public class DataSeed {
                 "Meeting notes đã gửi mail", "Deadline tuần sau", "Sprint planning vào thứ 2",
                 "Daily standup 9h sáng"
         };
+        List<Message> savedMessages = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
             Message message = new Message();
             message.setChatRoom(chatRooms.get(i % chatRooms.size()));
             message.setSender(allUsers.get(i % Math.min(10, allUsers.size())));
             message.setContent(messageContents[i % messageContents.length]);
+            message.setMessageType(Message.MessageType.TEXT);
             message.setSentAt(LocalDateTime.now().minusHours(100 - i));
-            messageRepository.save(message);
+            savedMessages.add(messageRepository.save(message));
         }
         log.info("   ✅ Created 100 messages");
+
+        // 3.1 Message Status (DELIVERED/SEEN) - mark some messages as seen
+        log.info("👁️ Creating Message Status records...");
+        int statusCount = 0;
+        Random random = new Random();
+        // Only process first 20 messages to avoid slow queries
+        int messagesToProcess = Math.min(20, savedMessages.size());
+        for (int i = 0; i < messagesToProcess; i++) {
+            Message msg = savedMessages.get(i);
+            // Pick one viewer per message (not the sender)
+            int viewerIndex = (i + 1) % Math.min(5, allUsers.size());
+            User viewer = allUsers.get(viewerIndex);
+            if (!viewer.getUserId().equals(msg.getSender().getUserId())) {
+                try {
+                    MessageStatus status = new MessageStatus();
+                    MessageStatusId statusId = new MessageStatusId();
+                    statusId.setMessageId(msg.getMessageId());
+                    statusId.setUserId(viewer.getUserId());
+                    status.setId(statusId);
+                    status.setMessage(msg);
+                    status.setUser(viewer);
+                    status.setStatus(MessageStatus.MessageStatusType.SEEN);
+                    status.setTimestamp(msg.getSentAt().plusMinutes(random.nextInt(30) + 1));
+                    messageStatusRepository.save(status);
+                    statusCount++;
+                } catch (Exception e) {
+                    log.debug("Skipping duplicate message status");
+                }
+            }
+        }
+        log.info("   ✅ Created {} message status records", statusCount);
 
         log.info("💬 ========== CHAT MODULE COMPLETED ==========\n");
     }
@@ -729,12 +929,41 @@ public class DataSeed {
 
         List<User> allUsers = userRepository.findAll();
 
-        // 1. Simple Notifications - 30 notifications
+        // 1. Simple Notifications - 30 notifications with realistic deep links
         log.info("📢 Creating Notifications...");
-        String[] notifTypes = { "INFO", "SUCCESS", "WARNING", "ERROR" };
+        String[] notifTypes = {
+                "NEW_MESSAGE", "TASK_ASSIGNED", "TASK_UPDATED", "COMMENT_ADDED",
+                "LEAVE_APPROVED", "LEAVE_REJECTED", "SALARY_UPDATED", "ATTENDANCE_REMINDER"
+        };
         String[] notifTitles = {
-                "Chào mừng!", "Cập nhật thành công", "Cảnh báo hệ thống", "Lỗi xảy ra",
-                "Tin nhắn mới", "Dự án mới", "Nhiệm vụ được giao", "Deadline sắp tới"
+                "Tin nhắn mới từ Team",
+                "Bạn được giao task mới",
+                "Task đã được cập nhật",
+                "Có comment mới trên task",
+                "Đơn nghỉ phép đã được duyệt",
+                "Đơn nghỉ phép bị từ chối",
+                "Bảng lương tháng này đã sẵn sàng",
+                "Nhắc nhở: Bạn chưa chấm công hôm nay"
+        };
+        String[] notifContents = {
+                "Team HR gửi tin nhắn mới trong group chat",
+                "Task 'Implement login' được giao cho bạn trong dự án HRM",
+                "Task 'Fix bug dashboard' đã chuyển sang 'In Progress'",
+                "Admin comment: 'Cần review code trước khi merge'",
+                "Đơn nghỉ phép từ 15/12 - 17/12 đã được duyệt",
+                "Đơn nghỉ phép bị từ chối. Lý do: Thiếu nhân sự",
+                "Bảng lương tháng 11/2024 đã được HR tính xong",
+                "Đã 9:30 AM, bạn chưa check-in hôm nay!"
+        };
+        String[] notifLinks = {
+                "/chat/room/1",
+                "/projects/issues/HRM-1",
+                "/projects/issues/DASH-5",
+                "/projects/issues/MOB-10",
+                "/hr/leave-requests",
+                "/hr/leave-requests",
+                "/hr/payroll",
+                "/hr/attendance"
         };
 
         for (int i = 0; i < Math.min(30, allUsers.size() * 3); i++) {
@@ -742,8 +971,8 @@ public class DataSeed {
             notif.setUser(allUsers.get(i % allUsers.size()));
             notif.setType(notifTypes[i % notifTypes.length]);
             notif.setTitle(notifTitles[i % notifTitles.length]);
-            notif.setContent("Nội dung thông báo số " + (i + 1));
-            notif.setLink("/dashboard");
+            notif.setContent(notifContents[i % notifContents.length]);
+            notif.setLink(notifLinks[i % notifLinks.length]);
             notif.setIsRead(i % 5 == 0); // 20% đã đọc
             notificationRepository.save(notif);
         }
@@ -751,11 +980,26 @@ public class DataSeed {
 
         // 2. ThongBao - 20 advanced notifications
         log.info("📨 Creating ThongBao...");
+        String[] tbTitles = {
+                "Thông báo họp phòng ban",
+                "Lịch nghỉ lễ 2024",
+                "Cập nhật chính sách công ty",
+                "Thông báo tuyển dụng nội bộ",
+                "Kết quả đánh giá quý"
+        };
+        String[] tbContents = {
+                "Họp phòng ban lúc 14:00 ngày mai tại phòng họp A",
+                "Công ty nghỉ Tết từ 29/12 đến 05/01/2025",
+                "Chính sách làm việc từ xa đã được cập nhật",
+                "Phòng IT tuyển 2 vị trí Senior Developer",
+                "Kết quả đánh giá Q4 đã sẵn sàng. Vui lòng xem chi tiết."
+        };
+
         for (int i = 0; i < Math.min(20, allUsers.size() * 2); i++) {
             ThongBao tb = new ThongBao();
             tb.setNguoiNhan(allUsers.get(i % allUsers.size()));
-            tb.setTieuDe("Thông báo " + (i + 1));
-            tb.setNoiDung("Nội dung thông báo chi tiết số " + (i + 1));
+            tb.setTieuDe(tbTitles[i % tbTitles.length]);
+            tb.setNoiDung(tbContents[i % tbContents.length]);
             tb.setLoai(ThongBao.LoaiThongBao.values()[i % ThongBao.LoaiThongBao.values().length]);
             tb.setTrangThai(i % 4 == 0 ? ThongBao.TrangThaiThongBao.DA_DOC : ThongBao.TrangThaiThongBao.CHUA_DOC);
             tb.setUuTien(ThongBao.MucDoUuTien.values()[i % 4]);
@@ -766,4 +1010,5 @@ public class DataSeed {
 
         log.info("🔔 ========== NOTIFICATION MODULE COMPLETED ==========\n");
     }
+
 }

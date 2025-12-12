@@ -118,13 +118,17 @@ public class ChamCong {
     }
 
     public boolean isLate() {
-        // Giả sử giờ làm việc bắt đầu lúc 8:00
-        return gioVao != null && gioVao.isAfter(LocalTime.of(8, 0));
+        // Giờ làm việc bắt đầu lúc 8:00
+        // Chỉ tính đi trễ nếu đến sau 8:05 (hơn 5 phút)
+        LocalTime gioVaoChuan = LocalTime.of(8, 0);
+        return gioVao != null && gioVao.isAfter(gioVaoChuan.plusMinutes(5));
     }
 
     public boolean isEarlyLeave() {
-        // Giả sử giờ làm việc kết thúc lúc 17:00
-        return gioRa != null && gioRa.isBefore(LocalTime.of(17, 0));
+        // Giờ làm việc kết thúc lúc 17:00
+        // Chỉ tính về sớm nếu về trước 16:55 (hơn 5 phút)
+        LocalTime gioRaChuan = LocalTime.of(17, 0);
+        return gioRa != null && gioRa.isBefore(gioRaChuan.minusMinutes(5));
     }
 
     public enum TrangThaiChamCong {

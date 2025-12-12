@@ -114,15 +114,13 @@ class FirebaseNotificationService {
   }
 
   static Future<void> _sendTokenToBackend(String token) async {
-    // Check if user is logged in
-    // Note: You might need to expose a method in AuthService to check login status or get token
-    // For now, we assume ApiService handles auth headers and we just call the endpoint
-    
     try {
       final apiService = ApiService();
-      await apiService.put('/profile/fcm-token', {'token': token});
+      // Backend expects Key: fcmToken, Method: POST
+      await apiService.post('/profile/fcm-token', {'fcmToken': token});
+      debugPrint('FCM Token sent to backend successfully');
     } catch (e) {
-      // Ignore error
+      debugPrint('Error sending FCM token to backend: $e');
     }
   }
 }
